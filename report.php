@@ -219,7 +219,6 @@ $user = strtolower($_SESSION['username'] ?? '');
         <!-- 1. DHU Report (Teal) -->
         <!-- <i class="fa-solid fa-chart-line card-btn"></i> -->
 
-
         <!-- 2. Manpower Report (Orange) -->
         <!-- <i class="fa-solid fa-users card-btn"></i> -->
 
@@ -236,19 +235,14 @@ $user = strtolower($_SESSION['username'] ?? '');
         <!-- 6. Rejection Report (Red) -->
         <!-- <i class="fa-solid fa-ban card-btn"></i> -->
 
-
         <!-- 7. Adjustment Report (Amber) -->
         <!-- <i class="fa-solid fa-sliders-h card-btn"></i> -->
-
 
         <!-- 8. Transfer Report (Amber) -->
         <!-- <i class="fa-solid fa-exchange-alt card-btn"></i> -->
 
         <!-- 9. Production Hourly Report (Amber) -->
         <!-- <i class="fa-solid fa-clock card-btn"></i> -->
-
-
-
 
       </div>
 
