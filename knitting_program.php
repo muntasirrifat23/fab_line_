@@ -788,6 +788,7 @@
                                 <tr class="summary-row">
                                     <td colspan="2" class="summary-label">Total</td>
                                     <td class="summary-total" id="totalQtyDisplay">0.00</td>
+                                    <td></td>
                                     <td class="summary-remaining" id="totalRemainingDisplay">0.00</td>
                                     <td></td>
                                 </tr>
@@ -819,7 +820,10 @@
     <script>
         var bookingData = null;
         var allRowsData = [];
-        var targetQty = 0;
+        var targetQty = 0; // remaining available for new allocations (for selected description)
+        var originalTargetQty = 0; // total target from knitting_input (for selected description)
+        var allocatedQty = 0; // already allocated for selected description
+        var allocatedByDescription = {}; // map of description => allocated sum
         var validMcnoList = [];
         var isMcnoListLoaded = false;
 
@@ -903,12 +907,22 @@
                         $('#alertBox').html('');
                     }
                 })
+
                 .done(function(resp) {
 
                     if (resp && resp.success && resp.data) {
 
                         bookingData = resp.data;
                         allRowsData = resp.all_data || [];
+
+                        // capture target and allocated values from server
+                        allocatedByDescription = resp.allocated_by_description || {};
+                        // overall allocated sum
+                        allocatedQty = parseFloat(resp.allocated_qty) || 0;
+                        // initial originalTargetQty is set per-description when user selects description
+                        originalTargetQty = parseFloat(resp.data.KNITTING_TARGET_QTY) || 0;
+                        // remaining for the default / first description
+                        targetQty = originalTargetQty - (allocatedByDescription[resp.data.KNIT_M_DESCRIPTION] || 0);
 
                         $('#formContainer').removeClass('hidden');
 
@@ -1003,9 +1017,14 @@
             $('#lot_no').val(rowData.LOT_NO || '');
             $('#knit_material_code').val(rowData.KNIT_MATERIAL_CODE || rowData.KNIT_MAT_CODE || '');
 
-            targetQty = parseFloat(rowData.KNITTING_TARGET_QTY) || 0;
+            // Use the original target value (may differ per description) if available
+            originalTargetQty = parseFloat(rowData.KNITTING_TARGET_QTY) || originalTargetQty || 0;
+            // already allocated for this description (if available from server)
+            allocatedQty = parseFloat(allocatedByDescription[description]) || 0;
+            // remaining available for new allocations = original target - allocated for this description
+            targetQty = originalTargetQty - allocatedQty;
             $('#display_target_qty').text(targetQty.toFixed(2));
-            $('#knitting_target_qty').val(targetQty);
+            $('#knitting_target_qty').val(originalTargetQty);
             $('#selected_desc_label').html('(For: <span>' + description + '</span>)');
 
             resetMcnoRows();

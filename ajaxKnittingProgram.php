@@ -100,5 +100,26 @@ $response = [
     'descriptions' => array_values(array_unique($descriptions))
 ];
 
+// Calculate already allocated qty from knitting_program table for this booking
+$allocQuery = "SELECT KNIT_M_DESCRIPTION, IFNULL(SUM(QTY),0) AS allocated_qty FROM knitting_program WHERE BOOKING = '$b' GROUP BY KNIT_M_DESCRIPTION";
+$allocRes = mysqli_query($db, $allocQuery);
+$allocated = 0;
+$allocatedByDesc = [];
+if ($allocRes) {
+    while ($ar = mysqli_fetch_assoc($allocRes)) {
+        $desc = isset($ar['KNIT_M_DESCRIPTION']) ? $ar['KNIT_M_DESCRIPTION'] : '';
+        $qty = isset($ar['allocated_qty']) ? (float)$ar['allocated_qty'] : 0;
+        $allocatedByDesc[$desc] = $qty;
+        $allocated += $qty;
+    }
+}
+
+$response['allocated_qty'] = $allocated;
+$response['allocated_by_description'] = $allocatedByDesc;
+
+// remaining for the default data row (firstRow); clients should use per-description remaining when available
+$response['remaining_qty'] = (float)$data['KNITTING_TARGET_QTY'] - ($allocatedByDesc[$data['KNIT_M_DESCRIPTION']] ?? 0);
+// ];
+
 echo json_encode($response);
 ?>
