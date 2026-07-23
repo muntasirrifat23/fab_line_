@@ -8,19 +8,6 @@ if (!isset($_SESSION['username'])) {
 }
 
 $uname = $_SESSION['username'];
-// $userIP = $_SERVER['REMOTE_ADDR'];
-
-// // Only for 'test' user
-// if ($uname === 'test') {
-
-//     $allowedIPs = ['192.168.16.171', '127.0.0.1', '::1'];
-
-//     if (!in_array($userIP, $allowedIPs)) {
-//         session_destroy();
-//         echo "<script>alert('Access denied: Only office WiFi allowed'); window.location.href='login.php';</script>";
-//         exit();
-//     }
-// }
 
 $options = "";
 $lineNumbers = array();
@@ -43,6 +30,11 @@ if (isset($_POST['knitting_input'])) {
 if (isset($_POST['knitting_program'])) {
     $_SESSION['lineNo'] = $_POST['option'];
     header('location:knitting_program.php');
+    exit();
+}
+if (isset($_POST['knitting_inspection'])) {
+    $_SESSION['lineNo'] = $_POST['option'];
+    header('location:knitting_inspection.php');
     exit();
 }
 if (isset($_POST['knitting_store'])) {
@@ -261,7 +253,7 @@ mysqli_close($db);
         .btn-grid {
             display: grid;
             grid-template-columns: repeat(6, 1fr);
-            gap: 16px;
+            gap: 12px;
             margin: 24px 0;
         }
 
@@ -280,7 +272,7 @@ mysqli_close($db);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 4px;
         }
 
         .btn-grid .w3-button:hover {
@@ -384,7 +376,7 @@ mysqli_close($db);
 
     <div class="container-centered">
         <div class="page-header">
-            <p><i class="fas fa-chalkboard-user"></i> SELECT LINE NO</p>
+            <p><i class="fas fa-chalkboard-user"></i> Welcome To FabLine</p>
         </div>
         <div class="glass-panel">
             <form action="initialPage.php" method="post">
@@ -407,12 +399,28 @@ mysqli_close($db);
                     </div>
                 </div> -->
 
+              
+
                 <div class="btn-grid">
-                    <!-- <button class="w3-button w3-teal" name="knitting_input" id="knitting_input"><i class="fas fa-sign-in-alt"></i> KNITTING INPUT</button> -->
-                    <button class="w3-button w3-teal" name="knitting_program" id="knitting_program"><i class="fas fa-tshirt"></i> KNITTING PROGRAM</button>
-                    <button class="w3-button w3-teal" name="knitting_store" id="knitting_store"><i class="fas fa-tshirt"></i> KNITTING STORE</button>
-                    <button class="w3-button w3-teal" name="user_management" id="user_management"><i class="fas fa-user-plus"></i>USER MANAGEMENT</button>
-                    <button class="w3-button w3-teal" name="report" id="report"><i class="fas fa-file-alt"></i> REPORT</button>
+                    <button class="w3-button w3-teal" name="knitting_program" id="knitting_program">
+                        <i class="fas fa-industry"></i> KNITTING PROGRAM
+                    </button>
+
+                    <button class="w3-button w3-teal" name="knitting_inspection" id="knitting_inspection">
+                        <i class="fas fa-clipboard-check"></i> KNITTING INSPECTION
+                    </button>
+
+                    <button class="w3-button w3-teal" name="knitting_store" id="knitting_store">
+                        <i class="fas fa-warehouse"></i> KNITTING STORE
+                    </button>
+
+                    <button class="w3-button w3-teal" name="user_management" id="user_management">
+                        <i class="fas fa-users-cog"></i> USER MANAGEMENT
+                    </button>
+
+                    <button class="w3-button w3-teal" name="report" id="report">
+                        <i class="fas fa-chart-bar"></i> ALL REPORTS
+                    </button>
                 </div>
 
                 <div class="btn-grid">
