@@ -463,7 +463,7 @@ if ($result && $result->num_rows > 0) {
                         <input type="date" name="end_date" class="form-control" value="<?php echo htmlspecialchars($end_date); ?>">
                     </div>
                 </div>
-                <div class="col-12 col-md-6 col-lg-3">
+                <div class="col-12 col-md-6 col-lg-3 align-self-end">
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-sm btn-primary flex-grow-1 fw-semibold" style="border-radius:10px; background-color:#1a56db; border-color:#1a56db;">
                             <i class="fa-solid fa-magnifying-glass me-1"></i> Apply Filter
