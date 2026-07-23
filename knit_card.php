@@ -10,41 +10,35 @@ if (!isset($_SESSION['username'])) {
 $uname = $_SESSION['username'];
 
 // Search filters
-$buyer_filter  = isset($_GET['buyer'])      ? trim($_GET['buyer'])      : '';
-$mc_no_filter  = isset($_GET['mc_no'])      ? trim($_GET['mc_no'])      : '';
-$start_date    = isset($_GET['start_date']) ? trim($_GET['start_date']) : '';
-$end_date      = isset($_GET['end_date'])   ? trim($_GET['end_date'])   : '';
+$buyer_filter    = isset($_GET['buyer'])      ? trim($_GET['buyer'])      : '';
+$mc_no_filter    = isset($_GET['mc_no'])      ? trim($_GET['mc_no'])      : '';
+$booking_filter  = isset($_GET['booking_no']) ? trim($_GET['booking_no']) : '';
 
-// Build query using real column names
-$query  = "SELECT kc.*, kp.BOOKING AS kp_booking
-           FROM knit_card kc
-           LEFT JOIN knitting_program kp ON kc.KPTID = kp.KPTID
-           WHERE 1=1";
+// Build query using real KPTID column; LEFT JOIN knit_card on KPTID
+$query = "SELECT kp.*, kc.KCID AS card_id
+          FROM knitting_program kp
+          LEFT JOIN knit_card kc ON kp.KPTID = kc.KPTID
+          WHERE 1=1";
 $params = [];
 $types  = '';
 
 if ($buyer_filter !== '') {
-    $query   .= " AND kc.BUYER LIKE ?";
+    $query   .= " AND kp.BUYER LIKE ?";
     $params[] = "%{$buyer_filter}%";
     $types   .= 's';
 }
 if ($mc_no_filter !== '') {
-    $query   .= " AND kc.MCNO LIKE ?";
+    $query   .= " AND kp.MCNO LIKE ?";
     $params[] = "%{$mc_no_filter}%";
     $types   .= 's';
 }
-if ($start_date !== '') {
-    $query   .= " AND kc.CARD_DATE >= ?";
-    $params[] = $start_date;
-    $types   .= 's';
-}
-if ($end_date !== '') {
-    $query   .= " AND kc.CARD_DATE <= ?";
-    $params[] = $end_date;
+if ($booking_filter !== '') {
+    $query   .= " AND kp.BOOKING LIKE ?";
+    $params[] = "%{$booking_filter}%";
     $types   .= 's';
 }
 
-$query .= " ORDER BY kc.KCID DESC";
+$query .= " ORDER BY kp.KPTID DESC";
 
 $stmt = $db->prepare($query);
 if ($stmt) {
@@ -57,29 +51,32 @@ if ($stmt) {
     $result = false;
 }
 
-$total_cards = 0;
-$total_qty   = 0.00;
-$buyers_set  = [];
-$mc_set      = [];
-$rows_array  = [];
+// Summary stats
+$total_programs = 0;
+$total_req_qty  = 0.00;
+$generated_count = 0;
+$pending_count   = 0;
+$rows_array = [];
 
 if ($result && $result->num_rows > 0) {
     while ($r = $result->fetch_assoc()) {
-        $rows_array[]   = $r;
-        $total_cards++;
-        $total_qty     += floatval($r['REQ_QTY'] ?? 0);
-        if (!empty($r['BUYER'])) $buyers_set[$r['BUYER']] = true;
-        if (!empty($r['MCNO']))  $mc_set[$r['MCNO']]      = true;
+        $rows_array[]    = $r;
+        $total_programs++;
+        $total_req_qty  += floatval($r['QTY'] ?? 0);
+        if (intval($r['CARD_GENERATED']) === 1) {
+            $generated_count++;
+        } else {
+            $pending_count++;
+        }
     }
 }
-?>
-<!DOCTYPE html>
+?><!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Knit Cards Directory | Purbani Fabrics</title>
+    <title>Knitting Program Directory | Purbani Fabrics</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <link rel="stylesheet" href="css/bootstrap.min.css">
@@ -386,25 +383,17 @@ if ($result && $result->num_rows > 0) {
             transform: scale(1.002);
         }
 
-        .badge-kc {
-            background: #eff6ff;
-            color: #1e40af;
-            border: 1px solid #bfdbfe;
-            padding: 4px 10px;
-            border-radius: 8px;
+        .badge-status {
+            font-size: 11px;
             font-weight: 700;
-            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
-
-        .badge-mc {
-            background: #f8fafc;
-            color: #475569;
-            border: 1px solid #e2e8f0;
-            padding: 4px 10px;
-            border-radius: 8px;
-            font-weight: 700;
-            font-size: 12px;
-        }
+        .badge-generated { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .badge-pending   { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
 
         .btn-teal {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
@@ -442,20 +431,20 @@ if ($result && $result->num_rows > 0) {
         }
 
         .btn-action-edit {
-            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
             color: white !important;
             font-weight: 700;
             border-radius: 10px !important;
             padding: 8px 16px !important;
             border: none;
             font-size: 13px !important;
-            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);
+            box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2);
             transition: all 0.2s ease;
         }
         .btn-action-edit:hover {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
             transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(5, 150, 105, 0.35);
+            box-shadow: 0 6px 16px rgba(217, 119, 6, 0.35);
         }
     </style>
 </head>
@@ -470,11 +459,11 @@ if ($result && $result->num_rows > 0) {
                 <!-- Left: icon + title -->
                 <div class="banner-title-group">
                     <div class="banner-icon-wrap">
-                        <i class="fa-solid fa-id-card"></i>
+                        <i class="fa-solid fa-list-check"></i>
                     </div>
                     <div>
-                        <h1>Knit Cards Directory</h1>
-                        <p class="banner-subtitle">Manage knitting production cards, view tracking logs, and generate PDF card printouts</p>
+                        <h1>Knitting Program Directory</h1>
+                        <p class="banner-subtitle">Manage production knitting programs, track quantities, and generate production Knit Cards</p>
                     </div>
                 </div>
                 <!-- Right: action buttons -->
@@ -482,8 +471,11 @@ if ($result && $result->num_rows > 0) {
                     <a href="initialPage.php" class="btn nav-btn btn-glass">
                         <i class="fa-solid fa-arrow-left"></i> Dashboard
                     </a>
-                    <a href="knitting_program.php" class="btn nav-btn btn-glass">
-                        <i class="fa-solid fa-industry"></i> Knitting Programs
+                    <a href="knitting/knitting_program_form.php" class="btn nav-btn btn-blue-solid">
+                        <i class="fa-solid fa-plus"></i> New Program
+                    </a>
+                    <a href="knitting/knit_card_list.php" class="btn nav-btn btn-glass">
+                        <i class="fa-solid fa-id-card"></i> All Knit Cards
                     </a>
                 </div>
             </div>
@@ -504,10 +496,10 @@ if ($result && $result->num_rows > 0) {
         <div class="row g-3 mb-4">
             <div class="col-md-3 col-sm-6">
                 <div class="stat-card d-flex align-items-center gap-3">
-                    <div class="stat-icon bg-teal-light"><i class="fa-solid fa-id-card"></i></div>
+                    <div class="stat-icon bg-teal-light"><i class="fa-solid fa-clipboard-list"></i></div>
                     <div>
-                        <div class="text-muted small fw-semibold">Total Cards</div>
-                        <div class="fs-4 fw-bold text-dark"><?php echo number_format($total_cards); ?></div>
+                        <div class="text-muted small fw-semibold">Total Programs</div>
+                        <div class="fs-4 fw-bold text-dark"><?php echo number_format($total_programs); ?></div>
                     </div>
                 </div>
             </div>
@@ -515,26 +507,26 @@ if ($result && $result->num_rows > 0) {
                 <div class="stat-card d-flex align-items-center gap-3">
                     <div class="stat-icon bg-blue-light"><i class="fa-solid fa-weight-hanging"></i></div>
                     <div>
-                        <div class="text-muted small fw-semibold">Total Req Qty</div>
-                        <div class="fs-4 fw-bold text-dark"><?php echo number_format($total_qty, 2); ?> <span class="fs-6 text-muted font-normal">KG</span></div>
+                        <div class="text-muted small fw-semibold">Total Required Qty</div>
+                        <div class="fs-4 fw-bold text-dark"><?php echo number_format($total_req_qty, 2); ?> <span class="fs-6 text-muted font-normal">KG</span></div>
                     </div>
                 </div>
             </div>
             <div class="col-md-3 col-sm-6">
                 <div class="stat-card d-flex align-items-center gap-3">
-                    <div class="stat-icon bg-green-light"><i class="fa-solid fa-users"></i></div>
+                    <div class="stat-icon bg-green-light"><i class="fa-solid fa-circle-check"></i></div>
                     <div>
-                        <div class="text-muted small fw-semibold">Active Buyers</div>
-                        <div class="fs-4 fw-bold text-success"><?php echo number_format(count($buyers_set)); ?></div>
+                        <div class="text-muted small fw-semibold">Cards Generated</div>
+                        <div class="fs-4 fw-bold text-success"><?php echo number_format($generated_count); ?></div>
                     </div>
                 </div>
             </div>
             <div class="col-md-3 col-sm-6">
                 <div class="stat-card d-flex align-items-center gap-3">
-                    <div class="stat-icon bg-amber-light"><i class="fa-solid fa-gears"></i></div>
+                    <div class="stat-icon bg-amber-light"><i class="fa-solid fa-clock"></i></div>
                     <div>
-                        <div class="text-muted small fw-semibold">Active Machines</div>
-                        <div class="fs-4 fw-bold" style="color:#b45309;"><?php echo number_format(count($mc_set)); ?></div>
+                        <div class="text-muted small fw-semibold">Pending Cards</div>
+                        <div class="fs-4 fw-bold" style="color:#b45309;"><?php echo number_format($pending_count); ?></div>
                     </div>
                 </div>
             </div>
@@ -551,15 +543,11 @@ if ($result && $result->num_rows > 0) {
                     <label class="form-label small fw-bold text-secondary mb-1">Filter by Machine No (M/C)</label>
                     <input type="text" name="mc_no" class="form-control form-control-sm" placeholder="Machine No..." value="<?php echo htmlspecialchars($mc_no_filter); ?>">
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label small fw-bold text-secondary mb-1">From Date</label>
-                    <input type="date" name="start_date" class="form-control form-control-sm" value="<?php echo htmlspecialchars($start_date); ?>">
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-secondary mb-1">Filter by Booking No</label>
+                    <input type="text" name="booking_no" class="form-control form-control-sm" placeholder="Booking No..." value="<?php echo htmlspecialchars($booking_filter); ?>">
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label small fw-bold text-secondary mb-1">To Date</label>
-                    <input type="date" name="end_date" class="form-control form-control-sm" value="<?php echo htmlspecialchars($end_date); ?>">
-                </div>
-                <div class="col-md-2 d-flex gap-2">
+                <div class="col-md-3 d-flex gap-2">
                     <button type="submit" class="btn btn-teal btn-sm px-4 flex-grow-1 fw-semibold">
                         <i class="fa-solid fa-magnifying-glass me-1"></i> Filter
                     </button>
@@ -576,59 +564,82 @@ if ($result && $result->num_rows > 0) {
                 <table class="table custom-table table-hover mb-0">
                     <thead>
                         <tr>
-                            <th>Card ID</th>
-                            <th>Card Date</th>
+                            <th>Program ID</th>
+                            <th>Date</th>
                             <th>M/C No</th>
                             <th>Buyer</th>
                             <th>Booking No</th>
-                            <th>Style</th>
+                            <th>Style No</th>
                             <th>Fabric Type</th>
                             <th>Yarn Type</th>
                             <th>Req Qty (KG)</th>
-                            <th>Prepared By</th>
+                            <th>Card Status</th>
                             <th class="text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (count($rows_array) > 0): ?>
                             <?php foreach ($rows_array as $row):
-                                $c_id       = intval($row['KCID']);
-                                $c_date     = !empty($row['CARD_DATE']) ? date('Y-m-d', strtotime($row['CARD_DATE'])) : '';
-                                $c_mc       = $row['MCNO']         ?? '';
-                                $c_buyer    = $row['BUYER']        ?? '';
-                                $c_booking  = $row['kp_booking']   ?? $row['BOOKING'] ?? '';
-                                $c_style    = $row['STYLE']        ?? '';
-                                $c_fabrics  = $row['FABRICS_TYPE'] ?? '';
-                                $c_yarn     = $row['YARN_TYPE']    ?? '';
-                                $c_req_qty  = floatval($row['REQ_QTY'] ?? 0);
-                                $c_prep     = $row['PREPARED_BY']  ?? '';
+                                $p_id       = intval($row['KPTID']);
+                                $p_date     = !empty($row['CREATED_DATE']) ? date('Y-m-d', strtotime($row['CREATED_DATE'])) : '';
+                                $p_mc       = $row['MCNO']         ?? '';
+                                $p_buyer    = $row['BUYER']        ?? '';
+                                $p_booking  = $row['BOOKING']      ?? '';
+                                $p_style    = $row['STYLE']        ?? '';
+                                $p_fabrics  = $row['FABRICS_TYPE'] ?? '';
+                                $p_yarn     = $row['YARN_TYPE']    ?? '';
+                                $p_req_qty  = floatval($row['QTY'] ?? 0);
+                                $p_card_gen = intval($row['CARD_GENERATED'] ?? 0);
+                                $p_card_id  = $row['card_id'] ?? '';
                             ?>
                                 <tr>
-                                    <td><span class="badge-kc">#KC-<?php echo $c_id; ?></span></td>
+                                    <td><strong>#<?php echo $p_id; ?></strong></td>
                                     <td>
                                         <i class="fa-regular fa-calendar me-1 text-muted"></i>
-                                        <?php echo htmlspecialchars($c_date); ?>
+                                        <?php echo htmlspecialchars($p_date); ?>
                                     </td>
-                                    <td><span class="badge-mc">M/C <?php echo htmlspecialchars($c_mc); ?></span></td>
-                                    <td><strong><?php echo htmlspecialchars($c_buyer); ?></strong></td>
-                                    <td><?php echo htmlspecialchars($c_booking); ?></td>
-                                    <td><?php echo htmlspecialchars($c_style); ?></td>
-                                    <td><?php echo htmlspecialchars($c_fabrics); ?></td>
-                                    <td><small class="text-muted"><?php echo htmlspecialchars($c_yarn); ?></small></td>
-                                    <td><strong class="text-success"><?php echo number_format($c_req_qty, 2); ?> KG</strong></td>
-                                    <td><small class="text-secondary"><i class="fa-solid fa-user-circle me-1"></i><?php echo htmlspecialchars($c_prep); ?></small></td>
+                                    <td><strong>M/C <?php echo htmlspecialchars($p_mc); ?></strong></td>
+                                    <td><strong><?php echo htmlspecialchars($p_buyer); ?></strong></td>
+                                    <td><?php echo htmlspecialchars($p_booking); ?></td>
+                                    <td><?php echo htmlspecialchars($p_style); ?></td>
+                                    <td><?php echo htmlspecialchars($p_fabrics); ?></td>
+                                    <td><small class="text-muted"><?php echo htmlspecialchars($p_yarn); ?></small></td>
+                                    <td><strong class="text-success"><?php echo number_format($p_req_qty, 2); ?> KG</strong></td>
+                                    <td>
+                                        <?php if ($p_card_gen === 1): ?>
+                                            <span class="badge-status badge-generated"><i class="fa-solid fa-circle-check"></i> Generated</span>
+                                        <?php else: ?>
+                                            <span class="badge-status badge-pending"><i class="fa-solid fa-clock"></i> Pending</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td class="text-center">
                                         <div class="d-inline-flex gap-2">
-                                            <a href="knitting/knit_card_view.php?id=<?php echo $c_id; ?>"
-                                               class="btn btn-sm btn-action-view"
-                                               title="View Production Log">
-                                                <i class="fa-solid fa-eye me-1"></i> View Card
-                                            </a>
-                                            <a href="knitting/knit_card_print.php?id=<?php echo $c_id; ?>"
+                                            <?php if ($p_card_gen === 1): ?>
+                                                <?php if (!empty($p_card_id)): ?>
+                                                    <a href="knitting/knit_card_view.php?id=<?php echo intval($p_card_id); ?>"
+                                                       class="btn btn-sm btn-action-view"
+                                                       title="View Generated Card Log">
+                                                        <i class="fa-solid fa-eye me-1"></i> View Card
+                                                    </a>
+                                                <?php else: ?>
+                                                    <a href="knitting/knit_card_list.php" class="btn btn-sm btn-action-view">
+                                                        <i class="fa-solid fa-id-card me-1"></i> All Cards
+                                                    </a>
+                                                <?php endif; ?>
+                                            <?php else: ?>
+                                                <a href="knitting/knit_card_generate.php?program_id=<?php echo $p_id; ?>"
+                                                   class="btn btn-sm btn-teal"
+                                                   style="border-radius:10px; font-size:12.5px;"
+                                                   onclick="return confirm('Generate a new Knit Card for this program?');"
+                                                   title="Generate Knit Card">
+                                                    <i class="fa-solid fa-file-circle-plus me-1"></i> Generate Card
+                                                </a>
+                                            <?php endif; ?>
+
+                                            <a href="knitting/knitting_program_form.php?id=<?php echo $p_id; ?>"
                                                class="btn btn-sm btn-action-edit"
-                                               target="_blank"
-                                               title="Print Card Details">
-                                                <i class="fa-solid fa-print me-1"></i> Print
+                                               title="Edit Program">
+                                                <i class="fa-solid fa-pen-to-square me-1"></i> Edit
                                             </a>
                                         </div>
                                     </td>
@@ -638,8 +649,8 @@ if ($result && $result->num_rows > 0) {
                             <tr>
                                 <td colspan="11" class="text-center py-5 text-muted">
                                     <i class="fa-solid fa-folder-open fa-3x mb-3 text-secondary d-block"></i>
-                                    <h6 class="fw-bold">No Knit Cards Found</h6>
-                                    <p class="small mb-0">Try adjusting your filters or search terms.</p>
+                                    <h6 class="fw-bold">No Knitting Programs Found</h6>
+                                    <p class="small mb-0">Try adjusting your filters or click "New Program" to add an entry.</p>
                                 </td>
                             </tr>
                         <?php endif; ?>
