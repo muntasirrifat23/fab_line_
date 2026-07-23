@@ -82,12 +82,18 @@ if ($result && $result->num_rows > 0) {
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/mycss.css">
 
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-teal: #00796b;
-            --dark-teal: #004d40;
+            --primary-teal: #0f172a;
+            --dark-teal: #0f172a;
+            --accent-green: #10b981;
             --surface-bg: #f8fafc;
-            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            --card-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+            --header-from:  #090d22;
+            --header-mid:   #0f172a;
+            --header-to:    #1e3a8a;
+            --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
         }
 
         i, i.fa-solid, i.fas, i.far, i.fab, i.fa-regular {
@@ -101,108 +107,352 @@ if ($result && $result->num_rows > 0) {
         }
 
         body {
-            padding: 20px;
+            padding: 24px;
             background-color: var(--surface-bg);
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-family: var(--font-main);
             color: #334155;
+            background-image: radial-gradient(circle at 10% 20%, rgba(30, 58, 138, 0.015) 0%, transparent 60%),
+                              radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.015) 0%, transparent 60%);
         }
 
+        /* ═══════════════════════════════════════════
+           HEADER BANNER
+        ═══════════════════════════════════════════ */
         .top-banner {
-            background: linear-gradient(135deg, #004d40 0%, #00796b 50%, #00897b 100%);
+            position: relative;
+            background: linear-gradient(135deg, var(--header-from) 0%, var(--header-mid) 50%, var(--header-to) 100%);
             color: white;
-            padding: 22px 28px;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0, 121, 107, 0.2);
-            margin-bottom: 24px;
+            padding: 36px 40px 0 40px;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
+            margin-bottom: 30px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
+
+        /* Decorative background blobs */
+        .top-banner::before {
+            content: '';
+            position: absolute;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.22) 0%, transparent 70%);
+            top: -120px; right: -80px;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .top-banner::after {
+            content: '';
+            position: absolute;
+            width: 250px; height: 250px;
+            background: radial-gradient(circle, rgba(147, 197, 253, 0.15) 0%, transparent 70%);
+            bottom: -20px; left: 80px;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .banner-inner {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding-bottom: 30px;
+        }
+
+        /* Icon badge */
+        .banner-icon-wrap {
+            width: 62px; height: 62px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px;
+            flex-shrink: 0;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            color: #60a5fa;
+        }
+
+        .banner-title-group { display: flex; align-items: center; gap: 20px; }
 
         .top-banner h1 {
-            font-weight: 700;
-            font-size: 1.75rem;
-            margin: 0;
+            font-weight: 800;
+            font-size: 2rem;
+            margin: 0 0 6px 0;
+            letter-spacing: -0.5px;
+            line-height: 1.15;
+            background: linear-gradient(135deg, #ffffff 60%, #93c5fd 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
+        .banner-subtitle {
+            font-size: 14px;
+            color: #93c5fd;
+            margin: 0;
+            font-weight: 500;
+            letter-spacing: 0.1px;
+            opacity: 0.9;
+        }
+
+        /* Nav buttons */
+        .nav-btn {
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 13.5px;
+            padding: 10px 20px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-glass {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #f8fafc;
+            backdrop-filter: blur(10px);
+        }
+        .btn-glass:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-blue-solid {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            color: white;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+        }
+        .btn-blue-solid:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            color: white;
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+        }
+
+        /* Bottom glassy strip inside header */
+        .banner-info-strip {
+            position: relative;
+            z-index: 2;
+            background: rgba(15, 23, 42, 0.25);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            margin: 0 -40px;
+            padding: 14px 40px;
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .strip-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+
+        .strip-item .strip-dot {
+            width: 9px; height: 9px;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 8px currentColor;
+        }
+
+        /* ═══════════════════════════════════════════
+           STAT CARDS
+        ═══════════════════════════════════════════ */
         .stat-card {
             background: #ffffff;
-            border-radius: 14px;
-            padding: 18px 22px;
-            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 22px 24px;
             box-shadow: var(--card-shadow);
-            transition: all 0.2s ease;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-
         .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 35px rgba(15, 23, 42, 0.08);
+            border-color: #cbd5e1;
         }
 
         .stat-icon {
-            width: 46px;
-            height: 46px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
+            width: 56px; height: 56px;
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.02);
         }
+        
+        .bg-teal-light  { background: linear-gradient(135deg, #eff6ff, #dbeafe); color: #1d4ed8; }
+        .bg-blue-light  { background: linear-gradient(135deg, #f0f9ff, #e0f2fe); color: #0284c7; }
+        .bg-green-light { background: linear-gradient(135deg, #f0fdf4, #dcfce7); color: #166534; }
+        .bg-amber-light { background: linear-gradient(135deg, #fffbeb, #fef3c7); color: #b45309; }
 
-        .bg-teal-light  { background: #e0f2f1; color: var(--primary-teal); }
-        .bg-blue-light  { background: #dbeafe; color: #1d4ed8; }
-        .bg-green-light { background: #dcfce7; color: #15803d; }
-        .bg-amber-light { background: #fef3c7; color: #b45309; }
-
+        /* ═══════════════════════════════════════════
+           SEARCH & FILTER PANEL
+        ═══════════════════════════════════════════ */
         .search-panel {
             background: #ffffff;
-            border-radius: 14px;
-            padding: 20px 24px;
-            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 24px;
             box-shadow: var(--card-shadow);
-            margin-bottom: 24px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 28px;
         }
 
-        .table-panel {
-            background: #ffffff;
-            border-radius: 14px;
-            padding: 20px;
-            border: 1px solid #e2e8f0;
-            box-shadow: var(--card-shadow);
+        .form-control {
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            padding: 10px 16px;
+            font-size: 14px;
+            color: #0f172a;
+            font-weight: 500;
+            background-color: #f8fafc;
+            transition: all 0.2s ease;
+        }
+        .form-control:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+            background-color: #ffffff;
         }
 
-        .custom-table {
-            vertical-align: middle;
+        /* Specific rules for filter form controls to align perfectly with button height */
+        .search-panel .form-control {
+            height: 42px !important;
+            padding: 8px 14px !important;
+            font-size: 13.5px !important;
+            border-color: #cbd5e1;
+        }
+        
+        .search-panel .btn {
+            height: 42px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-radius: 12px !important;
+            font-weight: 700;
             font-size: 13.5px;
         }
 
-        .custom-table thead th {
-            background: #f1f5f9;
-            color: #475569;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 11.5px;
-            letter-spacing: 0.5px;
-            padding: 12px 14px;
-            border-bottom: 2px solid #cbd5e1;
+        /* ═══════════════════════════════════════════
+           TABLES
+        ═══════════════════════════════════════════ */
+        .table-panel {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
         }
 
-        .custom-table tbody tr { transition: background 0.15s ease; }
-        .custom-table tbody tr:hover { background-color: #f8fafc; }
-        .custom-table td { padding: 12px 14px; }
+        .custom-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .custom-table thead th {
+            background: #0f172a;
+            color: #f8fafc;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 16px;
+            border: none;
+            border-bottom: 2px solid #1e293b;
+        }
+        .custom-table thead th:first-child { border-top-left-radius: 16px; border-bottom-left-radius: 16px; }
+        .custom-table thead th:last-child  { border-top-right-radius: 16px; border-bottom-right-radius: 16px; }
+        
+        .custom-table tbody td { 
+            padding: 16px; 
+            font-size: 14px; 
+            vertical-align: middle; 
+            border-bottom: 1px solid #f1f5f9; 
+            color: #334155;
+            font-weight: 500;
+        }
+        .custom-table tbody tr {
+            transition: all 0.2s ease;
+        }
+        .custom-table tbody tr:hover { 
+            background-color: #f8fafc; 
+            transform: scale(1.002);
+        }
 
         .badge-status {
             font-size: 11px;
-            font-weight: 600;
-            padding: 5px 10px;
+            font-weight: 700;
+            padding: 6px 12px;
             border-radius: 20px;
             display: inline-flex;
             align-items: center;
             gap: 4px;
         }
-
         .badge-generated { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
         .badge-pending   { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
 
-        .btn-teal             { background-color: var(--primary-teal); border-color: var(--primary-teal); color: white; }
-        .btn-teal:hover       { background-color: var(--dark-teal); color: white; }
+        .btn-teal {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+            color: white;
+            font-weight: 700;
+            border-radius: 12px;
+            padding: 11px 24px;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+            transition: all 0.2s ease;
+        }
+        .btn-teal:hover {
+            background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(16, 185, 129, 0.35);
+        }
+
+        /* Action buttons */
+        .btn-action-view {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white !important;
+            font-weight: 700;
+            border-radius: 10px !important;
+            padding: 8px 16px !important;
+            border: none;
+            font-size: 13px !important;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+            transition: all 0.2s ease;
+        }
+        .btn-action-view:hover {
+            background: linear-gradient(135deg, #3d75f5 0%, #2563eb 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+        }
+
+        .btn-action-edit {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+            color: white !important;
+            font-weight: 700;
+            border-radius: 10px !important;
+            padding: 8px 16px !important;
+            border: none;
+            font-size: 13px !important;
+            box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2);
+            transition: all 0.2s ease;
+        }
+        .btn-action-edit:hover {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(217, 119, 6, 0.35);
+        }
     </style>
 </head>
 
@@ -210,24 +460,31 @@ if ($result && $result->num_rows > 0) {
 
     <div class="container-fluid" style="max-width: 1400px;">
 
-        <!-- Header Banner -->
-        <div class="top-banner d-flex justify-content-between align-items-center flex-wrap gap-3">
-            <div>
-                <h1 class="d-flex align-items-center gap-2">
-                    <i class="fa-solid fa-list-check"></i> Knitting Program Directory
-                </h1>
-                <p class="mb-0 text-white-50 small mt-1">Manage production knitting programs, track quantities, and generate production Knit Cards</p>
-            </div>
-            <div class="d-flex gap-2">
-                <a href="initialPage.php" class="btn btn-light px-3 py-2 fw-semibold text-dark" style="border-radius:10px;">
-                    <i class="fa-solid fa-arrow-left me-1"></i> Dashboard
-                </a>
-                <a href="knitting_program_form.php" class="btn btn-teal px-3 py-2 fw-semibold" style="border-radius:10px;">
-                    <i class="fa-solid fa-plus me-1"></i> New Program
-                </a>
-                <a href="knit_card_list.php" class="btn btn-outline-light px-3 py-2 fw-semibold" style="border-radius:10px;">
-                    <i class="fa-solid fa-id-card me-1"></i> All Knit Cards
-                </a>
+        <!-- ═══ HEADER BANNER ═══ -->
+        <div class="top-banner">
+            <div class="banner-inner">
+                <!-- Left: icon + title -->
+                <div class="banner-title-group">
+                    <div class="banner-icon-wrap">
+                        <i class="fa-solid fa-list-check"></i>
+                    </div>
+                    <div>
+                        <h1>Knitting Program Directory</h1>
+                        <p class="banner-subtitle">Manage production knitting programs, track quantities, and generate production Knit Cards</p>
+                    </div>
+                </div>
+                <!-- Right: action buttons -->
+                <div class="d-flex gap-2 flex-wrap align-items-center">
+                    <a href="initialPage.php" class="btn nav-btn btn-glass">
+                        <i class="fa-solid fa-arrow-left"></i> Dashboard
+                    </a>
+                    <a href="knitting_program_form.php" class="btn nav-btn btn-blue-solid">
+                        <i class="fa-solid fa-plus"></i> New Program
+                    </a>
+                    <a href="knit_card_list.php" class="btn nav-btn btn-glass">
+                        <i class="fa-solid fa-id-card"></i> All Knit Cards
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -366,24 +623,23 @@ if ($result && $result->num_rows > 0) {
                                         <?php endif; ?>
                                     </td>
                                     <td class="text-center">
-                                        <div class="d-inline-flex gap-1">
+                                        <div class="d-inline-flex gap-2">
                                             <?php if ($p_card_gen === 1): ?>
                                                 <?php if (!empty($p_card_id)): ?>
                                                     <a href="knit_card_view.php?id=<?php echo intval($p_card_id); ?>"
-                                                       class="btn btn-sm btn-primary px-3 py-1"
-                                                       style="border-radius:6px; font-size:12.5px; background-color:#2563eb; border-color:#2563eb;"
+                                                       class="btn btn-sm btn-action-view"
                                                        title="View Generated Card Log">
                                                         <i class="fa-solid fa-eye me-1"></i> View Card
                                                     </a>
                                                 <?php else: ?>
-                                                    <a href="knit_card_list.php" class="btn btn-sm btn-secondary px-3 py-1" style="border-radius:6px; font-size:12.5px;">
+                                                    <a href="knit_card_list.php" class="btn btn-sm btn-action-view">
                                                         <i class="fa-solid fa-id-card me-1"></i> All Cards
                                                     </a>
                                                 <?php endif; ?>
                                             <?php else: ?>
                                                 <a href="knit_card_generate.php?program_id=<?php echo $p_id; ?>"
-                                                   class="btn btn-sm btn-teal px-3 py-1"
-                                                   style="border-radius:6px; font-size:12.5px;"
+                                                   class="btn btn-sm btn-teal"
+                                                   style="border-radius:10px; font-size:12.5px;"
                                                    onclick="return confirm('Generate a new Knit Card for this program?');"
                                                    title="Generate Knit Card">
                                                     <i class="fa-solid fa-file-circle-plus me-1"></i> Generate Card
@@ -391,8 +647,7 @@ if ($result && $result->num_rows > 0) {
                                             <?php endif; ?>
 
                                             <a href="knitting_program_form.php?id=<?php echo $p_id; ?>"
-                                               class="btn btn-sm btn-warning text-dark px-3 py-1 fw-semibold"
-                                               style="border-radius:6px; font-size:12.5px; background-color:#d97706; border-color:#d97706; color:white !important;"
+                                               class="btn btn-sm btn-action-edit"
                                                title="Edit Program">
                                                 <i class="fa-solid fa-pen-to-square me-1"></i> Edit
                                             </a>
