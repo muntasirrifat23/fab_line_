@@ -550,7 +550,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <div class="row g-4">
                     <div class="col-md-4">
-                        <label class="form-label">BOOKING No <span class="required-tag">*</span></label>
+                        <label class="form-label">Knit Programe Number <span class="required-tag">*</span></label>
                         <div class="d-flex flex-column gap-3">
                             <input type="text" name="BOOKING" id="bookingInput" class="form-control" placeholder="Enter BOOKING (e.g. 230043287)" value="<?php echo htmlspecialchars($booking); ?>" required>
                             <div>
