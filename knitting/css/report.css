@@ -1,0 +1,19 @@
+.center-table {
+  margin-left: auto;
+  margin-right: auto;
+  width: 60%; /* Adjust as needed */
+}
+.gap {
+  margin-right: 10px;
+}
+.table-container {
+  text-align: center;
+}
+
+table.table-bordered {
+  border: 2px solid black; /* Deep black border */
+}
+table.table-bordered th,
+table.table-bordered td {
+  border: 2px solid black; /* Deep black border for cells */
+}
