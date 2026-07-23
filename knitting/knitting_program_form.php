@@ -438,9 +438,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
             color: white;
             border: none;
-            border-top-right-radius: 12px !important;
-            border-bottom-right-radius: 12px !important;
-            padding: 0 24px;
+            border-radius: 12px !important;
+            padding: 10px 24px;
             font-weight: 700;
             font-size: 13.5px;
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -552,9 +551,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="row g-4">
                     <div class="col-md-4">
                         <label class="form-label">BOOKING No <span class="required-tag">*</span></label>
-                        <div class="input-group">
+                        <div class="d-flex gap-2">
                             <input type="text" name="BOOKING" id="bookingInput" class="form-control" placeholder="Enter BOOKING (e.g. 230043287)" value="<?php echo htmlspecialchars($booking); ?>" required>
-                            <button type="button" class="btn btn-lookup" id="fetchBookingBtn">
+                            <button type="button" class="btn btn-lookup flex-shrink-0" id="fetchBookingBtn">
                                 <i class="fa-solid fa-magnifying-glass me-1"></i> Lookup
                             </button>
                         </div>
