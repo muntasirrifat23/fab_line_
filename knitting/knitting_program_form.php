@@ -416,7 +416,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="d-flex align-items-center gap-3 mb-1">
                     <h1 class="d-flex align-items-center gap-2">
                         <i class="fa-solid <?php echo $is_edit ? 'fa-pen-to-square' : 'fa-plus-circle'; ?>"></i>
-                        <?php echo $is_edit ? 'Edit Program Entry #' . $edit_id : 'New Knitting Program Entry'; ?>
+                        <?php echo $is_edit ? 'Edit Program Entry #' . $edit_id : 'Program Entry'; ?>
                     </h1>
                 </div>
                 <p class="mb-0 text-white-50 small">Fill parameters, lookup booking information, and allocate machine production details</p>

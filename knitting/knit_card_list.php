@@ -449,19 +449,28 @@ if ($result && $result->num_rows > 0) {
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small fw-bold text-secondary mb-1">From Date</label>
-                    <input type="date" name="start_date" class="form-control form-control-sm" value="<?php echo htmlspecialchars($start_date); ?>">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light text-secondary"><i class="fa-regular fa-calendar"></i></span>
+                        <input type="date" name="start_date" class="form-control" value="<?php echo htmlspecialchars($start_date); ?>">
+                    </div>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small fw-bold text-secondary mb-1">To Date</label>
-                    <input type="date" name="end_date" class="form-control form-control-sm" value="<?php echo htmlspecialchars($end_date); ?>">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light text-secondary"><i class="fa-regular fa-calendar"></i></span>
+                        <input type="date" name="end_date" class="form-control" value="<?php echo htmlspecialchars($end_date); ?>">
+                    </div>
                 </div>
-                <div class="col-md-3 d-flex gap-2">
-                    <button type="submit" class="btn btn-sm btn-primary flex-grow-1 py-2 fw-semibold" style="border-radius:10px; background-color:var(--primary-teal); border-color:var(--primary-teal);">
-                        <i class="fa-solid fa-magnifying-glass me-1"></i> Apply Filter
-                    </button>
-                    <a href="knit_card_list.php" class="btn btn-sm btn-outline-secondary py-2 px-3 fw-semibold" style="border-radius:10px;">
-                        <i class="fa-solid fa-rotate-left me-1"></i> Reset
-                    </a>
+                <div class="col-md-3">
+                    <label class="form-label small mb-1">&nbsp;</label>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-sm btn-primary flex-grow-1 py-2 fw-semibold" style="border-radius:10px; background-color:#1a56db; border-color:#1a56db;">
+                            <i class="fa-solid fa-magnifying-glass me-1"></i> Apply Filter
+                        </button>
+                        <a href="knit_card_list.php" class="btn btn-sm btn-outline-secondary py-2 px-3 fw-semibold" style="border-radius:10px;">
+                            <i class="fa-solid fa-rotate-left me-1"></i> Reset
+                        </a>
+                    </div>
                 </div>
             </form>
         </div>
