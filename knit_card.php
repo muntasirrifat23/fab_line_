@@ -474,7 +474,7 @@ if ($result && $result->num_rows > 0) {
                     <a href="knitting/knitting_program_form.php" class="btn nav-btn btn-blue-solid">
                         <i class="fa-solid fa-plus"></i> New Program
                     </a>
-                    <a href="knitting/knit_card_list.php" class="btn nav-btn btn-glass">
+                    <a href="knit_card_list.php" class="btn nav-btn btn-glass">
                         <i class="fa-solid fa-id-card"></i> All Knit Cards
                     </a>
                 </div>
@@ -616,18 +616,18 @@ if ($result && $result->num_rows > 0) {
                                         <div class="d-inline-flex gap-2">
                                             <?php if ($p_card_gen === 1): ?>
                                                 <?php if (!empty($p_card_id)): ?>
-                                                    <a href="knitting/knit_card_view.php?id=<?php echo intval($p_card_id); ?>"
+                                                    <a href="knit_card_view.php?id=<?php echo intval($p_card_id); ?>"
                                                        class="btn btn-sm btn-action-view"
                                                        title="View Generated Card Log">
                                                         <i class="fa-solid fa-eye me-1"></i> View Card
                                                     </a>
                                                 <?php else: ?>
-                                                    <a href="knitting/knit_card_list.php" class="btn btn-sm btn-action-view">
+                                                    <a href="knit_card_list.php" class="btn btn-sm btn-action-view">
                                                         <i class="fa-solid fa-id-card me-1"></i> All Cards
                                                     </a>
                                                 <?php endif; ?>
                                             <?php else: ?>
-                                                <a href="knitting/knit_card_generate.php?program_id=<?php echo $p_id; ?>"
+                                                <a href="knit_card_generate.php?program_id=<?php echo $p_id; ?>"
                                                    class="btn btn-sm btn-teal"
                                                    style="border-radius:10px; font-size:12.5px;"
                                                    onclick="return confirm('Generate a new Knit Card for this program?');"
