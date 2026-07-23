@@ -551,12 +551,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="row g-4">
                     <div class="col-md-4">
                         <label class="form-label">BOOKING No <span class="required-tag">*</span></label>
-                        <div class="d-flex gap-2">
-                            <input type="text" name="BOOKING" id="bookingInput" class="form-control" placeholder="Enter BOOKING (e.g. 230043287)" value="<?php echo htmlspecialchars($booking); ?>" required>
-                            <button type="button" class="btn btn-lookup flex-shrink-0" id="fetchBookingBtn">
-                                <i class="fa-solid fa-magnifying-glass me-1"></i> Lookup
-                            </button>
-                        </div>
+                        <input type="text" name="BOOKING" id="bookingInput" class="form-control" placeholder="Enter BOOKING (e.g. 230043287)" value="<?php echo htmlspecialchars($booking); ?>" required>
+                        <button type="button" class="btn btn-lookup mt-3" id="fetchBookingBtn">
+                            <i class="fa-solid fa-magnifying-glass me-1"></i> Lookup
+                        </button>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Machine No (MCNO) <span class="required-tag">*</span></label>
