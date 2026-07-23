@@ -541,7 +541,7 @@ mysqli_close($db);
             $("#uploadCSV").hide();
             $("#user_management").hide();
 
-            if (urTYP === "admin" || urTYP === "abuhena" || urTYP === "test" || urTYP === "ppq30" || urTYP === "ppq34" || urTYP === "ppq70") {
+            if (urTYP === "admin" ||urTYP === "siam" || urTYP === "abuhena" || urTYP === "test" || urTYP === "ppq30" || urTYP === "ppq34" || urTYP === "ppq70") {
                 // No direct action   just placeholder
             }
 
@@ -581,7 +581,7 @@ mysqli_close($db);
                 $("#sidLINE").hide();
             }
 
-            if (urTYP === "ppq30" || urTYP === "ppq34" || urTYP === "ppq70" || urTYP === "ppq57" || urTYP === "ppl04" || urTYP === "admin" || urTYP === "abuhena" || urTYP === "test") {
+            if (urTYP === "ppq30" || urTYP === "ppq34" || urTYP === "ppq70" || urTYP === "ppq57" || urTYP === "ppl04" || urTYP === "admin" || urTYP === "siam" || urTYP === "abuhena" || urTYP === "test") {
                 $("#idExcel, #uploadCSV, #user_management, #usersBtn, #updateUserBtn, #report").show();
             } else {
                 $("#usersBtn, #updateUserBtn").hide();
