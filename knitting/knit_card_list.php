@@ -296,18 +296,7 @@ if ($result && $result->num_rows > 0) {
             box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
         }
 
-        /* Specific rules for filter form controls to align perfectly with button height */
-        .filter-panel .form-control, .filter-panel .form-select, .filter-panel .input-group-text {
-            height: 38px !important;
-            padding: 6px 12px !important;
-            font-size: 13.5px !important;
-        }
-        .filter-panel .btn {
-            height: 38px !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-        }
+
 
         /* ═══════════════════════════════════════════
            TABLE
@@ -446,41 +435,40 @@ if ($result && $result->num_rows > 0) {
         <div class="filter-panel">
             <h6 class="fw-bold mb-3 text-dark d-flex align-items-center gap-2"><i class="fa-solid fa-filter" style="color:var(--primary-teal);"></i> Filter Knit Cards</h6>
             <form method="GET" action="knit_card_list.php" class="row g-3 align-items-end">
-                <div class="col-md-3">
+                <div class="col-12 col-md-6 col-lg-3">
                     <label class="form-label small fw-bold text-secondary mb-1">Buyer Name</label>
                     <div class="input-group input-group-sm">
                         <span class="input-group-text bg-light text-secondary"><i class="fa-solid fa-user"></i></span>
                         <input type="text" name="buyer" class="form-control" placeholder="Search Buyer..." value="<?php echo htmlspecialchars($buyer_filter); ?>">
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-12 col-md-6 col-lg-2">
                     <label class="form-label small fw-bold text-secondary mb-1">Machine (M/C No)</label>
                     <div class="input-group input-group-sm">
                         <span class="input-group-text bg-light text-secondary"><i class="fa-solid fa-hard-drive"></i></span>
                         <input type="text" name="mc_no" class="form-control" placeholder="e.g. 87" value="<?php echo htmlspecialchars($mc_no_filter); ?>">
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-12 col-md-6 col-lg-2">
                     <label class="form-label small fw-bold text-secondary mb-1">From Date</label>
                     <div class="input-group input-group-sm">
                         <span class="input-group-text bg-light text-secondary"><i class="fa-regular fa-calendar"></i></span>
                         <input type="date" name="start_date" class="form-control" value="<?php echo htmlspecialchars($start_date); ?>">
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-12 col-md-6 col-lg-2">
                     <label class="form-label small fw-bold text-secondary mb-1">To Date</label>
                     <div class="input-group input-group-sm">
                         <span class="input-group-text bg-light text-secondary"><i class="fa-regular fa-calendar"></i></span>
                         <input type="date" name="end_date" class="form-control" value="<?php echo htmlspecialchars($end_date); ?>">
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label small mb-1">&nbsp;</label>
+                <div class="col-12 col-md-6 col-lg-3">
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-sm btn-primary flex-grow-1 py-2 fw-semibold" style="border-radius:10px; background-color:#1a56db; border-color:#1a56db;">
+                        <button type="submit" class="btn btn-sm btn-primary flex-grow-1 fw-semibold" style="border-radius:10px; background-color:#1a56db; border-color:#1a56db;">
                             <i class="fa-solid fa-magnifying-glass me-1"></i> Apply Filter
                         </button>
-                        <a href="knit_card_list.php" class="btn btn-sm btn-outline-secondary py-2 px-3 fw-semibold" style="border-radius:10px;">
+                        <a href="knit_card_list.php" class="btn btn-sm btn-outline-secondary px-3 fw-semibold" style="border-radius:10px; display: inline-flex; align-items: center; justify-content: center;">
                             <i class="fa-solid fa-rotate-left me-1"></i> Reset
                         </a>
                     </div>
