@@ -566,7 +566,7 @@ mysqli_close($db);
                 $("#sidLINE").hide();
             }
 
-            if (urTYP === "ppq30" || urTYP === "ppq34" || urTYP === "ppq70" || urTYP === "ppq57" || urTYP === "ppl04" || urTYP === "admin" || urTYP === "abuhena" || urTYP === "test") {
+            if (urTYP === "ppq30" || urTYP === "ppq34" || urTYP === "ppq70" || urTYP === "ppq57" || urTYP === "ppl04" || urTYP === "admin" || urTYP === "abuhena" || urTYP === "test" || urTYP === "mukul" || urTYP === "noman" || urTYP === "abcd" || urTYP === "hossain") {
                 $("#idExcel, #uploadCSV, #user_management, #usersBtn, #updateUserBtn").show();
             } else {
                 $("#usersBtn, #updateUserBtn").hide();
