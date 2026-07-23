@@ -296,6 +296,19 @@ if ($result && $result->num_rows > 0) {
             box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
         }
 
+        /* Specific rules for filter form controls to align perfectly with button height */
+        .filter-panel .form-control, .filter-panel .form-select, .filter-panel .input-group-text {
+            height: 38px !important;
+            padding: 6px 12px !important;
+            font-size: 13.5px !important;
+        }
+        .filter-panel .btn {
+            height: 38px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
         /* ═══════════════════════════════════════════
            TABLE
         ═══════════════════════════════════════════ */
