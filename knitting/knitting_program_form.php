@@ -434,11 +434,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin-left: 2px;
         }
 
-        /* ═══════════════════════════════════════════
-           BUTTONS & LOOKUPS
-        ═══════════════════════════════════════════ */
         .btn-lookup {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
             color: white;
             border: none;
             border-top-right-radius: 12px !important;
@@ -446,13 +443,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 0 24px;
             font-weight: 700;
             font-size: 13.5px;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
         }
         .btn-lookup:hover {
-            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
             color: white;
-            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+            transform: scale(1.02);
         }
 
         .btn-teal {
