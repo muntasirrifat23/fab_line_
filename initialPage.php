@@ -292,11 +292,21 @@ mysqli_close($db);
 
         .w3-black {
             background: linear-gradient(135deg, #374151, #111827);
-            color: white;
+            color: #fff;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
         }
 
         .w3-black:hover {
-            background: linear-gradient(135deg, #1f2937, #111827);
+            background: #ffffff !important;
+            color: #000000 !important;
+            border: 2px solid #000000 !important;
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, .15);
+        }
+
+        .w3-black:hover i {
+            color: #000000 !important;
         }
 
         .w3-modal .w3-modal-content {
@@ -399,7 +409,7 @@ mysqli_close($db);
                     </div>
                 </div> -->
 
-              
+
 
                 <div class="btn-grid">
                     <button class="w3-button w3-teal" name="knitting_program" id="knitting_program">
