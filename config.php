@@ -70,5 +70,11 @@ if (!$db) {
 // Set charset
 mysqli_set_charset($db, 'utf8mb4');
 
+if (!defined('APP_BASE_URL')) {
+    $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
+    $scriptDir = isset($_SERVER['SCRIPT_NAME']) ? rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\') : '/Knitting Project';
+    define('APP_BASE_URL', "http://" . $host . $scriptDir);
+}
+
 // Return database connection for use in other files
 ?>
