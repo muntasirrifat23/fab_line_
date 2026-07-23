@@ -434,7 +434,7 @@ if ($result && $result->num_rows > 0) {
         <!-- Filter Panel -->
         <div class="filter-panel">
             <h6 class="fw-bold mb-3 text-dark d-flex align-items-center gap-2"><i class="fa-solid fa-filter" style="color:var(--primary-teal);"></i> Filter Knit Cards</h6>
-            <form method="GET" action="knit_card_list.php" class="row g-3 align-items-end">
+            <form method="GET" action="knit_card_list.php" class="row g-3">
                 <div class="col-12 col-md-6 col-lg-3">
                     <label class="form-label small fw-bold text-secondary mb-1">Buyer Name</label>
                     <div class="input-group input-group-sm">
@@ -463,14 +463,16 @@ if ($result && $result->num_rows > 0) {
                         <input type="date" name="end_date" class="form-control" value="<?php echo htmlspecialchars($end_date); ?>">
                     </div>
                 </div>
-                <div class="col-12 col-md-6 col-lg-3 d-flex align-items-end">
-                    <div class="d-flex gap-2 w-100">
-                        <button type="submit" class="btn btn-sm btn-primary flex-grow-1 fw-semibold" style="border-radius:10px; background-color:#1a56db; border-color:#1a56db;">
-                            <i class="fa-solid fa-magnifying-glass me-1"></i> Apply Filter
-                        </button>
-                        <a href="knit_card_list.php" class="btn btn-sm btn-outline-secondary px-3 fw-semibold" style="border-radius:10px; display: inline-flex; align-items: center; justify-content: center;">
-                            <i class="fa-solid fa-rotate-left me-1"></i> Reset
-                        </a>
+                <div class="col-12 col-md-6 col-lg-3">
+                    <div class="d-flex align-items-end h-100 mt-4">
+                        <div class="d-flex gap-2 w-100">
+                            <button type="submit" class="btn btn-sm btn-primary flex-grow-1 fw-semibold" style="border-radius:10px; background-color:#1a56db; border-color:#1a56db;">
+                                <i class="fa-solid fa-magnifying-glass me-1"></i> Apply Filter
+                            </button>
+                            <a href="knit_card_list.php" class="btn btn-sm btn-outline-secondary px-3 fw-semibold" style="border-radius:10px; display: inline-flex; align-items: center; justify-content: center;">
+                                <i class="fa-solid fa-rotate-left me-1"></i> Reset
+                            </a>
+                        </div>
                     </div>
                 </div>
             </form>
