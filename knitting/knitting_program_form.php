@@ -191,15 +191,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/mycss.css">
 
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-teal: #00796b;
-            --dark-teal: #004d40;
-            --light-teal: #e0f2f1;
+            --primary-teal: #0f172a;
+            --dark-teal: #0f172a;
             --accent-blue: #2563eb;
             --surface-bg: #f8fafc;
-            --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
-            --focus-ring: 0 0 0 3px rgba(0, 121, 107, 0.15);
+            --card-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+            --focus-ring: 0 0 0 4px rgba(37, 99, 235, 0.12);
+            --header-from:  #090d22;
+            --header-mid:   #0f172a;
+            --header-to:    #1e3a8a;
+            --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
         }
 
         i, i.fa-solid, i.fas, i.far, i.fab, i.fa-regular {
@@ -215,51 +219,133 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         body {
             padding: 24px;
             background-color: var(--surface-bg);
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-family: var(--font-main);
             color: #334155;
+            background-image: radial-gradient(circle at 10% 20%, rgba(30, 58, 138, 0.015) 0%, transparent 60%),
+                              radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.015) 0%, transparent 60%);
         }
 
-        /* Top Header Banner */
+        /* ═══════════════════════════════════════════
+           HEADER BANNER
+        ═══════════════════════════════════════════ */
         .top-banner {
-            background: linear-gradient(135deg, #004d40 0%, #00796b 50%, #00897b 100%);
+            position: relative;
+            background: linear-gradient(135deg, var(--header-from) 0%, var(--header-mid) 50%, var(--header-to) 100%);
             color: white;
-            padding: 26px 34px;
+            padding: 36px 40px;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
+            margin-bottom: 30px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Decorative background blobs */
+        .top-banner::before {
+            content: '';
+            position: absolute;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.22) 0%, transparent 70%);
+            top: -120px; right: -80px;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .top-banner::after {
+            content: '';
+            position: absolute;
+            width: 250px; height: 250px;
+            background: radial-gradient(circle, rgba(147, 197, 253, 0.15) 0%, transparent 70%);
+            bottom: -20px; left: 80px;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .banner-inner {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .banner-title-group { display: flex; align-items: center; gap: 20px; }
+
+        /* Icon badge */
+        .banner-icon-wrap {
+            width: 62px; height: 62px;
             border-radius: 18px;
-            box-shadow: 0 12px 28px rgba(0, 121, 107, 0.22);
-            margin-bottom: 28px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px;
+            flex-shrink: 0;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            color: #60a5fa;
         }
 
         .top-banner h1 {
-            font-weight: 700;
-            font-size: 1.85rem;
+            font-weight: 800;
+            font-size: 2rem;
+            margin: 0 0 6px 0;
+            letter-spacing: -0.5px;
+            line-height: 1.15;
+            background: linear-gradient(135deg, #ffffff 60%, #93c5fd 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .banner-subtitle {
+            font-size: 14px;
+            color: #93c5fd;
             margin: 0;
-            letter-spacing: -0.3px;
+            font-weight: 500;
+            letter-spacing: 0.1px;
+            opacity: 0.9;
         }
 
-        .badge-mode {
-            background: rgba(255, 255, 255, 0.18);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+        /* Nav buttons */
+        .nav-btn {
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 13.5px;
+            padding: 10px 20px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-glass {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #f8fafc;
+            backdrop-filter: blur(10px);
+        }
+        .btn-glass:hover {
+            background: rgba(255, 255, 255, 0.15);
             color: #ffffff;
-            font-size: 11.5px;
-            font-weight: 600;
-            padding: 5px 14px;
-            border-radius: 20px;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
+            border-color: rgba(255, 255, 255, 0.3);
         }
 
-        /* Section Cards */
+        /* ═══════════════════════════════════════════
+           FORM CARDS & FIELDS
+        ═══════════════════════════════════════════ */
         .form-card {
             background: #ffffff;
-            border-radius: 16px;
-            padding: 28px 32px;
+            border-radius: 24px;
+            padding: 30px;
             box-shadow: var(--card-shadow);
             border: 1px solid #e2e8f0;
-            margin-bottom: 24px;
+            margin-bottom: 30px;
             transition: border-color 0.2s ease;
         }
-
         .form-card:hover {
             border-color: #cbd5e1;
         }
@@ -267,77 +353,79 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .section-header {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 16px;
             padding-bottom: 16px;
             border-bottom: 2px solid #f1f5f9;
             margin-bottom: 24px;
         }
 
         .section-icon {
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
-            font-weight: 600;
+            font-size: 1.2rem;
+            font-weight: 700;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
         }
 
-        .icon-teal { background: #e0f2f1; color: var(--primary-teal); }
-        .icon-blue { background: #dbeafe; color: #1d4ed8; }
-        .icon-purple { background: #f3e8ff; color: #7e22ce; }
-        .icon-amber { background: #fef3c7; color: #b45309; }
+        .icon-teal   { background: linear-gradient(135deg, #eff6ff, #dbeafe); color: #1d4ed8; }
+        .icon-blue   { background: linear-gradient(135deg, #f0f9ff, #e0f2fe); color: #0284c7; }
+        .icon-purple { background: linear-gradient(135deg, #faf5ff, #f3e8ff); color: #7e22ce; }
+        .icon-amber  { background: linear-gradient(135deg, #fffbeb, #fef3c7); color: #b45309; }
 
         .section-title {
-            font-size: 15px;
-            font-weight: 700;
+            font-size: 16px;
+            font-weight: 800;
             color: #0f172a;
-            margin: 0;
-            letter-spacing: -0.2px;
+            margin: 0 0 2px 0;
+            letter-spacing: -0.3px;
         }
 
         .section-subtitle {
-            font-size: 12.5px;
+            font-size: 13px;
             color: #64748b;
             margin: 0;
         }
 
-        /* Inputs & Labels */
         .form-card .form-label {
             display: block !important;
             width: 100% !important;
-            margin-bottom: 7px !important;
+            margin-bottom: 8px !important;
             font-size: 13px;
-            font-weight: 600;
-            color: #334155;
+            font-weight: 700;
+            color: #475569;
         }
 
         .form-card .form-control, 
         .form-card .form-select {
             display: block !important;
             width: 100% !important;
-            border-radius: 10px;
+            border-radius: 12px;
             border: 1px solid #cbd5e1;
-            padding: 10px 14px;
+            padding: 10px 16px;
             font-size: 14px;
             color: #0f172a;
-            background-color: #ffffff;
-            transition: all 0.15s ease-in-out;
+            font-weight: 500;
+            background-color: #f8fafc;
+            transition: all 0.2s ease;
         }
 
         .form-card .form-control:focus, 
         .form-card .form-select:focus {
-            border-color: var(--primary-teal);
+            border-color: #2563eb;
             box-shadow: var(--focus-ring);
+            background-color: #ffffff;
             outline: none;
         }
 
         .form-card .form-control[readonly] {
-            background-color: #f8fafc;
-            border-color: #e2e8f0;
-            color: #64748b;
-            font-weight: 600;
+            background-color: #e2e8f0;
+            border-color: #cbd5e1;
+            color: #475569;
+            font-weight: 700;
         }
 
         .required-tag {
@@ -346,60 +434,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin-left: 2px;
         }
 
-        /* Custom Input Groups */
+        /* ═══════════════════════════════════════════
+           BUTTONS & LOOKUPS
+        ═══════════════════════════════════════════ */
         .btn-lookup {
-            background: linear-gradient(135deg, #00796b 0%, #004d40 100%);
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
             color: white;
             border: none;
-            border-top-right-radius: 10px !important;
-            border-bottom-right-radius: 10px !important;
-            padding: 0 20px;
-            font-weight: 600;
+            border-top-right-radius: 12px !important;
+            border-bottom-right-radius: 12px !important;
+            padding: 0 24px;
+            font-weight: 700;
             font-size: 13.5px;
-            transition: opacity 0.2s ease;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
         }
-
         .btn-lookup:hover {
-            opacity: 0.92;
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
             color: white;
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
         }
 
         .btn-teal {
-            background: linear-gradient(135deg, #00796b 0%, #004d40 100%);
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
             border: none;
             color: white;
-            font-weight: 600;
-            border-radius: 10px;
+            font-weight: 700;
+            border-radius: 12px;
             padding: 11px 28px;
-            box-shadow: 0 4px 14px rgba(0, 121, 107, 0.25);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
             transition: all 0.2s ease;
         }
-
         .btn-teal:hover {
+            background: linear-gradient(135deg, #3d75f5 0%, #2563eb 100%);
             transform: translateY(-1px);
-            box-shadow: 0 6px 18px rgba(0, 121, 107, 0.35);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
             color: white;
         }
 
         .btn-cancel {
-            border-radius: 10px;
-            padding: 11px 24px;
-            font-weight: 600;
+            border-radius: 12px;
+            padding: 11px 28px;
+            font-weight: 700;
+            font-size: 14.5px;
             border: 1px solid #cbd5e1;
             color: #475569;
             background: #ffffff;
             transition: all 0.15s ease;
         }
-
         .btn-cancel:hover {
             background: #f1f5f9;
             color: #1e293b;
+            border-color: #cbd5e1;
         }
 
         .actions-panel {
             background: #ffffff;
-            border-radius: 16px;
-            padding: 20px 32px;
+            border-radius: 24px;
+            padding: 24px 30px;
             border: 1px solid #e2e8f0;
             box-shadow: var(--card-shadow);
         }
@@ -410,21 +502,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="container-fluid" style="max-width: 1350px;">
 
-        <!-- Header Banner -->
-        <div class="top-banner d-flex justify-content-between align-items-center flex-wrap gap-3">
-            <div>
-                <div class="d-flex align-items-center gap-3 mb-1">
-                    <h1 class="d-flex align-items-center gap-2">
+        <!-- ═══ HEADER BANNER ═══ -->
+        <div class="top-banner">
+            <div class="banner-inner">
+                <!-- Left: icon + title -->
+                <div class="banner-title-group">
+                    <div class="banner-icon-wrap">
                         <i class="fa-solid <?php echo $is_edit ? 'fa-pen-to-square' : 'fa-plus-circle'; ?>"></i>
-                        <?php echo $is_edit ? 'Edit Program Entry #' . $edit_id : 'Program Entry'; ?>
-                    </h1>
+                    </div>
+                    <div>
+                        <h1><?php echo $is_edit ? 'Edit Program Entry #' . $edit_id : 'Program Entry'; ?></h1>
+                        <p class="banner-subtitle">Fill parameters, lookup booking information, and allocate machine production details</p>
+                    </div>
                 </div>
-                <p class="mb-0 text-white-50 small">Fill parameters, lookup booking information, and allocate machine production details</p>
-            </div>
-            <div>
-                <a href="knitting_program_list.php" class="btn btn-light px-3 py-2 fw-semibold text-dark" style="border-radius:10px;">
-                    <i class="fa-solid fa-arrow-left me-1"></i> Back to Program List
-                </a>
+                <!-- Right: action buttons -->
+                <div>
+                    <a href="knitting_program_list.php" class="btn nav-btn btn-glass">
+                        <i class="fa-solid fa-arrow-left"></i> Back to Program List
+                    </a>
+                </div>
             </div>
         </div>
 
