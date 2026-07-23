@@ -32,6 +32,11 @@ if (isset($_POST['knitting_program'])) {
     header('location:knitting_program.php');
     exit();
 }
+if (isset($_POST['knitting_production'])) {
+    $_SESSION['lineNo'] = $_POST['option'];
+    header('location:knitting_production.php');
+    exit();
+}
 if (isset($_POST['knit_card_creation'])) {
     $_SESSION['lineNo'] = $_POST['option'];
     header('location:knit_card_creation.php');
@@ -434,6 +439,10 @@ mysqli_close($db);
                         <i class="fas fa-industry"></i> KNIT CARD
                     </button>
 
+                    <button class="w3-button w3-teal" name="knitting_production" id="knitting_production">
+                        <i class="fas fa-industry"></i> KNITTING PRODUCTION
+                    </button>
+
                     <button class="w3-button w3-teal" name="knitting_inspection" id="knitting_inspection">
                         <i class="fas fa-clipboard-check"></i> KNITTING INSPECTION
                     </button>
@@ -559,7 +568,7 @@ mysqli_close($db);
             $("#uploadCSV").hide();
             $("#user_management").hide();
 
-            if (urTYP === "admin" ||urTYP === "siam" || urTYP === "abuhena" || urTYP === "test" || urTYP === "ppq30" || urTYP === "ppq34" || urTYP === "ppq70") {
+            if (urTYP === "admin" || urTYP === "siam" || urTYP === "abuhena" || urTYP === "test" || urTYP === "ppq30" || urTYP === "ppq34" || urTYP === "ppq70") {
                 // No direct action   just placeholder
             }
 
