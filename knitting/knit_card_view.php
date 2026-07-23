@@ -193,12 +193,18 @@ $completion_pct = ($target_qty > 0) ? min(100, round(($total_cum_produced / $tar
     <link rel="stylesheet" href="css/mycss.css">
     <script src="js/qrcode.min.js"></script>
 
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-teal: #00796b;
-            --dark-teal: #004d40;
+            --primary-teal: #0f172a;
+            --dark-teal: #0f172a;
+            --accent-green: #10b981;
             --surface-bg: #f8fafc;
-            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            --card-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+            --header-from:  #090d22;
+            --header-mid:   #0f172a;
+            --header-to:    #1e3a8a;
+            --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
         }
 
         i, i.fa-solid, i.fas, i.far, i.fab, i.fa-regular {
@@ -206,60 +212,326 @@ $completion_pct = ($target_qty > 0) ? min(100, round(($total_cum_produced / $tar
             padding: 0 !important; margin: 0 !important; display: inline-block !important; transform: none !important;
         }
 
-        body { padding: 24px; background-color: var(--surface-bg); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #334155; }
-
-        .top-banner {
-            background: linear-gradient(135deg, #004d40 0%, #00796b 50%, #00897b 100%);
-            color: white; padding: 24px 30px; border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0, 121, 107, 0.2); margin-bottom: 28px;
+        body {
+            padding: 24px;
+            background-color: var(--surface-bg);
+            font-family: var(--font-main);
+            color: #334155;
+            background-image: radial-gradient(circle at 10% 20%, rgba(30, 58, 138, 0.015) 0%, transparent 60%),
+                              radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.015) 0%, transparent 60%);
         }
-        .top-banner h1 { font-weight: 700; font-size: 1.75rem; margin: 0; }
 
-        .nav-btn { border-radius: 10px; font-weight: 600; padding: 9px 18px; transition: all 0.2s ease; }
-        .nav-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.15); }
+        /* ═══════════════════════════════════════════
+           HEADER BANNER
+        ═══════════════════════════════════════════ */
+        .top-banner {
+            position: relative;
+            background: linear-gradient(135deg, var(--header-from) 0%, var(--header-mid) 50%, var(--header-to) 100%);
+            color: white;
+            padding: 36px 40px;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
+            margin-bottom: 30px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
 
+        /* Decorative background blobs */
+        .top-banner::before {
+            content: '';
+            position: absolute;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.22) 0%, transparent 70%);
+            top: -120px; right: -80px;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .top-banner::after {
+            content: '';
+            position: absolute;
+            width: 250px; height: 250px;
+            background: radial-gradient(circle, rgba(147, 197, 253, 0.15) 0%, transparent 70%);
+            bottom: -20px; left: 80px;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .top-banner h1 {
+            font-weight: 800;
+            font-size: 2rem;
+            margin: 0 0 6px 0;
+            letter-spacing: -0.5px;
+            line-height: 1.15;
+            background: linear-gradient(135deg, #ffffff 60%, #93c5fd 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Nav buttons */
+        .nav-btn {
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 13.5px;
+            padding: 10px 20px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-glass {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #f8fafc;
+            backdrop-filter: blur(10px);
+        }
+        .btn-glass:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-blue-solid {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            color: white;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+        }
+        .btn-blue-solid:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            color: white;
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+        }
+
+        /* ═══════════════════════════════════════════
+           CONTENT PANELS
+        ═══════════════════════════════════════════ */
         .content-panel {
-            background: #fff; border-radius: 16px; padding: 32px 36px;
-            box-shadow: var(--card-shadow); border: 1px solid #e2e8f0; margin-bottom: 28px;
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid #e2e8f0;
+            margin-bottom: 30px;
         }
 
         .form-section-title {
-            font-size: 14.5px; font-weight: 700; color: var(--primary-teal); text-transform: uppercase;
-            border-bottom: 2px solid #e0f2f1; padding-bottom: 10px; margin-bottom: 24px;
-            display: flex; align-items: center; gap: 10px; letter-spacing: 0.5px;
+            font-size: 15px;
+            font-weight: 800;
+            color: #0f172a;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 12px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .form-label { display: block !important; width: 100% !important; margin-bottom: 8px !important; font-size: 13px; font-weight: 600; color: #1e293b; }
-        .form-control, .form-select { display: block !important; width: 100% !important; border-radius: 10px; border: 1px solid #cbd5e1; padding: 10px 14px; font-size: 14px; }
-        .form-control:focus, .form-select:focus { border-color: var(--primary-teal); box-shadow: 0 0 0 3px rgba(0,121,107,.15); }
+        .form-label {
+            display: block !important;
+            width: 100% !important;
+            margin-bottom: 8px !important;
+            font-size: 13px;
+            font-weight: 700;
+            color: #475569;
+        }
 
-        .content-panel .row > [class*="col-"] { margin-bottom: 20px !important; }
+        .form-control, .form-select {
+            display: block !important;
+            width: 100% !important;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #0f172a;
+            background-color: #f8fafc;
+            transition: all 0.2s ease;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+            background-color: #ffffff;
+            outline: none;
+        }
 
-        .table-responsive-wrapper { width: 100%; overflow-x: auto; border-radius: 12px; border: 1px solid #e2e8f0; }
-        .custom-table { width: 100%; margin-bottom: 0; border-collapse: separate; border-spacing: 0; }
-        .custom-table thead th { background: #1e293b; color: #f8fafc; font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 13px 15px; vertical-align: middle; border: none; }
-        .custom-table tbody td { padding: 13px 15px; font-size: 13.5px; vertical-align: middle; border-bottom: 1px solid #f1f5f9; }
-        .custom-table tbody tr:hover { background-color: #f8fafc; }
+        .content-panel .row > [class*="col-"] {
+            margin-bottom: 20px !important;
+        }
 
-        .btn-teal { background-color: var(--primary-teal); border-color: var(--primary-teal); color: white; font-weight: 600; border-radius: 10px; padding: 10px 22px; }
-        .btn-teal:hover { background-color: var(--dark-teal); color: white; }
+        /* ═══════════════════════════════════════════
+           STAT BOXES
+        ═══════════════════════════════════════════ */
+        .stat-box {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 18px 22px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.01), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
+            transition: all 0.25s ease;
+        }
+        .stat-box:hover {
+            transform: translateY(-2px);
+            border-color: #cbd5e1;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.02);
+        }
 
-        .stat-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 18px; }
+        /* ═══════════════════════════════════════════
+           TABLES
+        ═══════════════════════════════════════════ */
+        .table-responsive-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+        }
+        .custom-table {
+            width: 100%;
+            margin-bottom: 0;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .custom-table thead th {
+            background: #0f172a;
+            color: #f8fafc;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 16px;
+            vertical-align: middle;
+            border: none;
+            border-bottom: 2px solid #1e293b;
+        }
+        .custom-table tbody td {
+            padding: 16px;
+            font-size: 14px;
+            vertical-align: middle;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+            font-weight: 500;
+        }
+        .custom-table tbody tr {
+            transition: background-color 0.2s ease;
+        }
+        .custom-table tbody tr:hover {
+            background-color: #f8fafc;
+        }
 
-        /* QR Modal */
-        .custom-modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(15,23,42,.65); backdrop-filter: blur(4px); z-index: 99999; display: flex; align-items: center; justify-content: center; animation: fadeInModal .2s ease-out; }
+        /* ═══════════════════════════════════════════
+           BUTTONS
+        ═══════════════════════════════════════════ */
+        .btn-teal {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            border: none;
+            color: white;
+            font-weight: 700;
+            border-radius: 12px;
+            padding: 11px 24px;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+            transition: all 0.2s ease;
+        }
+        .btn-teal:hover {
+            background: linear-gradient(135deg, #3d75f5 0%, #2563eb 100%);
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+        }
+
+        /* ═══════════════════════════════════════════
+           MODALS
+        ═══════════════════════════════════════════ */
+        .custom-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeInModal .25s ease-out;
+        }
         @keyframes fadeInModal { from { opacity:0; } to { opacity:1; } }
-        .custom-modal-container { background: #fff; border-radius: 16px; width: 90%; max-width: 440px; padding: 24px 28px; box-shadow: 0 20px 40px rgba(0,0,0,.25); text-align: center; position: relative; }
-        .custom-modal-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0; margin-bottom: 20px; }
-        .custom-modal-title { font-size: 17px; font-weight: 700; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 8px; }
-        .custom-modal-close { background: none; border: none; font-size: 24px; font-weight: 700; color: #64748b; cursor: pointer; line-height: 1; padding: 0 4px; }
+        
+        .custom-modal-container {
+            background: #ffffff;
+            border-radius: 24px;
+            width: 90%;
+            max-width: 460px;
+            padding: 30px;
+            box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+            text-align: center;
+            position: relative;
+            border: 1px solid #e2e8f0;
+        }
+        .custom-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #f1f5f9;
+            margin-bottom: 24px;
+        }
+        .custom-modal-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .custom-modal-close {
+            background: none;
+            border: none;
+            font-size: 26px;
+            font-weight: 700;
+            color: #94a3b8;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0 4px;
+            transition: color 0.2s ease;
+        }
         .custom-modal-close:hover { color: #0f172a; }
         .custom-modal-body { padding: 10px 0; }
-        .qr-img-wrapper { background: #f8fafc; padding: 16px; border-radius: 14px; display: inline-block; border: 1px solid #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,.05); margin-bottom: 14px; }
-        .qr-caption { font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 4px; }
-        .qr-url-text { font-size: 11.5px; font-family: monospace; color: #64748b; margin-bottom: 0; word-break: break-all; }
-        .custom-modal-footer { padding-top: 16px; border-top: 1px solid #e2e8f0; margin-top: 20px; display: flex; justify-content: center; }
-        .custom-modal-btn { border-radius: 10px; padding: 8px 24px; font-weight: 600; }
+        
+        .qr-img-wrapper {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 20px;
+            display: inline-block;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 20px rgba(0,0,0,.03);
+            margin-bottom: 16px;
+        }
+        .qr-caption { font-size: 14.5px; font-weight: 700; color: #0f172a; margin-bottom: 6px; }
+        .qr-url-text { font-size: 12px; font-family: monospace; color: #64748b; margin-bottom: 0; word-break: break-all; }
+        
+        .custom-modal-footer {
+            padding-top: 16px;
+            border-top: 1px solid #f1f5f9;
+            margin-top: 24px;
+            display: flex;
+            justify-content: center;
+        }
+        .custom-modal-btn {
+            border-radius: 12px;
+            padding: 10px 28px;
+            font-weight: 700;
+            font-size: 14.5px;
+        }
     </style>
 </head>
 
@@ -267,23 +539,38 @@ $completion_pct = ($target_qty > 0) ? min(100, round(($total_cum_produced / $tar
 
     <div class="container-fluid" style="max-width: 1350px;">
 
-        <!-- Header Banner -->
-        <div class="top-banner d-flex justify-content-between align-items-center flex-wrap gap-3">
-            <div>
-                <h1 class="d-flex align-items-center gap-2">
-                    <i class="fa-solid fa-id-card"></i> Knit Card #<?php echo $card_id; ?> Details
-                </h1>
-                <p class="mb-0 text-white-50 small mt-1">
-                    Card Date: <strong><?php echo htmlspecialchars($card['CARD_DATE']); ?></strong> &nbsp;|&nbsp;
-                    Machine: <strong>M/C <?php echo htmlspecialchars($card['MCNO']); ?></strong> &nbsp;|&nbsp;
-                    Buyer: <strong><?php echo htmlspecialchars($card['BUYER']); ?></strong>
-                </p>
-            </div>
-            <div class="d-flex gap-2 flex-wrap align-items-center">
-                <a href="knit_card_list.php" class="btn btn-light nav-btn text-dark"><i class="fa-solid fa-arrow-left me-1"></i> Back to Cards</a>
-                <a href="knitting_program_list.php" class="btn btn-outline-light nav-btn text-white"><i class="fa-solid fa-list-check me-1"></i> Programs List</a>
-                <button type="button" class="btn btn-light nav-btn text-dark" id="btnOpenQrModal"><i class="fa-solid fa-qrcode me-1"></i> QR Code</button>
-                <a href="knit_card_print.php?id=<?php echo $card_id; ?>" target="_blank" class="btn btn-warning nav-btn text-dark fw-bold"><i class="fa-solid fa-print me-1"></i> Print Floor Card</a>
+        <!-- ═══ HEADER BANNER ═══ -->
+        <div class="top-banner">
+            <div class="banner-inner">
+                <!-- Left: icon + title -->
+                <div class="banner-title-group">
+                    <div class="banner-icon-wrap">
+                        <i class="fa-solid fa-id-card"></i>
+                    </div>
+                    <div>
+                        <h1>Knit Card #<?php echo $card_id; ?> Details</h1>
+                        <p class="banner-subtitle">
+                            Date: <strong style="color:white;"><?php echo htmlspecialchars($card['CARD_DATE']); ?></strong> &nbsp;|&nbsp;
+                            Machine: <strong style="color:white;">M/C <?php echo htmlspecialchars($card['MCNO']); ?></strong> &nbsp;|&nbsp;
+                            Buyer: <strong style="color:white;"><?php echo htmlspecialchars($card['BUYER']); ?></strong>
+                        </p>
+                    </div>
+                </div>
+                <!-- Right: nav buttons -->
+                <div class="d-flex gap-2 flex-wrap align-items-center">
+                    <a href="knit_card_list.php" class="btn nav-btn btn-glass">
+                        <i class="fa-solid fa-arrow-left"></i> Back to Directory
+                    </a>
+                    <a href="knitting_program_list.php" class="btn nav-btn btn-glass">
+                        <i class="fa-solid fa-list-check"></i> Programs List
+                    </a>
+                    <button type="button" class="btn nav-btn btn-glass" id="btnOpenQrModal">
+                        <i class="fa-solid fa-qrcode"></i> QR Code
+                    </button>
+                    <a href="knit_card_print.php?id=<?php echo $card_id; ?>" target="_blank" class="btn nav-btn btn-blue-solid">
+                        <i class="fa-solid fa-print"></i> Print Floor Card
+                    </a>
+                </div>
             </div>
         </div>
 
