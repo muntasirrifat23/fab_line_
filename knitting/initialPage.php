@@ -412,7 +412,6 @@ mysqli_close($db);
                 <div class="btn-grid">
                     <button class="w3-button w3-teal" name="knitting_input" id="knitting_input"><i class="fas fa-sign-in-alt"></i> Knitting Input</button>
                     <button class="w3-button w3-teal" name="knitting_program" id="knitting_program"><i class="fas fa-tshirt"></i> Knitting Program</button>
-                    <button class="w3-button w3-teal" name="knit_cards" id="knit_cards"><i class="fas fa-id-card"></i> Knit Cards</button>
                     <button class="w3-button w3-teal" name="knitting_store" id="knitting_store"><i class="fas fa-warehouse"></i> Knitting Store</button>
                     <button class="w3-button w3-teal" name="user_management" id="user_management"><i class="fas fa-user-plus"></i> User Management</button>
                     <button class="w3-button w3-teal" name="report" id="report"><i class="fas fa-file-alt"></i> Report</button>
