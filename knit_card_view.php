@@ -191,7 +191,7 @@ $completion_pct = ($target_qty > 0) ? min(100, round(($total_cum_produced / $tar
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/mycss.css">
-    <script src="js/qrcode.min.js"></script>
+    <script src="knitting/js/qrcode.min.js"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
