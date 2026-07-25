@@ -27,7 +27,6 @@ if (!$db) {
 
 mysqli_set_charset($db, 'utf8mb4');
 
-// Ensure MAIN_TID and SUB_TID can hold values above 2,147,483,647
 $columnResult = mysqli_query($db, "SHOW COLUMNS FROM knitting_program WHERE Field IN ('MAIN_TID','SUB_TID')");
 $needsBigInt = false;
 if ($columnResult) {
@@ -98,8 +97,8 @@ if (!is_array($mcnoQtyData) || empty($mcnoQtyData)) {
 
 // Determine MAIN_TID and starting SUB_TID using only valid prior IDs
 $tidResult = mysqli_query($db, "SELECT 
-    COALESCE(MAX(CASE WHEN MAIN_TID >= 2000000990 THEN MAIN_TID END), 2000000990) AS max_main,
-    COALESCE(MAX(CASE WHEN SUB_TID >= 3000000990 THEN SUB_TID END), 3000000990) AS max_sub
+    COALESCE(MAX(CASE WHEN MAIN_TID >= 1000000000 THEN MAIN_TID END), 1000000000) AS max_main,
+    COALESCE(MAX(CASE WHEN SUB_TID >= 2000000000 THEN SUB_TID END), 2000000000) AS max_sub
 FROM knitting_program");
 if (!$tidResult) {
     http_response_code(500);
@@ -108,8 +107,8 @@ if (!$tidResult) {
     exit();
 }
 $tidRow = mysqli_fetch_assoc($tidResult);
-$mainTid = ((int)$tidRow['max_main'] < 2000000990 ? 2000000990 : (int)$tidRow['max_main']) + 1;
-$nextSubTid = ((int)$tidRow['max_sub'] < 3000000990 ? 3000000990 : (int)$tidRow['max_sub']) + 1;
+$mainTid = ((int)$tidRow['max_main'] < 1000000000 ? 1000000000 : (int)$tidRow['max_main']) + 1;
+$nextSubTid = ((int)$tidRow['max_sub'] < 2000000000 ? 2000000000 : (int)$tidRow['max_sub']) + 1;
 
 // Start transaction
 if (!mysqli_begin_transaction($db)) {
