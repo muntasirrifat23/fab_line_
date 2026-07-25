@@ -62,6 +62,7 @@ $finishDia = isset($_POST['finish_dia']) ? trim($_POST['finish_dia']) : null;
 $openTube = isset($_POST['open_tube']) ? trim($_POST['open_tube']) : null;
 $lotNo = isset($_POST['lot_no']) ? trim($_POST['lot_no']) : null;
 $knitMaterialCode = isset($_POST['knit_material_code']) ? trim($_POST['knit_material_code']) : null;
+$color = isset($_POST['color']) ? trim($_POST['color']) : null;
 $mcnoQtyData = isset($_POST['mcno_qty']) ? $_POST['mcno_qty'] : [];
 
 // Validate required fields
@@ -145,8 +146,9 @@ $insertSql = "INSERT INTO knitting_program (
     FINISH_DIA,
     OPEN_TUBE,
     LOT_NO,
-    KNIT_MATERIAL_CODE
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    KNIT_MATERIAL_CODE,
+    COLOR
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 $stmt = mysqli_prepare($db, $insertSql);
 
@@ -179,7 +181,7 @@ foreach ($mcnoQtyData as $row) {
 
     mysqli_stmt_bind_param(
         $stmt,
-        "iisssssssdsssssssss",
+        "iisssssssdssssssssss",
         $mainTid,
         $currentSubTid,
         $booking,
@@ -198,7 +200,8 @@ foreach ($mcnoQtyData as $row) {
         $finishDia,
         $openTube,
         $lotNo,
-        $knitMaterialCode
+        $knitMaterialCode,
+        $color
     );
 
     if (!mysqli_stmt_execute($stmt)) {
