@@ -481,7 +481,7 @@ if ($result && $result->num_rows > 0) {
                     <a href="knitting_program_form.php" class="btn nav-btn btn-blue-solid">
                         <i class="fa-solid fa-plus"></i> New Program
                     </a>
-                    <a href="knit_card_list.php" class="btn nav-btn btn-glass">
+                    <a href="knit_card_report.php" class="btn nav-btn btn-glass">
                         <i class="fa-solid fa-id-card"></i> All Knit Cards
                     </a>
                 </div>
@@ -632,7 +632,7 @@ if ($result && $result->num_rows > 0) {
                                                         <i class="fa-solid fa-eye me-1"></i> View Card
                                                     </a>
                                                 <?php else: ?>
-                                                    <a href="knit_card_list.php" class="btn btn-sm btn-action-view">
+                                                    <a href="knit_card_report.php" class="btn btn-sm btn-action-view">
                                                         <i class="fa-solid fa-id-card me-1"></i> All Cards
                                                     </a>
                                                 <?php endif; ?>

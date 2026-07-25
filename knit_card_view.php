@@ -12,7 +12,7 @@ $msg     = isset($_GET['msg'])   ? trim($_GET['msg'])   : '';
 $error   = isset($_GET['error']) ? trim($_GET['error']) : '';
 
 if ($card_id <= 0) {
-    header("Location: knit_card_list.php?error=Invalid+Card+ID");
+    header("Location: knit_card_report.php?error=Invalid+Card+ID");
     exit();
 }
 
@@ -142,7 +142,7 @@ if ($stmt) {
 }
 
 if (!$card_res || $card_res->num_rows == 0) {
-    header("Location: knit_card_list.php?error=Card+not+found");
+    header("Location: knit_card_report.php?error=Card+not+found");
     exit();
 }
 $card = $card_res->fetch_assoc();
@@ -558,7 +558,7 @@ $completion_pct = ($target_qty > 0) ? min(100, round(($total_cum_produced / $tar
                 </div>
                 <!-- Right: nav buttons -->
                 <div class="d-flex gap-2 flex-wrap align-items-center">
-                    <a href="knit_card_list.php" class="btn nav-btn btn-glass">
+                    <a href="knit_card_report.php" class="btn nav-btn btn-glass">
                         <i class="fa-solid fa-arrow-left"></i> Back to Directory
                     </a>
                     <a href="knitting_program_list.php" class="btn nav-btn btn-glass">
