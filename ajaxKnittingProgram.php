@@ -47,8 +47,11 @@ $query = "SELECT
     FINISH_GSM, 
     FINISH_DIA, 
     OPEN_TUBE, 
-    SONO, 
+    SONO,
+    SL_VDQ,
+    COLOR,
     LOT_NO, 
+    MC_DIA,
     KNIT_M_DESCRIPTION, 
     KNIT_MATERIAL_CODE,
     KNITTING_TARGET_QTY 
