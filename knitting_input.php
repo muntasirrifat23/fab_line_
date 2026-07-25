@@ -99,29 +99,31 @@
                 <table class="table table-bordered table-striped table-hover table-sm">
                     <thead class="table-dark">
                         <tr>
-                            <th>KITID</th>
                             <th>BUDAT</th>
                             <th>SUPPLIER</th>
                             <th>BUYER</th>
+                            <th>BOOKING</th>
+                            <th>MC DIA</th>
+                            <th>FINISH DIA</th>
+                            <th>OPEN TUBE</th>
+                            <th>STYLE</th>
                             <th>YARN TYPE</th>
                             <th>YARN COUNT</th>
-                            <th>FINISH DIA</th>
                             <th>FABRICS TYPE</th>
-                            <th>BOOKING</th>
-                            <th>STYLE</th>
                             <th>FINISH GSM</th>
-                            <th>OPEN TUBE</th>
+                            <th>COLOR</th>
                             <th>SONO</th>
                             <th>SO ITEM</th>
                             <th>KNIT MATERIAL CODE</th>
-                            <th>KNIT M DESCRIPTION</th>
+                            <th>KNIT MATERIAL DESCRIPTION</th>
                             <th>ORDER TYPE</th>
                             <th>KNITTING TARGET QTY</th>
+                            <th>SL VDQ</th>
+                            <th>LOT NO</th>
                             <th>FIRST SHIPMENT DATE</th>
                             <th>LAST SHIPMENT DATE</th>
                             <th>KNIT TNA START</th>
                             <th>KNIT TNA END</th>
-                            <th>LOT NO</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -138,43 +140,51 @@
     <script src="jquery.min.js"></script>
 
     <script>
-        function renderTableRows(data) {
-            var tbody = $('#tableBody');
-            tbody.empty();
-            if (!data || data.length === 0) {
-                tbody.append('<tr><td colspan="25" class="text-center small-muted">No data found</td></tr>');
-                return;
-            }
+      function renderTableRows(data) {
 
-            data.forEach(function(row) {
-                var tr = $('<tr>');
-                tr.append($('<td>').text(row.KITID || ''));
-                tr.append($('<td>').text(row.BUDAT || ''));
-                tr.append($('<td>').text(row.SUPPLIER || ''));
-                tr.append($('<td>').text(row.BUYER || ''));
-                tr.append($('<td>').text(row.YARN_TYPE || ''));
-                tr.append($('<td>').text(row.YARN_COUNT || ''));
-                tr.append($('<td>').text(row.FINISH_DIA || ''));
-                tr.append($('<td>').text(row.FABRICS_TYPE || ''));
-                tr.append($('<td>').text(row.BOOKING || ''));
-                tr.append($('<td>').text(row.STYLE || ''));
-                tr.append($('<td>').text(row.FINISH_GSM || ''));
-                tr.append($('<td>').text(row.OPEN_TUBE || ''));
-                tr.append($('<td>').text(row.SONO || ''));
-                tr.append($('<td>').text(row.SO_ITEM || ''));
-                tr.append($('<td>').text(row.KNIT_MATERIAL_CODE || ''));
-                tr.append($('<td>').text(row.KNIT_M_DESCRIPTION || ''));
-                tr.append($('<td>').text(row.ORDER_TYPE || ''));
-                tr.append($('<td>').text(row.KNITTING_TARGET_QTY || ''));
-                tr.append($('<td>').text(row.FIRST_SHIPMENT_DATE || ''));
-                tr.append($('<td>').text(row.LAST_SHIPMENT_DATE || ''));
-                tr.append($('<td>').text(row.KNIT_TNA_START || ''));
-                tr.append($('<td>').text(row.KNIT_TNA_END || ''));
-                tr.append($('<td>').text(row.LOT_NO || ''));
-                tbody.append(tr);
-            });
-        }
+    var tbody = $('#tableBody');
+    tbody.empty();
 
+    if (!data || data.length === 0) {
+        tbody.append('<tr><td colspan="26" class="text-center">No Data Found</td></tr>');
+        return;
+    }
+
+    $.each(data, function(index, row) {
+
+        tbody.append(`
+        <tr>
+            <td>${row.BUDAT ?? ''}</td>
+            <td>${row.SUPPLIER ?? ''}</td>
+            <td>${row.BUYER ?? ''}</td>
+            <td>${row.BOOKING ?? ''}</td>
+            <td>${row.MC_DIA ?? ''}</td>
+            <td>${row.FINISH_DIA ?? ''}</td>
+            <td>${row.OPEN_TUBE ?? ''}</td>
+            <td>${row.STYLE ?? ''}</td>
+            <td>${row.YARN_TYPE ?? ''}</td>
+            <td>${row.YARN_COUNT ?? ''}</td>
+            <td>${row.FABRICS_TYPE ?? ''}</td>
+            <td>${row.FINISH_GSM ?? ''}</td>
+            <td>${row.COLOR ?? ''}</td>
+            <td>${row.SONO ?? ''}</td>
+            <td>${row.SO_ITEM ?? ''}</td>
+            <td>${row.KNIT_MATERIAL_CODE ?? ''}</td>
+            <td>${row.KNIT_M_DESCRIPTION ?? ''}</td>
+            <td>${row.ORDER_TYPE ?? ''}</td>
+            <td>${row.KNITTING_TARGET_QTY ?? ''}</td>
+            <td>${row.SL_VDQ ?? ''}</td>
+            <td>${row.LOT_NO ?? ''}</td>
+            <td>${row.FIRST_SHIPMENT_DATE ?? ''}</td>
+            <td>${row.LAST_SHIPMENT_DATE ?? ''}</td>
+            <td>${row.KNIT_TNA_START ?? ''}</td>
+            <td>${row.KNIT_TNA_END ?? ''}</td>
+        </tr>
+        `);
+
+    });
+
+}
         function searchBooking() {
             var booking = $('#bookingInput').val().trim();
             if (!booking) {
@@ -192,10 +202,10 @@
                 })
                 .done(function(resp) {
                     if (resp && resp.success) renderTableRows(resp.data);
-                    else $('#tableBody').html('<tr><td colspan="25" class="text-center small-muted">No data found</td></tr>');
+                    else $('#tableBody').html('<tr><td colspan="26" class="text-center small-muted">No data found</td></tr>');
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr><td colspan="25" class="text-center text-danger">Error searching</td></tr>');
+                    $('#tableBody').html('<tr><td colspan="26" class="text-center text-danger">Error searching</td></tr>');
                 })
                 .always(function() {
                     $('#searchBtn').prop('disabled', false).text('Search');
