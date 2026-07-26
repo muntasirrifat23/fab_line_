@@ -103,14 +103,16 @@
                             <th>MAIN TID</th>
                             <th>SUB TID</th>
                             <th>BOOKING</th>
+                            <th>MCNO</th>
+                            <th>MC DIA</th>
                             <th>SONO</th>
                             <th>STYLE</th>
                             <th>BUYER</th>
                             <th>SUPPLIER</th>
-                            <th>MCNO</th>
                             <th>QTY</th>
                             <th>SHIFT</th>
                             <th>COLOR</th>
+                            <th>SL/VDQ</th>
                             <th>YARN TYPE</th>
                             <th>YARN COUNT</th>
                             <th>FABRICS TYPE</th>
@@ -118,8 +120,8 @@
                             <th>FINISH DIA</th>
                             <th>OPEN / TUBE</th>
                             <th>LOT NO</th>
-                            <th>KNIT M DESCRIPTION</th>
-                            <th>KNIT MATERIAL CODE</th>
+                            <!-- <th>KNIT M DESCRIPTION</th>
+                            <th>KNIT MATERIAL CODE</th> -->
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -150,14 +152,17 @@
                 tr.append($('<td>').text(row.MAIN_TID || ''));
                 tr.append($('<td>').text(row.SUB_TID || ''));
                 tr.append($('<td>').text(row.BOOKING || ''));
+                tr.append($('<td>').text(row.MCNO || ''));
+                tr.append($('<td>').text(row.MC_DIA || ''));
                 tr.append($('<td>').text(row.SONO || ''));
                 tr.append($('<td>').text(row.STYLE || ''));
                 tr.append($('<td>').text(row.BUYER || ''));
                 tr.append($('<td>').text(row.SUPPLIER || ''));
-                tr.append($('<td>').text(row.MCNO || ''));
                 tr.append($('<td>').text(row.QTY || ''));
                 tr.append($('<td>').text(row.SHIFT || ''));
                 tr.append($('<td>').text(row.COLOR || ''));
+                                tr.append($('<td>').text(row.SL_VDQ || ''));
+
                 tr.append($('<td>').text(row.YARN_TYPE || ''));
                 tr.append($('<td>').text(row.YARN_COUNT || ''));
                 tr.append($('<td>').text(row.FABRICS_TYPE || ''));
@@ -165,8 +170,8 @@
                 tr.append($('<td>').text(row.FINISH_DIA || ''));
                 tr.append($('<td>').text(row.OPEN_TUBE || ''));
                 tr.append($('<td>').text(row.LOT_NO || ''));
-                tr.append($('<td>').text(row.KNIT_M_DESCRIPTION || ''));
-                tr.append($('<td>').text(row.KNIT_MATERIAL_CODE || ''));
+                // tr.append($('<td>').text(row.KNIT_M_DESCRIPTION || ''));
+                // tr.append($('<td>').text(row.KNIT_MATERIAL_CODE || ''));
                 tbody.append(tr);
             });
         }

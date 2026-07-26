@@ -57,12 +57,14 @@ $knitDescription = isset($_POST['knit_m_description']) ? trim($_POST['knit_m_des
 $yarnType = isset($_POST['yarn_type']) ? trim($_POST['yarn_type']) : null;
 $yarnCount = isset($_POST['yarn_count']) ? trim($_POST['yarn_count']) : null;
 $fabricsType = isset($_POST['fabrics_type']) ? trim($_POST['fabrics_type']) : null;
+$mcDia = isset($_POST['mc_dia']) ? trim($_POST['mc_dia']) : null;
 $finishGsm = isset($_POST['finish_gsm']) ? trim($_POST['finish_gsm']) : null;
 $finishDia = isset($_POST['finish_dia']) ? trim($_POST['finish_dia']) : null;
 $openTube = isset($_POST['open_tube']) ? trim($_POST['open_tube']) : null;
 $lotNo = isset($_POST['lot_no']) ? trim($_POST['lot_no']) : null;
 $knitMaterialCode = isset($_POST['knit_material_code']) ? trim($_POST['knit_material_code']) : null;
 $color = isset($_POST['color']) ? trim($_POST['color']) : null;
+$slVdq = isset($_POST['sl_vdq']) ? trim($_POST['sl_vdq']) : null;
 $mcnoQtyData = isset($_POST['mcno_qty']) ? $_POST['mcno_qty'] : [];
 
 // Validate required fields
@@ -137,6 +139,7 @@ $insertSql = "INSERT INTO knitting_program (
     SUPPLIER,
     KNIT_M_DESCRIPTION,
     MCNO,
+    MC_DIA,
     QTY,
     SHIFT,
     YARN_TYPE,
@@ -145,10 +148,11 @@ $insertSql = "INSERT INTO knitting_program (
     FINISH_GSM,
     FINISH_DIA,
     OPEN_TUBE,
+    SL_VDQ,
     LOT_NO,
     KNIT_MATERIAL_CODE,
     COLOR
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 $stmt = mysqli_prepare($db, $insertSql);
 
@@ -180,29 +184,31 @@ foreach ($mcnoQtyData as $row) {
     $currentSubTid = $nextSubTid++;
 
     mysqli_stmt_bind_param(
-        $stmt,
-        "iisssssssdssssssssss",
-        $mainTid,
-        $currentSubTid,
-        $booking,
-        $sono,
-        $style,
-        $buyer,
-        $supplier,
-        $knitDescription,
-        $mcno,
-        $qty,
-        $shift,
-        $yarnType,
-        $yarnCount,
-        $fabricsType,
-        $finishGsm,
-        $finishDia,
-        $openTube,
-        $lotNo,
-        $knitMaterialCode,
-        $color
-    );
+    $stmt,
+    "iissssssssdsssssssssss",
+    $mainTid,
+    $currentSubTid,
+    $booking,
+    $sono,
+    $style,
+    $buyer,
+    $supplier,
+    $knitDescription,
+    $mcno,
+    $mcDia,
+    $qty,
+    $shift,
+    $yarnType,
+    $yarnCount,
+    $fabricsType,
+    $finishGsm,
+    $finishDia,
+    $openTube,
+    $slVdq,
+    $lotNo,
+    $knitMaterialCode,
+    $color
+);
 
     if (!mysqli_stmt_execute($stmt)) {
         mysqli_rollback($db);
@@ -239,4 +245,3 @@ $response = [
 
 echo json_encode($response);
 mysqli_close($db);
-?>
