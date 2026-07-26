@@ -471,7 +471,7 @@ if ($result && $result->num_rows > 0) {
                     <a href="initialPage.php" class="btn nav-btn btn-glass">
                         <i class="fa-solid fa-arrow-left"></i> Dashboard
                     </a>
-                    <a href="knitting/knitting_program_form.php" class="btn nav-btn btn-blue-solid">
+                    <a href="knitting_program_form.php" class="btn nav-btn btn-blue-solid">
                         <i class="fa-solid fa-plus"></i> New Program
                     </a>
                     <a href="knit_card_report.php" class="btn nav-btn btn-glass">
@@ -636,7 +636,7 @@ if ($result && $result->num_rows > 0) {
                                                 </a>
                                             <?php endif; ?>
 
-                                            <a href="knitting/knitting_program_form.php?id=<?php echo $p_id; ?>"
+                                            <a href="knitting_program_form.php?id=<?php echo $p_id; ?>"
                                                class="btn btn-sm btn-action-edit"
                                                title="Edit Program">
                                                 <i class="fa-solid fa-pen-to-square me-1"></i> Edit
