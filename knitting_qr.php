@@ -206,22 +206,23 @@ return `
         function generateQrCode(row, target) {
             target.empty();
             var qrText = [
-                row.SUB_TID,
-                row.MCNO,
-                row.BUYER,
-                row.BOOKING,
-                row.SONO,
-                row.STYLE,
-                row.FABRICS_TYPE,
-                row.YARN_COUNT,
-                row.YARN_TYPE,
-                row.FINISH_GSM,
-                row.FINISH_DIA,
-                row.OPEN_TUBE,
-                row.LOT_NO,
-                row.QTY,
-                row.COLOR
-            ].filter(Boolean).join(' | ');
+                row.SUB_TID || '',
+                row.MCNO || '',
+                row.BUYER || '',
+                row.SUPPLIER || '',
+                row.BOOKING || '',
+                row.SONO || '',
+                row.STYLE || '',
+                row.FABRICS_TYPE || '',
+                row.YARN_COUNT || '',
+                row.YARN_TYPE || '',
+                row.FINISH_GSM || '',
+                row.FINISH_DIA || '',
+                row.OPEN_TUBE || '',
+                row.LOT_NO || '',
+                row.QTY || '',
+                row.COLOR || ''
+            ].join(' | ');
 
             new QRCode(target[0], {
                 text: qrText || 'QR CODE',
@@ -259,15 +260,69 @@ return `
                 alert('QR code is not ready yet.');
                 return;
             }
-            var printWindow = window.open('', '_blank');
-            if (!printWindow) {
-                alert('Unable to open print window. Please allow popups.');
+
+            var panel = container.closest('.qr-dropdown-panel')[0];
+            if (!panel) {
+                alert('Print panel is not available.');
                 return;
             }
-            printWindow.document.write('<html><head><title>Print QR Code</title></head><body style="margin:0; display:flex; align-items:center; justify-content:center; height:100vh;"><img src="' + dataUrl + '" style="max-width:100%; height:auto;"> </body></html>');
-            printWindow.document.close();
-            printWindow.focus();
-            printWindow.print();
+
+            var clone = panel.cloneNode(true);
+            var cloneQrWrapper = clone.querySelector('.qr-code-wrapper');
+            if (cloneQrWrapper) {
+                cloneQrWrapper.innerHTML = '<img src="' + dataUrl + '" style="width:100%; height:auto; display:block;" />';
+            }
+
+            var buttons = clone.querySelector('.qr-buttons');
+            if (buttons) {
+                buttons.parentNode.removeChild(buttons);
+            }
+
+            var printStyles = '<style>' +
+                '@page{size:A4 portrait;margin:15mm;}' +
+                'body{margin:0;padding:10mm;font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;}' +
+                '.qr-dropdown-panel{width:100%;padding:0;border:none;box-shadow:none;}' +
+                '.qr-content{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;}' +
+                '.qr-code-wrapper{width:260px;flex:0 0 260px;}' +
+                '.qr-code-wrapper img{width:100% !important;height:auto !important;border:1px solid #333;}' +
+                '.qr-info{flex:1;min-width:260px;font-size:14px;line-height:1.5;}' +
+                '.qr-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;}' +
+                '.qr-grid div{white-space:normal;}' +
+                '.qr-lot{margin-top:16px;border-top:1px solid #666;padding-top:10px;font-size:14px;line-height:1.5;}' +
+                '.qr-buttons{display:none !important;}' +
+                '</style>';
+
+            var printHtml = '<html><head><title>Print QR Code</title>' + printStyles + '</head><body>' + clone.outerHTML + '</body></html>';
+
+            var iframe = document.createElement('iframe');
+            iframe.style.position = 'fixed';
+            iframe.style.right = '0';
+            iframe.style.bottom = '0';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = '0';
+            iframe.style.overflow = 'hidden';
+            document.body.appendChild(iframe);
+
+            var doc = iframe.contentWindow ? iframe.contentWindow.document : iframe.contentDocument;
+            doc.open();
+            doc.write(printHtml);
+            doc.close();
+
+            iframe.onload = function() {
+                try {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                } catch (e) {
+                    console.error('Print failed:', e);
+                    alert('Print failed. Please allow popups or use browser print manually.');
+                }
+                setTimeout(function() {
+                    if (iframe.parentNode) {
+                        iframe.parentNode.removeChild(iframe);
+                    }
+                }, 1500);
+            };
         }
 
         function closeQrDropdown() {
