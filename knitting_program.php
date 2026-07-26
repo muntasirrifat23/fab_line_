@@ -709,6 +709,14 @@
                                 <label>Finish GSM</label>
                                 <input type="text" id="finish_gsm" readonly>
                             </div>
+                            <div class="form-group">
+                                <label>SL/VQ</label>
+                                <input type="text" id="sl_vdq" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>COLOR</label>
+                                <input type="text" id="color" readonly>
+                            </div>
                         </div>
                     </div>
 
@@ -718,6 +726,10 @@
                             Quality & Material Details
                         </div>
                         <div class="form-grid">
+                            <div class="form-group">
+                                <label>Finish DIA</label>
+                                <input type="text" id="mc_dia" readonly>
+                            </div>
                             <div class="form-group">
                                 <label>Finish DIA</label>
                                 <input type="text" id="finish_dia" readonly>
@@ -1012,6 +1024,9 @@
             $('#yarn_count').val(rowData.YARN_COUNT || '');
             $('#fabrics_type').val(rowData.FABRICS_TYPE || '');
             $('#finish_gsm').val(rowData.FINISH_GSM || '');
+            $('#sl_vdq').val(rowData.SL_VDQ || '');
+            $('#color').val(rowData.COLOR || '');
+            $('#mc_dia').val(rowData.MC_DIA || '');
             $('#finish_dia').val(rowData.FINISH_DIA || '');
             $('#open_tube').val(rowData.OPEN_TUBE || '');
             $('#lot_no').val(rowData.LOT_NO || '');
@@ -1162,6 +1177,7 @@
             var rows = $('#mcnoQtyTableBody tr');
             var allRowsValid = true;
             var allFilled = true;
+            var hasDataRow = false;
 
             rows.each(function() {
                 var mcno = $(this).find('.mcno-input').val().trim();
@@ -1170,7 +1186,13 @@
                 var qtyDisabled = $(this).find('.qty-input').prop('disabled');
                 var shiftDisabled = $(this).find('.shift-input').prop('disabled');
 
-                // If QTY or SHIFT is disabled, row is not valid
+                var isEmptyRow = !mcno && !qty && !shift;
+                if (isEmptyRow) {
+                    return true; // ignore blank rows
+                }
+
+                hasDataRow = true;
+
                 if (qtyDisabled || shiftDisabled) {
                     allRowsValid = false;
                     allFilled = false;
@@ -1188,22 +1210,24 @@
                     return false;
                 }
 
-                // Check if qty is valid (not exceeding remaining)
                 var qtyNum = parseFloat(qty);
-                if (qtyNum <= 0) {
+                if (isNaN(qtyNum) || qtyNum <= 0) {
                     allRowsValid = false;
                     return false;
                 }
             });
 
-            // Also check total doesn't exceed target
+            // Also check total doesn't exceed target (only count filled rows)
             var totalQty = 0;
             rows.each(function() {
+                var mcno = $(this).find('.mcno-input').val().trim();
                 var qty = parseFloat($(this).find('.qty-input').val()) || 0;
-                totalQty += qty;
+                if (mcno && qty > 0) {
+                    totalQty += qty;
+                }
             });
 
-            if (totalQty > targetQty) {
+            if (hasDataRow && totalQty > targetQty) {
                 allRowsValid = false;
             }
 
@@ -1287,6 +1311,11 @@
                 var qty = $(this).find('.qty-input').val().trim();
                 var shift = $(this).find('.shift-input').val().trim();
 
+                var isEmptyRow = !mcno && !qty && !shift;
+                if (isEmptyRow) {
+                    return true; // skip completely empty rows
+                }
+
                 if (!mcno || !qty || !shift) {
                     isValid = false;
                     return false;
@@ -1297,9 +1326,15 @@
                     return false;
                 }
 
+                var qtyNum = parseFloat(qty);
+                if (isNaN(qtyNum) || qtyNum <= 0) {
+                    isValid = false;
+                    return false;
+                }
+
                 data.push({
                     mcno: mcno,
-                    qty: parseFloat(qty),
+                    qty: qtyNum,
                     shift: shift
                 });
             });
@@ -1408,105 +1443,118 @@
                 }
             });
 
+
             // Submit button
-            $('#submitBtn').on('click', function(e) {
-                e.preventDefault();
+         // Submit button - UPDATED VERSION
+$('#submitBtn').on('click', function(e) {
+    e.preventDefault();
 
-                if (!isMcnoListLoaded) {
-                    showAlert('Please wait, MCNO list is still loading...', 'info');
-                    return;
-                }
+    if (!isMcnoListLoaded) {
+        showAlert('Please wait, MCNO list is still loading...', 'info');
+        return;
+    }
 
-                var mcnoResult = getMcnoQtyData();
-                if (!mcnoResult.isValid) {
-                    showAlert('Please fill all MCNO, QTY, and SHIFT fields with valid data.', 'error');
-                    return;
-                }
+    var mcnoResult = getMcnoQtyData();
+    if (!mcnoResult.isValid) {
+        showAlert('Please fill all MCNO, QTY, and SHIFT fields with valid data.', 'error');
+        return;
+    }
 
-                if (mcnoResult.data.length === 0) {
-                    showAlert('Please add at least one MCNO and QTY', 'error');
-                    return;
-                }
+    if (mcnoResult.data.length === 0) {
+        showAlert('Please add at least one MCNO and QTY', 'error');
+        return;
+    }
 
-                var selectedDescription = $('#knit_m_description').val();
-                if (!selectedDescription || selectedDescription.trim() === '') {
-                    showAlert('Please select a Knit M Description', 'error');
-                    return;
-                }
+    var selectedDescription = $('#knit_m_description').val();
+    if (!selectedDescription || selectedDescription.trim() === '') {
+        showAlert('Please select a Knit M Description', 'error');
+        return;
+    }
 
-                var totalQty = 0;
-                mcnoResult.data.forEach(function(item) {
-                    totalQty += item.qty;
-                });
+    var totalQty = 0;
+    mcnoResult.data.forEach(function(item) {
+        totalQty += item.qty;
+    });
 
-                if (totalQty > targetQty) {
-                    showAlert('Total quantity (' + totalQty.toFixed(2) + ') exceeds target quantity (' + targetQty.toFixed(2) + '). Please adjust.', 'error');
-                    return;
-                }
+    // Get current target qty for validation
+    var targetQtyValue = parseFloat($('#display_target_qty').text()) || 0;
+    if (totalQty > targetQtyValue) {
+        showAlert('Total quantity (' + totalQty.toFixed(2) + ') exceeds target quantity (' + targetQtyValue.toFixed(2) + '). Please adjust.', 'error');
+        return;
+    }
 
-                var formData = {
-                    booking: $('#booking').val(),
-                    sono: $('#sono').val(),
-                    style: $('#style').val(),
-                    buyer: $('#buyer').val(),
-                    supplier: $('#supplier').val(),
-                    knit_m_description: selectedDescription,
-                    yarn_type: $('#yarn_type').val(),
-                    yarn_count: $('#yarn_count').val(),
-                    fabrics_type: $('#fabrics_type').val(),
-                    finish_gsm: $('#finish_gsm').val(),
-                    finish_dia: $('#finish_dia').val(),
-                    open_tube: $('#open_tube').val(),
-                    lot_no: $('#lot_no').val(),
-                    knit_material_code: $('#knit_material_code').val(),
-                    knitting_target_qty: $('#knitting_target_qty').val(),
-                    mcno_qty: mcnoResult.data
-                };
+    var formData = {
+        booking: $('#booking').val(),
+        sono: $('#sono').val(),
+        style: $('#style').val(),
+        buyer: $('#buyer').val(),
+        supplier: $('#supplier').val(),
+        knit_m_description: selectedDescription,
+        yarn_type: $('#yarn_type').val(),
+        yarn_count: $('#yarn_count').val(),
+        fabrics_type: $('#fabrics_type').val(),
+        finish_gsm: $('#finish_gsm').val(),
+        sl_vdq: $('#sl_vdq').val(),
+        color: $('#color').val(),
+        mc_dia: $('#mc_dia').val(),
+        finish_dia: $('#finish_dia').val(),
+        open_tube: $('#open_tube').val(),
+        lot_no: $('#lot_no').val(),
+        knit_material_code: $('#knit_material_code').val(),
+        knitting_target_qty: $('#knitting_target_qty').val(),
+        mcno_qty: mcnoResult.data
+    };
 
-                console.log('Form Data:', formData);
+    console.log('Form Data:', formData);
 
-                var $submitBtn = $('#submitBtn');
-                $submitBtn.prop('disabled', true).html('<span class="loading-spinner"></span> Saving...');
+    var $submitBtn = $(this);
+    $submitBtn.prop('disabled', true).html('<span class="loading-spinner"></span> Saving...');
 
-                $.ajax({
-                    url: 'ajax_save_knitting_program.php',
-                    method: 'POST',
-                    contentType: 'application/json; charset=utf-8',
-                    processData: false,
-                    data: JSON.stringify(formData),
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.success) {
-                            showAlert(response.message || 'Program saved successfully!', 'success', 3000);
-                            setTimeout(function() {
-                                window.location.reload();
-                            }, 3000);
-                        } else {
-                            showAlert(response.message || response.error || 'Failed to save program.', 'error', 3000);
-                        }
-                    },
-                    error: function(jqXHR) {
-                        var message = 'Error saving program. Please try again.';
-                        if (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.message) {
-                            message = jqXHR.responseJSON.message;
-                        } else if (jqXHR && jqXHR.responseText) {
-                            try {
-                                var errorData = JSON.parse(jqXHR.responseText);
-                                if (errorData && errorData.message) {
-                                    message = errorData.message;
-                                }
-                            } catch (e) {
-                                console.error('Save error response:', jqXHR.responseText);
-                            }
-                        }
-                        showAlert(message, 'error', 3000);
-                    },
-                    complete: function() {
-                        $submitBtn.prop('disabled', false).html('<i class="fa-solid fa-paper-plane"></i> Save Program');
+    $.ajax({
+        url: 'ajax_save_knitting_program.php',
+        method: 'POST',
+        contentType: 'application/json; charset=utf-8',
+        processData: false,
+        data: JSON.stringify(formData),
+        dataType: 'json',
+      success: function(response) {
+    if (response.success) {
+
+        showAlert(response.message || 'Program saved successfully!', 'success', 1500);
+
+        setTimeout(function () {
+            window.location.reload();
+        }, 1500);
+
+    } else {
+
+        showAlert(response.message || response.error || 'Failed to save program.', 'error', 2000);
+
+    }
+},
+        error: function(jqXHR, textStatus, errorThrown) {
+            var message = 'Error saving program. Please try again.';
+            if (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.message) {
+                message = jqXHR.responseJSON.message;
+            } else if (jqXHR && jqXHR.responseText) {
+                try {
+                    var errorData = JSON.parse(jqXHR.responseText);
+                    if (errorData && errorData.message) {
+                        message = errorData.message;
                     }
-                });
-            });
-        });
+                } catch (e) {
+                    console.error('Save error response:', jqXHR.responseText);
+                }
+            }
+            showAlert(message, 'error', 2000);
+        },
+        complete: function() {
+            $submitBtn.prop('disabled', false).html('<i class="fa-solid fa-paper-plane"></i> Save Program');
+        }
+    });
+});
+
+    });
     </script>
 
 </body>

@@ -27,22 +27,6 @@ if (!$db) {
 
 mysqli_set_charset($db, 'utf8mb4');
 
-$columnResult = mysqli_query($db, "SHOW COLUMNS FROM knitting_program WHERE Field IN ('MAIN_TID','SUB_TID')");
-$needsBigInt = false;
-if ($columnResult) {
-    while ($col = mysqli_fetch_assoc($columnResult)) {
-        if (stripos($col['Type'], 'bigint') === false) {
-            $needsBigInt = true;
-            break;
-        }
-    }
-    mysqli_free_result($columnResult);
-}
-
-if ($needsBigInt) {
-    mysqli_query($db, "ALTER TABLE knitting_program MODIFY MAIN_TID BIGINT NOT NULL, MODIFY SUB_TID BIGINT NOT NULL");
-}
-
 // Decode JSON request body if needed
 $rawInput = file_get_contents('php://input');
 if ($rawInput !== false && strlen(trim($rawInput)) > 0) {
@@ -73,11 +57,14 @@ $knitDescription = isset($_POST['knit_m_description']) ? trim($_POST['knit_m_des
 $yarnType = isset($_POST['yarn_type']) ? trim($_POST['yarn_type']) : null;
 $yarnCount = isset($_POST['yarn_count']) ? trim($_POST['yarn_count']) : null;
 $fabricsType = isset($_POST['fabrics_type']) ? trim($_POST['fabrics_type']) : null;
+$mcDia = isset($_POST['mc_dia']) ? trim($_POST['mc_dia']) : null;
 $finishGsm = isset($_POST['finish_gsm']) ? trim($_POST['finish_gsm']) : null;
 $finishDia = isset($_POST['finish_dia']) ? trim($_POST['finish_dia']) : null;
 $openTube = isset($_POST['open_tube']) ? trim($_POST['open_tube']) : null;
 $lotNo = isset($_POST['lot_no']) ? trim($_POST['lot_no']) : null;
 $knitMaterialCode = isset($_POST['knit_material_code']) ? trim($_POST['knit_material_code']) : null;
+$color = isset($_POST['color']) ? trim($_POST['color']) : null;
+$slVdq = isset($_POST['sl_vdq']) ? trim($_POST['sl_vdq']) : null;
 $mcnoQtyData = isset($_POST['mcno_qty']) ? $_POST['mcno_qty'] : [];
 
 // Validate required fields
@@ -95,20 +82,41 @@ if (!is_array($mcnoQtyData) || empty($mcnoQtyData)) {
     exit();
 }
 
-// Determine MAIN_TID and starting SUB_TID using only valid prior IDs
-$tidResult = mysqli_query($db, "SELECT 
-    COALESCE(MAX(CASE WHEN MAIN_TID >= 1000000000 THEN MAIN_TID END), 1000000000) AS max_main,
-    COALESCE(MAX(CASE WHEN SUB_TID >= 2000000000 THEN SUB_TID END), 2000000000) AS max_sub
-FROM knitting_program");
+// Check if booking already exists in knitting_program table
+$checkSql = "SELECT COUNT(*) as count FROM knitting_program WHERE BOOKING = ?";
+$checkStmt = mysqli_prepare($db, $checkSql);
+mysqli_stmt_bind_param($checkStmt, "s", $booking);
+mysqli_stmt_execute($checkStmt);
+$checkResult = mysqli_stmt_get_result($checkStmt);
+$row = mysqli_fetch_assoc($checkResult);
+$existingCount = (int)$row['count'];
+mysqli_stmt_close($checkStmt);
+
+// Always create a NEW MAIN_TID for every Save
+
+$tidResult = mysqli_query($db, "
+    SELECT
+        COALESCE(MAX(MAIN_TID), 1000000000) AS max_main,
+        COALESCE(MAX(SUB_TID), 2000000000) AS max_sub
+    FROM knitting_program
+");
+
 if (!$tidResult) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Failed to determine IDs: ' . mysqli_error($db)]);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Failed to determine IDs: ' . mysqli_error($db)
+    ]);
     mysqli_close($db);
     exit();
 }
+
 $tidRow = mysqli_fetch_assoc($tidResult);
-$mainTid = ((int)$tidRow['max_main'] < 1000000000 ? 1000000000 : (int)$tidRow['max_main']) + 1;
-$nextSubTid = ((int)$tidRow['max_sub'] < 2000000000 ? 2000000000 : (int)$tidRow['max_sub']) + 1;
+
+$mainTid = $tidRow['max_main'] + 1;
+$nextSubTid = $tidRow['max_sub'] + 1;
+
+mysqli_free_result($tidResult);
 
 // Start transaction
 if (!mysqli_begin_transaction($db)) {
@@ -118,6 +126,9 @@ if (!mysqli_begin_transaction($db)) {
     exit();
 }
 
+
+
+// Prepare insert statement
 $insertSql = "INSERT INTO knitting_program (
     MAIN_TID,
     SUB_TID,
@@ -128,6 +139,7 @@ $insertSql = "INSERT INTO knitting_program (
     SUPPLIER,
     KNIT_M_DESCRIPTION,
     MCNO,
+    MC_DIA,
     QTY,
     SHIFT,
     YARN_TYPE,
@@ -136,9 +148,11 @@ $insertSql = "INSERT INTO knitting_program (
     FINISH_GSM,
     FINISH_DIA,
     OPEN_TUBE,
+    SL_VDQ,
     LOT_NO,
-    KNIT_MATERIAL_CODE
-) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    KNIT_MATERIAL_CODE,
+    COLOR
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 $stmt = mysqli_prepare($db, $insertSql);
 
@@ -169,35 +183,38 @@ foreach ($mcnoQtyData as $row) {
     // Generate unique SUB_TID
     $currentSubTid = $nextSubTid++;
 
-   mysqli_stmt_bind_param(
+    mysqli_stmt_bind_param(
     $stmt,
-    "iisssssssdsssssssss",
-    $mainTid,            // i
-    $currentSubTid,      // i
-    $booking,            // s
-    $sono,               // s
-    $style,              // s
-    $buyer,              // s
-    $supplier,           // s
-    $knitDescription,    // s
-    $mcno,               // s
-    $qty,                // d
-    $shift,              // s
-    $yarnType,           // s
-    $yarnCount,          // s
-    $fabricsType,        // s
-    $finishGsm,          // s
-    $finishDia,          // s
-    $openTube,           // s
-    $lotNo,              // s
-    $knitMaterialCode    // s
+    "iissssssssdsssssssssss",
+    $mainTid,
+    $currentSubTid,
+    $booking,
+    $sono,
+    $style,
+    $buyer,
+    $supplier,
+    $knitDescription,
+    $mcno,
+    $mcDia,
+    $qty,
+    $shift,
+    $yarnType,
+    $yarnCount,
+    $fabricsType,
+    $finishGsm,
+    $finishDia,
+    $openTube,
+    $slVdq,
+    $lotNo,
+    $knitMaterialCode,
+    $color
 );
 
     if (!mysqli_stmt_execute($stmt)) {
         mysqli_rollback($db);
         http_response_code(500);
         echo json_encode([
-            'success' => false, 
+            'success' => false,
             'message' => 'Insert failed for MCNO ' . $mcno . ': ' . mysqli_stmt_error($stmt)
         ]);
         mysqli_stmt_close($stmt);
@@ -221,10 +238,10 @@ if (!mysqli_commit($db)) {
 
 $response = [
     'success' => true,
-    'message' => 'Program saved successfully.',
-    'inserted_count' => $insertedCount
+    'message' => 'Program saved successfully. ' . $insertedCount . ' record(s) inserted.',
+    'inserted_count' => $insertedCount,
+    'main_tid' => $mainTid
 ];
 
 echo json_encode($response);
 mysqli_close($db);
-?>

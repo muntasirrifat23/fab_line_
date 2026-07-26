@@ -37,11 +37,6 @@ if (isset($_POST['knitting_production'])) {
     header('location:knitting_production.php');
     exit();
 }
-if (isset($_POST['knit_card_creation'])) {
-    $_SESSION['lineNo'] = $_POST['option'];
-    header('location:knit_card_creation.php');
-    exit();
-}
 if (isset($_POST['knit_card'])) {
     $_SESSION['lineNo'] = $_POST['option'];
     header('location:knit_card.php');
@@ -429,10 +424,6 @@ mysqli_close($db);
                 <div class="btn-grid">
                     <button class="w3-button w3-teal" name="knitting_program" id="knitting_program">
                         <i class="fas fa-industry"></i> KNITTING PROGRAM
-                    </button>
-
-                    <button class="w3-button w3-teal" name="knit_card_creation" id="knit_card_creation">
-                        <i class="fas fa-industry"></i> KNIT CARD CREATION
                     </button>
 
                     <button class="w3-button w3-teal" name="knit_card" id="knit_card">
