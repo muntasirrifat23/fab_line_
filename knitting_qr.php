@@ -38,7 +38,7 @@
         .qr-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px 25px;
+            gap: 4px ;
         }
 
         .qr-grid div {
@@ -82,6 +82,7 @@
                             <th>QR PRINT</th>
                             <th>Program</th>
                             <th>MCNO</th>
+                            <th>MC DIA</th>
                             <th>BUYER</th>
                             <th>BOOKING</th>
                             <th>SONO</th>
@@ -92,9 +93,11 @@
                             <th>FINISH GSM</th>
                             <th>FINISH DIA</th>
                             <th>OPEN / TUBE</th>
-                            <th>LOT NO</th>
                             <th>QTY</th>
                             <th>COLOR</th>
+                            <th>SL/VDQ</th>
+                            <th>LOT NO</th>
+
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -130,6 +133,7 @@
                 tr.append($('<td>').append(actionBtn));
                 tr.append($('<td>').text(row.SUB_TID || ''));
                 tr.append($('<td>').text(row.MCNO || ''));
+                tr.append($('<td>').text(row.MC_DIA || ''));
                 tr.append($('<td>').text(row.BUYER || ''));
                 tr.append($('<td>').text(row.BOOKING || ''));
                 tr.append($('<td>').text(row.SONO || ''));
@@ -140,16 +144,18 @@
                 tr.append($('<td>').text(row.FINISH_GSM || ''));
                 tr.append($('<td>').text(row.FINISH_DIA || ''));
                 tr.append($('<td>').text(row.OPEN_TUBE || ''));
-                tr.append($('<td>').text(row.LOT_NO || ''));
                 tr.append($('<td>').text(row.QTY || ''));
                 tr.append($('<td>').text(row.COLOR || ''));
+                tr.append($('<td>').text(row.SL_VDQ || ''));
+                tr.append($('<td>').text(row.LOT_NO || ''));
+
                 tbody.append(tr);
             });
         }
 
-     function buildDropdownContent(row){
+        function buildDropdownContent(row) {
 
-return `
+            return `
 <div class="qr-dropdown-panel">
 
 <div class="qr-content">
@@ -183,11 +189,14 @@ return `
             <div><b>Qty :</b> ${row.QTY||''}</div>
             <div><b>Color :</b> ${row.COLOR||''}</div>
 
+            <div><b>MC DIA :</b> ${row.MC_DIA||''}</div>
+            <div><b>SL/VDQ :</b> ${row.SL_VDQ||''}</div>
+
+            <div><b>LOT NO :</b> ${row.LOT_NO||''}</div>
+
         </div>
 
-        <div class="qr-lot">
-            <b>LOT NO :</b> ${row.LOT_NO||''}
-        </div>
+       
 
         <div class="qr-buttons">
             <button class="btn btn-success btn-sm qr-download-btn">Download</button>
@@ -202,7 +211,8 @@ return `
 </div>
 `;
 
-}
+        }
+
         function generateQrCode(row, target) {
             target.empty();
             var qrText = [
@@ -286,7 +296,7 @@ return `
                 '.qr-code-wrapper{width:260px;flex:0 0 260px;}' +
                 '.qr-code-wrapper img{width:100% !important;height:auto !important;border:1px solid #333;}' +
                 '.qr-info{flex:1;min-width:260px;font-size:14px;line-height:1.5;}' +
-                '.qr-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;}' +
+                '.qr-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}' +
                 '.qr-grid div{white-space:normal;}' +
                 '.qr-lot{margin-top:16px;border-top:1px solid #666;padding-top:10px;font-size:14px;line-height:1.5;}' +
                 '.qr-buttons{display:none !important;}' +
@@ -334,11 +344,11 @@ return `
             closeQrDropdown();
             var row = button.closest('tr');
             var data = button.data('row');
-var dropdownHtml =
-'<tr class="qr-dropdown-row">' +
-'<td colspan="16" style="padding:10px;background:#f8f9fa;">' +
-buildDropdownContent(data) +
-'</td></tr>';
+            var dropdownHtml =
+                '<tr class="qr-dropdown-row">' +
+                '<td colspan="16" style="padding:10px;background:#f8f9fa;">' +
+                buildDropdownContent(data) +
+                '</td></tr>';
             row.after(dropdownHtml);
             var panel = row.next().find('.qr-code-target');
             generateQrCode(data, panel);

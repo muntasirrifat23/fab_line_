@@ -67,6 +67,7 @@ if (mysqli_num_rows($checkResult) > 0) {
         'open_tube' => 'OPEN_TUBE',
         'lot_no' => 'LOT_NO',
         'qty' => 'QTY',
+        'sl_vdq' => 'SL_VDQ',
         'color' => 'COLOR'
     ];
     
@@ -155,6 +156,7 @@ $knownColumns = [
     'finish_dia' => 'FINISH_DIA',
     'open_tube' => 'OPEN_TUBE',
     'lot_no' => 'LOT_NO',
+    'sl_vdq' => 'SL_VDQ',
     'qty' => 'QTY',
     'color' => 'COLOR'
 ];

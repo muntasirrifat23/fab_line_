@@ -246,7 +246,7 @@ $user = strtolower($_SESSION['username'] ?? '');
         </div>
 
         <!-- 4.  -->
-        <!-- <div class="col-md-4 mb-3 d-flex">
+        <div class="col-md-4 mb-3 d-flex">
           <div class="report-card w-100 card-bg">
             <form method="POST" action="knitting_qr.php" class="h-100 w-100">
               <button type="submit" class="btn btn-report">
@@ -257,7 +257,9 @@ $user = strtolower($_SESSION['username'] ?? '');
               </button>
             </form>
           </div>
-        </div> -->
+        </div>
+
+        
         <!-- 1. DHU Report (Teal) -->
         <!-- <i class="fa-solid fa-chart-line card-btn"></i> -->
 

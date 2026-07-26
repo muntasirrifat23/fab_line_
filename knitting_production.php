@@ -496,7 +496,7 @@
       const QR_FIELDS = [
         'SUB_TID', 'MCNO', 'BUYER', 'BOOKING', 'SONO', 'STYLE',
         'FABRICS_TYPE', 'YARN_COUNT', 'YARN_TYPE', 'FINISH_GSM',
-        'FINISH_DIA', 'OPEN_TUBE', 'LOT_NO', 'QTY', 'COLOR'
+        'FINISH_DIA', 'OPEN_TUBE', 'LOT_NO', 'QTY', 'COLOR', 'SL_VDQ'
       ];
 
       const FIELD_LABELS = {
@@ -686,6 +686,10 @@
             <div>
               <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">LOT NO</div>
               <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.LOT_NO || '-'}</div>
+            </div>
+            <div>
+              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">SL/VDQ</div>
+              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.SL_VDQ || '-'}</div>
             </div>
           </div>
           
