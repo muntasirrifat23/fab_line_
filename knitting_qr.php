@@ -38,7 +38,7 @@
         .qr-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 4px ;
+            gap: 4px;
         }
 
         .qr-grid div {
@@ -154,7 +154,6 @@
         }
 
         function buildDropdownContent(row) {
-
             return `
 <div class="qr-dropdown-panel">
 
@@ -196,8 +195,6 @@
 
         </div>
 
-       
-
         <div class="qr-buttons">
             <button class="btn btn-success btn-sm qr-download-btn">Download</button>
             <button class="btn btn-primary btn-sm qr-print-btn">Print QR</button>
@@ -210,29 +207,43 @@
 
 </div>
 `;
-
         }
 
         function generateQrCode(row, target) {
             target.empty();
-            var qrText = [
-                row.SUB_TID || '',
-                row.MCNO || '',
-                row.BUYER || '',
-                row.SUPPLIER || '',
-                row.BOOKING || '',
-                row.SONO || '',
-                row.STYLE || '',
-                row.FABRICS_TYPE || '',
-                row.YARN_COUNT || '',
-                row.YARN_TYPE || '',
-                row.FINISH_GSM || '',
-                row.FINISH_DIA || '',
-                row.OPEN_TUBE || '',
-                row.LOT_NO || '',
-                row.QTY || '',
-                row.COLOR || ''
-            ].join(' | ');
+
+            // *** IMPORTANT FIX: Use the exact same field order as Production page expects ***
+            // Order: SUB_TID, BOOKING, SONO, BUYER, MCNO, MC_DIA, STYLE, YARN_TYPE, YARN_COUNT, 
+            //        FABRICS_TYPE, FINISH_GSM, FINISH_DIA, OPEN_TUBE, COLOR, QTY, SL_VDQ, LOT_NO
+            var qrFields = [
+                'SUB_TID',
+                'BOOKING',
+                'SONO',
+                'BUYER',
+                'MCNO',
+                'MC_DIA',
+                'STYLE',
+                'YARN_TYPE',
+                'YARN_COUNT',
+                'FABRICS_TYPE',
+                'FINISH_GSM',
+                'FINISH_DIA',
+                'OPEN_TUBE',
+                'COLOR',
+                'QTY',
+                'SL_VDQ',
+                'LOT_NO'
+            ];
+
+            var qrText = qrFields.map(function(field) {
+                var value = row[field] || '';
+                // Clean and trim value to prevent parsing issues
+                return String(value).trim();
+            }).join('|');
+
+            // Log for debugging
+            console.log('QR Text generated:', qrText);
+            console.log('QR Field count:', qrFields.length);
 
             new QRCode(target[0], {
                 text: qrText || 'QR CODE',
@@ -302,7 +313,8 @@
                 '.qr-buttons{display:none !important;}' +
                 '</style>';
 
-            var printHtml = '<html><head><title>Print QR Code</title>' + printStyles + '</head><body>' + clone.outerHTML + '</body></html>';
+            var printHtml = '<html><head><title>Print QR Code</title>' + printStyles + '</head><body>' + clone.outerHTML +
+                '</body></html>';
 
             var iframe = document.createElement('iframe');
             iframe.style.position = 'fixed';
@@ -346,7 +358,7 @@
             var data = button.data('row');
             var dropdownHtml =
                 '<tr class="qr-dropdown-row">' +
-                '<td colspan="16" style="padding:10px;background:#f8f9fa;">' +
+                '<td colspan="18" style="padding:10px;background:#f8f9fa;">' +
                 buildDropdownContent(data) +
                 '</td></tr>';
             row.after(dropdownHtml);
@@ -396,10 +408,12 @@
                 })
                 .done(function(resp) {
                     if (resp && resp.success) renderTableRows(resp.data);
-                    else $('#tableBody').html('<tr><td colspan="21" class="text-center small-muted">No data found</td></tr>');
+                    else $('#tableBody').html(
+                    '<tr><td colspan="21" class="text-center small-muted">No data found</td></tr>');
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr><td colspan="16" class="text-center text-danger">Error searching</td></tr>');
+                    $('#tableBody').html(
+                        '<tr><td colspan="16" class="text-center text-danger">Error searching</td></tr>');
                 })
                 .always(function() {
                     $('#searchBtn').prop('disabled', false).text('Search');
@@ -415,10 +429,12 @@
                 })
                 .done(function(resp) {
                     if (resp && resp.success) renderTableRows(resp.data);
-                    else $('#tableBody').html('<tr><td colspan="21" class="text-center small-muted">No data returned</td></tr>');
+                    else $('#tableBody').html(
+                    '<tr><td colspan="21" class="text-center small-muted">No data returned</td></tr>');
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr><td colspan="21" class="text-center text-danger">Error loading data</td></tr>');
+                    $('#tableBody').html(
+                        '<tr><td colspan="21" class="text-center text-danger">Error loading data</td></tr>');
                 });
         }
 

@@ -228,10 +228,65 @@
       margin-left: 10px;
     }
 
+    .single-row {
+      grid-template-columns: 1fr !important;
+    }
+
     .data-row.default-row {
-      border-left-color: #7a8bb0;
-      opacity: 0.8;
-      background: #131d30;
+      display: grid !important;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 14px;
+      align-items: flex-start;
+      height: auto;
+      min-height: auto;
+    }
+
+    .data-row.default-row>div {
+      min-width: 0;
+    }
+
+    .data-row.default-row div div:first-child {
+      font-size: 11px;
+      color: #8fa5cf;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+    }
+
+    .data-row.default-row div div:last-child {
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+
+      /* Important */
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      line-height: 1.45;
+    }
+
+    .field-block {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: auto;
+    }
+
+    .field-block .field-label {
+      font-size: 0.7rem;
+      color: #8fa5cf;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.85;
+    }
+
+    .field-block .field-value {
+      font-size: 0.95rem;
+      color: #ffffff;
+      font-weight: 700;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      line-height: 1.3;
     }
 
     .data-row.default-row .label {
@@ -447,6 +502,19 @@
         min-height: 200px;
       }
     }
+
+    @media(max-width:768px){
+      .data-row.default-row{
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
+      }
+    }
+
+    @media(max-width:480px){
+      .data-row.default-row{
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+    }
+
   </style>
 </head>
 
@@ -494,27 +562,29 @@
       const cameraControls = document.getElementById('cameraControls');
 
       const QR_FIELDS = [
-        'SUB_TID', 'MCNO', 'BUYER', 'BOOKING', 'SONO', 'STYLE',
-        'FABRICS_TYPE', 'YARN_COUNT', 'YARN_TYPE', 'FINISH_GSM',
-        'FINISH_DIA', 'OPEN_TUBE', 'LOT_NO', 'QTY', 'COLOR', 'SL_VDQ'
+        'SUB_TID', 'BOOKING', 'SONO', 'BUYER', 'MCNO', 'MC_DIA', 'STYLE',
+        'YARN_TYPE', 'YARN_COUNT', 'FABRICS_TYPE', 'FINISH_GSM', 'FINISH_DIA',
+        'OPEN_TUBE', 'COLOR', 'QTY', 'SL_VDQ', 'LOT_NO'
       ];
 
       const FIELD_LABELS = {
         'SUB_TID': 'Program',
-        'MCNO': 'Machine No',
-        'BUYER': 'Buyer',
         'BOOKING': 'Booking',
         'SONO': 'SONO',
+        'BUYER': 'Buyer',
+        'MCNO': 'Machine No',
+        'MC_DIA': 'Machine Dia',
         'STYLE': 'Style',
-        'FABRICS_TYPE': 'Fabrics Type',
-        'YARN_COUNT': 'Yarn Count',
         'YARN_TYPE': 'Yarn Type',
+        'YARN_COUNT': 'Yarn Count',
+        'FABRICS_TYPE': 'Fabrics Type',
         'FINISH_GSM': 'Finish GSM',
         'FINISH_DIA': 'Finish Dia',
         'OPEN_TUBE': 'Open / Tube',
-        'LOT_NO': 'Lot No',
+        'COLOR': 'Color',
         'QTY': 'Qty',
-        'COLOR': 'Color'
+        'SL_VDQ': 'SL / VDQ',
+        'LOT_NO': 'Lot No'
       };
 
       let scannedInfo = null;
@@ -551,35 +621,131 @@
 
       function parseQrText(qrText) {
         const raw = String(qrText || '').trim();
+        // Handle both '|' and ' | ' delimiters
         const normalized = raw.replace(/\s*\|\s*/g, '|');
-        let parts = normalized.split('|').map(part => part.trim());
-        if (parts.length > 0 && parts[parts.length - 1] === '') {
+        let parts = normalized.split('|').map(part => String(part).trim());
+        
+        // Remove trailing empty parts
+        while (parts.length > 0 && parts[parts.length - 1] === '') {
           parts.pop();
         }
 
-        const originalLength = parts.length;
-        if (originalLength === QR_FIELDS.length - 1) {
-          parts.splice(3, 0, '');
-        } else if (originalLength === QR_FIELDS.length - 2) {
-          parts.splice(3, 0, '');
-          parts.splice(11, 0, '');
+        console.log('✓ Parsed parts count:', parts.length, 'Parts:', parts);
+
+        const format16WithSupplier = [
+          'SUB_TID', 'MCNO', 'BUYER', 'SUPPLIER', 'BOOKING', 'SONO', 'STYLE',
+          'FABRICS_TYPE', 'YARN_COUNT', 'YARN_TYPE', 'FINISH_GSM', 'FINISH_DIA',
+          'OPEN_TUBE', 'LOT_NO', 'QTY', 'COLOR'
+        ];
+
+        const format16WithoutSupplier = [
+          'SUB_TID', 'MCNO', 'BUYER', 'BOOKING', 'SONO', 'STYLE',
+          'FABRICS_TYPE', 'YARN_COUNT', 'YARN_TYPE', 'FINISH_GSM', 'FINISH_DIA',
+          'OPEN_TUBE', 'LOT_NO', 'QTY', 'COLOR'
+        ];
+
+        const format17 = [
+          'SUB_TID', 'BOOKING', 'SONO', 'BUYER', 'MCNO', 'MC_DIA', 'STYLE',
+          'YARN_TYPE', 'YARN_COUNT', 'FABRICS_TYPE', 'FINISH_GSM', 'FINISH_DIA',
+          'OPEN_TUBE', 'COLOR', 'QTY', 'SL_VDQ', 'LOT_NO'
+        ];
+
+        const buildData = (fields) => {
+          const data = {};
+          fields.forEach((field, index) => {
+            data[field] = parts[index] || '';
+          });
+          data.raw = raw;
+          data.parsed = true;
+          return data;
+        };
+
+        // Soft validators - less strict
+        const isNumeric = (value) => /^\d+$/.test(value);
+        const looksLikeBooking = (value) => isNumeric(value) && value.length >= 4;
+        const looksLikeSono = (value) => isNumeric(value) && value.length >= 4;
+        const looksLikeMachineNo = (value) => /^[A-Za-z0-9\-\/]+$/.test(value) && value.length >= 2;
+        const looksLikeBuyer = (value) => /[A-Za-z]/.test(value) && value.length >= 2;
+
+        // Priority 1: Check for 17-field format (from Knitting QR Report) - most common
+        if (parts.length === format17.length) {
+          // Soft validation: check key fields without being too strict
+          const booking = parts[1];
+          const sono = parts[2];
+          const buyer = parts[3];
+          const mcno = parts[4];
+          
+          // If at least 2 key fields look right, accept it
+          const keyFieldsValid = 
+            (looksLikeBooking(booking) ? 1 : 0) +
+            (looksLikeSono(sono) ? 1 : 0) +
+            (looksLikeBuyer(buyer) ? 1 : 0) +
+            (looksLikeMachineNo(mcno) ? 1 : 0);
+          
+          if (keyFieldsValid >= 2 || (booking && sono)) {
+            console.log('✓ Detected format17 (17 fields from QR Report), valid fields:', keyFieldsValid);
+            return buildData(format17);
+          }
+          
+          // Even if validation is weak, if length matches exactly, parse as format17
+          console.log('⚠ Format17 length match, accepting as fallback (valid fields:', keyFieldsValid, ')');
+          return buildData(format17);
         }
 
-        if (parts.length !== QR_FIELDS.length) {
-          return {
-            raw,
-            parsed: false,
-            parts
-          };
+        // Priority 2: Check for 16-field format with supplier
+        if (parts.length === format16WithSupplier.length) {
+          const mcno = parts[1];
+          const booking = parts[4];
+          const sono = parts[5];
+          
+          if ((looksLikeMachineNo(mcno) || mcno) && looksLikeBooking(booking) && looksLikeSono(sono)) {
+            console.log('✓ Detected format16WithSupplier');
+            return buildData(format16WithSupplier);
+          }
+          // If supplier is blank, still try to parse
+          if (parts[3] === '' && booking && sono) {
+            console.log('✓ Detected format16WithSupplier (empty supplier)');
+            return buildData(format16WithSupplier);
+          }
         }
 
-        const data = {};
-        QR_FIELDS.forEach((field, index) => {
-          data[field] = parts[index] || '';
-        });
-        data.raw = raw;
-        data.parsed = true;
-        return data;
+        // Priority 3: Check for 16-field format without supplier
+        if (parts.length === format16WithoutSupplier.length) {
+          const mcno = parts[1];
+          const booking = parts[3];
+          const sono = parts[4];
+          
+          if ((looksLikeMachineNo(mcno) || mcno) && booking && sono) {
+            console.log('✓ Detected format16WithoutSupplier');
+            return buildData(format16WithoutSupplier);
+          }
+        }
+
+        // Priority 4: Check if length matches QR_FIELDS exactly
+        if (parts.length === QR_FIELDS.length) {
+          console.log('✓ Detected QR_FIELDS format (length match)');
+          return buildData(QR_FIELDS);
+        }
+
+        // Fallback: Try to match by checking if we have reasonable field patterns
+        if (parts.length >= 10) {
+          // If we have at least 10 parts that look semi-reasonable, try format17
+          const hasGoodData = parts.filter(p => p && p.length > 0).length >= 8;
+          if (hasGoodData) {
+            console.log('⚠ Partial data detected, attempting format17 interpretation');
+            if (parts.length <= 17) {
+              return buildData(format17.slice(0, parts.length).concat(format17.slice(parts.length)));
+            }
+          }
+        }
+
+        // If nothing matches, return raw data
+        console.log('❌ No format detected - returning raw data. Parts count:', parts.length);
+        return {
+          raw,
+          parsed: false,
+          parts
+        };
       }
 
       function renderScannedData(qrText) {
@@ -613,86 +779,36 @@
           return;
         }
 
+        const buildFieldRow = (fields) => `
+          <div class="data-row default-row">
+            ${fields.map(field => `
+              <div class="field-block">
+                <span class="field-label">${FIELD_LABELS[field] || field}</span>
+                <span class="field-value">${scannedInfo[field] || '-'}</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+
         let html = `
           <div class="data-row header-row" style="border-left-color:#4fc3f7;">
             <span class="label">✅ QR Scanned <span class="scanned-badge">program</span></span>
             <span class="value">${new Date().toLocaleTimeString()}</span>
           </div>
-  
-          <div class="data-row default-row" style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;align-items:flex-start; margin-bottom:4px;">
-           <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">PROGRAM</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.SUB_TID || '-'}</div>
-            </div> 
-          <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">BOOKING NO</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.BOOKING || '-'}</div>
-            </div>
-            <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">SONO</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.SONO || '-'}</div>
-            </div>
-            <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">BUYER</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.BUYER || '-'}</div>
-            </div>
-            <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">STYLE</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.STYLE || '-'}</div>
-            </div>
-          </div>
+        `;
 
-       
-          <div class="data-row default-row" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:flex-start; margin-bottom:4px;">
-            <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">YARN TYPE</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.YARN_TYPE || '-'}</div>
-            </div>
-            <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">YARN COUNT</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.YARN_COUNT || '-'}</div>
-            </div>
-            <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">FABRICS TYPE</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.FABRICS_TYPE || '-'}</div>
-            </div>
-          </div>
+        html += buildFieldRow(['SUB_TID', 'BOOKING', 'SONO', 'BUYER']);
+        html += buildFieldRow(['MCNO', 'MC_DIA', 'STYLE', 'YARN_TYPE']);
+        html += buildFieldRow(['YARN_COUNT', 'FABRICS_TYPE', 'FINISH_GSM', 'FINISH_DIA']);
+        html += buildFieldRow(['OPEN_TUBE', 'COLOR', 'QTY', 'SL_VDQ']);
 
-    
-          <div class="data-row default-row" style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;align-items:flex-start; margin-bottom:4px;">
-            <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">FINISH GSM</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.FINISH_GSM || '-'}</div>
-            </div>
-            <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">FINISH DIA</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.FINISH_DIA || '-'}</div>
-            </div>
-            <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">OPEN / TUBE</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.OPEN_TUBE || '-'}</div>
-            </div>
-             <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">COLOR</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.COLOR || '-'}</div>
-            </div>
-            <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">QTY</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.QTY || '-'}</div>
+        html += `
+          <div class="data-row default-row single-row">
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.LOT_NO}</span>
+              <span class="field-value">${scannedInfo.LOT_NO || '-'}</span>
             </div>
           </div>
-
-          <div class="data-row default-row" style="display:grid;grid-template-columns:repeat(1,minmax(0,1fr));gap:14px;align-items:flex-start;">
-            <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">LOT NO</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.LOT_NO || '-'}</div>
-            </div>
-            <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">SL/VDQ</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.SL_VDQ || '-'}</div>
-            </div>
-          </div>
-          
           <button class="rescan-btn" onclick="window.restartQrScanner()">
             <i class="fas fa-redo"></i> Scan Another QR
           </button>
