@@ -657,6 +657,7 @@
           });
           data.raw = raw;
           data.parsed = true;
+          data.originalQTY = data.QTY || '';
           return data;
         };
 
@@ -864,28 +865,97 @@
           return;
         }
 
+        const qtyValue = scannedInfo.QTY || '';
+
+        const originalQty = scannedInfo.originalQTY || scannedInfo.QTY || '';
         let html = `
           <div class="data-row header-row" style="border-left-color:#3b82f6;">
             <span class="label">✏️ Edit Mode <span class="scanned-badge" style="background:#3b82f6;">editing</span></span>
             <span class="value">${new Date().toLocaleTimeString()}</span>
           </div>
-          <div class="message-row" style="margin-bottom:8px;">Update values below, then click <strong>Production</strong> to save.</div>
-        `;
-
-        QR_FIELDS.forEach(field => {
-          const label = FIELD_LABELS[field] || field;
-          const value = scannedInfo[field] || '';
-          html += `
-            <div class="edit-form-row">
-              <label class="field-label">${label}</label>
-              <input type="text" class="field-input" id="edit-${field}" value="${value}">
+          <div class="message-row" style="margin-bottom:8px;">Only <strong>Qty</strong> is editable. Maximum available qty: <strong>${originalQty || 'N/A'}</strong>.</div>
+          <div class="data-row default-row">
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.SUB_TID}</span>
+              <span class="field-value">${scannedInfo.SUB_TID || '-'}</span>
             </div>
-          `;
-        });
-
-        html += `<button class="rescan-btn" onclick="window.restartQrScanner()">
-          <i class="fas fa-redo"></i> Scan Another QR
-        </button>`;
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.BOOKING}</span>
+              <span class="field-value">${scannedInfo.BOOKING || '-'}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.SONO}</span>
+              <span class="field-value">${scannedInfo.SONO || '-'}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.BUYER}</span>
+              <span class="field-value">${scannedInfo.BUYER || '-'}</span>
+            </div>
+          </div>
+          <div class="data-row default-row">
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.MCNO}</span>
+              <span class="field-value">${scannedInfo.MCNO || '-'}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.MC_DIA}</span>
+              <span class="field-value">${scannedInfo.MC_DIA || '-'}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.STYLE}</span>
+              <span class="field-value">${scannedInfo.STYLE || '-'}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.YARN_TYPE}</span>
+              <span class="field-value">${scannedInfo.YARN_TYPE || '-'}</span>
+            </div>
+          </div>
+          <div class="data-row default-row">
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.YARN_COUNT}</span>
+              <span class="field-value">${scannedInfo.YARN_COUNT || '-'}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.FABRICS_TYPE}</span>
+              <span class="field-value">${scannedInfo.FABRICS_TYPE || '-'}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.FINISH_GSM}</span>
+              <span class="field-value">${scannedInfo.FINISH_GSM || '-'}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.FINISH_DIA}</span>
+              <span class="field-value">${scannedInfo.FINISH_DIA || '-'}</span>
+            </div>
+          </div>
+          <div class="data-row default-row">
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.OPEN_TUBE}</span>
+              <span class="field-value">${scannedInfo.OPEN_TUBE || '-'}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.COLOR}</span>
+              <span class="field-value">${scannedInfo.COLOR || '-'}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.SL_VDQ}</span>
+              <span class="field-value">${scannedInfo.SL_VDQ || '-'}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.QTY}</span>
+              <input type="text" class="field-input" id="edit-QTY" value="${qtyValue}">
+            </div>
+          </div>
+          <div class="data-row default-row single-row">
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.LOT_NO}</span>
+              <span class="field-value">${scannedInfo.LOT_NO || '-'}</span>
+            </div>
+          </div>
+          <button class="rescan-btn" onclick="window.restartQrScanner()">
+            <i class="fas fa-redo"></i> Scan Another QR
+          </button>
+        `;
 
         resultContainer.innerHTML = html;
 
@@ -916,16 +986,37 @@
         if (!scannedInfo || !scannedInfo.parsed) {
           return;
         }
-        QR_FIELDS.forEach(field => {
-          const input = document.getElementById(`edit-${field}`);
-          if (input) {
-            scannedInfo[field] = input.value.trim();
-          }
-        });
 
+        const input = document.getElementById('edit-QTY');
+        if (!input) {
+          return;
+        }
+
+        const newQtyRaw = input.value.trim();
+        const maxQty = parseFloat((scannedInfo.originalQTY || scannedInfo.QTY || '').replace(/,/g, '.')) || 0;
+        const newQty = parseFloat(newQtyRaw.replace(/,/g, '.'));
+
+        if (!newQtyRaw) {
+          alert('Qty cannot be empty.');
+          return;
+        }
+        if (isNaN(newQty) || newQty <= 0) {
+          alert('Qty must be a valid number.');
+          return;
+        }
+        if (maxQty > 0 && newQty > maxQty + 0.000001) {
+          alert('Qty exceeds available amount. Maximum available qty: ' + (scannedInfo.originalQTY || scannedInfo.QTY));
+          return;
+        }
+
+        const previousOriginalQty = scannedInfo.originalQTY;
+        scannedInfo.QTY = newQtyRaw;
         scannedInfo.raw = QR_FIELDS.map(field => scannedInfo[field] || '').join(' | ');
         isEditMode = false;
         renderScannedData(scannedInfo.raw);
+        if (scannedInfo && scannedInfo.parsed) {
+          scannedInfo.originalQTY = previousOriginalQty;
+        }
         renderProductionActions();
       }
 
