@@ -158,7 +158,7 @@
       margin-top: 20px;
       border: 1px solid #29364f;
       box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
-      max-height: 500px;
+      max-height: 800px;
       overflow-y: auto;
     }
 
@@ -194,7 +194,7 @@
     }
 
     #result-content {
-      min-height: 70px;
+      min-height: 120px;
       display: flex;
       flex-direction: column;
       gap: 4px;
