@@ -158,7 +158,7 @@
       margin-top: 20px;
       border: 1px solid #29364f;
       box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
-      max-height: 800px;
+      /* max-height: 00px; */
       overflow-y: auto;
     }
 
@@ -194,7 +194,7 @@
     }
 
     #result-content {
-      min-height: 120px;
+      min-height: 140px;
       display: flex;
       flex-direction: column;
       gap: 4px;
@@ -218,7 +218,7 @@
     .data-row .label {
       color: #8bb1ff;
       font-weight: 600;
-      min-width: 120px;
+      min-width: 140px;
     }
 
     .data-row .value {
@@ -1235,4 +1235,4 @@
   </script>
 </body>
 
-</html>
+</html> 
