@@ -16,7 +16,7 @@
 
     body {
       font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
-      background: #0b0f1a;
+      background: #c7c8ca;
       min-height: 100vh;
       display: flex;
       justify-content: center;
@@ -194,7 +194,7 @@
     }
 
     #result-content {
-      min-height: 140px;
+      min-height: auto;
       display: flex;
       flex-direction: column;
       gap: 4px;
@@ -553,9 +553,22 @@
       </div>
       <div id="action-content" class="action-content"></div>
     </div>
-    <div class="footer-note" style="margin-top:16px; text-align:center; color:#44557a; font-size:0.7rem; letter-spacing:0.5px;">
-      <i class="fas fa-camera"></i> Scan QR from Knitting Report · data shown instantly <i class="fas fa-arrow-right"></i>
-    </div>
+    <!-- FOOTER -->
+<div class="footer-note" style="margin-top:6px; text-align:center; color:#44557a; letter-spacing:0.5px;">
+    <button class="btn btn-dark"
+        onclick="window.location.href='initialPage.php';"
+        style="background-color:white;
+               color:black;
+               padding:12px;
+               border-radius:8px;
+               cursor:pointer;
+               transition:all .2s ease;
+               font-weight:bold;
+               font-size:1rem;">
+        <i class="fa-solid fa-arrow-left" style="margin-right:6px;"></i>
+        Back to Initial Page
+    </button>
+</div>
   </div>
 
   <script>
@@ -575,7 +588,7 @@
       ];
 
       const FIELD_LABELS = {
-        'SUB_TID': 'Program',
+        'SUB_TID': 'ROLL NO',
         'BOOKING': 'Booking',
         'SONO': 'SONO',
         'BUYER': 'Buyer',
@@ -601,25 +614,16 @@
       let scanCount = 0;
 
       const DEFAULT_DATA = [{
-          label: '📋 Status',
-          value: 'Awaiting QR scan'
-        },
-        {
-          label: '📷 Camera',
-          value: 'Ready'
-        },
-        {
-          label: '💡 Hint',
-          value: 'Scan QR code from Knitting Report'
-        }
-      ];
+        label: 'Status',
+        value: 'Awaiting QR scan'
+      }];
 
       function renderDefaultData() {
         scannedInfo = null;
         isEditMode = false;
         hideActionContent();
 
-        let html = `<div class="data-row header-row"><span class="label">📋 Default Information</span><span class="value"></span></div>`;
+        let html = `<div class="data-row header-row"><span class="label">Default Information</span><span class="value"></span></div>`;
         DEFAULT_DATA.forEach(f => {
           html += `<div class="data-row default-row"><span class="label">${f.label}</span><span class="value">${f.value}</span></div>`;
         });
@@ -800,7 +804,7 @@
 
         let html = `
           <div class="data-row header-row" style="border-left-color:#4fc3f7;">
-            <span class="label">✅ QR Scanned <span class="scanned-badge">program</span></span>
+            <span class="label">✅ QR Scanned <span class="scanned-badge">ROLL NO</span></span>
             <span class="value">${new Date().toLocaleTimeString()}</span>
           </div>
         `;
@@ -854,9 +858,7 @@
         document.getElementById('productionBtn').addEventListener('click', handleProductionSave);
         document.getElementById('editProductionBtn').addEventListener('click', toggleEditMode);
         document.getElementById('cancelProductionBtn').addEventListener('click', function() {
-          isEditMode = false;
-          renderScannedData(scannedInfo.raw);
-          hideActionContent();
+          window.location.reload();
         });
       }
 
@@ -1035,7 +1037,7 @@
 
       function handleProductionSave() {
         if (!scannedInfo || !scannedInfo.parsed) {
-          alert('No valid program data available to save.');
+          alert('No valid ROLL NO data available to save.');
           return;
         }
 
