@@ -978,21 +978,20 @@
         resultContainer.innerHTML = html;
 
         actionContainer.innerHTML = `
-          <div class="action-card">
-            <button class="btn-action production" type="button" id="productionBtn">
-              <i class="fas fa-save"></i> Production
+        <div class="action-card">
+        
+            <button class="btn-action production" type="button" id="editedProductionBtn">
+                <i class="fas fa-save"></i> Edited Production
             </button>
-            <button class="btn-action edit" type="button" id="saveEditBtn">
-              <i class="fas fa-check"></i> Save Edit
-            </button>
+        
             <button class="btn-action cancel" type="button" id="cancelProductionBtn">
-              <i class="fas fa-times"></i> Cancel
+                <i class="fas fa-times"></i> Cancel
             </button>
-          </div>
+        
+        </div>
         `;
 
-        document.getElementById('productionBtn').addEventListener('click', handleProductionSave);
-        document.getElementById('saveEditBtn').addEventListener('click', saveEditedData);
+        document.getElementById("editedProductionBtn").addEventListener("click", editedProductionSave);
         document.getElementById('cancelProductionBtn').addEventListener('click', function() {
           isEditMode = false;
           renderScannedData(scannedInfo.raw);
@@ -1036,7 +1035,40 @@
         if (scannedInfo && scannedInfo.parsed) {
           scannedInfo.originalQTY = previousOriginalQty;
         }
-        renderProductionActions();
+
+        const productionBtn = document.getElementById("productionBtn");
+        if (productionBtn) {
+          productionBtn.disabled = false;
+        }
+      }
+
+      function editedProductionSave() {
+
+        const input = document.getElementById("edit-QTY");
+        if (!input) return;
+
+        const newQtyRaw = input.value.trim();
+        const maxQty = parseFloat(scannedInfo.originalQTY || 0);
+        const newQty = parseFloat(newQtyRaw);
+
+        if (newQtyRaw === "") {
+          alert("Qty cannot be empty");
+          return;
+        }
+
+        if (isNaN(newQty) || newQty <= 0) {
+          alert("Invalid Qty");
+          return;
+        }
+
+        if (newQty > maxQty) {
+          alert("Qty exceeds available Qty");
+          return;
+        }
+
+        scannedInfo.QTY = newQtyRaw;
+        handleProductionSave();
+
       }
 
       function handleProductionSave() {
