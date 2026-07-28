@@ -1126,18 +1126,25 @@
       }
 
       function renderResultMessage(message, type) {
-        const msgHtml = `<div class="message-row ${type}">${message}</div>`;
-        actionContainer.innerHTML = msgHtml;
 
-        if (type === 'success') {
+        actionContainer.innerHTML = `
+        <div class="message-row ${type}">
+            ${message}<br>
+            <small>Page will reload in 2 seconds...</small>
+        </div>
+    `;
+
+        if (type === "success") {
+
+          const btn = document.getElementById("productionBtn");
+          if (btn) btn.disabled = true;
+
           setTimeout(() => {
-            if (scannedInfo && scannedInfo.parsed) {
-              renderProductionActions();
-            } else {
-              hideActionContent();
-            }
-          }, 5000);
+            window.location.reload();
+          }, 2000);
+
         }
+
       }
 
       function startScanner() {
