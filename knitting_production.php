@@ -229,7 +229,15 @@
     }
 
     .single-row {
-      grid-template-columns: 1fr !important;
+      display: grid !important;
+      grid-template-columns: 2fr 1fr !important;
+      gap: 14px;
+    }
+
+    @media (max-width:480px) {
+      .single-row {
+        grid-template-columns: 1fr 1fr !important;
+      }
     }
 
     .data-row.default-row {
@@ -503,18 +511,17 @@
       }
     }
 
-    @media(max-width:768px){
-      .data-row.default-row{
+    @media(max-width:768px) {
+      .data-row.default-row {
         grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
       }
     }
 
-    @media(max-width:480px){
-      .data-row.default-row{
+    @media(max-width:480px) {
+      .data-row.default-row {
         grid-template-columns: repeat(2, 1fr) !important;
       }
     }
-
   </style>
 </head>
 
@@ -624,7 +631,7 @@
         // Handle both '|' and ' | ' delimiters
         const normalized = raw.replace(/\s*\|\s*/g, '|');
         let parts = normalized.split('|').map(part => String(part).trim());
-        
+
         // Remove trailing empty parts
         while (parts.length > 0 && parts[parts.length - 1] === '') {
           parts.pop();
@@ -675,19 +682,19 @@
           const sono = parts[2];
           const buyer = parts[3];
           const mcno = parts[4];
-          
+
           // If at least 2 key fields look right, accept it
-          const keyFieldsValid = 
+          const keyFieldsValid =
             (looksLikeBooking(booking) ? 1 : 0) +
             (looksLikeSono(sono) ? 1 : 0) +
             (looksLikeBuyer(buyer) ? 1 : 0) +
             (looksLikeMachineNo(mcno) ? 1 : 0);
-          
+
           if (keyFieldsValid >= 2 || (booking && sono)) {
             console.log('✓ Detected format17 (17 fields from QR Report), valid fields:', keyFieldsValid);
             return buildData(format17);
           }
-          
+
           // Even if validation is weak, if length matches exactly, parse as format17
           console.log('⚠ Format17 length match, accepting as fallback (valid fields:', keyFieldsValid, ')');
           return buildData(format17);
@@ -698,7 +705,7 @@
           const mcno = parts[1];
           const booking = parts[4];
           const sono = parts[5];
-          
+
           if ((looksLikeMachineNo(mcno) || mcno) && looksLikeBooking(booking) && looksLikeSono(sono)) {
             console.log('✓ Detected format16WithSupplier');
             return buildData(format16WithSupplier);
@@ -715,7 +722,7 @@
           const mcno = parts[1];
           const booking = parts[3];
           const sono = parts[4];
-          
+
           if ((looksLikeMachineNo(mcno) || mcno) && booking && sono) {
             console.log('✓ Detected format16WithoutSupplier');
             return buildData(format16WithoutSupplier);
@@ -798,16 +805,21 @@
           </div>
         `;
 
-        html += buildFieldRow(['SUB_TID', 'BOOKING', 'SONO', 'BUYER']);
-        html += buildFieldRow(['MCNO', 'MC_DIA', 'STYLE', 'YARN_TYPE']);
-        html += buildFieldRow(['YARN_COUNT', 'FABRICS_TYPE', 'FINISH_GSM', 'FINISH_DIA']);
-        html += buildFieldRow(['OPEN_TUBE', 'COLOR', 'QTY', 'SL_VDQ']);
+        html += buildFieldRow(['SUB_TID', 'BOOKING', 'SONO']);
+        html += buildFieldRow(['MCNO', 'MC_DIA', 'BUYER']);
+        html += buildFieldRow(['STYLE', 'YARN_TYPE', 'YARN_COUNT']);
+        html += buildFieldRow(['FABRICS_TYPE', 'FINISH_GSM', 'FINISH_DIA']);
+        html += buildFieldRow(['OPEN_TUBE', 'COLOR', 'SL_VDQ']);
 
         html += `
           <div class="data-row default-row single-row">
             <div class="field-block">
               <span class="field-label">${FIELD_LABELS.LOT_NO}</span>
               <span class="field-value">${scannedInfo.LOT_NO || '-'}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.QTY}</span>
+              <span class="field-value">${scannedInfo.QTY || '-'}</span>
             </div>
           </div>
           <button class="rescan-btn" onclick="window.restartQrScanner()">
@@ -941,15 +953,16 @@
               <span class="field-label">${FIELD_LABELS.SL_VDQ}</span>
               <span class="field-value">${scannedInfo.SL_VDQ || '-'}</span>
             </div>
-            <div class="field-block">
-              <span class="field-label">${FIELD_LABELS.QTY}</span>
-              <input type="text" class="field-input" id="edit-QTY" value="${qtyValue}">
-            </div>
+        
           </div>
           <div class="data-row default-row single-row">
             <div class="field-block">
               <span class="field-label">${FIELD_LABELS.LOT_NO}</span>
               <span class="field-value">${scannedInfo.LOT_NO || '-'}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.QTY}</span>
+              <input type="text" class="field-input" id="edit-QTY" value="${qtyValue}">
             </div>
           </div>
           <button class="rescan-btn" onclick="window.restartQrScanner()">
@@ -1235,4 +1248,4 @@
   </script>
 </body>
 
-</html> 
+</html>
