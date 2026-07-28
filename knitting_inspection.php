@@ -403,21 +403,23 @@
           aspectRatio: 1.0
         };
 
-        // Use default camera (environment preferred)
-        const cameraConstraints = { facingMode: "environment" };
-
-        html5QrCode.start(
-          cameraConstraints,
-          config,
-          onScanSuccess,
-          onScanError
-        ).then(() => {
+        Html5Qrcode.getCameras().then(devices => {
+          if (devices && devices.length > 0) {
+            let selectedCameraId = devices[0].id;
+            for (let i = 0; i < devices.length; i++) {
+              if (devices[i].label.toLowerCase().includes("back")) {
+                selectedCameraId = devices[i].id;
+                break;
+              }
+            }
+            return html5QrCode.start(selectedCameraId, config, onScanSuccess, onScanError);
+          } else {
+            throw new Error("No cameras found on this device.");
+          }
+        }).then(() => {
           isScanning = true;
           cameraStatus.innerText = 'Scanning';
           cameraStatus.style.color = '#8bcbff';
-          // On start we also reset to default data (if no scan yet)
-          // but only if result panel is empty or default already shown
-          // we keep default until scan occurs.
           if (resultContainer.children.length === 0) {
             renderDefaultData();
           }
@@ -425,7 +427,6 @@
           console.error("Camera start error:", err);
           cameraStatus.innerText = 'Camera error';
           cameraStatus.style.color = '#f7a1a1';
-          // show error in result?
           resultContainer.innerHTML = `
             <div class="data-row default-row" style="border-left-color: #c44;">
               <strong><i class="fas fa-exclamation-triangle"></i> Camera unavailable</strong>
