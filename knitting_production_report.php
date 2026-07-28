@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Report | Program</title>
+    <title>Report | Production</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <link rel="stylesheet" href="css/bootstrap.min.css">
@@ -62,7 +62,7 @@
                 <i class="fa-solid fa-arrow-left" style="margin-right:6px;background:none;border:none;box-shadow:none;transform:none;"></i>
                 Back to Initial Page
             </button>
-            <h1 class="title">Knitting Program Report</h1>
+            <h1 class="title">Knitting Production Report</h1>
             <div></div>
         </div>
 
@@ -70,11 +70,11 @@
             <div class="row g-3 align-items-end controls">
                 <div class="col-md-8">
                     <label class="form-label fw-semibold" style="font-size: larger; color: black;">
-                        Search SONO or Document NO
+                        Search Roll Or Booking No
                     </label>
 
                     <div class="input-group input-group-sm d-flex align-items-center gap-2">
-                        <input type="text" id="bookingInput" class="form-control" placeholder="SONO, BOOKING or Document NO">
+                        <input type="text" id="bookingInput" class="form-control" placeholder="Enter Roll / Booking No">
                         <button class="btn px-4" id="searchBtn" style="margin-top:8px; background:#2563eb; border:1px solid #2563eb; color:#fff; border-radius:8px;">
                             <i class="fa-solid fa-magnifying-glass me-1" style="margin-right:6px;background:none;border:none;box-shadow:none;transform:none;"></i>
                             Search
@@ -100,28 +100,24 @@
                     <thead class="table-dark">
                         <tr>
                             <th>DATE</th>
-                            <th>MAIN TID</th>
-                            <th>SUB TID</th>
+                            <th>ROLL NO</th>
                             <th>BOOKING</th>
                             <th>MCNO</th>
-                            <th>MC DIA</th>
-                            <th>SONO</th>
-                            <th>STYLE</th>
-                            <th>BUYER</th>
-                            <th>SUPPLIER</th>
                             <th>QTY</th>
-                            <th>SHIFT</th>
-                            <th>COLOR</th>
-                            <th>SL/VDQ</th>
+                            <th>REJ QTY</th>
+                            <th>SONO</th>
+                            <th>BUYER</th>
+                            <th>STYLE</th>
+                            <th>MC DIA</th>
                             <th>YARN TYPE</th>
                             <th>YARN COUNT</th>
                             <th>FABRICS TYPE</th>
                             <th>FINISH GSM</th>
                             <th>FINISH DIA</th>
                             <th>OPEN / TUBE</th>
+                            <th>COLOR</th>
+                            <th>SL/VDQ</th>
                             <th>LOT NO</th>
-                            <!-- <th>KNIT M DESCRIPTION</th>
-                            <th>KNIT MATERIAL CODE</th> -->
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -142,71 +138,78 @@
             var tbody = $('#tableBody');
             tbody.empty();
             if (!data || data.length === 0) {
-                tbody.append('<tr><td colspan="21" class="text-center small-muted">No data found</td></tr>');
+                tbody.append('<tr><td colspan="21" class="text-center small-muted">No Roll Or Booking No found</td></tr>');
                 return;
             }
 
             data.forEach(function(row) {
                 var tr = $('<tr>');
-                tr.append($('<td>').text(row.CREATED_AT || ''));
-                tr.append($('<td>').text(row.MAIN_TID || ''));
-                tr.append($('<td>').text(row.SUB_TID || ''));
-                tr.append($('<td>').text(row.BOOKING || ''));
+                tr.append($('<td>').text(row.BUDAT || ''));
+                tr.append($('<td>').text(row.ROLL || ''));
+                tr.append($('<td>').text(row.BOOKING_NO || ''));
                 tr.append($('<td>').text(row.MCNO || ''));
-                tr.append($('<td>').text(row.MC_DIA || ''));
+                tr.append($('<td>').text(row.UQTY || ''));
+                tr.append($('<td>').text(row.RQTY || ''));
                 tr.append($('<td>').text(row.SONO || ''));
-                tr.append($('<td>').text(row.STYLE || ''));
                 tr.append($('<td>').text(row.BUYER || ''));
-                tr.append($('<td>').text(row.SUPPLIER || ''));
-                tr.append($('<td>').text(row.QTY || ''));
-                tr.append($('<td>').text(row.SHIFT || ''));
-                tr.append($('<td>').text(row.COLOR || ''));
-                                tr.append($('<td>').text(row.SL_VDQ || ''));
-
+                tr.append($('<td>').text(row.STYLE || ''));
+                tr.append($('<td>').text(row.MC_DIA || ''));
                 tr.append($('<td>').text(row.YARN_TYPE || ''));
                 tr.append($('<td>').text(row.YARN_COUNT || ''));
                 tr.append($('<td>').text(row.FABRICS_TYPE || ''));
                 tr.append($('<td>').text(row.FINISH_GSM || ''));
                 tr.append($('<td>').text(row.FINISH_DIA || ''));
                 tr.append($('<td>').text(row.OPEN_TUBE || ''));
+                tr.append($('<td>').text(row.COLOR || ''));
+                tr.append($('<td>').text(row.SL_VDQ || ''));
                 tr.append($('<td>').text(row.LOT_NO || ''));
-                // tr.append($('<td>').text(row.KNIT_M_DESCRIPTION || ''));
-                // tr.append($('<td>').text(row.KNIT_MATERIAL_CODE || ''));
                 tbody.append(tr);
             });
         }
 
         function searchBooking() {
-            var booking = $('#bookingInput').val().trim();
-            if (!booking) {
-                alert('Please enter SONO or Booking to search');
+            var search = $('#bookingInput').val().trim();
+
+            if (!search) {
+                alert('Please enter Roll No or Booking No');
                 return;
             }
-            $('#searchBtn').prop('disabled', true).text('Searching...');
+
+            $('#searchBtn').prop('disabled', true).html('Searching...');
+
             $.ajax({
-                    url: 'ajaxKnittingProgram_Report.php',
+                    url: 'ajaxKnittingProduction_Report.php',
                     data: {
-                        booking: booking
+                        search: search
                     },
                     dataType: 'json',
                     method: 'GET'
                 })
                 .done(function(resp) {
-                    if (resp && resp.success) renderTableRows(resp.data);
-                    else $('#tableBody').html('<tr><td colspan="21" class="text-center small-muted">No data found</td></tr>');
+                    if (resp && resp.success) {
+                        renderTableRows(resp.data);
+                    } else {
+                        $('#tableBody').html(
+                            '<tr><td colspan="21" class="text-center small-muted">No data found</td></tr>'
+                        );
+                    }
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr><td colspan="21" class="text-center text-danger">Error searching</td></tr>');
+                    $('#tableBody').html(
+                        '<tr><td colspan="21" class="text-center text-danger">Error searching</td></tr>'
+                    );
                 })
                 .always(function() {
-                    $('#searchBtn').prop('disabled', false).text('Search');
+                    $('#searchBtn').prop('disabled', false).html(
+                        '<i class="fa-solid fa-magnifying-glass me-1" style="margin-right:6px;background:none;border:none;box-shadow:none;transform:none;"></i> Search'
+                    );
                 });
         }
 
         function loadAll() {
             $('#tableBody').html('<tr><td colspan="21" class="text-center small-muted">Loading data...</td></tr>');
             $.ajax({
-                    url: 'ajaxKnittingProgram_Report.php',
+                    url: 'ajaxKnittingProduction_Report.php',
                     dataType: 'json',
                     method: 'GET'
                 })

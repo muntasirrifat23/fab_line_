@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Knitting | Production</title>
+  <title>Report | Production</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <style>
@@ -16,7 +16,7 @@
 
     body {
       font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
-      background: #0b0f1a;
+      background: #c7c8ca;
       min-height: 100vh;
       display: flex;
       justify-content: center;
@@ -158,7 +158,7 @@
       margin-top: 20px;
       border: 1px solid #29364f;
       box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
-      max-height: 500px;
+      /* max-height: 00px; */
       overflow-y: auto;
     }
 
@@ -194,7 +194,7 @@
     }
 
     #result-content {
-      min-height: 70px;
+      min-height: auto;
       display: flex;
       flex-direction: column;
       gap: 4px;
@@ -218,7 +218,7 @@
     .data-row .label {
       color: #8bb1ff;
       font-weight: 600;
-      min-width: 120px;
+      min-width: 140px;
     }
 
     .data-row .value {
@@ -228,10 +228,73 @@
       margin-left: 10px;
     }
 
+    .single-row {
+      display: grid !important;
+      grid-template-columns: 2fr 1fr !important;
+      gap: 14px;
+    }
+
+    @media (max-width:480px) {
+      .single-row {
+        grid-template-columns: 1fr 1fr !important;
+      }
+    }
+
     .data-row.default-row {
-      border-left-color: #7a8bb0;
-      opacity: 0.8;
-      background: #131d30;
+      display: grid !important;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 14px;
+      align-items: flex-start;
+      height: auto;
+      min-height: auto;
+    }
+
+    .data-row.default-row>div {
+      min-width: 0;
+    }
+
+    .data-row.default-row div div:first-child {
+      font-size: 11px;
+      color: #8fa5cf;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+    }
+
+    .data-row.default-row div div:last-child {
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+
+      /* Important */
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      line-height: 1.45;
+    }
+
+    .field-block {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: auto;
+    }
+
+    .field-block .field-label {
+      font-size: 0.7rem;
+      color: #8fa5cf;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.85;
+    }
+
+    .field-block .field-value {
+      font-size: 0.95rem;
+      color: #ffffff;
+      font-weight: 700;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      line-height: 1.3;
     }
 
     .data-row.default-row .label {
@@ -447,6 +510,18 @@
         min-height: 200px;
       }
     }
+
+    @media(max-width:768px) {
+      .data-row.default-row {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
+      }
+    }
+
+    @media(max-width:480px) {
+      .data-row.default-row {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+    }
   </style>
 </head>
 
@@ -478,8 +553,21 @@
       </div>
       <div id="action-content" class="action-content"></div>
     </div>
-    <div class="footer-note" style="margin-top:16px; text-align:center; color:#44557a; font-size:0.7rem; letter-spacing:0.5px;">
-      <i class="fas fa-camera"></i> Scan QR from Knitting Report · data shown instantly <i class="fas fa-arrow-right"></i>
+    <!-- FOOTER -->
+    <div class="footer-note" style="margin-top:6px; text-align:center; color:#44557a; letter-spacing:0.5px;">
+      <button class="btn btn-dark"
+        onclick="window.location.href='initialPage.php';"
+        style="background-color:white;
+               color:black;
+               padding:12px;
+               border-radius:8px;
+               cursor:pointer;
+               transition:all .2s ease;
+               font-weight:bold;
+               font-size:1rem;">
+        <i class="fa-solid fa-arrow-left" style="margin-right:6px;"></i>
+        Back to Initial Page
+      </button>
     </div>
   </div>
 
@@ -494,27 +582,29 @@
       const cameraControls = document.getElementById('cameraControls');
 
       const QR_FIELDS = [
-        'SUB_TID', 'MCNO', 'BUYER', 'BOOKING', 'SONO', 'STYLE',
-        'FABRICS_TYPE', 'YARN_COUNT', 'YARN_TYPE', 'FINISH_GSM',
-        'FINISH_DIA', 'OPEN_TUBE', 'LOT_NO', 'QTY', 'COLOR', 'SL_VDQ'
+        'SUB_TID', 'BOOKING', 'SONO', 'BUYER', 'MCNO', 'MC_DIA', 'STYLE',
+        'YARN_TYPE', 'YARN_COUNT', 'FABRICS_TYPE', 'FINISH_GSM', 'FINISH_DIA',
+        'OPEN_TUBE', 'COLOR', 'QTY', 'SL_VDQ', 'LOT_NO'
       ];
 
       const FIELD_LABELS = {
-        'SUB_TID': 'Program',
-        'MCNO': 'Machine No',
-        'BUYER': 'Buyer',
+        'SUB_TID': 'ROLL NO',
         'BOOKING': 'Booking',
         'SONO': 'SONO',
+        'BUYER': 'Buyer',
+        'MCNO': 'Machine No',
+        'MC_DIA': 'Machine Dia',
         'STYLE': 'Style',
-        'FABRICS_TYPE': 'Fabrics Type',
-        'YARN_COUNT': 'Yarn Count',
         'YARN_TYPE': 'Yarn Type',
+        'YARN_COUNT': 'Yarn Count',
+        'FABRICS_TYPE': 'Fabrics Type',
         'FINISH_GSM': 'Finish GSM',
         'FINISH_DIA': 'Finish Dia',
         'OPEN_TUBE': 'Open / Tube',
-        'LOT_NO': 'Lot No',
-        'QTY': 'Qty',
-        'COLOR': 'Color'
+        'COLOR': 'Color',
+        'QTY': 'QTY',
+        'SL_VDQ': 'SL / VDQ',
+        'LOT_NO': 'Lot No'
       };
 
       let scannedInfo = null;
@@ -524,25 +614,16 @@
       let scanCount = 0;
 
       const DEFAULT_DATA = [{
-          label: '📋 Status',
-          value: 'Awaiting QR scan'
-        },
-        {
-          label: '📷 Camera',
-          value: 'Ready'
-        },
-        {
-          label: '💡 Hint',
-          value: 'Scan QR code from Knitting Report'
-        }
-      ];
+        label: 'Status',
+        value: 'Awaiting QR scan'
+      }];
 
       function renderDefaultData() {
         scannedInfo = null;
         isEditMode = false;
         hideActionContent();
 
-        let html = `<div class="data-row header-row"><span class="label">📋 Default Information</span><span class="value"></span></div>`;
+        let html = `<div class="data-row header-row"><span class="label">Default Information</span><span class="value"></span></div>`;
         DEFAULT_DATA.forEach(f => {
           html += `<div class="data-row default-row"><span class="label">${f.label}</span><span class="value">${f.value}</span></div>`;
         });
@@ -551,35 +632,133 @@
 
       function parseQrText(qrText) {
         const raw = String(qrText || '').trim();
+        // Handle both '|' and ' | ' delimiters
         const normalized = raw.replace(/\s*\|\s*/g, '|');
-        let parts = normalized.split('|').map(part => part.trim());
-        if (parts.length > 0 && parts[parts.length - 1] === '') {
+        let parts = normalized.split('|').map(part => String(part).trim());
+
+        // Remove trailing empty parts
+        while (parts.length > 0 && parts[parts.length - 1] === '') {
           parts.pop();
         }
 
-        const originalLength = parts.length;
-        if (originalLength === QR_FIELDS.length - 1) {
-          parts.splice(3, 0, '');
-        } else if (originalLength === QR_FIELDS.length - 2) {
-          parts.splice(3, 0, '');
-          parts.splice(11, 0, '');
+        console.log('✓ Parsed parts count:', parts.length, 'Parts:', parts);
+
+        const format16WithSupplier = [
+          'SUB_TID', 'MCNO', 'BUYER', 'SUPPLIER', 'BOOKING', 'SONO', 'STYLE',
+          'FABRICS_TYPE', 'YARN_COUNT', 'YARN_TYPE', 'FINISH_GSM', 'FINISH_DIA',
+          'OPEN_TUBE', 'LOT_NO', 'QTY', 'COLOR'
+        ];
+
+        const format16WithoutSupplier = [
+          'SUB_TID', 'MCNO', 'BUYER', 'BOOKING', 'SONO', 'STYLE',
+          'FABRICS_TYPE', 'YARN_COUNT', 'YARN_TYPE', 'FINISH_GSM', 'FINISH_DIA',
+          'OPEN_TUBE', 'LOT_NO', 'QTY', 'COLOR'
+        ];
+
+        const format17 = [
+          'SUB_TID', 'BOOKING', 'SONO', 'BUYER', 'MCNO', 'MC_DIA', 'STYLE',
+          'YARN_TYPE', 'YARN_COUNT', 'FABRICS_TYPE', 'FINISH_GSM', 'FINISH_DIA',
+          'OPEN_TUBE', 'COLOR', 'QTY', 'SL_VDQ', 'LOT_NO'
+        ];
+
+        const buildData = (fields) => {
+          const data = {};
+          fields.forEach((field, index) => {
+            data[field] = parts[index] || '';
+          });
+          data.raw = raw;
+          data.parsed = true;
+          data.originalQTY = data.QTY || '';
+          data.edited = false;
+          return data;
+        };
+
+        // Soft validators - less strict
+        const isNumeric = (value) => /^\d+$/.test(value);
+        const looksLikeBooking = (value) => isNumeric(value) && value.length >= 4;
+        const looksLikeSono = (value) => isNumeric(value) && value.length >= 4;
+        const looksLikeMachineNo = (value) => /^[A-Za-z0-9\-\/]+$/.test(value) && value.length >= 2;
+        const looksLikeBuyer = (value) => /[A-Za-z]/.test(value) && value.length >= 2;
+
+        // Priority 1: Check for 17-field format (from Knitting QR Report) - most common
+        if (parts.length === format17.length) {
+          // Soft validation: check key fields without being too strict
+          const booking = parts[1];
+          const sono = parts[2];
+          const buyer = parts[3];
+          const mcno = parts[4];
+
+          // If at least 2 key fields look right, accept it
+          const keyFieldsValid =
+            (looksLikeBooking(booking) ? 1 : 0) +
+            (looksLikeSono(sono) ? 1 : 0) +
+            (looksLikeBuyer(buyer) ? 1 : 0) +
+            (looksLikeMachineNo(mcno) ? 1 : 0);
+
+          if (keyFieldsValid >= 2 || (booking && sono)) {
+            console.log('✓ Detected format17 (17 fields from QR Report), valid fields:', keyFieldsValid);
+            return buildData(format17);
+          }
+
+          // Even if validation is weak, if length matches exactly, parse as format17
+          console.log('⚠ Format17 length match, accepting as fallback (valid fields:', keyFieldsValid, ')');
+          return buildData(format17);
         }
 
-        if (parts.length !== QR_FIELDS.length) {
-          return {
-            raw,
-            parsed: false,
-            parts
-          };
+        // Priority 2: Check for 16-field format with supplier
+        if (parts.length === format16WithSupplier.length) {
+          const mcno = parts[1];
+          const booking = parts[4];
+          const sono = parts[5];
+
+          if ((looksLikeMachineNo(mcno) || mcno) && looksLikeBooking(booking) && looksLikeSono(sono)) {
+            console.log('✓ Detected format16WithSupplier');
+            return buildData(format16WithSupplier);
+          }
+          // If supplier is blank, still try to parse
+          if (parts[3] === '' && booking && sono) {
+            console.log('✓ Detected format16WithSupplier (empty supplier)');
+            return buildData(format16WithSupplier);
+          }
         }
 
-        const data = {};
-        QR_FIELDS.forEach((field, index) => {
-          data[field] = parts[index] || '';
-        });
-        data.raw = raw;
-        data.parsed = true;
-        return data;
+        // Priority 3: Check for 16-field format without supplier
+        if (parts.length === format16WithoutSupplier.length) {
+          const mcno = parts[1];
+          const booking = parts[3];
+          const sono = parts[4];
+
+          if ((looksLikeMachineNo(mcno) || mcno) && booking && sono) {
+            console.log('✓ Detected format16WithoutSupplier');
+            return buildData(format16WithoutSupplier);
+          }
+        }
+
+        // Priority 4: Check if length matches QR_FIELDS exactly
+        if (parts.length === QR_FIELDS.length) {
+          console.log('✓ Detected QR_FIELDS format (length match)');
+          return buildData(QR_FIELDS);
+        }
+
+        // Fallback: Try to match by checking if we have reasonable field patterns
+        if (parts.length >= 10) {
+          // If we have at least 10 parts that look semi-reasonable, try format17
+          const hasGoodData = parts.filter(p => p && p.length > 0).length >= 8;
+          if (hasGoodData) {
+            console.log('⚠ Partial data detected, attempting format17 interpretation');
+            if (parts.length <= 17) {
+              return buildData(format17.slice(0, parts.length).concat(format17.slice(parts.length)));
+            }
+          }
+        }
+
+        // If nothing matches, return raw data
+        console.log('❌ No format detected - returning raw data. Parts count:', parts.length);
+        return {
+          raw,
+          parsed: false,
+          parts
+        };
       }
 
       function renderScannedData(qrText) {
@@ -588,7 +767,9 @@
           return;
         }
 
-        scannedInfo = parseQrText(qrText);
+        if (!scannedInfo || scannedInfo.raw !== qrText) {
+          scannedInfo = parseQrText(qrText);
+        }
         isEditMode = false;
         hideActionContent();
 
@@ -606,94 +787,49 @@
               <span class="label" style="color:#9ca3af; min-width:100%;">Raw Data:</span>
               <span class="value" style="text-align:left; font-size:0.8rem; word-break:break-all; color:#d1d5db;">${scannedInfo.raw}</span>
             </div>
-            <button class="rescan-btn" onclick="window.restartQrScanner()">
-              <i class="fas fa-redo"></i> Scan Again
-            </button>
+           <button class="rescan-btn" onclick="window.location.reload();">
+              <i class="fas fa-redo"></i> Scan Another QR
+           </button>
           `;
           return;
         }
 
+        const buildFieldRow = (fields) => `
+          <div class="data-row default-row">
+            ${fields.map(field => `
+              <div class="field-block">
+                <span class="field-label">${FIELD_LABELS[field] || field}</span>
+                <span class="field-value">${scannedInfo[field] || '-'}</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+
         let html = `
           <div class="data-row header-row" style="border-left-color:#4fc3f7;">
-            <span class="label">✅ QR Scanned <span class="scanned-badge">program</span></span>
+            <span class="label">✅ QR Scanned <span class="scanned-badge">ROLL NO</span></span>
             <span class="value">${new Date().toLocaleTimeString()}</span>
           </div>
-  
-          <div class="data-row default-row" style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;align-items:flex-start; margin-bottom:4px;">
-           <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">PROGRAM</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.SUB_TID || '-'}</div>
-            </div> 
-          <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">BOOKING NO</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.BOOKING || '-'}</div>
-            </div>
-            <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">SONO</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.SONO || '-'}</div>
-            </div>
-            <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">BUYER</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.BUYER || '-'}</div>
-            </div>
-            <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">STYLE</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.STYLE || '-'}</div>
-            </div>
-          </div>
+        `;
 
-       
-          <div class="data-row default-row" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:flex-start; margin-bottom:4px;">
-            <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">YARN TYPE</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.YARN_TYPE || '-'}</div>
-            </div>
-            <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">YARN COUNT</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.YARN_COUNT || '-'}</div>
-            </div>
-            <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">FABRICS TYPE</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.FABRICS_TYPE || '-'}</div>
-            </div>
-          </div>
+        html += buildFieldRow(['SUB_TID', 'BOOKING', 'SONO']);
+        html += buildFieldRow(['MCNO', 'MC_DIA', 'BUYER']);
+        html += buildFieldRow(['STYLE', 'YARN_TYPE', 'YARN_COUNT']);
+        html += buildFieldRow(['FABRICS_TYPE', 'FINISH_GSM', 'FINISH_DIA']);
+        html += buildFieldRow(['OPEN_TUBE', 'COLOR', 'SL_VDQ']);
 
-    
-          <div class="data-row default-row" style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;align-items:flex-start; margin-bottom:4px;">
-            <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">FINISH GSM</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.FINISH_GSM || '-'}</div>
+        html += `
+          <div class="data-row default-row single-row">
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.LOT_NO}</span>
+              <span class="field-value">${scannedInfo.LOT_NO || '-'}</span>
             </div>
-            <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">FINISH DIA</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.FINISH_DIA || '-'}</div>
-            </div>
-            <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">OPEN / TUBE</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.OPEN_TUBE || '-'}</div>
-            </div>
-             <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">COLOR</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.COLOR || '-'}</div>
-            </div>
-            <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">QTY</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.QTY || '-'}</div>
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.QTY}</span>
+              <span class="field-value">${scannedInfo.QTY || '-'}</span>
             </div>
           </div>
-
-          <div class="data-row default-row" style="display:grid;grid-template-columns:repeat(1,minmax(0,1fr));gap:14px;align-items:flex-start;">
-            <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">LOT NO</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.LOT_NO || '-'}</div>
-            </div>
-            <div>
-              <div style="font-size:0.75rem;opacity:0.75;margin-bottom:4px;">SL/VDQ</div>
-              <div style="font-size:0.95rem;font-weight:700;">${scannedInfo.SL_VDQ || '-'}</div>
-            </div>
-          </div>
-          
-          <button class="rescan-btn" onclick="window.restartQrScanner()">
+          <button class="rescan-btn" onclick="window.location.reload();">
             <i class="fas fa-redo"></i> Scan Another QR
           </button>
         `;
@@ -725,9 +861,7 @@
         document.getElementById('productionBtn').addEventListener('click', handleProductionSave);
         document.getElementById('editProductionBtn').addEventListener('click', toggleEditMode);
         document.getElementById('cancelProductionBtn').addEventListener('click', function() {
-          isEditMode = false;
-          renderScannedData(scannedInfo.raw);
-          hideActionContent();
+          window.location.reload();
         });
       }
 
@@ -748,47 +882,116 @@
           return;
         }
 
+        const qtyValue = scannedInfo.QTY || '';
+
+        const originalQty = scannedInfo.originalQTY || scannedInfo.QTY || '';
         let html = `
           <div class="data-row header-row" style="border-left-color:#3b82f6;">
             <span class="label">✏️ Edit Mode <span class="scanned-badge" style="background:#3b82f6;">editing</span></span>
             <span class="value">${new Date().toLocaleTimeString()}</span>
           </div>
-          <div class="message-row" style="margin-bottom:8px;">Update values below, then click <strong>Production</strong> to save.</div>
-        `;
-
-        QR_FIELDS.forEach(field => {
-          const label = FIELD_LABELS[field] || field;
-          const value = scannedInfo[field] || '';
-          html += `
-            <div class="edit-form-row">
-              <label class="field-label">${label}</label>
-              <input type="text" class="field-input" id="edit-${field}" value="${value}">
+          <div class="message-row" style="margin-bottom:8px;">Only <strong>Qty</strong> is editable. Maximum available qty: <strong>${originalQty || 'N/A'}</strong>.</div>
+          <div class="data-row default-row">
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.SUB_TID}</span>
+              <span class="field-value">${scannedInfo.SUB_TID || '-'}</span>
             </div>
-          `;
-        });
-
-        html += `<button class="rescan-btn" onclick="window.restartQrScanner()">
-          <i class="fas fa-redo"></i> Scan Another QR
-        </button>`;
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.BOOKING}</span>
+              <span class="field-value">${scannedInfo.BOOKING || '-'}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.SONO}</span>
+              <span class="field-value">${scannedInfo.SONO || '-'}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.BUYER}</span>
+              <span class="field-value">${scannedInfo.BUYER || '-'}</span>
+            </div>
+          </div>
+          <div class="data-row default-row">
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.MCNO}</span>
+              <span class="field-value">${scannedInfo.MCNO || '-'}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.MC_DIA}</span>
+              <span class="field-value">${scannedInfo.MC_DIA || '-'}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.STYLE}</span>
+              <span class="field-value">${scannedInfo.STYLE || '-'}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.YARN_TYPE}</span>
+              <span class="field-value">${scannedInfo.YARN_TYPE || '-'}</span>
+            </div>
+          </div>
+          <div class="data-row default-row">
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.YARN_COUNT}</span>
+              <span class="field-value">${scannedInfo.YARN_COUNT || '-'}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.FABRICS_TYPE}</span>
+              <span class="field-value">${scannedInfo.FABRICS_TYPE || '-'}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.FINISH_GSM}</span>
+              <span class="field-value">${scannedInfo.FINISH_GSM || '-'}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.FINISH_DIA}</span>
+              <span class="field-value">${scannedInfo.FINISH_DIA || '-'}</span>
+            </div>
+          </div>
+          <div class="data-row default-row">
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.OPEN_TUBE}</span>
+              <span class="field-value">${scannedInfo.OPEN_TUBE || '-'}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.COLOR}</span>
+              <span class="field-value">${scannedInfo.COLOR || '-'}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.SL_VDQ}</span>
+              <span class="field-value">${scannedInfo.SL_VDQ || '-'}</span>
+            </div>
+        
+          </div>
+          <div class="data-row default-row single-row">
+            <div class="field-block">
+              <span class="field-label">${FIELD_LABELS.LOT_NO}</span>
+              <span class="field-value">${scannedInfo.LOT_NO || '-'}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">REJ QTY</span>
+              <input type="text" class="field-input" id="edit-QTY" value="${qtyValue}">
+            </div>
+          </div>
+          <button class="rescan-btn" onclick="window.location.reload();">
+            <i class="fas fa-redo"></i> Scan Another QR
+          </button>
+        `;
 
         resultContainer.innerHTML = html;
 
         actionContainer.innerHTML = `
-          <div class="action-card">
-            <button class="btn-action production" type="button" id="productionBtn">
-              <i class="fas fa-save"></i> Production
+        <div class="action-card">
+        
+            <button class="btn-action production" type="button" id="editedProductionBtn">
+                <i class="fas fa-save"></i> Edited Production
             </button>
-            <button class="btn-action edit" type="button" id="saveEditBtn">
-              <i class="fas fa-check"></i> Save Edit
-            </button>
+        
             <button class="btn-action cancel" type="button" id="cancelProductionBtn">
-              <i class="fas fa-times"></i> Cancel
+                <i class="fas fa-times"></i> Cancel
             </button>
-          </div>
+        
+        </div>
         `;
 
-        document.getElementById('productionBtn').addEventListener('click', handleProductionSave);
-        document.getElementById('saveEditBtn').addEventListener('click', saveEditedData);
+        document.getElementById("editedProductionBtn").addEventListener("click", editedProductionSave);
         document.getElementById('cancelProductionBtn').addEventListener('click', function() {
           isEditMode = false;
           renderScannedData(scannedInfo.raw);
@@ -800,79 +1003,191 @@
         if (!scannedInfo || !scannedInfo.parsed) {
           return;
         }
-        QR_FIELDS.forEach(field => {
-          const input = document.getElementById(`edit-${field}`);
-          if (input) {
-            scannedInfo[field] = input.value.trim();
-          }
-        });
 
-        scannedInfo.raw = QR_FIELDS.map(field => scannedInfo[field] || '').join(' | ');
-        isEditMode = false;
-        renderScannedData(scannedInfo.raw);
-        renderProductionActions();
-      }
-
-      function handleProductionSave() {
-        if (!scannedInfo || !scannedInfo.parsed) {
-          alert('No valid program data available to save.');
+        const input = document.getElementById('edit-QTY');
+        if (!input) {
           return;
         }
 
-        const payload = {
-          ...scannedInfo,
-          raw: scannedInfo.raw
-        };
+        const newQtyRaw = input.value.trim();
+        const maxQty = parseFloat((scannedInfo.originalQTY || scannedInfo.QTY || '').replace(/,/g, '.')) || 0;
+        const newQty = parseFloat(newQtyRaw.replace(/,/g, '.'));
 
-        const button = document.getElementById('productionBtn');
-        if (button) {
-          button.disabled = true;
-          button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        if (!newQtyRaw) {
+          alert('Qty cannot be empty.');
+          return;
+        }
+        if (isNaN(newQty) || newQty <= 0) {
+          alert('Qty must be a valid number.');
+          return;
+        }
+        if (maxQty > 0 && newQty > maxQty + 0.000001) {
+          alert('Qty exceeds available amount. Maximum available qty: ' + (scannedInfo.originalQTY || scannedInfo.QTY));
+          return;
         }
 
-        fetch('ajaxKnittingProduction.php', {
-            method: 'POST',
+        const previousOriginalQty = scannedInfo.originalQTY;
+        scannedInfo.QTY = newQtyRaw;
+        scannedInfo.raw = QR_FIELDS.map(field => scannedInfo[field] || '').join(" | ");
+        isEditMode = false;
+        renderScannedData(scannedInfo.raw);
+
+        if (scannedInfo && scannedInfo.parsed) {
+          scannedInfo.originalQTY = previousOriginalQty;
+        }
+
+        const productionBtn = document.getElementById("productionBtn");
+        if (productionBtn) {
+          productionBtn.disabled = false;
+        }
+      }
+
+      function editedProductionSave() {
+
+        const input = document.getElementById("edit-QTY");
+        if (!input) return;
+
+        const newQtyRaw = input.value.trim();
+        const maxQty = parseFloat(scannedInfo.originalQTY || 0);
+        const newQty = parseFloat(newQtyRaw);
+
+        if (newQtyRaw === "") {
+          alert("Qty cannot be empty");
+          return;
+        }
+
+        if (isNaN(newQty) || newQty <= 0) {
+          alert("Invalid Qty");
+          return;
+        }
+
+        if (newQty > maxQty) {
+          alert("Qty exceeds available Qty");
+          return;
+        }
+
+        scannedInfo.QTY = newQtyRaw;
+        handleProductionSave();
+
+      }
+
+      function handleProductionSave() {
+
+        if (!scannedInfo || !scannedInfo.parsed) {
+          alert("No QR Data");
+          return;
+        }
+
+        let oqty = parseFloat(scannedInfo.originalQTY || scannedInfo.QTY || 0);
+        let rqty = 0;
+        if (String(scannedInfo.QTY) !== String(scannedInfo.originalQTY)) {
+          rqty = parseFloat(scannedInfo.QTY || 0);
+        }
+        let uqty = (oqty - rqty).toFixed(2);
+
+        const payload = {
+          sub_tid: scannedInfo.SUB_TID || "",
+          booking: scannedInfo.BOOKING || "",
+          sono: scannedInfo.SONO || "",
+          buyer: scannedInfo.BUYER || "",
+          mcno: scannedInfo.MCNO || "",
+          mc_dia: scannedInfo.MC_DIA || "",
+          style: scannedInfo.STYLE || "",
+          yarn_type: scannedInfo.YARN_TYPE || "",
+          yarn_count: scannedInfo.YARN_COUNT || "",
+          fabrics_type: scannedInfo.FABRICS_TYPE || "",
+          finish_gsm: scannedInfo.FINISH_GSM || "",
+          finish_dia: scannedInfo.FINISH_DIA || "",
+          open_tube: scannedInfo.OPEN_TUBE || "",
+          color: scannedInfo.COLOR || "",
+          sl_vdq: scannedInfo.SL_VDQ || "",
+          lot_no: scannedInfo.LOT_NO || "",
+
+          oqty: oqty,
+          rqty: rqty,
+          uqty: uqty
+
+        };
+
+        console.log(payload);
+
+        fetch("ajaxKnittingProductionInsert.php", {
+
+            method: "POST",
+
             headers: {
-              'Content-Type': 'application/json',
-              'X-Requested-With': 'XMLHttpRequest'
+              "Content-Type": "application/json"
             },
+
             body: JSON.stringify(payload)
+
           })
-          .then(response => response.json())
+
+          .then(async res => {
+
+            const txt = await res.text();
+
+            console.log(txt);
+
+            return JSON.parse(txt);
+
+          })
+
           .then(data => {
-            if (button) {
-              button.disabled = false;
-              button.innerHTML = '<i class="fas fa-save"></i> Production';
-            }
-            if (data && data.success) {
-              renderResultMessage('✅ Production saved successfully. ID: ' + (data.insert_id || 'N/A'), 'success');
+
+            console.log(data);
+
+            if (data.success) {
+
+              renderResultMessage(
+                "✅ " + data.message,
+                "success"
+              );
+
             } else {
-              renderResultMessage('❌ ' + (data.message || 'Failed to save production record.'), 'error');
+
+              renderResultMessage(
+                "❌ " + data.message,
+                "error"
+              );
+
             }
+
           })
-          .catch(error => {
-            if (button) {
-              button.disabled = false;
-              button.innerHTML = '<i class="fas fa-save"></i> Production';
-            }
-            renderResultMessage('❌ AJAX error saving production. Check console.', 'error');
-            console.error('Production save error:', error);
+
+          .catch(err => {
+
+            console.error(err);
+
+            renderResultMessage(
+              err.message,
+              "error"
+            );
+
           });
+
       }
 
       function renderResultMessage(message, type) {
-        const msgHtml = `<div class="message-row ${type}">${message}</div>`;
-        actionContainer.innerHTML = msgHtml;
 
-        if (type === 'success') {
+        actionContainer.innerHTML = `
+        <div class="message-row ${type}">
+            ${message}<br>
+            <small>Page will reload in 2 seconds...</small>
+        </div>
+    `;
+
+        if (type === "success") {
+
+          const btn = document.getElementById("productionBtn");
+          if (btn) btn.disabled = true;
+
           setTimeout(() => {
-            if (scannedInfo && scannedInfo.parsed) {
-              renderProductionActions();
-            } else {
-              hideActionContent();
-            }
-          }, 5000);
+            window.location.reload();
+          }, 2000);
+
         }
+
       }
 
       function startScanner() {
@@ -943,7 +1258,7 @@
               <span class="label">💡 Tip:</span>
               <span class="value">Tap restart or grant permissions</span>
             </div>
-            <button class="rescan-btn" onclick="window.restartQrScanner()">
+            <button class="rescan-btn" onclick="window.location.reload();">
               <i class="fas fa-redo"></i> Retry Camera
             </button>
           `;
