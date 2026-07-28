@@ -787,9 +787,9 @@
               <span class="label" style="color:#9ca3af; min-width:100%;">Raw Data:</span>
               <span class="value" style="text-align:left; font-size:0.8rem; word-break:break-all; color:#d1d5db;">${scannedInfo.raw}</span>
             </div>
-            <button class="rescan-btn" onclick="window.restartQrScanner()">
-              <i class="fas fa-redo"></i> Scan Again
-            </button>
+           <button class="rescan-btn" onclick="window.location.reload();">
+              <i class="fas fa-redo"></i> Scan Another QR
+           </button>
           `;
           return;
         }
@@ -829,7 +829,7 @@
               <span class="field-value">${scannedInfo.QTY || '-'}</span>
             </div>
           </div>
-          <button class="rescan-btn" onclick="window.restartQrScanner()">
+          <button class="rescan-btn" onclick="window.location.reload();">
             <i class="fas fa-redo"></i> Scan Another QR
           </button>
         `;
@@ -970,7 +970,7 @@
               <input type="text" class="field-input" id="edit-QTY" value="${qtyValue}">
             </div>
           </div>
-          <button class="rescan-btn" onclick="window.restartQrScanner()">
+          <button class="rescan-btn" onclick="window.location.reload();">
             <i class="fas fa-redo"></i> Scan Another QR
           </button>
         `;
@@ -1258,7 +1258,7 @@
               <span class="label">💡 Tip:</span>
               <span class="value">Tap restart or grant permissions</span>
             </div>
-            <button class="rescan-btn" onclick="window.restartQrScanner()">
+            <button class="rescan-btn" onclick="window.location.reload();">
               <i class="fas fa-redo"></i> Retry Camera
             </button>
           `;
