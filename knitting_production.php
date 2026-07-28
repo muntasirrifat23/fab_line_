@@ -554,8 +554,8 @@
       <div id="action-content" class="action-content"></div>
     </div>
     <!-- FOOTER -->
-<div class="footer-note" style="margin-top:6px; text-align:center; color:#44557a; letter-spacing:0.5px;">
-    <button class="btn btn-dark"
+    <div class="footer-note" style="margin-top:6px; text-align:center; color:#44557a; letter-spacing:0.5px;">
+      <button class="btn btn-dark"
         onclick="window.location.href='initialPage.php';"
         style="background-color:white;
                color:black;
@@ -567,8 +567,8 @@
                font-size:1rem;">
         <i class="fa-solid fa-arrow-left" style="margin-right:6px;"></i>
         Back to Initial Page
-    </button>
-</div>
+      </button>
+    </div>
   </div>
 
   <script>
@@ -1036,50 +1036,93 @@
       }
 
       function handleProductionSave() {
+
         if (!scannedInfo || !scannedInfo.parsed) {
-          alert('No valid ROLL NO data available to save.');
+          alert("No QR Data");
           return;
         }
 
         const payload = {
-          ...scannedInfo,
-          raw: scannedInfo.raw
+
+          sub_tid: scannedInfo.SUB_TID || "",
+          booking: scannedInfo.BOOKING || "",
+          sono: scannedInfo.SONO || "",
+          buyer: scannedInfo.BUYER || "",
+          mcno: scannedInfo.MCNO || "",
+          mc_dia: scannedInfo.MC_DIA || "",
+          style: scannedInfo.STYLE || "",
+          yarn_type: scannedInfo.YARN_TYPE || "",
+          yarn_count: scannedInfo.YARN_COUNT || "",
+          fabrics_type: scannedInfo.FABRICS_TYPE || "",
+          finish_gsm: scannedInfo.FINISH_GSM || "",
+          finish_dia: scannedInfo.FINISH_DIA || "",
+          open_tube: scannedInfo.OPEN_TUBE || "",
+          color: scannedInfo.COLOR || "",
+          sl_vdq: scannedInfo.SL_VDQ || "",
+          lot_no: scannedInfo.LOT_NO || "",
+
+          qty: scannedInfo.QTY || "",
+          originalqty: scannedInfo.originalQTY || scannedInfo.QTY || ""
+
         };
 
-        const button = document.getElementById('productionBtn');
-        if (button) {
-          button.disabled = true;
-          button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-        }
+        console.log(payload);
 
-        fetch('ajaxKnittingProduction.php', {
-            method: 'POST',
+        fetch("ajaxKnittingProductionInsert.php", {
+
+            method: "POST",
+
             headers: {
-              'Content-Type': 'application/json',
-              'X-Requested-With': 'XMLHttpRequest'
+              "Content-Type": "application/json"
             },
+
             body: JSON.stringify(payload)
+
           })
-          .then(response => response.json())
+
+          .then(async res => {
+
+            const txt = await res.text();
+
+            console.log(txt);
+
+            return JSON.parse(txt);
+
+          })
+
           .then(data => {
-            if (button) {
-              button.disabled = false;
-              button.innerHTML = '<i class="fas fa-save"></i> Production';
-            }
-            if (data && data.success) {
-              renderResultMessage('✅ Production saved successfully. ID: ' + (data.insert_id || 'N/A'), 'success');
+
+            console.log(data);
+
+            if (data.success) {
+
+              renderResultMessage(
+                "✅ " + data.message,
+                "success"
+              );
+
             } else {
-              renderResultMessage('❌ ' + (data.message || 'Failed to save production record.'), 'error');
+
+              renderResultMessage(
+                "❌ " + data.message,
+                "error"
+              );
+
             }
+
           })
-          .catch(error => {
-            if (button) {
-              button.disabled = false;
-              button.innerHTML = '<i class="fas fa-save"></i> Production';
-            }
-            renderResultMessage('❌ AJAX error saving production. Check console.', 'error');
-            console.error('Production save error:', error);
+
+          .catch(err => {
+
+            console.error(err);
+
+            renderResultMessage(
+              err.message,
+              "error"
+            );
+
           });
+
       }
 
       function renderResultMessage(message, type) {

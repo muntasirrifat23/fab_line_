@@ -26,17 +26,41 @@ if (isset($_SESSION['expire_time'])) {
 }
 
 // Inject auto logout script into HTML pages for non-AJAX requests
-$inject_script = '<script src="auto_logout.js"></script>';
-$isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-         strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
-if (!$isAjax) {
+// Detect AJAX request
+$isAjax = (
+    !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+    strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
+);
+
+// Auto logout script শুধুমাত্র HTML page-এর জন্য
+if (
+    !$isAjax &&
+    isset($_SERVER['SCRIPT_NAME']) &&
+    stripos(basename($_SERVER['SCRIPT_NAME']), 'ajax') === false
+) {
+
+    $inject_script = '<script src="auto_logout.js"></script>';
+
     if (!headers_sent()) {
         ob_start(function ($buffer) use ($inject_script) {
-            $pos = stripos($buffer, '</body>');
-            if ($pos !== false) {
-                return substr_replace($buffer, $inject_script . '</body>', $pos, 7);
+
+            // শুধুমাত্র HTML response হলে inject করবে
+            if (stripos($buffer, '<html') === false) {
+                return $buffer;
             }
-            return $buffer . $inject_script;
+
+            $pos = stripos($buffer, '</body>');
+
+            if ($pos !== false) {
+                return substr_replace(
+                    $buffer,
+                    $inject_script . '</body>',
+                    $pos,
+                    7
+                );
+            }
+
+            return $buffer;
         });
     }
 }
