@@ -602,7 +602,7 @@
         'FINISH_DIA': 'Finish Dia',
         'OPEN_TUBE': 'Open / Tube',
         'COLOR': 'Color',
-        'QTY': 'Qty',
+        'QTY': 'QTY',
         'SL_VDQ': 'SL / VDQ',
         'LOT_NO': 'Lot No'
       };
@@ -669,6 +669,7 @@
           data.raw = raw;
           data.parsed = true;
           data.originalQTY = data.QTY || '';
+          data.edited = false;
           return data;
         };
 
@@ -766,7 +767,9 @@
           return;
         }
 
-        scannedInfo = parseQrText(qrText);
+        if (!scannedInfo || scannedInfo.raw !== qrText) {
+          scannedInfo = parseQrText(qrText);
+        }
         isEditMode = false;
         hideActionContent();
 
@@ -963,7 +966,7 @@
               <span class="field-value">${scannedInfo.LOT_NO || '-'}</span>
             </div>
             <div class="field-block">
-              <span class="field-label">${FIELD_LABELS.QTY}</span>
+              <span class="field-label">REJ QTY</span>
               <input type="text" class="field-input" id="edit-QTY" value="${qtyValue}">
             </div>
           </div>
@@ -1026,9 +1029,10 @@
 
         const previousOriginalQty = scannedInfo.originalQTY;
         scannedInfo.QTY = newQtyRaw;
-        scannedInfo.raw = QR_FIELDS.map(field => scannedInfo[field] || '').join(' | ');
+        scannedInfo.raw = QR_FIELDS.map(field => scannedInfo[field] || '').join(" | ");
         isEditMode = false;
         renderScannedData(scannedInfo.raw);
+
         if (scannedInfo && scannedInfo.parsed) {
           scannedInfo.originalQTY = previousOriginalQty;
         }
@@ -1042,8 +1046,14 @@
           return;
         }
 
-        const payload = {
+        let oqty = parseFloat(scannedInfo.originalQTY || scannedInfo.QTY || 0);
+        let rqty = 0;
+        if (String(scannedInfo.QTY) !== String(scannedInfo.originalQTY)) {
+          rqty = parseFloat(scannedInfo.QTY || 0);
+        }
+        let uqty = (oqty - rqty).toFixed(2);
 
+        const payload = {
           sub_tid: scannedInfo.SUB_TID || "",
           booking: scannedInfo.BOOKING || "",
           sono: scannedInfo.SONO || "",
@@ -1061,8 +1071,9 @@
           sl_vdq: scannedInfo.SL_VDQ || "",
           lot_no: scannedInfo.LOT_NO || "",
 
-          qty: scannedInfo.QTY || "",
-          originalqty: scannedInfo.originalQTY || scannedInfo.QTY || ""
+          oqty: oqty,
+          rqty: rqty,
+          uqty: uqty
 
         };
 

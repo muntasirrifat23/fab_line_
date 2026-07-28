@@ -70,17 +70,30 @@ $open_tube    = val("open_tube");
 $color        = val("color");
 $sl_vdq       = val("sl_vdq");
 
-$oqty = val("originalqty");
-$uqty = val("qty");
+$oqty         = val("oqty");
+$rqty         = val("rqty");
+$uqty         = val("uqty");
 
-if ($oqty == "") {
-    $oqty = $uqty;
-}
-
-if ($uqty == "") {
+if ($oqty <= 0) {
     echo json_encode([
         "success" => false,
-        "message" => "Production Qty missing."
+        "message" => "Original Qty missing."
+    ]);
+    exit;
+}
+
+if ($rqty < 0) {
+    echo json_encode([
+        "success" => false,
+        "message" => "Invalid Reject Qty."
+    ]);
+    exit;
+}
+
+if ($rqty > $oqty) {
+    echo json_encode([
+        "success" => false,
+        "message" => "Reject Qty cannot be greater than Original Qty."
     ]);
     exit;
 }
@@ -113,11 +126,9 @@ if (mysqli_num_rows($result) > 0) {
 }
 
 mysqli_stmt_close($stmt);
-//========================
-// INSERT
-//========================
 
-$sql = "INSERT INTO knitting_production
+
+ $sql = "INSERT INTO knitting_production
 (
 BUDAT,
 ROLL,
@@ -136,11 +147,13 @@ OPEN_TUBE,
 COLOR,
 SL_VDQ,
 OQTY,
+RQTY,
 UQTY,
 LOT_NO
 )
 VALUES
 (
+?,
 ?,
 ?,
 ?,
@@ -178,7 +191,7 @@ $budat=date("Y-m-d");
 
 mysqli_stmt_bind_param(
     $stmt,
-    "sssssssssssssssssss",
+    "ssssssssssssssssssss",
 
     $budat,
     $roll,
@@ -197,6 +210,7 @@ mysqli_stmt_bind_param(
     $color,
     $sl_vdq,
     $oqty,
+    $rqty,
     $uqty,
     $lot_no
 );
@@ -228,6 +242,7 @@ echo json_encode([
     "roll" => $roll,
     "booking" => $booking,
     "oqty" => $oqty,
+    "rqty" => $rqty,
     "uqty" => $uqty
 ]);
 
