@@ -203,7 +203,7 @@ $user = strtolower($_SESSION['username'] ?? '');
       <h2 class="card-title text-center" style="color: #6d28d9;">Report Selection</h2>
       <div class="row d-flex align-items-stretch">
 
-        <!-- 1. Knitting Input Details Report (Amber) -->
+        <!-- 1. Knitting Input Details Report -->
         <div class="col-md-4 mb-3 d-flex">
           <div class="report-card w-100 card-bg">
             <form method="POST" action="knitting_input.php" class="h-100 w-100">
@@ -217,12 +217,12 @@ $user = strtolower($_SESSION['username'] ?? '');
           </div>
         </div>
 
-        <!-- 2. Knitting Program Report (Amber) -->
+        <!-- 2. Knitting Program Report -->
         <div class="col-md-4 mb-3 d-flex">
           <div class="report-card w-100 card-bg">
             <form method="POST" action="knitting_program_report.php" class="h-100 w-100">
               <button type="submit" class="btn btn-report">
-                <i class="fa-solid fa-file-lines card-btn"></i>
+                <i class="fa-solid fa-clipboard-list card-btn"></i>
                 <span class="floor-text">
                   <span>Knitting Program Report</span>
                 </span>
@@ -231,12 +231,12 @@ $user = strtolower($_SESSION['username'] ?? '');
           </div>
         </div>
 
-        <!-- 2. Knit Card Report (Amber) -->
+        <!-- 3. Knit Card Report -->
         <div class="col-md-4 mb-3 d-flex">
           <div class="report-card w-100 card-bg">
             <form method="POST" action="knit_card_report.php" class="h-100 w-100">
               <button type="submit" class="btn btn-report">
-                <i class="fa-solid fa-id-card card-btn"></i>
+                <i class="fa-solid fa-id-card-clip card-btn"></i>
                 <span class="floor-text">
                   <span>Knit Card Report</span>
                 </span>
@@ -245,7 +245,49 @@ $user = strtolower($_SESSION['username'] ?? '');
           </div>
         </div>
 
-        <!-- 4.  -->
+        <!-- 4. Knitting production Report -->
+        <div class="col-md-4 mb-3 d-flex">
+          <div class="report-card w-100 card-bg">
+            <form method="POST" action="knitting_production_report.php" class="h-100 w-100">
+              <button type="submit" class="btn btn-report">
+                <i class="fa-solid fa-chart-line card-btn"></i>
+                <span class="floor-text">
+                  <span>Knitting Production Report</span>
+                </span>
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- 5. Knitting Inspection Report -->
+        <div class="col-md-4 mb-3 d-flex">
+          <div class="report-card w-100 card-bg">
+            <form method="POST" action="knitting_inspection_report.php" class="h-100 w-100">
+              <button type="submit" class="btn btn-report">
+                <i class="fa-solid fa-boxes-stacked card-btn"></i>
+                <span class="floor-text">
+                  <span>Knitting Inspection Report</span>
+                </span>
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- 5. Knitting Store Report -->
+        <!-- <div class="col-md-4 mb-3 d-flex">
+          <div class="report-card w-100 card-bg">
+            <form method="POST" action="knitting_store_report.php" class="h-100 w-100">
+              <button type="submit" class="btn btn-report">
+                <i class="fa-solid fa-warehouse  card-btn"></i>
+                <span class="floor-text">
+                  <span>Knitting Store Report</span>
+                </span>
+              </button>
+            </form>
+          </div>
+        </div> -->
+
+        <!-- 00. Knitting QR Report -->
         <div class="col-md-4 mb-3 d-flex">
           <div class="report-card w-100 card-bg">
             <form method="POST" action="knitting_qr.php" class="h-100 w-100">
@@ -259,7 +301,7 @@ $user = strtolower($_SESSION['username'] ?? '');
           </div>
         </div>
 
-        
+
         <!-- 1. DHU Report (Teal) -->
         <!-- <i class="fa-solid fa-chart-line card-btn"></i> -->
 

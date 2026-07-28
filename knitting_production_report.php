@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Report | Store</title>
+    <title>Report | Production</title>
 </head>
 <body>
-    knitting store
-    
+    <h2>Knitting Production</h2>
 </body>
 </html>
