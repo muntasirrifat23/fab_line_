@@ -273,6 +273,20 @@ $user = strtolower($_SESSION['username'] ?? '');
           </div>
         </div>
 
+        <!-- 001. Knitting Test Inspection Report -->
+        <div class="col-md-4 mb-3 d-flex">
+          <div class="report-card w-100 card-bg">
+            <form method="POST" action="knitting_inspection_report_test.php" class="h-100 w-100">
+              <button type="submit" class="btn btn-report">
+                <i class="fa-solid fa-boxes-stacked card-btn"></i>
+                <span class="floor-text">
+                  <span>K Test Inspection</span>
+                </span>
+              </button>
+            </form>
+          </div>
+        </div>
+
         <!-- 5. Knitting Store Report -->
         <!-- <div class="col-md-4 mb-3 d-flex">
           <div class="report-card w-100 card-bg">
