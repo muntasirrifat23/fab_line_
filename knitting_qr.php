@@ -168,6 +168,7 @@
         <div class="qr-grid">
 
             <div><b>Program :</b> ${row.SUB_TID||''}</div>
+            <div><b>KPTID :</b> ${row.KPTID||''}</div>
             <div><b>MCNO :</b> ${row.MCNO||''}</div>
 
             <div><b>Buyer :</b> ${row.BUYER||''}</div>
@@ -209,51 +210,24 @@
 `;
         }
 
-        function generateQrCode(row, target) {
-            target.empty();
+       function generateQrCode(row, target) {
+    target.empty();
 
-            // *** IMPORTANT FIX: Use the exact same field order as Production page expects ***
-            // Order: SUB_TID, BOOKING, SONO, BUYER, MCNO, MC_DIA, STYLE, YARN_TYPE, YARN_COUNT, 
-            //        FABRICS_TYPE, FINISH_GSM, FINISH_DIA, OPEN_TUBE, COLOR, QTY, SL_VDQ, LOT_NO
-            var qrFields = [
-                'SUB_TID',
-                'BOOKING',
-                'SONO',
-                'BUYER',
-                'MCNO',
-                'MC_DIA',
-                'STYLE',
-                'YARN_TYPE',
-                'YARN_COUNT',
-                'FABRICS_TYPE',
-                'FINISH_GSM',
-                'FINISH_DIA',
-                'OPEN_TUBE',
-                'COLOR',
-                'QTY',
-                'SL_VDQ',
-                'LOT_NO'
-            ];
+    var qrText =
+        "Program: " + (row.SUB_TID || '') + "\n" +
+        "KPTID: " + (row.KPTID || '');
 
-            var qrText = qrFields.map(function(field) {
-                var value = row[field] || '';
-                // Clean and trim value to prevent parsing issues
-                return String(value).trim();
-            }).join('|');
+    console.log(qrText);
 
-            // Log for debugging
-            console.log('QR Text generated:', qrText);
-            console.log('QR Field count:', qrFields.length);
-
-            new QRCode(target[0], {
-                text: qrText || 'QR CODE',
-                width: 160,
-                height: 160,
-                colorDark: '#000000',
-                colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.H
-            });
-        }
+    new QRCode(target[0], {
+        text: qrText,
+        width: 160,
+        height: 160,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+    });
+}
 
         function downloadQrImage(container, filename) {
             var img = container.find('img')[0];
