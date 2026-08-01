@@ -64,10 +64,18 @@ if (!empty($errors)) {
 
 // Generate MAIN_TID and SUB_TID for new entries if missing
 if (empty($main_tid)) {
-    $main_tid = time();
+    $maxRow = mysqli_fetch_assoc(mysqli_query($db, 'SELECT MAX(MAIN_TID) AS max_main FROM knitting_program'));
+    $main_tid = intval($maxRow['max_main']) + 1;
+    if ($main_tid < 1000000001) {
+        $main_tid = 1000000001;
+    }
 }
 if (empty($sub_tid)) {
-    $sub_tid = time() . rand(10, 99);
+    $maxRow = mysqli_fetch_assoc(mysqli_query($db, 'SELECT MAX(SUB_TID) AS max_sub FROM knitting_program'));
+    $sub_tid = intval($maxRow['max_sub']) + 1;
+    if ($sub_tid < 2000000001) {
+        $sub_tid = 2000000001;
+    }
 }
 
 try {
