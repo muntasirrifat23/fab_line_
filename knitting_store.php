@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Scanner | Store</title>
+    <title>Knitting | Store</title>
     
     <!-- Bootstrap 5 & Font Awesome -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
@@ -376,7 +376,7 @@
         <div id="scan-overlay"></div>
         <div class="scan-line"></div>
         <div style="position:absolute;bottom:15px;left:50%;transform:translateX(-50%);color:white;font-size:12px;background:rgba(0,0,0,0.5);padding:5px 15px;border-radius:20px;pointer-events:none;z-index:10;">
-            Click to simulate scan
+            Point the camera at the QR code
         </div>
     </div>
     
@@ -441,11 +441,16 @@
 <!-- Scripts -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js"></script>
 
 <script>
     // ---------- GLOBALS ----------
     let scannerActive = false;
+    let scanLoopActive = false;
     let stream = null;
+    let scanCanvas = null;
+    let scanContext = null;
+    let barcodeDetector = null;
     let currentScannedData = null;
     let selectedRack = null;
     let selectedSubRack = null;
@@ -459,6 +464,57 @@
     };
     
     // ---------- API CALLS ----------
+    function initScannerCanvas() {
+        if (!scanCanvas) {
+            scanCanvas = document.createElement('canvas');
+            scanCanvas.style.display = 'none';
+            document.body.appendChild(scanCanvas);
+        }
+        if (!scanContext) {
+            scanContext = scanCanvas.getContext('2d');
+        }
+    }
+
+    async function scanFrame() {
+        if (!scannerActive || !scanLoopActive) return;
+
+        const video = document.getElementById('video');
+        if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth > 0 && video.videoHeight > 0) {
+            scanCanvas.width = video.videoWidth;
+            scanCanvas.height = video.videoHeight;
+            scanContext.drawImage(video, 0, 0, scanCanvas.width, scanCanvas.height);
+
+            let qrText = null;
+
+            if (barcodeDetector) {
+                try {
+                    const barcodes = await barcodeDetector.detect(scanCanvas);
+                    if (barcodes && barcodes.length > 0) {
+                        qrText = barcodes[0].rawValue || barcodes[0].boundingBox || null;
+                    }
+                } catch (detectorError) {
+                    console.warn('BarcodeDetector failed:', detectorError);
+                }
+            }
+
+            if (!qrText) {
+                const imageData = scanContext.getImageData(0, 0, scanCanvas.width, scanCanvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+                if (code && code.data) {
+                    qrText = code.data;
+                }
+            }
+
+            if (qrText) {
+                scanLoopActive = false;
+                processScannedData(qrText);
+                return;
+            }
+        }
+
+        requestAnimationFrame(scanFrame);
+    }
+
     function fetchDataByRoll(roll) {
         return new Promise((resolve, reject) => {
             $.ajax({
@@ -513,7 +569,19 @@
             video.srcObject = stream;
             await video.play();
             
+            initScannerCanvas();
+            if ('BarcodeDetector' in window) {
+                try {
+                    barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
+                } catch (e) {
+                    console.warn('BarcodeDetector init failed:', e);
+                    barcodeDetector = null;
+                }
+            }
+
             scannerActive = true;
+            scanLoopActive = true;
+            scanFrame();
             showStatus('Scanner started. Point camera at QR code.', 'info');
             document.getElementById('startScanBtn').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-1"></i> Scanning...';
             
@@ -526,6 +594,7 @@
     
     function stopScanner() {
         scannerActive = false;
+        scanLoopActive = false;
         if (stream) {
             stream.getTracks().forEach(track => track.stop());
             stream = null;
@@ -544,11 +613,11 @@
         try {
             // If data is a string (QR text), try to extract ROLL
             if (typeof data === 'string') {
-                // Try to find ROLL number in the QR text
-                const rollMatch = data.match(/ROLL:\s*(\S+)/i);
-                if (rollMatch && rollMatch[1]) {
-                    const roll = rollMatch[1].trim();
-                    showStatus(`Fetching data for ROLL: ${roll}...`, 'info');
+                // Try to extract roll number from various QR formats
+                let roll = extractRollFromQR(data);
+                
+                if (roll) {
+                    showStatus(`Searching for ROLL: ${roll}...`, 'info');
                     
                     const dbData = await fetchDataByRoll(roll);
                     if (dbData) {
@@ -559,7 +628,10 @@
                         stopScanner();
                         return;
                     }
+                    showStatus(`No data found for ROLL: ${roll}`, 'error');
+                    return;
                 }
+                
                 showStatus('Invalid QR code. Please scan a valid knitting QR.', 'error');
                 return;
             }
@@ -578,6 +650,34 @@
         } finally {
             isProcessing = false;
         }
+    }
+    
+    // Extract roll number from any QR format
+    function extractRollFromQR(qrText) {
+        if (!qrText || typeof qrText !== 'string') return null;
+        var text = qrText.trim();
+        
+        // Format 1: Pipe-delimited (from knitting_qr.php)
+        // SUB_TID|BOOKING|SONO|BUYER|MCNO|MC_DIA|STYLE|...
+        if (text.indexOf('|') !== -1) {
+            var parts = text.split('|');
+            var first = (parts[0] || '').trim();
+            if (first.length > 0) return first;
+        }
+        
+        // Format 2: KEY: VALUE newline format (from knitting_inspection_report_test.php)
+        // ROLL: 12345
+        var m = text.match(/ROLL:\s*([^\n\r]+)/i);
+        if (m && m[1]) return m[1].trim();
+        
+        // Format 3: SUB_TID: value
+        m = text.match(/SUB_TID:\s*([^\n\r]+)/i);
+        if (m && m[1]) return m[1].trim();
+        
+        // Format 4: Plain numeric (just a roll number directly)
+        if (/^\d+$/.test(text) && text.length >= 2) return text;
+        
+        return null;
     }
     
     // ---------- DISPLAY DATA ----------
@@ -740,32 +840,6 @@
         }
     }
     
-    // ---------- SIMULATE QR SCAN (for testing) ----------
-    function simulateQRScan() {
-        if (!scannerActive) {
-            showStatus('Scanner is not active. Start scan first.', 'error');
-            return;
-        }
-        
-        // Use a test ROLL number - you can change this to any existing ROLL
-        const testRoll = '2000000007';
-        showStatus(`Simulating scan for ROLL: ${testRoll}...`, 'info');
-        
-        fetchDataByRoll(testRoll)
-            .then(data => {
-                if (data) {
-                    currentScannedData = data;
-                    displayData(data);
-                    document.getElementById('rackSection').classList.add('active');
-                    showStatus('QR Code scanned successfully! Select rack location.', 'success');
-                    stopScanner();
-                }
-            })
-            .catch(error => {
-                showStatus('Error: ' + error, 'error');
-            });
-    }
-    
     // ---------- MANUAL FETCH ----------
     document.getElementById('manualFetchBtn').addEventListener('click', function() {
         const roll = document.getElementById('manualRollInput').value.trim();
@@ -805,14 +879,6 @@
             return;
         }
         startScanner();
-        
-        // Auto-simulate scan after 4 seconds for demo
-        // In production, this would be triggered by actual QR detection
-        setTimeout(() => {
-            if (scannerActive) {
-                simulateQRScan();
-            }
-        }, 4000);
     });
     
     document.getElementById('stopScanBtn').addEventListener('click', function() {
@@ -820,10 +886,10 @@
         showStatus('Scanner stopped.', 'info');
     });
     
-    // ---------- CLICK ON VIDEO TO SIMULATE SCAN ----------
+    // ---------- VIDEO CLICK ----------
     document.getElementById('video-container').addEventListener('click', function() {
         if (scannerActive) {
-            simulateQRScan();
+            showStatus('Scanning... point the camera at the QR code.', 'info');
         } else {
             showStatus('Start the scanner first.', 'info');
         }
