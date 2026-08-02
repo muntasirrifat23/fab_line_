@@ -349,6 +349,11 @@ if ($result && $result->num_rows > 0) {
                     </div>
                 </div>
                 <!-- Right: nav buttons -->
+                <div class="d-flex gap-2">
+                    <a href="initialPage.php" class="btn nav-btn btn-glass">
+                        <i class="fa-solid fa-house"></i> Back to Dashboard
+                    </a>
+                </div>
             </div>
 
             <!-- Glassy info strip at the bottom of the header -->

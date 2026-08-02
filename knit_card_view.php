@@ -19,52 +19,25 @@ if ($card_id <= 0) {
 // QR Code URL (public view)
 $qr_url = APP_BASE_URL . "/knit_card_public_view.php?id=" . $card_id;
 
-// ── Handle: Update Header Form ─────────────────────────────────────────────
+// ── Handle: Update Quantity Form (Only REQ_QTY is editable per business rules) ──
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_header'])) {
-    $f_mcno        = trim($_POST['MCNO']           ?? '');
-    $f_finish_dia  = trim($_POST['FINISH_DIA']      ?? '');
-    $f_finish_gsm  = trim($_POST['FINISH_GSM']      ?? '');
-    $f_grey_gsm    = trim($_POST['GREY_GSM']        ?? '');
-    $f_sl_vdq      = floatval($_POST['SL_VDQ']      ?? 0);
-    $f_open_tube   = trim($_POST['OPEN_TUBE']       ?? 'O');
-    $f_buyer       = trim($_POST['BUYER']           ?? '');
-    $f_booking     = trim($_POST['BOOKING']         ?? '');
-    $f_sono        = trim($_POST['SONO']            ?? '');
-    $f_style       = trim($_POST['STYLE']           ?? '');
-    $f_fabrics     = trim($_POST['FABRICS_TYPE']    ?? '');
-    $f_yarn_type   = trim($_POST['YARN_TYPE']       ?? '');
-    $f_yarn_count  = trim($_POST['YARN_COUNT']      ?? '');
-    $f_lot_no      = trim($_POST['LOT_NO']          ?? '');
-    $f_knit_desc   = trim($_POST['KNIT_M_DESCRIPTION'] ?? '');
-    $f_req_qty     = floatval($_POST['REQ_QTY']     ?? 0);
-    $f_prepared    = trim($_POST['PREPARED_BY']     ?? '');
-    $f_authorised  = trim($_POST['AUTHORISED_BY']   ?? '');
+    $f_req_qty = floatval($_POST['REQ_QTY'] ?? 0);
 
-    $upd = $db->prepare("
-        UPDATE knit_card SET
-            MCNO=?, FINISH_DIA=?, FINISH_GSM=?, GREY_GSM=?, SL_VDQ=?,
-            OPEN_TUBE=?, BUYER=?, BOOKING=?, SONO=?, STYLE=?,
-            FABRICS_TYPE=?, YARN_TYPE=?, YARN_COUNT=?, LOT_NO=?,
-            KNIT_M_DESCRIPTION=?, REQ_QTY=?, PREPARED_BY=?, AUTHORISED_BY=?
-        WHERE KCID=?
-    ");
-    if ($upd) {
-        $upd->bind_param(
-            "ssssdssssssssssdssi",
-            $f_mcno, $f_finish_dia, $f_finish_gsm, $f_grey_gsm, $f_sl_vdq,
-            $f_open_tube, $f_buyer, $f_booking, $f_sono, $f_style,
-            $f_fabrics, $f_yarn_type, $f_yarn_count, $f_lot_no,
-            $f_knit_desc, $f_req_qty, $f_prepared, $f_authorised,
-            $card_id
-        );
-        if ($upd->execute()) {
-            $msg = "Card header updated successfully!";
-        } else {
-            $error = "Failed to update: " . $db->error;
-        }
-        $upd->close();
+    if ($f_req_qty <= 0) {
+        $error = "Required Quantity must be a positive number.";
     } else {
-        $error = "Prepare failed: " . $db->error;
+        $upd = $db->prepare("UPDATE knit_card SET REQ_QTY = ? WHERE KCID = ?");
+        if ($upd) {
+            $upd->bind_param("di", $f_req_qty, $card_id);
+            if ($upd->execute()) {
+                $msg = "Card Required Quantity updated successfully!";
+            } else {
+                $error = "Failed to update: " . $db->error;
+            }
+            $upd->close();
+        } else {
+            $error = "Prepare failed: " . $db->error;
+        }
     }
 }
 
@@ -628,50 +601,47 @@ $completion_pct = ($target_qty > 0) ? min(100, round(($total_cum_produced / $tar
                 <div class="form-section-title mb-0 border-0 p-0">
                     <i class="fa-solid fa-sliders me-1"></i> Card Specifications Header
                 </div>
-                <small class="text-muted"><i class="fa-solid fa-pen-to-square me-1"></i> Edit parameters and click "Update Header Specs"</small>
+                <small class="text-muted"><i class="fa-solid fa-lock me-1"></i> Auto-generated specs are read-only. Only Quantity can be modified.</small>
             </div>
 
             <form method="POST" action="knit_card_view.php?id=<?php echo $card_id; ?>">
                 <input type="hidden" name="update_header" value="1">
 
                 <div class="row gx-3">
-                    <div class="col-md-2"><label class="form-label">M/C No</label><input type="text" name="MCNO" class="form-control" value="<?php echo htmlspecialchars($card['MCNO'] ?? ''); ?>"></div>
-                    <div class="col-md-2"><label class="form-label">Finish Dia</label><input type="text" name="FINISH_DIA" class="form-control" value="<?php echo htmlspecialchars($card['FINISH_DIA'] ?? ''); ?>"></div>
-                    <div class="col-md-2"><label class="form-label">Grey GSM</label><input type="text" name="GREY_GSM" class="form-control" value="<?php echo htmlspecialchars($card['GREY_GSM'] ?? ''); ?>"></div>
-                    <div class="col-md-2"><label class="form-label">Finish GSM</label><input type="text" name="FINISH_GSM" class="form-control" value="<?php echo htmlspecialchars($card['FINISH_GSM'] ?? ''); ?>"></div>
-                    <div class="col-md-2"><label class="form-label">SL / VDQ</label><input type="number" step="0.01" name="SL_VDQ" class="form-control" value="<?php echo htmlspecialchars($card['SL_VDQ'] ?? ''); ?>"></div>
-                    <div class="col-md-2"><label class="form-label">Open/Tube</label>
-                        <select name="OPEN_TUBE" class="form-select">
-                            <option value="O" <?php echo ($card['OPEN_TUBE'] ?? '') === 'O' ? 'selected' : ''; ?>>Open (O)</option>
-                            <option value="T" <?php echo ($card['OPEN_TUBE'] ?? '') === 'T' ? 'selected' : ''; ?>>Tube (T)</option>
-                        </select>
+                    <div class="col-md-2"><label class="form-label">M/C No</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['MCNO'] ?? ''); ?>" readonly></div>
+                    <div class="col-md-2"><label class="form-label">Finish Dia</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['FINISH_DIA'] ?? ''); ?>" readonly></div>
+                    <div class="col-md-2"><label class="form-label">Grey GSM</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['GREY_GSM'] ?? ''); ?>" readonly></div>
+                    <div class="col-md-2"><label class="form-label">Finish GSM</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['FINISH_GSM'] ?? ''); ?>" readonly></div>
+                    <div class="col-md-2"><label class="form-label">SL / VDQ</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['SL_VDQ'] ?? ''); ?>" readonly></div>
+                    <div class="col-md-2"><label class="form-label">Open/Tube</label><input type="text" class="form-control" value="<?php echo ($card['OPEN_TUBE'] ?? '') === 'T' ? 'Tube (T)' : 'Open (O)'; ?>" readonly></div>
+                </div>
+
+                <div class="row gx-3">
+                    <div class="col-md-2"><label class="form-label">Buyer</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['BUYER'] ?? ''); ?>" readonly></div>
+                    <div class="col-md-2"><label class="form-label">Supplier</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['SUPPLIER'] ?? ''); ?>" readonly></div>
+                    <div class="col-md-2"><label class="form-label">Booking No</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['BOOKING'] ?? ''); ?>" readonly></div>
+                    <div class="col-md-2"><label class="form-label">SONO</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['SONO'] ?? ''); ?>" readonly></div>
+                    <div class="col-md-2"><label class="form-label">Style</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['STYLE'] ?? ''); ?>" readonly></div>
+                    <div class="col-md-2"><label class="form-label">Fabric Type</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['FABRICS_TYPE'] ?? ''); ?>" readonly></div>
+                </div>
+
+                <div class="row gx-3">
+                    <div class="col-md-2"><label class="form-label">Yarn Type</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['YARN_TYPE'] ?? ''); ?>" readonly></div>
+                    <div class="col-md-2"><label class="form-label">Yarn Count</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['YARN_COUNT'] ?? ''); ?>" readonly></div>
+                    <div class="col-md-3"><label class="form-label">Lot No</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['LOT_NO'] ?? ''); ?>" readonly></div>
+                    <div class="col-md-3">
+                        <label class="form-label text-primary fw-bold"><i class="fa-solid fa-pen-to-square me-1"></i> Req Qty (KG) - Editable</label>
+                        <input type="number" step="0.01" min="0.01" name="REQ_QTY" class="form-control fw-bold text-primary" style="border: 2px solid #2563eb; background:#eff6ff;" value="<?php echo htmlspecialchars($card['REQ_QTY'] ?? ''); ?>" required>
                     </div>
+                    <div class="col-md-2"><label class="form-label">Prepared By</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['PREPARED_BY'] ?? ''); ?>" readonly></div>
                 </div>
 
                 <div class="row gx-3">
-                    <div class="col-md-2"><label class="form-label">Buyer</label><input type="text" name="BUYER" class="form-control" value="<?php echo htmlspecialchars($card['BUYER'] ?? ''); ?>"></div>
-                    <div class="col-md-2"><label class="form-label">Supplier</label><input type="text" name="SUPPLIER" class="form-control" value="<?php echo htmlspecialchars($card['SUPPLIER'] ?? ''); ?>"></div>
-                    <div class="col-md-2"><label class="form-label">Booking No</label><input type="text" name="BOOKING" class="form-control" value="<?php echo htmlspecialchars($card['BOOKING'] ?? ''); ?>"></div>
-                    <div class="col-md-2"><label class="form-label">SONO</label><input type="text" name="SONO" class="form-control" value="<?php echo htmlspecialchars($card['SONO'] ?? ''); ?>"></div>
-                    <div class="col-md-2"><label class="form-label">Style</label><input type="text" name="STYLE" class="form-control" value="<?php echo htmlspecialchars($card['STYLE'] ?? ''); ?>"></div>
-                    <div class="col-md-2"><label class="form-label">Fabric Type</label><input type="text" name="FABRICS_TYPE" class="form-control" value="<?php echo htmlspecialchars($card['FABRICS_TYPE'] ?? ''); ?>"></div>
-                </div>
-
-                <div class="row gx-3">
-                    <div class="col-md-2"><label class="form-label">Yarn Type</label><input type="text" name="YARN_TYPE" class="form-control" value="<?php echo htmlspecialchars($card['YARN_TYPE'] ?? ''); ?>"></div>
-                    <div class="col-md-2"><label class="form-label">Yarn Count</label><input type="text" name="YARN_COUNT" class="form-control" value="<?php echo htmlspecialchars($card['YARN_COUNT'] ?? ''); ?>"></div>
-                    <div class="col-md-3"><label class="form-label">Lot No</label><input type="text" name="LOT_NO" class="form-control" value="<?php echo htmlspecialchars($card['LOT_NO'] ?? ''); ?>"></div>
-                    <div class="col-md-2"><label class="form-label">Req Qty (KG)</label><input type="number" step="0.001" name="REQ_QTY" class="form-control fw-bold text-success" value="<?php echo htmlspecialchars($card['REQ_QTY'] ?? ''); ?>"></div>
-                    <div class="col-md-2"><label class="form-label">Prepared By</label><input type="text" name="PREPARED_BY" class="form-control" value="<?php echo htmlspecialchars($card['PREPARED_BY'] ?? ''); ?>"></div>
-                    <div class="col-md-1"><label class="form-label">Auth By</label><input type="text" name="AUTHORISED_BY" class="form-control" value="<?php echo htmlspecialchars($card['AUTHORISED_BY'] ?? ''); ?>"></div>
-                </div>
-
-                <div class="row gx-3">
-                    <div class="col-md-12"><label class="form-label">Knit Material Description</label><input type="text" name="KNIT_M_DESCRIPTION" class="form-control" value="<?php echo htmlspecialchars($card['KNIT_M_DESCRIPTION'] ?? ''); ?>"></div>
+                    <div class="col-md-12"><label class="form-label">Knit Material Description</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['KNIT_M_DESCRIPTION'] ?? ''); ?>" readonly></div>
                 </div>
 
                 <div class="d-flex justify-content-end pt-3 border-top">
-                    <button type="submit" class="btn btn-teal"><i class="fa-solid fa-floppy-disk me-1"></i> Update Header Specs</button>
+                    <button type="submit" class="btn btn-teal"><i class="fa-solid fa-floppy-disk me-1"></i> Update Quantity</button>
                 </div>
             </form>
         </div>

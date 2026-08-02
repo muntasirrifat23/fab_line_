@@ -63,7 +63,7 @@ if ($result && $result->num_rows > 0) {
         $rows_array[]    = $r;
         $total_programs++;
         $total_req_qty  += floatval($r['QTY'] ?? 0);
-        if (intval($r['CARD_GENERATED']) === 1) {
+        if (intval($r['CARD_GENERATED'] ?? 0) === 1) {
             $generated_count++;
         } else {
             $pending_count++;
