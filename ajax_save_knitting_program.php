@@ -113,8 +113,14 @@ if (!$tidResult) {
 
 $tidRow = mysqli_fetch_assoc($tidResult);
 
-$mainTid = $tidRow['max_main'] + 1;
-$nextSubTid = $tidRow['max_sub'] + 1;
+$mainTid = intval($tidRow['max_main']) + 1;
+if ($mainTid < 1000000001) {
+    $mainTid = 1000000001;
+}
+$nextSubTid = intval($tidRow['max_sub']) + 1;
+if ($nextSubTid < 2000000001) {
+    $nextSubTid = 2000000001;
+}
 
 mysqli_free_result($tidResult);
 

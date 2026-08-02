@@ -195,6 +195,9 @@ if (isset($schemaColumns['KNIT_MATERIAL_CODE']) && !in_array('KNIT_MATERIAL_CODE
 if (isset($schemaColumns['MAIN_TID']) && !in_array('MAIN_TID', $insertFields, true)) {
     $tidRow = mysqli_fetch_assoc(mysqli_query($db, 'SELECT COALESCE(MAX(MAIN_TID), 1000000000) AS max_main FROM knitting_program'));
     $mainTid = intval($tidRow['max_main']) + 1;
+    if ($mainTid < 1000000001) {
+        $mainTid = 1000000001;
+    }
     $insertFields[] = 'MAIN_TID';
     $insertValues[] = (string)$mainTid;
 }
@@ -202,6 +205,9 @@ if (isset($schemaColumns['MAIN_TID']) && !in_array('MAIN_TID', $insertFields, tr
 if (isset($schemaColumns['SUB_TID']) && !in_array('SUB_TID', $insertFields, true)) {
     $tidRow = mysqli_fetch_assoc(mysqli_query($db, 'SELECT COALESCE(MAX(SUB_TID), 2000000000) AS max_sub FROM knitting_program'));
     $subTid = intval($tidRow['max_sub']) + 1;
+    if ($subTid < 2000000001) {
+        $subTid = 2000000001;
+    }
     $insertFields[] = 'SUB_TID';
     $insertValues[] = (string)$subTid;
 }
