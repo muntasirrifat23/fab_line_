@@ -727,7 +727,7 @@
                         </div>
                         <div class="form-grid">
                             <div class="form-group">
-                                <label>Finish DIA</label>
+                                <label>MC DIA</label>
                                 <input type="text" id="mc_dia" readonly>
                             </div>
                             <div class="form-group">

@@ -95,42 +95,41 @@ function parseDate($raw)
     return null;
 }
 
-/* ==========================
-   CSV -> Database Map
-========================== */
+
 $columnMap = [
-    'SUPPLIER'              => 'SUPPLIER',
-    'BUYER'                 => 'BUYER',
-    'BOOKING'               => 'BOOKING',
-    'MC_DIA'                => 'MC_DIA',
-    'FINISH_DIA'            => 'FINISH_DIA',
-    'OPEN_TUBE'             => 'OPEN_TUBE',
-    'STYLE'                 => 'STYLE',
-    'YARN_TYPE'             => 'YARN_TYPE',
-    'YARN_COUNT'            => 'YARN_COUNT',
-    'FABRICS_TYPE'          => 'FABRICS_TYPE',
-    'FINISH_GSM'            => 'FINISH_GSM',
-    'COLOR'                 => 'COLOR',
-    'SONO'                  => 'SONO',
-    'SO_ITEM'               => 'SO_ITEM',
-    'KNIT_MATERIAL_CODE'    => 'KNIT_MATERIAL_CODE',
-    'KNIT_M_DESCRIPTION'    => 'KNIT_M_DESCRIPTION',
-    'ORDER_TYPE'            => 'ORDER_TYPE',
-    'KNITTING_TARGET_QTY'   => 'KNITTING_TARGET_QTY',
-    'SL_VDQ'                => 'SL_VDQ',
-    'LOT_NO'                => 'LOT_NO',
-    'FIRST_SHIPMENT_DATE'   => 'FIRST_SHIPMENT_DATE',
-    'LAST_SHIPMENT_DATE'    => 'LAST_SHIPMENT_DATE',
-    'KNIT_TNA_START'        => 'KNIT_TNA_START',
-    'KNIT_TNA_END'          => 'KNIT_TNA_END',
+    'PO_NUMBER'            => 'PO_NUMBER',
+    'SONO'                 => 'SONO',
+    'BUYER'                => 'BUYER',
+    'STYLE'                => 'STYLE',
+    'COLOR'                => 'COLOR',
+    'QTY'                  => 'QTY',
+    'FINISH_GSM'           => 'FINISH_GSM',
+    'FINISH_DIA'           => 'FINISH_DIA',
+    'OPEN_TUBE'            => 'OPEN_TUBE',
+    'FABRICS_TYPE'         => 'FABRICS_TYPE',
+    'YARN_TYPE'            => 'YARN_TYPE',
+    'KNIT_MATERIAL_CODE'   => 'KNIT_MATERIAL_CODE',
+    'KNIT_M_DESCRIPTION'   => 'KNIT_M_DESCRIPTION'
 ];
 
-/* ==========================
-   Prepare Insert - BUDAT (only date) & CBUDAT (with time)
-========================== */
-$dbColumns = array_values($columnMap);
-$dbColumns[] = "BUDAT";   // Add BUDAT (only date)
-$dbColumns[] = "CBUDAT";  // Add CBUDAT (with time)
+
+$dbColumns = [
+    "PO_NUMBER",
+    "SONO",
+    "BUYER",
+    "STYLE",
+    "COLOR",
+    "QTY",
+    "FINISH_GSM",
+    "FINISH_DIA",
+    "OPEN_TUBE",
+    "FABRICS_TYPE",
+    "YARN_TYPE",
+    "KNIT_MATERIAL_CODE",
+    "KNIT_M_DESCRIPTION",
+    "BUDAT",
+    "CBUDAT"
+];
 
 $sql = "INSERT INTO knitting_input
 (
@@ -146,68 +145,50 @@ if (!$stmt) {
     die($db->error);
 }
 
-/* ==========================
-   Import
-========================== */
 $rowNo = 1;
 $success = 0;
 $fail = 0;
 
 while (($row = fgetcsv($handle, 1000000, ",")) !== FALSE) {
     $rowNo++;
-    
     $values = [];
-    $types = "";
-    
-    // Process each column based on the map
-    foreach ($columnMap as $csv => $dbcol) {
-        if (isset($H[$csv])) {
-            $val = trim($row[$H[$csv]]);
-        } else {
-            $val = null;
+    $types  = "";
+
+    foreach ($columnMap as $csvCol => $dbCol) {
+        $value = isset($H[$csvCol]) ? trim($row[$H[$csvCol]]) : null;
+        if ($value === '') {
+            $value = null;
         }
-        
-        if ($val === '') {
-            $val = null;
-        }
-        
-        // Convert dates
-        if (in_array($dbcol, [
-            'FIRST_SHIPMENT_DATE',
-            'LAST_SHIPMENT_DATE',
-            'KNIT_TNA_START',
-            'KNIT_TNA_END'
-        ])) {
-            $original = $val;
-            $val = parseDate($val);
-            
-            // Debug output - uncomment to see what's happening
-            // echo "Original: " . $original . " -> Converted: " . $val . "<br>";
-        }
-        
-        $values[] = $val;
+        $values[] = $value;
         $types .= "s";
     }
-    
-    // Add current date only for BUDAT (without time)
-    date_default_timezone_set('Asia/Dhaka');
-    $values[] = date('Y-m-d');        // BUDAT - only date (e.g., 2026-07-16)
+
+    date_default_timezone_set("Asia/Dhaka");
+
+    // BUDAT
+    $values[] = date("Y-m-d");
     $types .= "s";
-    
-    // Add current datetime for CBUDAT (with time)
-    $values[] = date('Y-m-d H:i:s');  // CBUDAT - with time (e.g., 2026-07-16 14:30:25)
+
+    // CBUDAT
+    $values[] = date("Y-m-d H:i:s");
     $types .= "s";
-    
-    // Bind parameters and execute
+
     $stmt->bind_param($types, ...$values);
-    
+
     if ($stmt->execute()) {
+
         $success++;
-        echo "Row " . $rowNo . ": Knitting Input Inserted<br>";
+        echo "Row {$rowNo} inserted<br>";
+
     } else {
+
         $fail++;
-        echo "<span style='color:red'>Row " . $rowNo . " Failed : " . $stmt->error . "</span><br>";
+        echo "<span style='color:red'>
+        Row {$rowNo} Failed : {$stmt->error}
+        </span><br>";
+
     }
+
 }
 
 fclose($handle);
