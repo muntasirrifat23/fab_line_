@@ -194,9 +194,6 @@ while (($row = fgetcsv($handle, 1000000, ",")) !== FALSE) {
 fclose($handle);
 $stmt->close();
 
-/* ==========================================================
-   DELETE CSV AFTER PROCESSING
-========================================================== */
 if (file_exists($filepath)) {
     clearstatcache();
     $temp = $filepath . "_" . time() . ".tmp";

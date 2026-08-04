@@ -8,11 +8,13 @@ $booking = isset($_GET['booking']) ? trim($_GET['booking']) : '';
 $conditions = [];
 if ($booking !== '') {
     $b = mysqli_real_escape_string($db, $booking);
-    $conditions[] = "(BOOKING LIKE '%$b%' OR SONO LIKE '%$b%')";
+    $conditions[] = "(PO_NUMBER LIKE '%$b%' OR SONO LIKE '%$b%')";
 }
 
 $where = '';
-if (count($conditions) > 0) $where = 'WHERE ' . implode(' AND ', $conditions);
+if (count($conditions) > 0) {
+    $where = 'WHERE ' . implode(' AND ', $conditions);
+}
 
 $query = "SELECT * FROM knitting_input $where ORDER BY KITID DESC";
 $result = mysqli_query($db, $query);

@@ -74,7 +74,7 @@
                     </label>
 
                     <div class="input-group input-group-sm d-flex align-items-center gap-2">
-                        <input type="text" id="bookingInput" class="form-control" placeholder="SONO or Document NO">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Enter PO Number or SONO">
                         <button class="btn px-4" id="searchBtn" style="margin-top:8px; background:#2563eb; border:1px solid #2563eb; color:#fff; border-radius:8px;">
                             <i class="fa-solid fa-magnifying-glass me-1" style="margin-right:6px;background:none;border:none;box-shadow:none;transform:none;"></i>
                             Search
@@ -100,35 +100,24 @@
                     <thead class="table-dark">
                         <tr>
                             <th>BUDAT</th>
-                            <th>SUPPLIER</th>
+                            <th>PO NUMBER</th>
+                            <th>SONO</th>
                             <th>BUYER</th>
-                            <th>BOOKING</th>
-                            <th>MC DIA</th>
+                            <th>STYLE</th>
+                            <th>COLOR</th>
+                            <th>QTY</th>
+                            <th>FINISH GSM</th>
                             <th>FINISH DIA</th>
                             <th>OPEN TUBE</th>
-                            <th>STYLE</th>
-                            <th>YARN TYPE</th>
-                            <th>YARN COUNT</th>
                             <th>FABRICS TYPE</th>
-                            <th>FINISH GSM</th>
-                            <th>COLOR</th>
-                            <th>SONO</th>
-                            <th>SO ITEM</th>
-                            <th>KNIT MATERIAL CODE</th>
-                            <th>KNIT MATERIAL DESCRIPTION</th>
-                            <th>ORDER TYPE</th>
-                            <th>KNITTING TARGET QTY</th>
-                            <th>SL VDQ</th>
-                            <th>LOT NO</th>
-                            <th>FIRST SHIPMENT DATE</th>
-                            <th>LAST SHIPMENT DATE</th>
-                            <th>KNIT TNA START</th>
-                            <th>KNIT TNA END</th>
+                            <th>YARN TYPE</th>
+                            <th>MATERIAL CODE</th>
+                            <th>MATERIAL DESCRIPTION</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="25" class="text-center small-muted">Loading data...</td>
+                            <td colspan="14" class="text-center small-muted">Loading data...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -140,80 +129,73 @@
     <script src="jquery.min.js"></script>
 
     <script>
-      function renderTableRows(data) {
+        function renderTableRows(data) {
 
-    var tbody = $('#tableBody');
-    tbody.empty();
+            var tbody = $('#tableBody');
+            tbody.empty();
 
-    if (!data || data.length === 0) {
-        tbody.append('<tr><td colspan="26" class="text-center">No Data Found</td></tr>');
-        return;
-    }
-
-    $.each(data, function(index, row) {
-
-        tbody.append(`
-        <tr>
-            <td>${row.BUDAT ?? ''}</td>
-            <td>${row.SUPPLIER ?? ''}</td>
-            <td>${row.BUYER ?? ''}</td>
-            <td>${row.BOOKING ?? ''}</td>
-            <td>${row.MC_DIA ?? ''}</td>
-            <td>${row.FINISH_DIA ?? ''}</td>
-            <td>${row.OPEN_TUBE ?? ''}</td>
-            <td>${row.STYLE ?? ''}</td>
-            <td>${row.YARN_TYPE ?? ''}</td>
-            <td>${row.YARN_COUNT ?? ''}</td>
-            <td>${row.FABRICS_TYPE ?? ''}</td>
-            <td>${row.FINISH_GSM ?? ''}</td>
-            <td>${row.COLOR ?? ''}</td>
-            <td>${row.SONO ?? ''}</td>
-            <td>${row.SO_ITEM ?? ''}</td>
-            <td>${row.KNIT_MATERIAL_CODE ?? ''}</td>
-            <td>${row.KNIT_M_DESCRIPTION ?? ''}</td>
-            <td>${row.ORDER_TYPE ?? ''}</td>
-            <td>${row.KNITTING_TARGET_QTY ?? ''}</td>
-            <td>${row.SL_VDQ ?? ''}</td>
-            <td>${row.LOT_NO ?? ''}</td>
-            <td>${row.FIRST_SHIPMENT_DATE ?? ''}</td>
-            <td>${row.LAST_SHIPMENT_DATE ?? ''}</td>
-            <td>${row.KNIT_TNA_START ?? ''}</td>
-            <td>${row.KNIT_TNA_END ?? ''}</td>
-        </tr>
-        `);
-
-    });
-
-}
-        function searchBooking() {
-            var booking = $('#bookingInput').val().trim();
-            if (!booking) {
-                alert('Please enter SONO or Booking to search');
+            if (!data || data.length === 0) {
+                tbody.append('<tr><td colspan="14" class="text-center">No Data Found</td></tr>');
                 return;
             }
+
+            $.each(data, function(index, row) {
+                tbody.append(`
+            <tr>
+                <td>${row.BUDAT ?? ''}</td>
+                <td>${row.PO_NUMBER ?? ''}</td>
+                <td>${row.SONO ?? ''}</td>
+                <td>${row.BUYER ?? ''}</td>
+                <td>${row.STYLE ?? ''}</td>
+                <td>${row.COLOR ?? ''}</td>
+                <td>${row.QTY ?? ''}</td>
+                <td>${row.FINISH_GSM ?? ''}</td>
+                <td>${row.FINISH_DIA ?? ''}</td>
+                <td>${row.OPEN_TUBE ?? ''}</td>
+                <td>${row.FABRICS_TYPE ?? ''}</td>
+                <td>${row.YARN_TYPE ?? ''}</td>
+                <td>${row.KNIT_MATERIAL_CODE ?? ''}</td>
+                <td>${row.KNIT_M_DESCRIPTION ?? ''}</td>
+            </tr>
+            `);
+
+            });
+        }
+
+        function searchBooking() {
+            var keyword = $('#searchInput').val().trim();
+            if (keyword === '') {
+                alert('Please enter PO Number or SONO');
+                return;
+            }
+
             $('#searchBtn').prop('disabled', true).text('Searching...');
             $.ajax({
-                    url: 'ajaxKnittingInput.php',
-                    data: {
-                        booking: booking
-                    },
-                    dataType: 'json',
-                    method: 'GET'
-                })
-                .done(function(resp) {
-                    if (resp && resp.success) renderTableRows(resp.data);
-                    else $('#tableBody').html('<tr><td colspan="26" class="text-center small-muted">No data found</td></tr>');
-                })
-                .fail(function() {
-                    $('#tableBody').html('<tr><td colspan="26" class="text-center text-danger">Error searching</td></tr>');
-                })
-                .always(function() {
+                url: 'ajaxKnittingInput.php',
+                method: 'GET',
+                dataType: 'json',
+                data: {
+                    booking: keyword
+                },
+                success: function(resp) {
+                    if (resp.success) {
+                        renderTableRows(resp.data);
+                    } else {
+                        $('#tableBody').html('<tr><td colspan="14" class="text-center">No Data Found</td></tr>');
+                    }
+                },
+                error: function() {
+                    $('#tableBody').html('<tr><td colspan="14" class="text-center text-danger">Error loading data</td></tr>');
+                },
+                complete: function() {
                     $('#searchBtn').prop('disabled', false).text('Search');
-                });
+                }
+            });
+
         }
 
         function loadAll() {
-            $('#tableBody').html('<tr><td colspan="25" class="text-center small-muted">Loading data...</td></tr>');
+            $('#tableBody').html('<tr><td colspan="14" class="text-center small-muted">Loading data...</td></tr>');
             $.ajax({
                     url: 'ajaxKnittingInput.php',
                     dataType: 'json',
@@ -221,10 +203,10 @@
                 })
                 .done(function(resp) {
                     if (resp && resp.success) renderTableRows(resp.data);
-                    else $('#tableBody').html('<tr><td colspan="25" class="text-center small-muted">No data returned</td></tr>');
+                    else $('#tableBody').html('<tr><td colspan="14" class="text-center small-muted">No data returned</td></tr>');
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr><td colspan="25" class="text-center text-danger">Error loading data</td></tr>');
+                    $('#tableBody').html('<tr><td colspan="14" class="text-center text-danger">Error loading data</td></tr>');
                 });
         }
 
@@ -233,16 +215,19 @@
                 history.back();
             });
             $('#searchBtn').on('click', searchBooking);
+            $('#searchInput').on('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    searchBooking();
+                }
+            });
             $('#clearBtn').on('click', function() {
-                $('#bookingInput').val('');
+                $('#searchInput').val('');
                 loadAll();
             });
-
-            // initial load: show all data
             loadAll();
         });
     </script>
 
 </body>
-
 </html>
