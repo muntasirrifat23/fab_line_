@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Report | Program</title>
+    <title>Knitting Program · Responsive Cards</title>
 
+    <!-- Fonts & Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-    <link rel="stylesheet" href="css/bootstrap.min.css">
-    <link rel="stylesheet" href="css/mycss.css">
+    <!-- Bootstrap 5 (grid & utilities only) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+    <!-- jQuery UI for autocomplete -->
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
 
     <style>
         * {
@@ -18,168 +20,232 @@
         }
 
         body {
-            padding: 18px;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: #f1f5f9;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            padding: 1.5rem;
             min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        .header {
+        /* ----- unified card style ----- */
+        .card-unified {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 1.5rem 1.8rem;
+            box-shadow: 0 8px 24px rgba(0, 20, 40, 0.06);
+            border: 1px solid #eef2f6;
+            margin-bottom: 1.8rem;
+        }
+
+        .card-unified .card-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #0b2a4a;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-unified .card-title i {
+            color: #2563eb;
+            font-size: 1.2rem;
+        }
+
+        /* header */
+        .program-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 28px;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.8rem;
         }
 
-        .header .btn-back {
-            background-color: #1f2937;
-            color: #fff;
-            padding: 12px 24px;
-            border-radius: 8px;
-            border: none;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(20, 30, 50, 0.15);
-        }
-
-        .header .btn-back:hover {
-            background-color: #374151;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(20, 30, 50, 0.2);
-        }
-
-        .header h1 {
+        .program-header h1 {
             font-weight: 700;
-            color: #1f2937;
-            font-size: 32px;
+            font-size: 2rem;
+            color: #0b2a4a;
             margin: 0;
         }
 
-        .search-panel {
-            background: #fff;
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 6px 18px rgba(20, 30, 50, 0.08);
-            margin-bottom: 28px;
+        .btn-back {
+            background: #1e293b;
+            color: #fff;
+            border: none;
+            padding: 0.6rem 1.6rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: 0.2s;
         }
 
+        .btn-back:hover {
+            background: #0f172a;
+            transform: translateY(-2px);
+            color: #fff;
+        }
+
+        /* search panel */
         .search-panel label {
-            display: block;
-            font-size: 14px;
             font-weight: 600;
-            color: #374151;
-            margin-bottom: 8px;
+            font-size: 0.8rem;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.4px;
+            color: #475569;
+            margin-bottom: 0.5rem;
+            display: block;
         }
 
         .search-controls {
             display: flex;
-            gap: 12px;
-            align-items: center;
             flex-wrap: wrap;
+            gap: 0.7rem;
+            align-items: center;
         }
 
         .search-controls input {
-            flex: 1;
-            min-width: 200px;
-            padding: 12px 16px;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: all 0.3s ease;
+            flex: 1 1 220px;
+            padding: 0.6rem 1.2rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 30px;
+            font-size: 0.95rem;
+            background: #fafcfd;
+            transition: 0.2s;
         }
 
         .search-controls input:focus {
-            outline: none;
             border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        .search-controls .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
         }
 
         .btn-search {
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            background: #2563eb;
             color: #fff;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            border: none;
+            padding: 0.6rem 1.8rem;
+            border-radius: 60px;
+            font-weight: 600;
+            transition: 0.2s;
         }
 
         .btn-search:hover {
+            background: #1d4ed8;
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
         }
 
         .btn-clear {
-            background: #e5e7eb;
-            color: #1f2937;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            background: #e9edf2;
+            color: #1e293b;
+            border: none;
+            padding: 0.6rem 1.8rem;
+            border-radius: 60px;
+            font-weight: 600;
+            transition: 0.2s;
         }
 
         .btn-clear:hover {
-            background: #d1d5db;
+            background: #d5dce4;
             transform: translateY(-2px);
         }
 
-        .form-container {
-            background: #fff;
-            padding: 32px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(20, 30, 50, 0.12);
-            margin-bottom: 28px;
-        }
-
-        .form-container.hidden {
+        #searchError {
+            color: #b91c1c;
+            font-weight: 500;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
             display: none;
         }
 
-        .form-title {
-            font-size: 24px;
+        #searchError.show {
+            display: block;
+        }
+
+        /* ----- info grid: large → 6 cols, medium → 3 cols, small → 2 cols ----- */
+        .info-grid-6 {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 1.2rem 1.5rem;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-item label {
+            font-size: 0.65rem;
             font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 28px;
-            padding-bottom: 16px;
-            border-bottom: 3px solid #2563eb;
-            display: inline-block;
-        }
-
-        .form-section {
-            margin-bottom: 28px;
-        }
-
-        .section-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 16px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid #e5e7eb;
+            letter-spacing: 0.4px;
+            color: #64748b;
+            margin-bottom: 2px;
         }
 
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
+        .info-item span,
+        .info-item input {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #0b2a4a;
+            word-break: break-word;
         }
 
-        .form-grid-3 {
+        .info-item input {
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            background: #f8fbff;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+            width: 100%;
+            margin-top: 0.15rem;
+        }
+
+        .info-item input:focus {
+            border-color: #2563eb;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.10);
+            background: #ffffff;
+        }
+
+        .info-item .value-mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+
+        /* responsive: medium (tablet) → 3 cols */
+        @media (max-width: 992px) {
+            .info-grid-6 {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 1rem 1.2rem;
+            }
+        }
+
+        /* small (mobile) → 2 cols */
+        @media (max-width: 576px) {
+            .info-grid-6 {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.8rem 1rem;
+            }
+            .program-header h1 {
+                font-size: 1.5rem;
+            }
+            .card-unified {
+                padding: 1.2rem;
+            }
+        }
+
+        /* yarn & fabric grid — same responsive */
+        .yarn-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem 1.8rem;
+        }
+
+        @media (max-width: 576px) {
+            .yarn-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 0.8rem;
+            }
         }
 
         .form-group {
@@ -188,290 +254,283 @@
         }
 
         .form-group label {
-            font-size: 13px;
-            font-weight: 600;
-            color: #6b7280;
-            margin-bottom: 8px;
+            font-size: 0.65rem;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.3px;
+            color: #64748b;
+            margin-bottom: 2px;
         }
 
-        .form-group input,
-        .form-group select {
-            padding: 12px 14px;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            font-size: 14px;
-            background: #f9fafb;
-            color: #1f2937;
+        .form-group input {
+            padding: 0.5rem 0.9rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
             font-weight: 500;
-            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            background: #fff;
+            transition: 0.2s;
+            width: 100%;
         }
 
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
+        .form-group input:focus {
             border-color: #2563eb;
-            background: #fff;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.06);
         }
 
         .form-group input[readonly] {
-            background: #f3f4f6;
-            cursor: not-allowed;
+            background: #f1f5f9;
+            color: #1e293b;
         }
 
-        .info-row {
-            background: #f8fafc;
-            border-radius: 10px;
-            padding: 16px 20px;
-            margin-bottom: 20px;
-            border-left: 4px solid #2563eb;
-        }
-
-        .info-row .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-
-        .info-row .info-item {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .info-row .info-item label {
-            font-size: 11px;
-            font-weight: 600;
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .info-row .info-item span {
-            font-size: 15px;
-            font-weight: 600;
-            color: #1f2937;
-            margin-top: 4px;
-        }
-
-        .dropdown-section {
-            background: #fff;
-            border-radius: 10px;
-            padding: 20px;
-            border: 2px solid #e5e7eb;
-            margin-bottom: 20px;
-        }
-
-        .dropdown-section select {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            font-size: 14px;
-            background: #f9fafb;
-            transition: all 0.3s ease;
-        }
-
-        .dropdown-section select:focus {
-            outline: none;
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        .mcno-qty-section {
-            background: linear-gradient(135deg, #f0f4f8 0%, #e5eef7 100%);
-            padding: 24px;
-            border-radius: 12px;
-            border: 2px dashed #2563eb;
-        }
-
-        .mcno-qty-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 16px;
-            display: flex;
+        /* machine table & target */
+        .target-qty-box {
+            background: #dbeafe;
+            border-radius: 60px;
+            padding: 0.6rem 1.5rem;
+            display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 1.2rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.2rem;
+            border-left: 6px solid #2563eb;
         }
 
-        .mcno-qty-title i {
-            color: #2563eb;
-            font-size: 18px;
+        .target-qty-box label {
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #1e3a8a;
+            margin: 0;
+        }
+
+        .target-qty-box .qty-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #1e3a8a;
+            line-height: 1;
+        }
+
+        .selected-desc {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #1e3a8a;
+            background: rgba(255,255,255,0.5);
+            padding: 0.2rem 1rem;
+            border-radius: 40px;
         }
 
         .mcno-qty-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 16px;
             background: #fff;
-            border-radius: 8px;
+            border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
         }
 
         .mcno-qty-table thead {
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            background: #1e293b;
             color: #fff;
         }
 
         .mcno-qty-table th {
-            padding: 14px 16px;
-            text-align: left;
+            padding: 0.7rem 0.8rem;
             font-weight: 600;
-            font-size: 13px;
+            font-size: 0.7rem;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
+            text-align: left;
         }
 
         .mcno-qty-table td {
-            padding: 12px 16px;
-            border-bottom: 1px solid #e5e7eb;
+            padding: 0.5rem 0.6rem;
+            border-bottom: 1px solid #ecf1f6;
+            vertical-align: middle;
         }
 
-        .mcno-qty-table tbody tr:hover {
-            background: #f9fafb;
-        }
-
-        .mcno-qty-table input {
+        .mcno-qty-table input,
+        .mcno-qty-table select {
             width: 100%;
-            padding: 10px 12px;
-            border: 2px solid #e5e7eb;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: all 0.3s ease;
+            padding: 0.4rem 0.7rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            font-size: 0.85rem;
+            background: #fff;
+            transition: 0.15s;
         }
 
-        .mcno-qty-table input:focus {
-            outline: none;
+        .mcno-qty-table input:focus,
+        .mcno-qty-table select:focus {
             border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.06);
         }
 
-        .mcno-qty-table input[readonly] {
-            background: #f3f4f6;
-            cursor: not-allowed;
-        }
-
-        .mcno-qty-table input.invalid-mcno {
-            border-color: #dc2626;
-            background: #fee2e2;
-        }
-
-        .mcno-qty-table input:disabled {
-            background: #e5e7eb;
-            cursor: not-allowed;
+        .mcno-qty-table input:disabled,
+        .mcno-qty-table select:disabled {
+            background: #f1f5f9;
             opacity: 0.6;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-
-        .btn-add-row {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: #fff;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-        }
-
-        .btn-add-row:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
-        }
-
-        .btn-add-row:disabled {
-            opacity: 0.5;
             cursor: not-allowed;
-            transform: none;
+        }
+
+        .invalid-mcno {
+            border-color: #dc2626 !important;
+            background: #fee2e2 !important;
+        }
+
+        .validation-msg {
+            color: #b91c1c;
+            font-size: 0.65rem;
+            font-weight: 600;
+            display: none;
+            margin-top: 2px;
+        }
+
+        .validation-msg.show {
+            display: block;
         }
 
         .btn-delete-row {
             background: #ef4444;
-            color: #fff;
             border: none;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-            transition: all 0.3s ease;
+            color: #fff;
+            padding: 0.25rem 0.6rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            transition: 0.15s;
         }
 
         .btn-delete-row:hover {
-            background: #dc2626;
-            transform: scale(1.05);
+            background: #b91c1c;
         }
 
-        .btn-delete-row:disabled {
+        .summary-row {
+            background: #eef4fa;
+            font-weight: 700;
+            border-top: 3px solid #2563eb;
+        }
+
+        .summary-row td {
+            padding: 0.7rem 0.8rem;
+            color: #0b2a4a;
+        }
+
+        .summary-label {
+            text-align: right;
+            color: #475569;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 0.3px;
+        }
+
+        .summary-total {
+            color: #2563eb;
+            font-size: 1rem;
+        }
+
+        .summary-remaining {
+            color: #b45309;
+            font-size: 1rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        .btn-add-row {
+            background: #0b2a4a;
+            color: #fff;
+            border: none;
+            padding: 0.6rem 1.8rem;
+            border-radius: 60px;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .btn-add-row:hover:not(:disabled) {
+            background: #1e3a5f;
+            transform: translateY(-2px);
+        }
+
+        .btn-add-row:disabled {
             opacity: 0.4;
             cursor: not-allowed;
         }
 
         .btn-submit {
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            background: #2563eb;
             color: #fff;
-            padding: 14px 36px;
             border: none;
-            border-radius: 8px;
-            font-size: 15px;
+            padding: 0.8rem 2.8rem;
+            border-radius: 60px;
             font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-size: 1rem;
+            transition: 0.2s;
         }
 
-        .btn-submit:hover {
+        .btn-submit:hover:not(:disabled) {
+            background: #1d4ed8;
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
         }
 
         .btn-submit:disabled {
-            opacity: 0.6;
+            opacity: 0.5;
             cursor: not-allowed;
-            transform: none;
+        }
+
+        .alert-box {
+            margin-bottom: 1.2rem;
         }
 
         .alert {
-            padding: 14px 18px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            font-size: 14px;
+            border-radius: 60px;
+            padding: 0.7rem 1.5rem;
             font-weight: 500;
+            border: none;
         }
 
         .alert-danger {
             background: #fee2e2;
             color: #991b1b;
-            border-left: 4px solid #dc2626;
+            border-left: 6px solid #dc2626;
         }
 
         .alert-success {
             background: #dcfce7;
             color: #166534;
-            border-left: 4px solid #10b981;
+            border-left: 6px solid #16a34a;
         }
 
         .alert-info {
             background: #dbeafe;
             color: #1e40af;
-            border-left: 4px solid #2563eb;
+            border-left: 6px solid #2563eb;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none !important;
         }
 
         #detailsContainer {
@@ -482,347 +541,138 @@
             display: block;
         }
 
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(37, 99, 235, 0.3);
-            border-radius: 50%;
-            border-top-color: #2563eb;
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        .error-message {
-            color: #dc2626;
-            font-size: 13px;
-            margin-top: 8px;
-            display: none;
-        }
-
-        .error-message.show {
-            display: block;
-        }
-
-        .target-qty-box {
-            margin-bottom: 16px;
-            padding: 12px 16px;
-            background: #dbeafe;
-            border-radius: 8px;
-            border-left: 4px solid #2563eb;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .target-qty-box label {
-            font-size: 13px;
-            font-weight: 600;
-            color: #1e40af;
-            margin: 0;
-        }
-
-        .target-qty-box .qty-value {
-            font-size: 20px;
-            font-weight: 700;
-            color: #1e40af;
-        }
-
-        .selected-description-label {
-            font-size: 12px;
-            color: #6b7280;
-            font-weight: 500;
-        }
-
-        .selected-description-label span {
-            color: #1f2937;
-            font-weight: 600;
-        }
-
-        .mcno-input {
-            position: relative;
-        }
-
         .ui-autocomplete {
             max-height: 200px;
             overflow-y: auto;
-            overflow-x: hidden;
-            z-index: 9999;
-        }
-
-        .summary-row {
-            background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%);
-            font-weight: 700;
-            border-top: 3px solid #2563eb;
-        }
-
-        .summary-row td {
-            padding: 14px 16px;
-            font-weight: 700;
-            color: #1f2937;
-        }
-
-        .summary-row .summary-total {
-            color: #2563eb;
-            font-size: 16px;
-        }
-
-        .summary-row .summary-remaining {
-            color: #dc2626;
-            font-size: 16px;
-        }
-
-        .summary-row .summary-label {
-            text-align: right;
-            padding-right: 20px;
-            color: #6b7280;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 13px;
-            letter-spacing: 0.5px;
-        }
-
-        .mcno-cell {
-            position: relative;
-        }
-
-        .mcno-cell .validation-msg {
-            color: #dc2626;
-            font-size: 10px;
-            display: none;
-            margin-top: 2px;
-        }
-
-        .mcno-cell .validation-msg.show {
-            display: block;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.10);
         }
     </style>
 </head>
-
 <body>
 
-    <div class="container-fluid">
-        <div class="header">
-            <button class="btn btn-dark" id="backBtn" style="background-color:#1f2937;color:#fff;padding:12px;border-radius:8px;">
-                <i class="fa-solid fa-arrow-left" style="margin-right:6px;background:none;border:none;box-shadow:none;transform:none;"></i>
-                Back to Initial Page
-            </button>
-            <h1>Knitting Program</h1>
-            <div></div>
-        </div>
+<div class="container-fluid px-0">
 
-        <div class="search-panel">
-            <label>Search by PO Number</label>
-            <div class="search-controls">
-                <input type="text" id="bookingInput" placeholder="Enter PO Number...">
-                <button class="btn px-4" id="searchBtn" style="margin-top:8px; background:#2563eb; border:1px solid #2563eb; color:#fff; border-radius:8px;">
-                    <i class="fa-solid fa-magnifying-glass me-1" style="margin-right:6px;background:none;border:none;box-shadow:none;transform:none;"></i>
-                    Search
-                </button>
-
-                <button class="btn px-4" id="clearBtn" style="margin-top:8px; margin-left:8px; background:#6b7280; border:1px solid #6b7280; color:#fff; border-radius:8px;">
-                    <i class="fa-solid fa-rotate-left me-1" style="margin-right:6px;background:none;border:none;box-shadow:none;transform:none;"></i>
-                    Clear
-                </button>
-            </div>
-            <div class="error-message" id="searchError">Please enter a valid PO number</div>
-        </div>
-
-        <!-- Form Container -->
-        <div class="form-container hidden" id="formContainer">
-            <div id="alertBox"></div>
-
-            <h2 class="form-title">
-                <i class="fa-solid fa-file-contract" style="margin-right: 12px; color: #2563eb; background:none;border:none;box-shadow:none;transform:none;"></i>
-                Knitting Program
-            </h2>
-
-            <form id="knittingForm">
-                <!-- First Row -->
-                <div class="info-row">
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <label>PO Number</label>
-                            <span id="display_booking">-</span>
-                            <input type="hidden" id="booking" value="">
-                        </div>
-                        <div class="info-item">
-                            <label>SONO</label>
-                            <span id="display_sono">-</span>
-                            <input type="hidden" id="sono" value="">
-                        </div>
-                        <div class="info-item">
-                            <label>STYLE</label>
-                            <span id="display_style">-</span>
-                            <input type="hidden" id="style" value="">
-                        </div>
-                        <div class="info-item">
-                            <label>Buyer</label>
-                            <span id="display_buyer">-</span>
-                            <input type="hidden" id="buyer" value="">
-                        </div>
-                        <div class="info-item">
-                            <label>Supplier</label>
-                            <span id="display_supplier">-</span>
-                            <input type="hidden" id="supplier" value="">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Second Row -->
-                <div class="dropdown-section">
-                    <div class="form-group">
-                        <label>Knit M Description</label>
-                        <select id="knit_m_description">
-                            <option value="">-- Select Knit M Description --</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Third & Fourth Row -->
-                <div id="detailsContainer">
-                    <div class="form-section">
-                        <div class="section-title">
-                            <i class="fa-solid fa-scissors" style="margin-right:8px;background:none;border:none;box-shadow:none;transform:none;"></i>
-                            Yarn &amp; Fabric Details
-                        </div>
-                        <div class="form-grid-3">
-                            <div class="form-group">
-                                <label>Yarn Type</label>
-                                <input type="text" id="yarn_type" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label>Yarn Count</label>
-                                <input type="text" id="yarn_count" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label>Fabrics Type</label>
-                                <input type="text" id="fabrics_type" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label>Finish GSM</label>
-                                <input type="text" id="finish_gsm" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label>SL/VQ</label>
-                                <input type="text" id="sl_vdq" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label>COLOR</label>
-                                <input type="text" id="color" readonly>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-section">
-                        <div class="section-title">
-                            <i class="fa-solid fa-shirt" style="background:none;border:none;box-shadow:none;transform:none;"></i>
-                            Quality & Material Details
-                        </div>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label>MC DIA</label>
-                                <input type="text" id="mc_dia" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label>Finish DIA</label>
-                                <input type="text" id="finish_dia" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label>Open / Tube</label>
-                                <input type="text" id="open_tube" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label>Lot No</label>
-                                <input type="text" id="lot_no" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label>Knit Material Code</label>
-                                <input type="text" id="knit_material_code" readonly>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- MCNO & QTY Section -->
-                <div class="form-section">
-                    <div class="mcno-qty-section">
-                        <div class="mcno-qty-title">
-                            <i class="fa-solid fa-list-ul" style="background:none;border:none;box-shadow:none;transform:none;"></i>
-                            Machine No. & Quantity Details
-                        </div>
-
-                        <div class="target-qty-box">
-                            <label>Total Knitting Target QTY:</label>
-                            <span class="qty-value" id="display_target_qty">0.00</span>
-                            <span class="selected-description-label" id="selected_desc_label"></span>
-                            <input type="hidden" id="knitting_target_qty" value="">
-                        </div>
-
-                        <table class="mcno-qty-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 5%;">#</th>
-                                    <th style="width: 20%;">MCNO</th>
-                                    <th style="width: 20%;">QTY</th>
-                                    <th style="width: 20%;">SHIFT</th>
-                                    <th style="width: 25%;">Remaining QTY</th>
-                                    <th style="width: 10%;">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="mcnoQtyTableBody">
-                                <!-- Rows will be added dynamically -->
-                            </tbody>
-                            <tfoot id="summaryRow">
-                                <tr class="summary-row">
-                                    <td colspan="2" class="summary-label">Total</td>
-                                    <td class="summary-total" id="totalQtyDisplay">0.00</td>
-                                    <td></td>
-                                    <td class="summary-remaining" id="totalRemainingDisplay">0.00</td>
-                                    <td></td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                        <div class="action-buttons">
-                            <button type="button" class="btn-add-row" id="addMcnoRowBtn" disabled>
-                                <i class="fa-solid fa-plus" style="background:none;border:none;box-shadow:none;transform:none;"></i> Add Row
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Submit Button -->
-                <div class="action-buttons" style="margin-top: 32px;">
-                    <button type="button" class="btn-submit" id="submitBtn">
-                        <i class="fa-solid fa-paper-plane" style="background:none;border:none;box-shadow:none;transform:none;"></i> Save Program
-                    </button>
-                </div>
-            </form>
-        </div>
-
+    <!-- HEADER -->
+    <div class="program-header">
+        <button class="btn-back" id="backBtn"><i class="fa-solid fa-arrow-left me-2"></i>Back</button>
+        <h1><i class="fa-solid fa-circle-knot me-2" style="color:#2563eb;"></i>Knitting Program</h1>
+        <div></div>
     </div>
 
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.min.js"></script>
+    <!-- SEARCH -->
+    <div class="card-unified">
+        <label style="margin-bottom: 4px;">Search by PO Number</label>
+        <div class="search-controls">
+            <input type="text" id="bookingInput" placeholder="Please enter PO number">
+            <button class="btn-search" id="searchBtn"><i class="fa-solid fa-magnifying-glass me-1"></i>Search</button>
+            <button class="btn-clear" id="clearBtn"><i class="fa-solid fa-rotate-left me-1"></i>Clear</button>
+        </div>
+        <div class="error-message" id="searchError"><i class="fa-solid fa-circle-exclamation me-1"></i>Please enter a valid PO</div>
+    </div>
 
-    <script>
+    <!-- FORM CONTAINER -->
+    <div class="card-unified hidden" id="formContainer">
+
+        <div class="alert-box" id="alertBox"></div>
+
+        <div class="card-title"><i class="fa-regular fa-file-lines"></i> Knitting Program</div>
+
+        <form id="knittingForm">
+
+            <!-- INFO GRID: 6 cols (large) → 3 cols (medium) → 2 cols (small) -->
+            <div class="info-grid-6" id="infoGrid">
+                <!-- each item: label + span -->
+                <div class="info-item"><label>PO Number</label><span id="display_booking">-</span><input type="hidden" id="booking"></div>
+                <div class="info-item"><label>SONO</label><span id="display_sono">-</span><input type="hidden" id="sono"></div>
+                <div class="info-item"><label>Buyer</label><span id="display_buyer">-</span><input type="hidden" id="buyer"></div>
+                <div class="info-item"><label>STYLE</label><span id="display_style">-</span><input type="hidden" id="style"></div>
+                <div class="info-item"><label>COLOR</label><span id="display_color">-</span><input type="hidden" id="color"></div>
+                <div class="info-item"><label>Finish GSM</label><span id="display_finish_gsm">-</span><input type="hidden" id="finish_gsm"></div>
+                <div class="info-item"><label>Finish DIA</label><input type="text" id="finish_dia" placeholder="Finish DIA"></div>
+                <div class="info-item"><label>Open / Tube</label><input type="text" id="open_tube" placeholder="Open / Tube"></div>
+                <div class="info-item"><label>Fabrics Type</label><input type="text" id="fabrics_type" placeholder="Fabrics Type"></div>
+                <div class="info-item"><label>Yarn Type</label><span id="display_yarn_type">-</span><input type="hidden" id="yarn_type"></div>
+                <div class="info-item"><label>Knit Material Code</label><span id="display_knit_material_code">-</span><input type="hidden" id="knit_material_code"></div>
+                <div class="info-item"><label>Knit M Description</label><span id="display_knit_m_description">-</span><input type="hidden" id="knit_m_description"></div>
+            </div>
+
+            <!-- YARN & FABRIC (3 cols → 2 on small) -->
+            <div id="detailsContainer">
+                <div class="card-title" style="margin-top:1.8rem; border-top:2px solid #eef2f6; padding-top:1.2rem;"><i class="fa-solid fa-scissors"></i> Yarn &amp; Fabric Details</div>
+                <div class="yarn-grid">
+                    <div class="form-group"><label>Supplier</label><input type="text" id="supplier" readonly></div>
+                    <div class="form-group"><label>Yarn Count</label><input type="text" id="yarn_count" readonly></div>
+                    <div class="form-group"><label>SL/VQ</label><input type="text" id="sl_vdq" readonly></div>
+                    <!-- hidden fields used by backend -->
+                    <input type="hidden" id="mc_dia">
+                    <input type="hidden" id="lot_no">
+                </div>
+            </div>
+
+            <!-- MACHINE NO & QTY -->
+            <div class="card-title" style="margin-top:2rem; border-top:2px solid #eef2f6; padding-top:1.2rem;"><i class="fa-solid fa-list-check"></i> Machine No. &amp; Quantity</div>
+
+            <div class="target-qty-box">
+                <label>Total Knitting Target QTY :</label>
+                <span class="qty-value" id="display_target_qty">0.00</span>
+                <span class="selected-desc" id="selected_desc_label"></span>
+                <input type="hidden" id="knitting_target_qty">
+            </div>
+
+            <table class="mcno-qty-table">
+                <thead>
+                    <tr>
+                        <th style="width:5%;">#</th>
+                        <th style="width:22%;">MCNO</th>
+                        <th style="width:18%;">QTY</th>
+                        <th style="width:20%;">SHIFT</th>
+                        <th style="width:20%;">Remaining</th>
+                        <th style="width:10%;">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="mcnoQtyTableBody"></tbody>
+                <tfoot>
+                    <tr class="summary-row">
+                        <td colspan="2" class="summary-label">Total</td>
+                        <td class="summary-total" id="totalQtyDisplay">0.00</td>
+                        <td></td>
+                        <td class="summary-remaining" id="totalRemainingDisplay">0.00</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <div class="action-buttons">
+                <button type="button" class="btn-add-row" id="addMcnoRowBtn" disabled><i class="fa-solid fa-plus me-1"></i>Add Row</button>
+            </div>
+
+            <div class="action-buttons" style="margin-top:1.8rem;">
+                <button type="button" class="btn-submit" id="submitBtn"><i class="fa-regular fa-floppy-disk me-2"></i>Save Program</button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<!-- SCRIPTS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.14.1/jquery-ui.min.js"></script>
+
+<script>
+    (function($) {
+        "use strict";
+
+        // ---------- state ----------
         var bookingData = null;
         var allRowsData = [];
         var targetQty = 0;
         var originalTargetQty = 0;
-        var allocatedQty = 0;
         var allocatedByDescription = {};
         var validMcnoList = [];
         var isMcnoListLoaded = false;
 
-        // Load MCNO list from database
+        // ---------- load MCNO list ----------
         function loadMcnoList() {
             $.ajax({
                 url: 'ajax_mcno_search.php',
@@ -832,7 +682,6 @@
                 success: function(data) {
                     validMcnoList = data || [];
                     isMcnoListLoaded = true;
-                    console.log('MCNO List loaded:', validMcnoList.length, 'items');
                     $('.mcno-input').each(function() {
                         validateMcno(this);
                         updateQtyInputState(this);
@@ -841,7 +690,6 @@
                 error: function() {
                     validMcnoList = [];
                     isMcnoListLoaded = true;
-                    console.error('Failed to load MCNO list');
                 }
             });
         }
@@ -854,29 +702,46 @@
             });
         }
 
+        function validateMcno(input) {
+            var val = $(input).val().trim();
+            var cell = $(input).closest('.mcno-cell');
+            var msg = cell.find('.validation-msg');
+            if (!val) {
+                $(input).removeClass('invalid-mcno');
+                msg.removeClass('show');
+                return false;
+            }
+            if (!isValidMcno(val)) {
+                $(input).addClass('invalid-mcno');
+                msg.addClass('show');
+                return false;
+            } else {
+                $(input).removeClass('invalid-mcno');
+                msg.removeClass('show');
+                return true;
+            }
+        }
+
         function updateQtyInputState(mcnoInput) {
             var row = $(mcnoInput).closest('tr');
             var qtyInput = row.find('.qty-input');
             var shiftInput = row.find('.shift-input');
             var isValid = validateMcno(mcnoInput);
-
             if (isValid) {
                 qtyInput.prop('disabled', false);
                 shiftInput.prop('disabled', false);
                 qtyInput.focus();
             } else {
-                qtyInput.prop('disabled', true);
-                qtyInput.val('');
-                shiftInput.prop('disabled', true);
-                shiftInput.val('');
+                qtyInput.prop('disabled', true).val('');
+                shiftInput.prop('disabled', true).val('');
             }
             updateRemainingQty();
             checkAddRowButton();
         }
 
+        // ---------- load form data ----------
         function loadFormData(booking) {
-            $('#searchBtn').prop('disabled', true).html('<span class="loading-spinner"></span> Loading...');
-
+            $('#searchBtn').prop('disabled', true).html('<span class="loading-spinner"></span>');
             $.ajax({
                 url: 'ajaxKnittingProgram.php',
                 data: { booking: booking },
@@ -885,38 +750,31 @@
                 timeout: 30000,
                 beforeSend: function() {
                     $('#formContainer').removeClass('hidden');
-                    $('#knit_m_description').html('<option value="">Loading descriptions...</option>');
                     $('#detailsContainer').removeClass('visible');
-                    $('#mcnoQtyTableBody').html('<tr><td colspan="6" style="text-align:center;padding:20px;">Loading machine data...</td></tr>');
                     $('#alertBox').html('');
-                }
-            })
-            .done(function(resp) {
-                if (resp && resp.success && resp.data) {
-                    bookingData = resp.data;
-                    allRowsData = resp.all_data || [];
-                    allocatedByDescription = resp.allocated_by_description || {};
-                    allocatedQty = parseFloat(resp.allocated_qty) || 0;
-                    originalTargetQty = parseFloat(resp.data.KNITTING_TARGET_QTY || resp.data.QTY) || 0;
-                    targetQty = originalTargetQty - (allocatedByDescription[resp.data.KNIT_M_DESCRIPTION] || 0);
-
-                    $('#formContainer').removeClass('hidden');
-                    renderForm(bookingData);
-                    loadKnitDescriptions(resp);
-                } else {
+                },
+                success: function(resp) {
+                    if (resp && resp.success && resp.data) {
+                        bookingData = resp.data;
+                        allRowsData = resp.all_data || [];
+                        allocatedByDescription = resp.allocated_by_description || {};
+                        originalTargetQty = parseFloat(resp.data.KNITTING_TARGET_QTY || resp.data.QTY) || 0;
+                        var allocated = parseFloat(allocatedByDescription[resp.data.KNIT_M_DESCRIPTION]) || 0;
+                        targetQty = originalTargetQty - allocated;
+                        renderForm(bookingData);
+                        setKnitMDescription(resp);
+                    } else {
+                        $('#formContainer').addClass('hidden');
+                        showAlert(resp.error || 'Booking not found', 'error');
+                    }
+                },
+                error: function() {
                     $('#formContainer').addClass('hidden');
-                    $('#detailsContainer').removeClass('visible');
-                    showAlert(resp.error || 'Booking Data Not Found!', 'error');
+                    showAlert('Error loading data', 'error');
+                },
+                complete: function() {
+                    $('#searchBtn').prop('disabled', false).html('<i class="fa-solid fa-magnifying-glass me-1"></i>Search');
                 }
-            })
-            .fail(function(jqXHR, textStatus, errorThrown) {
-                console.error('AJAX Error:', textStatus, errorThrown);
-                console.error('Response:', jqXHR.responseText);
-                $('#formContainer').addClass('hidden');
-                showAlert('Error loading data: ' + textStatus + '. Please check console for details.', 'error');
-            })
-            .always(function() {
-                $('#searchBtn').prop('disabled', false).html('<i class="fa-solid fa-magnifying-glass me-1"></i> Search');
             });
         }
 
@@ -929,42 +787,28 @@
             $('#style').val(data.STYLE || '');
             $('#display_buyer').text(data.BUYER || '-');
             $('#buyer').val(data.BUYER || '');
-            $('#display_supplier').text(data.SUPPLIER || '-');
-            $('#supplier').val(data.SUPPLIER || '');
+
+            $('#color').val(data.COLOR || '');
+            $('#finish_gsm').val(data.FINISH_GSM || '');
+            $('#finish_dia').val(data.FINISH_DIA || '');
+            $('#open_tube').val(data.OPEN_TUBE || '');
+            $('#fabrics_type').val(data.FABRICS_TYPE || '');
+            $('#yarn_type').val(data.YARN_TYPE || '');
+            $('#knit_material_code').val(data.KNIT_MATERIAL_CODE || '');
+            $('#knit_m_description').val(data.KNIT_M_DESCRIPTION || '');
         }
 
-        function loadKnitDescriptions(resp) {
-            var select = $('#knit_m_description');
-            select.html('<option value="">-- Select Knit M Description --</option>');
-
-            var descriptions = [];
-            if (resp.descriptions && Array.isArray(resp.descriptions) && resp.descriptions.length > 0) {
-                descriptions = resp.descriptions;
-            } else if (resp.data && resp.data.KNIT_M_DESCRIPTION) {
-                descriptions = [resp.data.KNIT_M_DESCRIPTION];
-            }
-
-            if (descriptions.length > 0) {
-                descriptions.forEach(function(desc) {
-                    if (desc && desc.trim() !== '') {
-                        select.append('<option value="' + desc + '">' + desc + '</option>');
-                    }
-                });
-                if (descriptions.length === 1) {
-                    select.val(descriptions[0]);
-                    loadDetailsForDescription(descriptions[0]);
-                }
-            } else {
-                select.html('<option value="">No descriptions available</option>');
-                showAlert('No Knit M Description found for this booking.', 'info');
-            }
+        function setKnitMDescription(resp) {
+            var desc = resp.data.KNIT_M_DESCRIPTION || '';
+            $('#knit_m_description').val(desc);
+            $('#display_knit_m_description').text(desc || '-');
+            loadDetailsForDescription(desc);
         }
 
         function loadDetailsForDescription(description) {
             if (!bookingData) return;
-
             var rowData = null;
-            if (allRowsData && allRowsData.length > 0) {
+            if (allRowsData && allRowsData.length) {
                 for (var i = 0; i < allRowsData.length; i++) {
                     if (allRowsData[i].KNIT_M_DESCRIPTION === description) {
                         rowData = allRowsData[i];
@@ -974,21 +818,26 @@
             }
             if (!rowData) rowData = bookingData;
 
-            $('#yarn_type').val(rowData.YARN_TYPE || '');
-            $('#yarn_count').val(rowData.YARN_COUNT || '');
-            $('#fabrics_type').val(rowData.FABRICS_TYPE || '');
-            $('#finish_gsm').val(rowData.FINISH_GSM || '');
-            $('#sl_vdq').val(rowData.SL_VDQ || '');
+            $('#display_color').text(rowData.COLOR || '-');
             $('#color').val(rowData.COLOR || '');
-            $('#mc_dia').val(rowData.MC_DIA || '');
+            $('#display_finish_gsm').text(rowData.FINISH_GSM || '-');
+            $('#finish_gsm').val(rowData.FINISH_GSM || '');
             $('#finish_dia').val(rowData.FINISH_DIA || '');
             $('#open_tube').val(rowData.OPEN_TUBE || '');
-            $('#lot_no').val(rowData.LOT_NO || '');
+            $('#fabrics_type').val(rowData.FABRICS_TYPE || '');
+            $('#display_yarn_type').text(rowData.YARN_TYPE || '-');
+            $('#yarn_type').val(rowData.YARN_TYPE || '');
+            $('#display_knit_material_code').text(rowData.KNIT_MATERIAL_CODE || '-');
             $('#knit_material_code').val(rowData.KNIT_MATERIAL_CODE || '');
+            $('#display_knit_m_description').text(rowData.KNIT_M_DESCRIPTION || '-');
+            $('#knit_m_description').val(rowData.KNIT_M_DESCRIPTION || '');
+            $('#supplier').val(rowData.SUPPLIER || '');
+            $('#yarn_count').val(rowData.YARN_COUNT || '');
+            $('#sl_vdq').val(rowData.SL_VDQ || '');
 
             originalTargetQty = parseFloat(rowData.KNITTING_TARGET_QTY || rowData.QTY) || 0;
-            allocatedQty = parseFloat(allocatedByDescription[description]) || 0;
-            targetQty = originalTargetQty - allocatedQty;
+            var allocated = parseFloat(allocatedByDescription[description]) || 0;
+            targetQty = originalTargetQty - allocated;
             $('#display_target_qty').text(targetQty > 0 ? targetQty.toFixed(2) : '0.00');
             $('#knitting_target_qty').val(originalTargetQty);
             $('#selected_desc_label').html('(For: <span>' + description + '</span>)');
@@ -1003,36 +852,38 @@
             updateRemainingQty();
         }
 
+        // ---------- row management ----------
         function addMcnoRow() {
-            var tableBody = $('#mcnoQtyTableBody');
-            var rowCount = tableBody.find('tr').length + 1;
-            var newRow = $('<tr>');
-            newRow.append($('<td>').text(rowCount));
-            newRow.append(
+            var tbody = $('#mcnoQtyTableBody');
+            var rowCount = tbody.find('tr').length + 1;
+            var row = $('<tr>');
+            row.append($('<td>').text(rowCount));
+            row.append(
                 $('<td class="mcno-cell">').html(
-                    '<input type="text" class="mcno-input" autocomplete="off" placeholder="Enter MCNO">' +
-                    '<div class="validation-msg">Invalid MCNO. Please select from list.</div>'
+                    '<input type="text" class="mcno-input" autocomplete="off" placeholder="MCNO">' +
+                    '<div class="validation-msg">Invalid MCNO</div>'
                 )
             );
-            newRow.append($('<td>').html('<input type="number" class="qty-input" placeholder="Enter Quantity" disabled>'));
-            newRow.append($('<td>').html('<select class="shift-input" disabled>' +
-                '<option value="">Select Shift</option>' +
+            row.append($('<td>').html('<input type="number" class="qty-input" placeholder="QTY" disabled>'));
+            row.append($('<td>').html(
+                '<select class="shift-input" disabled>' +
+                '<option value="">Shift</option>' +
                 '<option value="A-SHIFT">A-SHIFT</option>' +
                 '<option value="B-SHIFT">B-SHIFT</option>' +
                 '<option value="C-SHIFT">C-SHIFT</option>' +
-                '</select>'));
-            newRow.append($('<td>').html('<input type="text" class="remaining-qty" readonly placeholder="Auto-calculated">'));
-            newRow.append($('<td>').html('<button type="button" class="btn-delete-row" onclick="deleteMcnoRow(this)"><i class="fa-solid fa-trash"></i></button>'));
-            tableBody.append(newRow);
+                '</select>'
+            ));
+            row.append($('<td>').html('<input type="text" class="remaining-qty" readonly placeholder="Remaining">'));
+            row.append($('<td>').html('<button type="button" class="btn-delete-row" onclick="deleteMcnoRow(this)"><i class="fa-solid fa-trash"></i></button>'));
+            tbody.append(row);
 
-            var mcnoInput = newRow.find('.mcno-input');
+            var mcnoInput = row.find('.mcno-input');
             bindMcnoAutocomplete(mcnoInput);
 
             mcnoInput.on('change blur', function() {
                 validateMcno(this);
                 updateQtyInputState(this);
             });
-
             mcnoInput.on('input', function() {
                 var cell = $(this).closest('.mcno-cell');
                 cell.find('.validation-msg').removeClass('show');
@@ -1042,35 +893,26 @@
                 row.find('.shift-input').prop('disabled', true).val('');
                 checkAddRowButton();
             });
-
-            newRow.find('.qty-input').on('input', function() {
+            row.find('.qty-input').on('input', function() {
                 updateRemainingQty();
                 checkAddRowButton();
             });
-
-            newRow.find('.shift-input').on('change', function() {
+            row.find('.shift-input').on('change', function() {
                 checkAddRowButton();
             });
-
             updateRemainingQty();
             checkAddRowButton();
         }
 
-        function bindMcnoAutocomplete(inputElement) {
-            if (!inputElement) inputElement = $('.mcno-input');
-            
-            inputElement.autocomplete({
+        function bindMcnoAutocomplete(el) {
+            el.autocomplete({
                 source: function(request, response) {
                     $.ajax({
                         url: 'ajax_mcno_search.php',
                         data: { term: request.term },
                         dataType: 'json',
-                        success: function(data) {
-                            response(data);
-                        },
-                        error: function() {
-                            response([]);
-                        }
+                        success: response,
+                        error: function() { response([]); }
                     });
                 },
                 minLength: 1,
@@ -1096,33 +938,49 @@
             });
         }
 
-        function validateMcno(input) {
-            var value = $(input).val().trim();
-            var cell = $(input).closest('.mcno-cell');
-            var msg = cell.find('.validation-msg');
-
-            if (!value) {
-                $(input).removeClass('invalid-mcno');
-                msg.removeClass('show');
-                return false;
-            }
-
-            if (!isValidMcno(value)) {
-                $(input).addClass('invalid-mcno');
-                msg.addClass('show');
-                return false;
+        window.deleteMcnoRow = function(btn) {
+            var tr = $(btn).closest('tr');
+            if ($('#mcnoQtyTableBody tr').length > 1) {
+                tr.remove();
+                updateMcnoRowNumbers();
+                updateRemainingQty();
+                checkAddRowButton();
             } else {
-                $(input).removeClass('invalid-mcno');
-                msg.removeClass('show');
-                return true;
+                showAlert('Cannot delete last row', 'error');
             }
+        };
+
+        function updateMcnoRowNumbers() {
+            $('#mcnoQtyTableBody tr').each(function(idx) {
+                $(this).find('td:first').text(idx + 1);
+            });
+        }
+
+        function updateRemainingQty() {
+            var totalQty = 0;
+            var rows = $('#mcnoQtyTableBody tr');
+            rows.each(function(index) {
+                var rowQty = parseFloat($(this).find('.qty-input').val()) || 0;
+                var qtyInput = $(this).find('.qty-input');
+                var remainingBefore = targetQty - totalQty;
+                if (rowQty > remainingBefore && remainingBefore >= 0) {
+                    qtyInput.val(remainingBefore.toFixed(2));
+                    rowQty = remainingBefore;
+                }
+                totalQty += rowQty;
+                var newRemaining = targetQty - totalQty;
+                $(this).find('.remaining-qty').val(newRemaining >= 0 ? newRemaining.toFixed(2) : '0.00');
+            });
+            $('#totalQtyDisplay').text(totalQty.toFixed(2));
+            var remainingTotal = targetQty - totalQty;
+            $('#totalRemainingDisplay').text(remainingTotal >= 0 ? remainingTotal.toFixed(2) : '0.00');
         }
 
         function checkAddRowButton() {
             var rows = $('#mcnoQtyTableBody tr');
-            var allRowsValid = true;
+            var allValid = true;
             var allFilled = true;
-            var hasDataRow = false;
+            var hasData = false;
 
             rows.each(function() {
                 var mcno = $(this).find('.mcno-input').val().trim();
@@ -1130,32 +988,17 @@
                 var shift = $(this).find('.shift-input').val().trim();
                 var qtyDisabled = $(this).find('.qty-input').prop('disabled');
                 var shiftDisabled = $(this).find('.shift-input').prop('disabled');
-
-                var isEmptyRow = !mcno && !qty && !shift;
-                if (isEmptyRow) return true;
-
-                hasDataRow = true;
-
-                if (qtyDisabled || shiftDisabled) {
-                    allRowsValid = false;
+                var isEmpty = !mcno && !qty && !shift;
+                if (isEmpty) return true;
+                hasData = true;
+                if (qtyDisabled || shiftDisabled || !mcno || !qty || !shift || !isValidMcno(mcno)) {
+                    allValid = false;
                     allFilled = false;
                     return false;
                 }
-
-                if (!mcno || !qty || !shift) {
-                    allFilled = false;
-                    allRowsValid = false;
-                    return false;
-                }
-
-                if (!isValidMcno(mcno)) {
-                    allRowsValid = false;
-                    return false;
-                }
-
                 var qtyNum = parseFloat(qty);
                 if (isNaN(qtyNum) || qtyNum <= 0) {
-                    allRowsValid = false;
+                    allValid = false;
                     return false;
                 }
             });
@@ -1166,102 +1009,53 @@
                 var qty = parseFloat($(this).find('.qty-input').val()) || 0;
                 if (mcno && qty > 0) totalQty += qty;
             });
+            if (hasData && totalQty > targetQty) allValid = false;
 
-            if (hasDataRow && totalQty > targetQty) allRowsValid = false;
-            $('#addMcnoRowBtn').prop('disabled', !(allRowsValid && allFilled));
-        }
-
-        function deleteMcnoRow(btn) {
-            var tr = $(btn).closest('tr');
-            if ($('#mcnoQtyTableBody tr').length > 1) {
-                tr.remove();
-                updateMcnoRowNumbers();
-                updateRemainingQty();
-                checkAddRowButton();
-            } else {
-                showAlert('Cannot delete the last row. Add more rows first.', 'error');
-            }
-        }
-
-        function updateMcnoRowNumbers() {
-            $('#mcnoQtyTableBody tr').each(function(index) {
-                $(this).find('td:first').text(index + 1);
-            });
-        }
-
-        function updateRemainingQty() {
-            var totalQty = 0;
-            var rows = $('#mcnoQtyTableBody tr');
-
-            rows.each(function(index) {
-                var rowQty = parseFloat($(this).find('.qty-input').val()) || 0;
-                var qtyInput = $(this).find('.qty-input');
-                var remainingBefore = targetQty - totalQty;
-
-                if (rowQty > remainingBefore && remainingBefore >= 0) {
-                    qtyInput.val(remainingBefore.toFixed(2));
-                    rowQty = remainingBefore;
-                    showAlert('Row ' + (index + 1) + ' QTY adjusted to remaining: ' + remainingBefore.toFixed(2), 'info');
-                }
-
-                totalQty += rowQty;
-                var newRemaining = targetQty - totalQty;
-                $(this).find('.remaining-qty').val(newRemaining >= 0 ? newRemaining.toFixed(2) : '0.00');
-            });
-
-            $('#totalQtyDisplay').text(totalQty.toFixed(2));
-            var remainingTotal = targetQty - totalQty;
-            $('#totalRemainingDisplay').text(remainingTotal >= 0 ? remainingTotal.toFixed(2) : '0.00');
+            $('#addMcnoRowBtn').prop('disabled', !(allValid && allFilled));
         }
 
         function getMcnoQtyData() {
             var data = [];
             var isValid = true;
             var rows = $('#mcnoQtyTableBody tr');
-
             if (rows.length === 0) return { data: [], isValid: false };
-
             rows.each(function() {
                 var mcno = $(this).find('.mcno-input').val().trim();
                 var qty = $(this).find('.qty-input').val().trim();
                 var shift = $(this).find('.shift-input').val().trim();
-
-                var isEmptyRow = !mcno && !qty && !shift;
-                if (isEmptyRow) return true;
-
+                var isEmpty = !mcno && !qty && !shift;
+                if (isEmpty) return true;
                 if (!mcno || !qty || !shift || !isValidMcno(mcno)) {
                     isValid = false;
                     return false;
                 }
-
                 var qtyNum = parseFloat(qty);
                 if (isNaN(qtyNum) || qtyNum <= 0) {
                     isValid = false;
                     return false;
                 }
-
                 data.push({ mcno: mcno, qty: qtyNum, shift: shift });
             });
-
             return { data: data, isValid: isValid };
         }
 
-        function showAlert(message, type, durationMs) {
-            var alertClass = type === 'error' ? 'alert-danger' : (type === 'info' ? 'alert-info' : 'alert-success');
+        // ---------- alert ----------
+        function showAlert(msg, type, duration) {
+            var cls = type === 'error' ? 'alert-danger' : (type === 'info' ? 'alert-info' : 'alert-success');
             var icon = type === 'error' ? 'circle-exclamation' : (type === 'info' ? 'circle-info' : 'circle-check');
-            var alertHtml = '<div class="alert ' + alertClass + '">' +
-                '<i class="fa-solid fa-' + icon + '" style="margin-right: 8px;"></i>' +
-                message + '</div>';
-            $('#alertBox').html(alertHtml);
-            setTimeout(function() {
-                $('#alertBox').html('');
-            }, durationMs || 3000);
+            $('#alertBox').html(
+                '<div class="alert ' + cls + '"><i class="fa-solid fa-' + icon + ' me-2"></i>' + msg + '</div>'
+            );
+            if (duration !== false) {
+                setTimeout(function() { $('#alertBox').html(''); }, duration || 3000);
+            }
         }
 
+        // ---------- ready ----------
         $(function() {
             loadMcnoList();
 
-            $('#backBtn').click(function() {
+            $('#backBtn').on('click', function() {
                 window.location.href = 'initialPage.php';
             });
 
@@ -1284,7 +1078,6 @@
                 allRowsData = [];
                 targetQty = 0;
                 $('#detailsContainer').removeClass('visible');
-                $('#knit_m_description').html('<option value="">-- Select Knit M Description --</option>');
                 $('#display_target_qty').text('0.00');
                 $('#knitting_target_qty').val('');
                 $('#selected_desc_label').html('');
@@ -1292,13 +1085,14 @@
                 $('#totalQtyDisplay').text('0.00');
                 $('#totalRemainingDisplay').text('0.00');
                 $('#addMcnoRowBtn').prop('disabled', true);
+                // reset all display fields
+                $('#infoGrid span').text('-');
                 addMcnoRow();
             });
 
             $('#bookingInput').on('keypress', function(e) {
                 if (e.which === 13) $('#searchBtn').click();
             });
-
             $('#bookingInput').on('input', function() {
                 $('#searchError').removeClass('show');
             });
@@ -1308,58 +1102,31 @@
                 if (!$(this).prop('disabled')) addMcnoRow();
             });
 
-            $('#mcnoQtyTableBody').on('change input', '.shift-input', function() {
-                checkAddRowButton();
-            });
-
-            $('#mcnoQtyTableBody').on('input', '.qty-input', function() {
-                updateRemainingQty();
-                checkAddRowButton();
-            });
-
-            $('#knit_m_description').on('change', function() {
-                var selected = $(this).val();
-                if (selected && selected.trim() !== '') {
-                    loadDetailsForDescription(selected);
-                } else {
-                    $('#detailsContainer').removeClass('visible');
-                    $('#display_target_qty').text('0.00');
-                    $('#knitting_target_qty').val('');
-                    $('#selected_desc_label').html('');
-                }
-            });
-
             $('#submitBtn').on('click', function(e) {
                 e.preventDefault();
-
                 if (!isMcnoListLoaded) {
-                    showAlert('Please wait, MCNO list is still loading...', 'info');
+                    showAlert('MCNO list still loading...', 'info');
                     return;
                 }
-
                 var mcnoResult = getMcnoQtyData();
                 if (!mcnoResult.isValid) {
-                    showAlert('Please fill all MCNO, QTY, and SHIFT fields with valid data.', 'error');
+                    showAlert('Fill all MCNO, QTY and SHIFT fields with valid data.', 'error');
                     return;
                 }
-
                 if (mcnoResult.data.length === 0) {
-                    showAlert('Please add at least one MCNO and QTY', 'error');
+                    showAlert('Add at least one MCNO row.', 'error');
                     return;
                 }
-
-                var selectedDescription = $('#knit_m_description').val();
-                if (!selectedDescription || selectedDescription.trim() === '') {
-                    showAlert('Please select a Knit M Description', 'error');
+                var desc = $('#knit_m_description').val();
+                if (!desc || desc.trim() === '') {
+                    showAlert('Knit M Description missing.', 'error');
                     return;
                 }
-
                 var totalQty = 0;
                 mcnoResult.data.forEach(function(item) { totalQty += item.qty; });
-
-                var targetQtyValue = parseFloat($('#display_target_qty').text()) || 0;
-                if (totalQty > targetQtyValue) {
-                    showAlert('Total quantity (' + totalQty.toFixed(2) + ') exceeds target quantity (' + targetQtyValue.toFixed(2) + '). Please adjust.', 'error');
+                var targetVal = parseFloat($('#display_target_qty').text()) || 0;
+                if (totalQty > targetVal) {
+                    showAlert('Total QTY exceeds target. Adjust.', 'error');
                     return;
                 }
 
@@ -1369,7 +1136,7 @@
                     style: $('#style').val(),
                     buyer: $('#buyer').val(),
                     supplier: $('#supplier').val(),
-                    knit_m_description: selectedDescription,
+                    knit_m_description: desc,
                     yarn_type: $('#yarn_type').val(),
                     yarn_count: $('#yarn_count').val(),
                     fabrics_type: $('#fabrics_type').val(),
@@ -1385,9 +1152,8 @@
                     mcno_qty: mcnoResult.data
                 };
 
-                var $submitBtn = $(this);
-                $submitBtn.prop('disabled', true).html('<span class="loading-spinner"></span> Saving...');
-
+                var $btn = $(this);
+                $btn.prop('disabled', true).html('<span class="loading-spinner"></span>');
                 $.ajax({
                     url: 'ajax_save_knitting_program.php',
                     method: 'POST',
@@ -1395,38 +1161,29 @@
                     processData: false,
                     data: JSON.stringify(formData),
                     dataType: 'json',
-                    success: function(response) {
-                        if (response.success) {
-                            showAlert(response.message || 'Program saved successfully!', 'success', 1500);
-                            setTimeout(function() {
-                                window.location.reload();
-                            }, 1500);
+                    success: function(resp) {
+                        if (resp.success) {
+                            showAlert(resp.message || 'Saved!', 'success', 1500);
+                            setTimeout(function() { window.location.reload(); }, 1500);
                         } else {
-                            showAlert(response.message || response.error || 'Failed to save program.', 'error', 2000);
+                            showAlert(resp.message || 'Save failed.', 'error', 2000);
                         }
                     },
-                    error: function(jqXHR, textStatus, errorThrown) {
-                        var message = 'Error saving program. Please try again.';
-                        if (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.message) {
-                            message = jqXHR.responseJSON.message;
-                        } else if (jqXHR && jqXHR.responseText) {
-                            try {
-                                var errorData = JSON.parse(jqXHR.responseText);
-                                if (errorData && errorData.message) message = errorData.message;
-                            } catch (e) {
-                                console.error('Save error response:', jqXHR.responseText);
-                            }
-                        }
-                        showAlert(message, 'error', 2000);
+                    error: function() {
+                        showAlert('Error saving program.', 'error', 2000);
                     },
                     complete: function() {
-                        $submitBtn.prop('disabled', false).html('<i class="fa-solid fa-paper-plane"></i> Save Program');
+                        $btn.prop('disabled', false).html('<i class="fa-regular fa-floppy-disk me-2"></i>Save Program');
                     }
                 });
             });
+
+            // initial row
+            addMcnoRow();
         });
-    </script>
+
+    })(jQuery);
+</script>
 
 </body>
-
 </html>
