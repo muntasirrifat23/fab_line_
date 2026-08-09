@@ -490,6 +490,41 @@
             margin-bottom: 1.2rem;
         }
 
+        .page-alert {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            width: min(92vw, 520px);
+            padding: 1.2rem 1.4rem;
+            border-radius: 24px;
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .page-alert.alert-danger {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .page-alert.alert-success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
+        }
+
+        .page-alert.alert-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+
         .alert {
             border-radius: 60px;
             padding: 0.7rem 1.5rem;
@@ -552,6 +587,7 @@
 <body>
 
 <div class="container-fluid px-0">
+    <div id="pageAlert" class="page-alert"></div>
 
     <!-- HEADER -->
     <div class="program-header">
@@ -828,13 +864,13 @@
         function updateRemainingQty() {
             var totalQty = 0;
             var rows = $('#mcnoQtyTableBody tr');
+            var overAlertShown = false;
             rows.each(function(index) {
                 var rowQty = parseFloat($(this).find('.qty-input').val()) || 0;
-                var qtyInput = $(this).find('.qty-input');
                 var remainingBefore = targetQty - totalQty;
-                if (rowQty > remainingBefore && remainingBefore >= 0) {
-                    qtyInput.val(remainingBefore.toFixed(2));
-                    rowQty = remainingBefore;
+                if (!overAlertShown && rowQty > remainingBefore && remainingBefore >= 0) {
+                    showPageAlert('Over QTY. Available qty is ' + remainingBefore.toFixed(2) + '.', 'error', 3000);
+                    overAlertShown = true;
                 }
                 totalQty += rowQty;
                 var newRemaining = targetQty - totalQty;
@@ -843,6 +879,32 @@
             $('#totalQtyDisplay').text(totalQty.toFixed(2));
             var remainingTotal = targetQty - totalQty;
             $('#totalRemainingDisplay').text(remainingTotal >= 0 ? remainingTotal.toFixed(2) : '0.00');
+            if (totalQty > targetQty && !overAlertShown) {
+                showAlert('Total QTY exceeds target. Available qty is 0.00.', 'error');
+            }
+        }
+        
+
+        function isManualDataValid() {
+            var requiredFields = [
+                '#finish_dia',
+                '#open_tube',
+                '#fabrics_type',
+                '#supplier',
+                '#yarn_count',
+                '#sl_vdq',
+                '#mc_dia',
+                '#gray_gsm',
+                '#lot_no',
+                '#knit_m_description'
+            ];
+            for (var i = 0; i < requiredFields.length; i++) {
+                var value = $(requiredFields[i]).val();
+                if (!value || value.toString().trim() === '') {
+                    return false;
+                }
+            }
+            return true;
         }
 
         function checkAddRowButton() {
@@ -875,7 +937,11 @@
             });
             if (hasData && totalQty > targetQty) allValid = false;
 
-            $('#addMcnoRowBtn').prop('disabled', !(allValid && allFilled));
+            var addRowsEnabled = allValid && allFilled;
+            $('#addMcnoRowBtn').prop('disabled', !addRowsEnabled);
+
+            var submitEnabled = addRowsEnabled && hasData && isManualDataValid();
+            $('#submitBtn').prop('disabled', !submitEnabled);
         }
 
         function getMcnoQtyData() {
@@ -910,6 +976,16 @@
             );
             if (duration !== false) {
                 setTimeout(function() { $('#alertBox').html(''); }, duration || 3000);
+            }
+        }
+
+        function showPageAlert(msg, type, duration) {
+            var cls = type === 'error' ? 'alert-danger' : (type === 'info' ? 'alert-info' : 'alert-success');
+            $('#pageAlert').removeClass('alert-danger alert-info alert-success').addClass(cls).html(
+                '<i class="fa-solid fa-' + (type === 'error' ? 'triangle-exclamation' : (type === 'info' ? 'circle-info' : 'circle-check')) + ' me-2"></i>' + msg
+            ).fadeIn(150);
+            if (duration !== false) {
+                setTimeout(function() { $('#pageAlert').fadeOut(150); }, duration || 3000);
             }
         }
 
@@ -955,6 +1031,23 @@
             });
             $('#bookingInput').on('input', function() {
                 $('#searchError').removeClass('show');
+            });
+
+            var manualFieldSelectors = [
+                '#finish_dia',
+                '#open_tube',
+                '#fabrics_type',
+                '#supplier',
+                '#yarn_count',
+                '#sl_vdq',
+                '#mc_dia',
+                '#gray_gsm',
+                '#lot_no',
+                '#knit_m_description'
+            ].join(', ');
+
+            $(manualFieldSelectors).on('input change', function() {
+                checkAddRowButton();
             });
 
             $('#addMcnoRowBtn').on('click', function(e) {
