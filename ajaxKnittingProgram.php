@@ -20,43 +20,39 @@ if (!$db) {
     exit();
 }
 
-// Get booking parameter
+// Get booking parameter (PO number search value)
 $booking = isset($_GET['booking']) ? trim($_GET['booking']) : '';
 
 if ($booking === '') {
     http_response_code(400);
     echo json_encode([
         'success' => false, 
-        'error' => 'Booking number is required'
+        'error' => 'PO number is required'
     ]);
     exit();
 }
 
-// Escape the booking number
+// Escape the PO number
 $b = mysqli_real_escape_string($db, $booking);
 
-// Get all data for this booking
+// Get all data for this PO number - Updated to match your table structure
 $query = "SELECT 
-    BOOKING, 
-    SUPPLIER, 
-    STYLE,
+    PO_NUMBER AS BOOKING, 
     BUYER, 
+    SONO,
+    STYLE,
+    COLOR,
     YARN_TYPE, 
-    YARN_COUNT, 
     FABRICS_TYPE, 
     FINISH_GSM, 
     FINISH_DIA, 
     OPEN_TUBE, 
-    SONO,
-    SL_VDQ,
-    COLOR,
-    LOT_NO, 
-    MC_DIA,
-    KNIT_M_DESCRIPTION, 
     KNIT_MATERIAL_CODE,
-    KNITTING_TARGET_QTY 
+    KNIT_M_DESCRIPTION, 
+    QTY AS KNITTING_TARGET_QTY,
+    BUDAT AS BUDAT
 FROM knitting_input 
-WHERE BOOKING = '$b'";
+WHERE PO_NUMBER = '$b'";
 
 $result = mysqli_query($db, $query);
 
@@ -75,6 +71,14 @@ $descriptions = [];
 $firstRow = null;
 
 while ($row = mysqli_fetch_assoc($result)) {
+    // Add default values for fields that don't exist in your table
+    $row['SUPPLIER'] = isset($row['SUPPLIER']) ? $row['SUPPLIER'] : '';
+    $row['SONO'] = isset($row['SONO']) ? $row['SONO'] : '';
+    $row['SL_VDQ'] = isset($row['SL_VDQ']) ? $row['SL_VDQ'] : '';
+    $row['MC_DIA'] = isset($row['MC_DIA']) ? $row['MC_DIA'] : '';
+    $row['LOT_NO'] = isset($row['LOT_NO']) ? $row['LOT_NO'] : '';
+    $row['YARN_COUNT'] = isset($row['YARN_COUNT']) ? $row['YARN_COUNT'] : '';
+    
     $allData[] = $row;
     if ($firstRow === null) {
         $firstRow = $row;

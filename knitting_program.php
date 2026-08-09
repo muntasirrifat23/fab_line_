@@ -618,9 +618,9 @@
         </div>
 
         <div class="search-panel">
-            <label>Search by Booking Number</label>
+            <label>Search by PO Number</label>
             <div class="search-controls">
-                <input type="text" id="bookingInput" placeholder="Enter Booking Number...">
+                <input type="text" id="bookingInput" placeholder="Enter PO Number...">
                 <button class="btn px-4" id="searchBtn" style="margin-top:8px; background:#2563eb; border:1px solid #2563eb; color:#fff; border-radius:8px;">
                     <i class="fa-solid fa-magnifying-glass me-1" style="margin-right:6px;background:none;border:none;box-shadow:none;transform:none;"></i>
                     Search
@@ -631,7 +631,7 @@
                     Clear
                 </button>
             </div>
-            <div class="error-message" id="searchError">Please enter a valid booking number</div>
+            <div class="error-message" id="searchError">Please enter a valid PO number</div>
         </div>
 
         <!-- Form Container -->
@@ -648,7 +648,7 @@
                 <div class="info-row">
                     <div class="info-grid">
                         <div class="info-item">
-                            <label>Booking Number</label>
+                            <label>PO Number</label>
                             <span id="display_booking">-</span>
                             <input type="hidden" id="booking" value="">
                         </div>
@@ -760,7 +760,7 @@
 
                         <div class="target-qty-box">
                             <label>Total Knitting Target QTY:</label>
-                            <span class="qty-value" id="display_target_qty">0</span>
+                            <span class="qty-value" id="display_target_qty">0.00</span>
                             <span class="selected-description-label" id="selected_desc_label"></span>
                             <input type="hidden" id="knitting_target_qty" value="">
                         </div>
@@ -777,24 +777,7 @@
                                 </tr>
                             </thead>
                             <tbody id="mcnoQtyTableBody">
-                                <tr>
-                                    <td>1</td>
-                                    <td class="mcno-cell">
-                                        <input type="text" class="mcno-input" placeholder="Enter MCNO">
-                                        <div class="validation-msg">Invalid MCNO. Please select from list.</div>
-                                    </td>
-                                    <td><input type="number" class="qty-input" placeholder="Enter Quantity" disabled></td>
-                                    <td>
-                                        <select class="shift-input" disabled>
-                                            <option value="">Select Shift</option>
-                                            <option value="A-SHIFT">A-SHIFT</option>
-                                            <option value="B-SHIFT">B-SHIFT</option>
-                                            <option value="C-SHIFT">C-SHIFT</option>
-                                        </select>
-                                    </td>
-                                    <td><input type="text" class="remaining-qty" readonly placeholder="Auto-calculated"></td>
-                                    <td><button type="button" class="btn-delete-row" onclick="deleteMcnoRow(this)"><i class="fa-solid fa-trash"></i></button></td>
-                                </tr>
+                                <!-- Rows will be added dynamically -->
                             </tbody>
                             <tfoot id="summaryRow">
                                 <tr class="summary-row">
@@ -832,10 +815,10 @@
     <script>
         var bookingData = null;
         var allRowsData = [];
-        var targetQty = 0; // remaining available for new allocations (for selected description)
-        var originalTargetQty = 0; // total target from knitting_input (for selected description)
-        var allocatedQty = 0; // already allocated for selected description
-        var allocatedByDescription = {}; // map of description => allocated sum
+        var targetQty = 0;
+        var originalTargetQty = 0;
+        var allocatedQty = 0;
+        var allocatedByDescription = {};
         var validMcnoList = [];
         var isMcnoListLoaded = false;
 
@@ -843,17 +826,13 @@
         function loadMcnoList() {
             $.ajax({
                 url: 'ajax_mcno_search.php',
-                data: {
-                    action: 'list'
-                },
+                data: { action: 'list' },
                 method: 'GET',
                 dataType: 'json',
                 success: function(data) {
-                    validMcnoList = data;
+                    validMcnoList = data || [];
                     isMcnoListLoaded = true;
                     console.log('MCNO List loaded:', validMcnoList.length, 'items');
-
-                    // Re-validate all rows after list is loaded
                     $('.mcno-input').each(function() {
                         validateMcno(this);
                         updateQtyInputState(this);
@@ -867,17 +846,14 @@
             });
         }
 
-        // Check if MCNO is valid
         function isValidMcno(mcno) {
             if (!mcno || mcno.trim() === '') return false;
             if (!isMcnoListLoaded) return true;
-
             return validMcnoList.some(function(item) {
                 return item.toUpperCase() === mcno.trim().toUpperCase();
             });
         }
 
-        // Enable/disable QTY input based on MCNO validity
         function updateQtyInputState(mcnoInput) {
             var row = $(mcnoInput).closest('tr');
             var qtyInput = row.find('.qty-input');
@@ -894,8 +870,6 @@
                 shiftInput.prop('disabled', true);
                 shiftInput.val('');
             }
-
-            // Update remaining QTY
             updateRemainingQty();
             checkAddRowButton();
         }
@@ -904,61 +878,46 @@
             $('#searchBtn').prop('disabled', true).html('<span class="loading-spinner"></span> Loading...');
 
             $.ajax({
-                    url: 'ajaxKnittingProgram.php',
-                    data: {
-                        booking: booking
-                    },
-                    dataType: 'json',
-                    method: 'GET',
-                    timeout: 30000,
-                    beforeSend: function() {
-                        $('#formContainer').removeClass('hidden');
-                        $('#knit_m_description').html('<option value="">Loading descriptions...</option>');
-                        $('#detailsContainer').removeClass('visible');
-                        $('#mcnoQtyTableBody').html('<tr><td colspan="5" style="text-align:center;padding:20px;">Loading machine data...</td></tr>');
-                        $('#alertBox').html('');
-                    }
-                })
+                url: 'ajaxKnittingProgram.php',
+                data: { booking: booking },
+                dataType: 'json',
+                method: 'GET',
+                timeout: 30000,
+                beforeSend: function() {
+                    $('#formContainer').removeClass('hidden');
+                    $('#knit_m_description').html('<option value="">Loading descriptions...</option>');
+                    $('#detailsContainer').removeClass('visible');
+                    $('#mcnoQtyTableBody').html('<tr><td colspan="6" style="text-align:center;padding:20px;">Loading machine data...</td></tr>');
+                    $('#alertBox').html('');
+                }
+            })
+            .done(function(resp) {
+                if (resp && resp.success && resp.data) {
+                    bookingData = resp.data;
+                    allRowsData = resp.all_data || [];
+                    allocatedByDescription = resp.allocated_by_description || {};
+                    allocatedQty = parseFloat(resp.allocated_qty) || 0;
+                    originalTargetQty = parseFloat(resp.data.KNITTING_TARGET_QTY || resp.data.QTY) || 0;
+                    targetQty = originalTargetQty - (allocatedByDescription[resp.data.KNIT_M_DESCRIPTION] || 0);
 
-                .done(function(resp) {
-
-                    if (resp && resp.success && resp.data) {
-
-                        bookingData = resp.data;
-                        allRowsData = resp.all_data || [];
-
-                        // capture target and allocated values from server
-                        allocatedByDescription = resp.allocated_by_description || {};
-                        // overall allocated sum
-                        allocatedQty = parseFloat(resp.allocated_qty) || 0;
-                        // initial originalTargetQty is set per-description when user selects description
-                        originalTargetQty = parseFloat(resp.data.KNITTING_TARGET_QTY) || 0;
-                        // remaining for the default / first description
-                        targetQty = originalTargetQty - (allocatedByDescription[resp.data.KNIT_M_DESCRIPTION] || 0);
-
-                        $('#formContainer').removeClass('hidden');
-
-                        renderForm(bookingData);
-                        loadKnitDescriptions(resp);
-
-                    } else {
-
-                        $('#formContainer').addClass('hidden');
-                        $('#detailsContainer').removeClass('visible');
-
-                        alert("Booking Data Not Found!");
-                    }
-
-                })
-                .fail(function(jqXHR, textStatus, errorThrown) {
-                    console.error('AJAX Error:', textStatus, errorThrown);
-                    console.error('Response:', jqXHR.responseText);
+                    $('#formContainer').removeClass('hidden');
+                    renderForm(bookingData);
+                    loadKnitDescriptions(resp);
+                } else {
                     $('#formContainer').addClass('hidden');
-                    showAlert('Error loading data: ' + textStatus + '. Please check console for details.', 'error');
-                })
-                .always(function() {
-                    $('#searchBtn').prop('disabled', false).html('<i class="fa-solid fa-magnifying-glass" style="background:none;border:none;box-shadow:none;transform:none;"></i> Search');
-                });
+                    $('#detailsContainer').removeClass('visible');
+                    showAlert(resp.error || 'Booking Data Not Found!', 'error');
+                }
+            })
+            .fail(function(jqXHR, textStatus, errorThrown) {
+                console.error('AJAX Error:', textStatus, errorThrown);
+                console.error('Response:', jqXHR.responseText);
+                $('#formContainer').addClass('hidden');
+                showAlert('Error loading data: ' + textStatus + '. Please check console for details.', 'error');
+            })
+            .always(function() {
+                $('#searchBtn').prop('disabled', false).html('<i class="fa-solid fa-magnifying-glass me-1"></i> Search');
+            });
         }
 
         function renderForm(data) {
@@ -979,7 +938,6 @@
             select.html('<option value="">-- Select Knit M Description --</option>');
 
             var descriptions = [];
-
             if (resp.descriptions && Array.isArray(resp.descriptions) && resp.descriptions.length > 0) {
                 descriptions = resp.descriptions;
             } else if (resp.data && resp.data.KNIT_M_DESCRIPTION) {
@@ -992,7 +950,6 @@
                         select.append('<option value="' + desc + '">' + desc + '</option>');
                     }
                 });
-
                 if (descriptions.length === 1) {
                     select.val(descriptions[0]);
                     loadDetailsForDescription(descriptions[0]);
@@ -1015,10 +972,7 @@
                     }
                 }
             }
-
-            if (!rowData) {
-                rowData = bookingData;
-            }
+            if (!rowData) rowData = bookingData;
 
             $('#yarn_type').val(rowData.YARN_TYPE || '');
             $('#yarn_count').val(rowData.YARN_COUNT || '');
@@ -1030,15 +984,12 @@
             $('#finish_dia').val(rowData.FINISH_DIA || '');
             $('#open_tube').val(rowData.OPEN_TUBE || '');
             $('#lot_no').val(rowData.LOT_NO || '');
-            $('#knit_material_code').val(rowData.KNIT_MATERIAL_CODE || rowData.KNIT_MAT_CODE || '');
+            $('#knit_material_code').val(rowData.KNIT_MATERIAL_CODE || '');
 
-            // Use the original target value (may differ per description) if available
-            originalTargetQty = parseFloat(rowData.KNITTING_TARGET_QTY) || originalTargetQty || 0;
-            // already allocated for this description (if available from server)
+            originalTargetQty = parseFloat(rowData.KNITTING_TARGET_QTY || rowData.QTY) || 0;
             allocatedQty = parseFloat(allocatedByDescription[description]) || 0;
-            // remaining available for new allocations = original target - allocated for this description
             targetQty = originalTargetQty - allocatedQty;
-            $('#display_target_qty').text(targetQty.toFixed(2));
+            $('#display_target_qty').text(targetQty > 0 ? targetQty.toFixed(2) : '0.00');
             $('#knitting_target_qty').val(originalTargetQty);
             $('#selected_desc_label').html('(For: <span>' + description + '</span>)');
 
@@ -1060,7 +1011,7 @@
             newRow.append(
                 $('<td class="mcno-cell">').html(
                     '<input type="text" class="mcno-input" autocomplete="off" placeholder="Enter MCNO">' +
-                    '<div class="validation-msg" style="background:none;border:none;box-shadow:none;transform:none;">Invalid MCNO. Please select from list.</div>'
+                    '<div class="validation-msg">Invalid MCNO. Please select from list.</div>'
                 )
             );
             newRow.append($('<td>').html('<input type="number" class="qty-input" placeholder="Enter Quantity" disabled>'));
@@ -1092,13 +1043,11 @@
                 checkAddRowButton();
             });
 
-            // QTY input change
             newRow.find('.qty-input').on('input', function() {
                 updateRemainingQty();
                 checkAddRowButton();
             });
 
-            // SHIFT select change
             newRow.find('.shift-input').on('change', function() {
                 checkAddRowButton();
             });
@@ -1108,17 +1057,13 @@
         }
 
         function bindMcnoAutocomplete(inputElement) {
-            if (!inputElement) {
-                inputElement = $('.mcno-input');
-            }
-
+            if (!inputElement) inputElement = $('.mcno-input');
+            
             inputElement.autocomplete({
                 source: function(request, response) {
                     $.ajax({
                         url: 'ajax_mcno_search.php',
-                        data: {
-                            term: request.term
-                        },
+                        data: { term: request.term },
                         dataType: 'json',
                         success: function(data) {
                             response(data);
@@ -1187,9 +1132,7 @@
                 var shiftDisabled = $(this).find('.shift-input').prop('disabled');
 
                 var isEmptyRow = !mcno && !qty && !shift;
-                if (isEmptyRow) {
-                    return true; // ignore blank rows
-                }
+                if (isEmptyRow) return true;
 
                 hasDataRow = true;
 
@@ -1217,35 +1160,15 @@
                 }
             });
 
-            // Also check total doesn't exceed target (only count filled rows)
             var totalQty = 0;
             rows.each(function() {
                 var mcno = $(this).find('.mcno-input').val().trim();
                 var qty = parseFloat($(this).find('.qty-input').val()) || 0;
-                if (mcno && qty > 0) {
-                    totalQty += qty;
-                }
+                if (mcno && qty > 0) totalQty += qty;
             });
 
-            if (hasDataRow && totalQty > targetQty) {
-                allRowsValid = false;
-            }
-
+            if (hasDataRow && totalQty > targetQty) allRowsValid = false;
             $('#addMcnoRowBtn').prop('disabled', !(allRowsValid && allFilled));
-        }
-
-        function updateRemainingDisplayForRow(row) {
-            var rowIndex = $(row).index();
-            var previousTotal = 0;
-
-            $('#mcnoQtyTableBody tr').each(function(index) {
-                if (index < rowIndex) {
-                    previousTotal += parseFloat($(this).find('.qty-input').val()) || 0;
-                }
-            });
-
-            var rowRemaining = targetQty - previousTotal;
-            $(row).find('.remaining-qty').val(rowRemaining >= 0 ? rowRemaining.toFixed(2) : '0.00');
         }
 
         function deleteMcnoRow(btn) {
@@ -1278,7 +1201,6 @@
                 if (rowQty > remainingBefore && remainingBefore >= 0) {
                     qtyInput.val(remainingBefore.toFixed(2));
                     rowQty = remainingBefore;
-                    qtyInput.removeClass('invalid-mcno');
                     showAlert('Row ' + (index + 1) + ' QTY adjusted to remaining: ' + remainingBefore.toFixed(2), 'info');
                 }
 
@@ -1287,10 +1209,8 @@
                 $(this).find('.remaining-qty').val(newRemaining >= 0 ? newRemaining.toFixed(2) : '0.00');
             });
 
-            // Update summary
-            var totalQtySum = totalQty;
-            var remainingTotal = targetQty - totalQtySum;
-            $('#totalQtyDisplay').text(totalQtySum.toFixed(2));
+            $('#totalQtyDisplay').text(totalQty.toFixed(2));
+            var remainingTotal = targetQty - totalQty;
             $('#totalRemainingDisplay').text(remainingTotal >= 0 ? remainingTotal.toFixed(2) : '0.00');
         }
 
@@ -1299,12 +1219,7 @@
             var isValid = true;
             var rows = $('#mcnoQtyTableBody tr');
 
-            if (rows.length === 0) {
-                return {
-                    data: [],
-                    isValid: false
-                };
-            }
+            if (rows.length === 0) return { data: [], isValid: false };
 
             rows.each(function() {
                 var mcno = $(this).find('.mcno-input').val().trim();
@@ -1312,16 +1227,9 @@
                 var shift = $(this).find('.shift-input').val().trim();
 
                 var isEmptyRow = !mcno && !qty && !shift;
-                if (isEmptyRow) {
-                    return true; // skip completely empty rows
-                }
+                if (isEmptyRow) return true;
 
-                if (!mcno || !qty || !shift) {
-                    isValid = false;
-                    return false;
-                }
-
-                if (!isValidMcno(mcno)) {
+                if (!mcno || !qty || !shift || !isValidMcno(mcno)) {
                     isValid = false;
                     return false;
                 }
@@ -1332,17 +1240,10 @@
                     return false;
                 }
 
-                data.push({
-                    mcno: mcno,
-                    qty: qtyNum,
-                    shift: shift
-                });
+                data.push({ mcno: mcno, qty: qtyNum, shift: shift });
             });
 
-            return {
-                data: data,
-                isValid: isValid
-            };
+            return { data: data, isValid: isValid };
         }
 
         function showAlert(message, type, durationMs) {
@@ -1357,31 +1258,24 @@
             }, durationMs || 3000);
         }
 
-        // Document ready
         $(function() {
-            // Load MCNO list first
             loadMcnoList();
 
-            // Back button
             $('#backBtn').click(function() {
                 window.location.href = 'initialPage.php';
             });
 
-            // Search button
             $('#searchBtn').on('click', function() {
                 var booking = $('#bookingInput').val().trim();
                 if (!booking) {
                     $('#searchError').addClass('show');
-                    setTimeout(function() {
-                        $('#searchError').removeClass('show');
-                    }, 3000);
+                    setTimeout(function() { $('#searchError').removeClass('show'); }, 3000);
                     return;
                 }
                 $('#searchError').removeClass('show');
                 loadFormData(booking);
             });
 
-            // Clear button
             $('#clearBtn').on('click', function() {
                 $('#bookingInput').val('');
                 $('#formContainer').addClass('hidden');
@@ -1391,7 +1285,7 @@
                 targetQty = 0;
                 $('#detailsContainer').removeClass('visible');
                 $('#knit_m_description').html('<option value="">-- Select Knit M Description --</option>');
-                $('#display_target_qty').text('0');
+                $('#display_target_qty').text('0.00');
                 $('#knitting_target_qty').val('');
                 $('#selected_desc_label').html('');
                 $('#mcnoQtyTableBody').html('');
@@ -1401,24 +1295,17 @@
                 addMcnoRow();
             });
 
-            // Enter key on booking input
             $('#bookingInput').on('keypress', function(e) {
-                if (e.which === 13) {
-                    $('#searchBtn').click();
-                }
+                if (e.which === 13) $('#searchBtn').click();
             });
 
-            // Remove error on input
             $('#bookingInput').on('input', function() {
                 $('#searchError').removeClass('show');
             });
 
-            // Add row button
             $('#addMcnoRowBtn').on('click', function(e) {
                 e.preventDefault();
-                if (!$(this).prop('disabled')) {
-                    addMcnoRow();
-                }
+                if (!$(this).prop('disabled')) addMcnoRow();
             });
 
             $('#mcnoQtyTableBody').on('change input', '.shift-input', function() {
@@ -1430,131 +1317,114 @@
                 checkAddRowButton();
             });
 
-            // Knit description change
             $('#knit_m_description').on('change', function() {
                 var selected = $(this).val();
                 if (selected && selected.trim() !== '') {
                     loadDetailsForDescription(selected);
                 } else {
                     $('#detailsContainer').removeClass('visible');
-                    $('#display_target_qty').text('0');
+                    $('#display_target_qty').text('0.00');
                     $('#knitting_target_qty').val('');
                     $('#selected_desc_label').html('');
                 }
             });
 
+            $('#submitBtn').on('click', function(e) {
+                e.preventDefault();
 
-            // Submit button
-         // Submit button - UPDATED VERSION
-$('#submitBtn').on('click', function(e) {
-    e.preventDefault();
-
-    if (!isMcnoListLoaded) {
-        showAlert('Please wait, MCNO list is still loading...', 'info');
-        return;
-    }
-
-    var mcnoResult = getMcnoQtyData();
-    if (!mcnoResult.isValid) {
-        showAlert('Please fill all MCNO, QTY, and SHIFT fields with valid data.', 'error');
-        return;
-    }
-
-    if (mcnoResult.data.length === 0) {
-        showAlert('Please add at least one MCNO and QTY', 'error');
-        return;
-    }
-
-    var selectedDescription = $('#knit_m_description').val();
-    if (!selectedDescription || selectedDescription.trim() === '') {
-        showAlert('Please select a Knit M Description', 'error');
-        return;
-    }
-
-    var totalQty = 0;
-    mcnoResult.data.forEach(function(item) {
-        totalQty += item.qty;
-    });
-
-    // Get current target qty for validation
-    var targetQtyValue = parseFloat($('#display_target_qty').text()) || 0;
-    if (totalQty > targetQtyValue) {
-        showAlert('Total quantity (' + totalQty.toFixed(2) + ') exceeds target quantity (' + targetQtyValue.toFixed(2) + '). Please adjust.', 'error');
-        return;
-    }
-
-    var formData = {
-        booking: $('#booking').val(),
-        sono: $('#sono').val(),
-        style: $('#style').val(),
-        buyer: $('#buyer').val(),
-        supplier: $('#supplier').val(),
-        knit_m_description: selectedDescription,
-        yarn_type: $('#yarn_type').val(),
-        yarn_count: $('#yarn_count').val(),
-        fabrics_type: $('#fabrics_type').val(),
-        finish_gsm: $('#finish_gsm').val(),
-        sl_vdq: $('#sl_vdq').val(),
-        color: $('#color').val(),
-        mc_dia: $('#mc_dia').val(),
-        finish_dia: $('#finish_dia').val(),
-        open_tube: $('#open_tube').val(),
-        lot_no: $('#lot_no').val(),
-        knit_material_code: $('#knit_material_code').val(),
-        knitting_target_qty: $('#knitting_target_qty').val(),
-        mcno_qty: mcnoResult.data
-    };
-
-    console.log('Form Data:', formData);
-
-    var $submitBtn = $(this);
-    $submitBtn.prop('disabled', true).html('<span class="loading-spinner"></span> Saving...');
-
-    $.ajax({
-        url: 'ajax_save_knitting_program.php',
-        method: 'POST',
-        contentType: 'application/json; charset=utf-8',
-        processData: false,
-        data: JSON.stringify(formData),
-        dataType: 'json',
-      success: function(response) {
-    if (response.success) {
-
-        showAlert(response.message || 'Program saved successfully!', 'success', 1500);
-
-        setTimeout(function () {
-            window.location.reload();
-        }, 1500);
-
-    } else {
-
-        showAlert(response.message || response.error || 'Failed to save program.', 'error', 2000);
-
-    }
-},
-        error: function(jqXHR, textStatus, errorThrown) {
-            var message = 'Error saving program. Please try again.';
-            if (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.message) {
-                message = jqXHR.responseJSON.message;
-            } else if (jqXHR && jqXHR.responseText) {
-                try {
-                    var errorData = JSON.parse(jqXHR.responseText);
-                    if (errorData && errorData.message) {
-                        message = errorData.message;
-                    }
-                } catch (e) {
-                    console.error('Save error response:', jqXHR.responseText);
+                if (!isMcnoListLoaded) {
+                    showAlert('Please wait, MCNO list is still loading...', 'info');
+                    return;
                 }
-            }
-            showAlert(message, 'error', 2000);
-        },
-        complete: function() {
-            $submitBtn.prop('disabled', false).html('<i class="fa-solid fa-paper-plane"></i> Save Program');
-        }
-    });
-});
 
-    });
+                var mcnoResult = getMcnoQtyData();
+                if (!mcnoResult.isValid) {
+                    showAlert('Please fill all MCNO, QTY, and SHIFT fields with valid data.', 'error');
+                    return;
+                }
+
+                if (mcnoResult.data.length === 0) {
+                    showAlert('Please add at least one MCNO and QTY', 'error');
+                    return;
+                }
+
+                var selectedDescription = $('#knit_m_description').val();
+                if (!selectedDescription || selectedDescription.trim() === '') {
+                    showAlert('Please select a Knit M Description', 'error');
+                    return;
+                }
+
+                var totalQty = 0;
+                mcnoResult.data.forEach(function(item) { totalQty += item.qty; });
+
+                var targetQtyValue = parseFloat($('#display_target_qty').text()) || 0;
+                if (totalQty > targetQtyValue) {
+                    showAlert('Total quantity (' + totalQty.toFixed(2) + ') exceeds target quantity (' + targetQtyValue.toFixed(2) + '). Please adjust.', 'error');
+                    return;
+                }
+
+                var formData = {
+                    booking: $('#booking').val(),
+                    sono: $('#sono').val(),
+                    style: $('#style').val(),
+                    buyer: $('#buyer').val(),
+                    supplier: $('#supplier').val(),
+                    knit_m_description: selectedDescription,
+                    yarn_type: $('#yarn_type').val(),
+                    yarn_count: $('#yarn_count').val(),
+                    fabrics_type: $('#fabrics_type').val(),
+                    finish_gsm: $('#finish_gsm').val(),
+                    sl_vdq: $('#sl_vdq').val(),
+                    color: $('#color').val(),
+                    mc_dia: $('#mc_dia').val(),
+                    finish_dia: $('#finish_dia').val(),
+                    open_tube: $('#open_tube').val(),
+                    lot_no: $('#lot_no').val(),
+                    knit_material_code: $('#knit_material_code').val(),
+                    knitting_target_qty: $('#knitting_target_qty').val(),
+                    mcno_qty: mcnoResult.data
+                };
+
+                var $submitBtn = $(this);
+                $submitBtn.prop('disabled', true).html('<span class="loading-spinner"></span> Saving...');
+
+                $.ajax({
+                    url: 'ajax_save_knitting_program.php',
+                    method: 'POST',
+                    contentType: 'application/json; charset=utf-8',
+                    processData: false,
+                    data: JSON.stringify(formData),
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            showAlert(response.message || 'Program saved successfully!', 'success', 1500);
+                            setTimeout(function() {
+                                window.location.reload();
+                            }, 1500);
+                        } else {
+                            showAlert(response.message || response.error || 'Failed to save program.', 'error', 2000);
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        var message = 'Error saving program. Please try again.';
+                        if (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.message) {
+                            message = jqXHR.responseJSON.message;
+                        } else if (jqXHR && jqXHR.responseText) {
+                            try {
+                                var errorData = JSON.parse(jqXHR.responseText);
+                                if (errorData && errorData.message) message = errorData.message;
+                            } catch (e) {
+                                console.error('Save error response:', jqXHR.responseText);
+                            }
+                        }
+                        showAlert(message, 'error', 2000);
+                    },
+                    complete: function() {
+                        $submitBtn.prop('disabled', false).html('<i class="fa-solid fa-paper-plane"></i> Save Program');
+                    }
+                });
+            });
+        });
     </script>
 
 </body>
