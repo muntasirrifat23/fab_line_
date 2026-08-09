@@ -621,20 +621,17 @@
             <table class="mcno-qty-table">
                 <thead>
                     <tr>
-                        <th style="width:5%;">#</th>
-                        <th style="width:22%;">MCNO</th>
-                        <th style="width:18%;">QTY</th>
-                        <th style="width:20%;">SHIFT</th>
-                        <th style="width:20%;">Remaining</th>
-                        <th style="width:10%;">Action</th>
+                        <th style="width:10%;">#</th>
+                        <th style="width:35%;">QTY</th>
+                        <th style="width:35%;">Remaining</th>
+                        <th style="width:20%;">Action</th>
                     </tr>
                 </thead>
                 <tbody id="mcnoQtyTableBody"></tbody>
                 <tfoot>
                     <tr class="summary-row">
-                        <td colspan="2" class="summary-label">Total</td>
+                        <td class="summary-label">Total</td>
                         <td class="summary-total" id="totalQtyDisplay">0.00</td>
-                        <td></td>
                         <td class="summary-remaining" id="totalRemainingDisplay">0.00</td>
                         <td></td>
                     </tr>
@@ -667,75 +664,6 @@
         var targetQty = 0;
         var originalTargetQty = 0;
         var allocatedByDescription = {};
-        var validMcnoList = [];
-        var isMcnoListLoaded = false;
-
-        // ---------- load MCNO list ----------
-        function loadMcnoList() {
-            $.ajax({
-                url: 'ajax_mcno_search.php',
-                data: { action: 'list' },
-                method: 'GET',
-                dataType: 'json',
-                success: function(data) {
-                    validMcnoList = data || [];
-                    isMcnoListLoaded = true;
-                    $('.mcno-input').each(function() {
-                        validateMcno(this);
-                        updateQtyInputState(this);
-                    });
-                },
-                error: function() {
-                    validMcnoList = [];
-                    isMcnoListLoaded = true;
-                }
-            });
-        }
-
-        function isValidMcno(mcno) {
-            if (!mcno || mcno.trim() === '') return false;
-            if (!isMcnoListLoaded) return true;
-            return validMcnoList.some(function(item) {
-                return item.toUpperCase() === mcno.trim().toUpperCase();
-            });
-        }
-
-        function validateMcno(input) {
-            var val = $(input).val().trim();
-            var cell = $(input).closest('.mcno-cell');
-            var msg = cell.find('.validation-msg');
-            if (!val) {
-                $(input).removeClass('invalid-mcno');
-                msg.removeClass('show');
-                return false;
-            }
-            if (!isValidMcno(val)) {
-                $(input).addClass('invalid-mcno');
-                msg.addClass('show');
-                return false;
-            } else {
-                $(input).removeClass('invalid-mcno');
-                msg.removeClass('show');
-                return true;
-            }
-        }
-
-        function updateQtyInputState(mcnoInput) {
-            var row = $(mcnoInput).closest('tr');
-            var qtyInput = row.find('.qty-input');
-            var shiftInput = row.find('.shift-input');
-            var isValid = validateMcno(mcnoInput);
-            if (isValid) {
-                qtyInput.prop('disabled', false);
-                shiftInput.prop('disabled', false);
-                qtyInput.focus();
-            } else {
-                qtyInput.prop('disabled', true).val('');
-                shiftInput.prop('disabled', true).val('');
-            }
-            updateRemainingQty();
-            checkAddRowButton();
-        }
 
         // ---------- load form data ----------
         function loadFormData(booking) {
@@ -864,85 +792,20 @@
             var rowCount = tbody.find('tr').length + 1;
             var row = $('<tr>');
             row.append($('<td>').text(rowCount));
-            row.append(
-                $('<td class="mcno-cell">').html(
-                    '<input type="text" class="mcno-input" autocomplete="off" placeholder="MCNO">' +
-                    '<div class="validation-msg">Invalid MCNO</div>'
-                )
-            );
-            row.append($('<td>').html('<input type="number" class="qty-input" placeholder="QTY" disabled>'));
-            row.append($('<td>').html(
-                '<select class="shift-input" disabled>' +
-                '<option value="">Shift</option>' +
-                '<option value="A-SHIFT">A-SHIFT</option>' +
-                '<option value="B-SHIFT">B-SHIFT</option>' +
-                '<option value="C-SHIFT">C-SHIFT</option>' +
-                '</select>'
-            ));
+            row.append($('<td>').html('<input type="number" class="qty-input" placeholder="QTY" step="0.01">'));
             row.append($('<td>').html('<input type="text" class="remaining-qty" readonly placeholder="Remaining">'));
             row.append($('<td>').html('<button type="button" class="btn-delete-row" onclick="deleteMcnoRow(this)"><i class="fa-solid fa-trash"></i></button>'));
             tbody.append(row);
 
-            var mcnoInput = row.find('.mcno-input');
-            bindMcnoAutocomplete(mcnoInput);
-
-            mcnoInput.on('change blur', function() {
-                validateMcno(this);
-                updateQtyInputState(this);
-            });
-            mcnoInput.on('input', function() {
-                var cell = $(this).closest('.mcno-cell');
-                cell.find('.validation-msg').removeClass('show');
-                $(this).removeClass('invalid-mcno');
-                var row = $(this).closest('tr');
-                row.find('.qty-input').prop('disabled', true).val('');
-                row.find('.shift-input').prop('disabled', true).val('');
-                checkAddRowButton();
-            });
             row.find('.qty-input').on('input', function() {
                 updateRemainingQty();
-                checkAddRowButton();
-            });
-            row.find('.shift-input').on('change', function() {
                 checkAddRowButton();
             });
             updateRemainingQty();
             checkAddRowButton();
         }
 
-        function bindMcnoAutocomplete(el) {
-            el.autocomplete({
-                source: function(request, response) {
-                    $.ajax({
-                        url: 'ajax_mcno_search.php',
-                        data: { term: request.term },
-                        dataType: 'json',
-                        success: response,
-                        error: function() { response([]); }
-                    });
-                },
-                minLength: 1,
-                select: function(event, ui) {
-                    $(this).val(ui.item.value);
-                    var cell = $(this).closest('.mcno-cell');
-                    cell.find('.validation-msg').removeClass('show');
-                    $(this).removeClass('invalid-mcno');
-                    updateQtyInputState(this);
-                    return false;
-                },
-                change: function(event, ui) {
-                    if (!ui.item) {
-                        validateMcno(this);
-                        updateQtyInputState(this);
-                    } else {
-                        var cell = $(this).closest('.mcno-cell');
-                        cell.find('.validation-msg').removeClass('show');
-                        $(this).removeClass('invalid-mcno');
-                        updateQtyInputState(this);
-                    }
-                }
-            });
-        }
+
 
         window.deleteMcnoRow = function(btn) {
             var tr = $(btn).closest('tr');
@@ -989,15 +852,11 @@
             var hasData = false;
 
             rows.each(function() {
-                var mcno = $(this).find('.mcno-input').val().trim();
                 var qty = $(this).find('.qty-input').val().trim();
-                var shift = $(this).find('.shift-input').val().trim();
-                var qtyDisabled = $(this).find('.qty-input').prop('disabled');
-                var shiftDisabled = $(this).find('.shift-input').prop('disabled');
-                var isEmpty = !mcno && !qty && !shift;
+                var isEmpty = !qty;
                 if (isEmpty) return true;
                 hasData = true;
-                if (qtyDisabled || shiftDisabled || !mcno || !qty || !shift || !isValidMcno(mcno)) {
+                if (!qty) {
                     allValid = false;
                     allFilled = false;
                     return false;
@@ -1011,9 +870,8 @@
 
             var totalQty = 0;
             rows.each(function() {
-                var mcno = $(this).find('.mcno-input').val().trim();
                 var qty = parseFloat($(this).find('.qty-input').val()) || 0;
-                if (mcno && qty > 0) totalQty += qty;
+                if (qty > 0) totalQty += qty;
             });
             if (hasData && totalQty > targetQty) allValid = false;
 
@@ -1026,12 +884,10 @@
             var rows = $('#mcnoQtyTableBody tr');
             if (rows.length === 0) return { data: [], isValid: false };
             rows.each(function() {
-                var mcno = $(this).find('.mcno-input').val().trim();
                 var qty = $(this).find('.qty-input').val().trim();
-                var shift = $(this).find('.shift-input').val().trim();
-                var isEmpty = !mcno && !qty && !shift;
+                var isEmpty = !qty;
                 if (isEmpty) return true;
-                if (!mcno || !qty || !shift || !isValidMcno(mcno)) {
+                if (!qty) {
                     isValid = false;
                     return false;
                 }
@@ -1040,7 +896,7 @@
                     isValid = false;
                     return false;
                 }
-                data.push({ mcno: mcno, qty: qtyNum, shift: shift });
+                data.push({ qty: qtyNum });
             });
             return { data: data, isValid: isValid };
         }
@@ -1059,8 +915,6 @@
 
         // ---------- ready ----------
         $(function() {
-            loadMcnoList();
-
             $('#backBtn').on('click', function() {
                 window.location.href = 'initialPage.php';
             });
@@ -1110,17 +964,13 @@
 
             $('#submitBtn').on('click', function(e) {
                 e.preventDefault();
-                if (!isMcnoListLoaded) {
-                    showAlert('MCNO list still loading...', 'info');
-                    return;
-                }
                 var mcnoResult = getMcnoQtyData();
                 if (!mcnoResult.isValid) {
-                    showAlert('Fill all MCNO, QTY and SHIFT fields with valid data.', 'error');
+                    showAlert('Fill all QTY fields with valid data.', 'error');
                     return;
                 }
                 if (mcnoResult.data.length === 0) {
-                    showAlert('Add at least one MCNO row.', 'error');
+                    showAlert('Add at least one quantity row.', 'error');
                     return;
                 }
                 var desc = $('#knit_m_description').val();
@@ -1147,6 +997,7 @@
                     yarn_count: $('#yarn_count').val(),
                     fabrics_type: $('#fabrics_type').val(),
                     finish_gsm: $('#finish_gsm').val(),
+                    gray_gsm: $('#gray_gsm').val(),
                     sl_vdq: $('#sl_vdq').val(),
                     color: $('#color').val(),
                     mc_dia: $('#mc_dia').val(),
