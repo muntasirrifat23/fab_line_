@@ -601,12 +601,12 @@
             <div id="detailsContainer">
                 <div class="card-title" style="margin-top:1.8rem; border-top:2px solid #eef2f6; padding-top:1.2rem;"><i class="fa-solid fa-scissors"></i> Yarn &amp; Fabric Details</div>
                 <div class="yarn-grid">
-                    <div class="form-group"><label>Supplier</label><input type="text" id="supplier" readonly></div>
-                    <div class="form-group"><label>Yarn Count</label><input type="text" id="yarn_count" readonly></div>
-                    <div class="form-group"><label>SL/VQ</label><input type="text" id="sl_vdq" readonly></div>
-                    <!-- hidden fields used by backend -->
-                    <input type="hidden" id="mc_dia">
-                    <input type="hidden" id="lot_no">
+                    <div class="form-group"><label>Supplier</label><input type="text" id="supplier" placeholder="Enter Supplier"></div>
+                    <div class="form-group"><label>Yarn Count</label><input type="text" id="yarn_count" placeholder="Enter Yarn Count"></div>
+                    <div class="form-group"><label>SL/VQ</label><input type="text" id="sl_vdq" placeholder="Enter SL/VQ"></div>
+                    <div class="form-group"><label>MC DIA</label><input type="text" id="mc_dia" placeholder="Enter MC DIA"></div>
+                    <div class="form-group"><label>Gray GSM</label><input type="text" id="gray_gsm" placeholder="Enter Gray GSM"></div>
+                    <div class="form-group"><label>Lot No</label><input type="text" id="lot_no" placeholder="Enter Lot No"></div>
                 </div>
             </div>
 
@@ -616,8 +616,6 @@
             <div class="target-qty-box">
                 <label>Total Knitting Target QTY :</label>
                 <span class="qty-value" id="display_target_qty">0.00</span>
-                <span class="selected-desc" id="selected_desc_label"></span>
-                <input type="hidden" id="knitting_target_qty">
             </div>
 
             <table class="mcno-qty-table">
@@ -796,6 +794,12 @@
             $('#yarn_type').val(data.YARN_TYPE || '');
             $('#knit_material_code').val(data.KNIT_MATERIAL_CODE || '');
             $('#knit_m_description').val(data.KNIT_M_DESCRIPTION || '');
+            $('#supplier').val(data.SUPPLIER || '');
+            $('#yarn_count').val(data.YARN_COUNT || '');
+            $('#sl_vdq').val(data.SL_VDQ || '');
+            $('#mc_dia').val(data.MC_DIA || '');
+            $('#gray_gsm').val(data.GRAY_GSM || '');
+            $('#lot_no').val(data.LOT_NO || '');
         }
 
         function setKnitMDescription(resp) {
@@ -834,13 +838,15 @@
             $('#supplier').val(rowData.SUPPLIER || '');
             $('#yarn_count').val(rowData.YARN_COUNT || '');
             $('#sl_vdq').val(rowData.SL_VDQ || '');
+            $('#mc_dia').val(rowData.MC_DIA || '');
+            $('#gray_gsm').val(rowData.GRAY_GSM || '');
+            $('#lot_no').val(rowData.LOT_NO || '');
 
             originalTargetQty = parseFloat(rowData.KNITTING_TARGET_QTY || rowData.QTY) || 0;
             var allocated = parseFloat(allocatedByDescription[description]) || 0;
             targetQty = originalTargetQty - allocated;
             $('#display_target_qty').text(targetQty > 0 ? targetQty.toFixed(2) : '0.00');
             $('#knitting_target_qty').val(originalTargetQty);
-            $('#selected_desc_label').html('(For: <span>' + description + '</span>)');
 
             resetMcnoRows();
             $('#detailsContainer').addClass('visible');
