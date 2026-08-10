@@ -23,15 +23,13 @@ $data = is_array($jsonBody) ? array_merge($_POST, $jsonBody) : $_POST;
 $kptid              = isset($data['KPTID']) ? intval($data['KPTID']) : 0;
 $is_edit            = ($kptid > 0);
 
-$booking            = trim($data['BOOKING'] ?? '');
+$booking            = trim($data['PO_NUMBER'] ?? $data['BOOKING'] ?? '');
 $sono               = trim($data['SONO'] ?? '');
 $style              = trim($data['STYLE'] ?? '');
 $buyer              = trim($data['BUYER'] ?? '');
 $supplier           = trim($data['SUPPLIER'] ?? '');
 $knit_m_description = trim($data['KNIT_M_DESCRIPTION'] ?? '');
-$mcno               = trim($data['MCNO'] ?? '');
 $qty                = floatval($data['QTY'] ?? 0);
-$shift              = trim($data['SHIFT'] ?? 'A-SHIFT');
 $yarn_type          = trim($data['YARN_TYPE'] ?? '');
 $yarn_count         = trim($data['YARN_COUNT'] ?? '');
 $fabrics_type       = trim($data['FABRICS_TYPE'] ?? '');
@@ -40,17 +38,26 @@ $finish_dia         = trim($data['FINISH_DIA'] ?? '');
 $open_tube          = trim($data['OPEN_TUBE'] ?? 'O');
 $lot_no             = trim($data['LOT_NO'] ?? '');
 $knit_material_code = trim($data['KNIT_MATERIAL_CODE'] ?? '');
+$color              = trim($data['COLOR'] ?? '');
+$sl_vdq             = trim($data['SL_VDQ'] ?? '');
 $operator_id        = trim($data['OPERATOR_ID'] ?? '');
 $main_tid           = trim($data['MAIN_TID'] ?? '');
 $sub_tid            = trim($data['SUB_TID'] ?? '');
 
+// Auto-detect SHIFT based on current server time
+$shiftHour = (int)date('G');
+if ($shiftHour >= 6 && $shiftHour < 14) {
+    $shift = 'A';
+} elseif ($shiftHour >= 14 && $shiftHour < 22) {
+    $shift = 'B';
+} else {
+    $shift = 'C';
+}
+
 // Server-side Validation
 $errors = [];
 if (empty($booking)) {
-    $errors[] = "BOOKING number is required.";
-}
-if (empty($mcno)) {
-    $errors[] = "Machine No (MCNO) is required.";
+    $errors[] = "PO Number is required.";
 }
 if ($qty <= 0) {
     $errors[] = "QTY must be greater than 0.";
@@ -83,30 +90,29 @@ try {
         $sql = "UPDATE knitting_program SET 
             MAIN_TID = ?, 
             SUB_TID = ?, 
-            BOOKING = ?, 
+            PO_NUMBER = ?, 
             SONO = ?, 
             STYLE = ?, 
             BUYER = ?, 
             SUPPLIER = ?, 
             KNIT_M_DESCRIPTION = ?, 
-            MCNO = ?, 
             QTY = ?, 
             SHIFT = ?, 
-            YARN_TYPE = ?, 
-            YARN_COUNT = ?, 
-            FABRICS_TYPE = ?, 
-            FINISH_GSM = ?, 
-            FINISH_DIA = ?, 
-            OPEN_TUBE = ?, 
-            LOT_NO = ?, 
+            YTYPE = ?, 
+            YCOUNT = ?, 
+            FTYPE = ?, 
+            FGSM = ?, 
+            FDIA = ?, 
+            O_T = ?, 
+            LOT = ?, 
             KNIT_MATERIAL_CODE = ? 
             WHERE KPTID = ?";
 
         $stmt = $db->prepare($sql);
         $stmt->bind_param(
-            "sssssssssdsssssssssi",
+            "sssssssssdssssssssi",
             $main_tid, $sub_tid, $booking, $sono, $style, $buyer, $supplier,
-            $knit_m_description, $mcno, $qty, $shift, $yarn_type, $yarn_count,
+            $knit_m_description, $qty, $shift, $yarn_type, $yarn_count,
             $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code, $kptid
         );
 
@@ -125,16 +131,16 @@ try {
         $stmt->close();
     } else {
         $sql = "INSERT INTO knitting_program (
-            MAIN_TID, SUB_TID, BOOKING, SONO, STYLE, BUYER, SUPPLIER, 
-            KNIT_M_DESCRIPTION, MCNO, QTY, SHIFT, YARN_TYPE, YARN_COUNT, 
-            FABRICS_TYPE, FINISH_GSM, FINISH_DIA, OPEN_TUBE, LOT_NO, KNIT_MATERIAL_CODE
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            MAIN_TID, SUB_TID, PO_NUMBER, SONO, STYLE, BUYER, SUPPLIER, 
+            KNIT_M_DESCRIPTION, QTY, SHIFT, YTYPE, YCOUNT, 
+            FTYPE, FGSM, FDIA, O_T, LOT, KNIT_MATERIAL_CODE
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $db->prepare($sql);
         $stmt->bind_param(
-            "sssssssssdsssssssss",
+            "sssssssssdssssssss",
             $main_tid, $sub_tid, $booking, $sono, $style, $buyer, $supplier,
-            $knit_m_description, $mcno, $qty, $shift, $yarn_type, $yarn_count,
+            $knit_m_description, $qty, $shift, $yarn_type, $yarn_count,
             $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code
         );
 

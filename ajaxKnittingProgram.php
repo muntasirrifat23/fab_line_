@@ -112,7 +112,7 @@ $response = [
 $allocated = 0;
 $allocatedByDesc = [];
 try {
-    $allocQuery = "SELECT KNIT_M_DESCRIPTION, IFNULL(SUM(QTY),0) AS allocated_qty FROM knitting_program WHERE BOOKING = '$b' GROUP BY KNIT_M_DESCRIPTION";
+    $allocQuery = "SELECT KNIT_M_DESCRIPTION, IFNULL(SUM(QTY),0) AS allocated_qty FROM knitting_program WHERE PO_NUMBER = '$b' GROUP BY KNIT_M_DESCRIPTION";
     $allocRes = mysqli_query($db, $allocQuery);
     if ($allocRes) {
         while ($ar = mysqli_fetch_assoc($allocRes)) {

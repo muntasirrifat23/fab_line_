@@ -13,7 +13,7 @@ $start_date    = isset($_GET['start_date']) ? trim($_GET['start_date']) : '';
 $end_date      = isset($_GET['end_date'])   ? trim($_GET['end_date'])   : '';
 
 // Build query using real column names
-$query  = "SELECT kc.*, kp.BOOKING AS kp_booking
+$query  = "SELECT kc.*, kp.PO_NUMBER AS kp_booking
            FROM knit_card kc
            LEFT JOIN knitting_program kp ON kc.KPTID = kp.KPTID
            WHERE 1=1";

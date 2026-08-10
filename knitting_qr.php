@@ -81,10 +81,9 @@
                         <tr>
                             <th>QR PRINT</th>
                             <th>Program</th>
-                            <th>MCNO</th>
-                            <th>MC DIA</th>
+                            <th>PO NUMBER</th>
+                            <th>SHIFT</th>
                             <th>BUYER</th>
-                            <th>BOOKING</th>
                             <th>SONO</th>
                             <th>STYLE</th>
                             <th>FABRICS TYPE</th>
@@ -132,22 +131,21 @@
 
                 tr.append($('<td>').append(actionBtn));
                 tr.append($('<td>').text(row.SUB_TID || ''));
-                tr.append($('<td>').text(row.MCNO || ''));
-                tr.append($('<td>').text(row.MC_DIA || ''));
+                tr.append($('<td>').text(row.PO_NUMBER || ''));
+                tr.append($('<td>').text(row.SHIFT || ''));
                 tr.append($('<td>').text(row.BUYER || ''));
-                tr.append($('<td>').text(row.BOOKING || ''));
                 tr.append($('<td>').text(row.SONO || ''));
                 tr.append($('<td>').text(row.STYLE || ''));
-                tr.append($('<td>').text(row.FABRICS_TYPE || ''));
-                tr.append($('<td>').text(row.YARN_COUNT || ''));
-                tr.append($('<td>').text(row.YARN_TYPE || ''));
-                tr.append($('<td>').text(row.FINISH_GSM || ''));
-                tr.append($('<td>').text(row.FINISH_DIA || ''));
-                tr.append($('<td>').text(row.OPEN_TUBE || ''));
+                tr.append($('<td>').text(row.FTYPE || ''));
+                tr.append($('<td>').text(row.YCOUNT || ''));
+                tr.append($('<td>').text(row.YTYPE || ''));
+                tr.append($('<td>').text(row.FGSM || ''));
+                tr.append($('<td>').text(row.FDIA || ''));
+                tr.append($('<td>').text(row.O_T || ''));
                 tr.append($('<td>').text(row.QTY || ''));
                 tr.append($('<td>').text(row.COLOR || ''));
-                tr.append($('<td>').text(row.SL_VDQ || ''));
-                tr.append($('<td>').text(row.LOT_NO || ''));
+                tr.append($('<td>').text(row.SL || ''));
+                tr.append($('<td>').text(row.LOT || ''));
 
                 tbody.append(tr);
             });
@@ -169,30 +167,29 @@
 
             <div><b>Program :</b> ${row.SUB_TID||''}</div>
             <div><b>KPTID :</b> ${row.KPTID||''}</div>
-            <div><b>MCNO :</b> ${row.MCNO||''}</div>
+            <div><b>Shift :</b> ${row.SHIFT||''}</div>
 
             <div><b>Buyer :</b> ${row.BUYER||''}</div>
-            <div><b>Booking :</b> ${row.BOOKING||''}</div>
+            <div><b>PO Number :</b> ${row.PO_NUMBER||''}</div>
 
             <div><b>SONO :</b> ${row.SONO||''}</div>
             <div><b>Style :</b> ${row.STYLE||''}</div>
 
-            <div><b>Fabrics :</b> ${row.FABRICS_TYPE||''}</div>
-            <div><b>Yarn Count :</b> ${row.YARN_COUNT||''}</div>
+            <div><b>Fabrics :</b> ${row.FTYPE||''}</div>
+            <div><b>Yarn Count :</b> ${row.YCOUNT||''}</div>
 
-            <div><b>Yarn Type :</b> ${row.YARN_TYPE||''}</div>
-            <div><b>Finish GSM :</b> ${row.FINISH_GSM||''}</div>
+            <div><b>Yarn Type :</b> ${row.YTYPE||''}</div>
+            <div><b>Finish GSM :</b> ${row.FGSM||''}</div>
 
-            <div><b>Finish Dia :</b> ${row.FINISH_DIA||''}</div>
-            <div><b>Open/Tube :</b> ${row.OPEN_TUBE||''}</div>
+            <div><b>Finish Dia :</b> ${row.FDIA||''}</div>
+            <div><b>Open/Tube :</b> ${row.O_T||''}</div>
 
             <div><b>Qty :</b> ${row.QTY||''}</div>
             <div><b>Color :</b> ${row.COLOR||''}</div>
 
-            <div><b>MC DIA :</b> ${row.MC_DIA||''}</div>
-            <div><b>SL/VDQ :</b> ${row.SL_VDQ||''}</div>
+            <div><b>SL/VDQ :</b> ${row.SL||''}</div>
 
-            <div><b>LOT NO :</b> ${row.LOT_NO||''}</div>
+            <div><b>LOT NO :</b> ${row.LOT||''}</div>
 
         </div>
 

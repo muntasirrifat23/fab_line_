@@ -11,8 +11,8 @@ $uname = $_SESSION['username'];
 
 // Search filters
 $buyer_filter    = isset($_GET['buyer'])      ? trim($_GET['buyer'])      : '';
-$mc_no_filter    = isset($_GET['mc_no'])      ? trim($_GET['mc_no'])      : '';
 $booking_filter  = isset($_GET['booking_no']) ? trim($_GET['booking_no']) : '';
+$shift_filter    = isset($_GET['shift'])      ? trim($_GET['shift'])      : '';
 
 // Build query using real KPTID column; LEFT JOIN knit_card on KPTID
 $query = "SELECT kp.*, kc.KCID AS card_id
@@ -27,14 +27,14 @@ if ($buyer_filter !== '') {
     $params[] = "%{$buyer_filter}%";
     $types   .= 's';
 }
-if ($mc_no_filter !== '') {
-    $query   .= " AND kp.MCNO LIKE ?";
-    $params[] = "%{$mc_no_filter}%";
+if ($booking_filter !== '') {
+    $query   .= " AND kp.PO_NUMBER LIKE ?";
+    $params[] = "%{$booking_filter}%";
     $types   .= 's';
 }
-if ($booking_filter !== '') {
-    $query   .= " AND kp.BOOKING LIKE ?";
-    $params[] = "%{$booking_filter}%";
+if ($shift_filter !== '') {
+    $query   .= " AND kp.SHIFT LIKE ?";
+    $params[] = "%{$shift_filter}%";
     $types   .= 's';
 }
 
@@ -63,7 +63,7 @@ if ($result && $result->num_rows > 0) {
         $rows_array[]    = $r;
         $total_programs++;
         $total_req_qty  += floatval($r['QTY'] ?? 0);
-        if (intval($r['CARD_GENERATED'] ?? 0) === 1) {
+        if (!empty($r['card_id'])) {
             $generated_count++;
         } else {
             $pending_count++;
@@ -540,12 +540,12 @@ if ($result && $result->num_rows > 0) {
                     <input type="text" name="buyer" class="form-control form-control-sm" placeholder="Buyer name..." value="<?php echo htmlspecialchars($buyer_filter); ?>">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label small fw-bold text-secondary mb-1">Filter by Machine No (M/C)</label>
-                    <input type="text" name="mc_no" class="form-control form-control-sm" placeholder="Machine No..." value="<?php echo htmlspecialchars($mc_no_filter); ?>">
+                    <label class="form-label small fw-bold text-secondary mb-1">Filter by PO Number</label>
+                    <input type="text" name="booking_no" class="form-control form-control-sm" placeholder="PO Number..." value="<?php echo htmlspecialchars($booking_filter); ?>">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label small fw-bold text-secondary mb-1">Filter by Booking No</label>
-                    <input type="text" name="booking_no" class="form-control form-control-sm" placeholder="Booking No..." value="<?php echo htmlspecialchars($booking_filter); ?>">
+                    <label class="form-label small fw-bold text-secondary mb-1">Filter by Shift</label>
+                    <input type="text" name="shift" class="form-control form-control-sm" placeholder="Shift..." value="<?php echo htmlspecialchars($shift_filter); ?>">
                 </div>
                 <div class="col-md-3 d-flex gap-2">
                     <button type="submit" class="btn btn-teal btn-sm px-4 flex-grow-1 fw-semibold">
@@ -566,9 +566,9 @@ if ($result && $result->num_rows > 0) {
                         <tr>
                             <th>Program ID</th>
                             <th>Date</th>
-                            <th>M/C No</th>
+                            <th>PO Number</th>
+                            <th>Shift</th>
                             <th>Buyer</th>
-                            <th>Booking No</th>
                             <th>Style No</th>
                             <th>Fabric Type</th>
                             <th>Yarn Type</th>
@@ -582,14 +582,14 @@ if ($result && $result->num_rows > 0) {
                             <?php foreach ($rows_array as $row):
                                 $p_id       = intval($row['KPTID']);
                                 $p_date     = !empty($row['CREATED_DATE']) ? date('Y-m-d', strtotime($row['CREATED_DATE'])) : '';
-                                $p_mc       = $row['MCNO']         ?? '';
-                                $p_buyer    = $row['BUYER']        ?? '';
-                                $p_booking  = $row['BOOKING']      ?? '';
-                                $p_style    = $row['STYLE']        ?? '';
-                                $p_fabrics  = $row['FABRICS_TYPE'] ?? '';
-                                $p_yarn     = $row['YARN_TYPE']    ?? '';
+                                $p_po       = $row['PO_NUMBER']   ?? '';
+                                $p_shift    = $row['SHIFT']       ?? '';
+                                $p_buyer    = $row['BUYER']       ?? '';
+                                $p_style    = $row['STYLE']       ?? '';
+                                $p_fabrics  = $row['FTYPE']       ?? '';
+                                $p_yarn     = $row['YTYPE']       ?? '';
                                 $p_req_qty  = floatval($row['QTY'] ?? 0);
-                                $p_card_gen = intval($row['CARD_GENERATED'] ?? 0);
+                                $p_card_gen = !empty($row['card_id']) ? 1 : 0;
                                 $p_card_id  = $row['card_id'] ?? '';
                             ?>
                                 <tr>
@@ -598,9 +598,9 @@ if ($result && $result->num_rows > 0) {
                                         <i class="fa-regular fa-calendar me-1 text-muted"></i>
                                         <?php echo htmlspecialchars($p_date); ?>
                                     </td>
-                                    <td><strong>M/C <?php echo htmlspecialchars($p_mc); ?></strong></td>
+                                    <td><strong><?php echo htmlspecialchars($p_po); ?></strong></td>
+                                    <td><strong><?php echo htmlspecialchars($p_shift); ?></strong></td>
                                     <td><strong><?php echo htmlspecialchars($p_buyer); ?></strong></td>
-                                    <td><?php echo htmlspecialchars($p_booking); ?></td>
                                     <td><?php echo htmlspecialchars($p_style); ?></td>
                                     <td><?php echo htmlspecialchars($p_fabrics); ?></td>
                                     <td><small class="text-muted"><?php echo htmlspecialchars($p_yarn); ?></small></td>

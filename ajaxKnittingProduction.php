@@ -41,7 +41,7 @@ if ($booking === '') {
 }
 
 // Check if this booking already exists
-$checkSql = "SELECT MAIN_TID, SUB_TID FROM knitting_program WHERE BOOKING = ?";
+$checkSql = "SELECT MAIN_TID, SUB_TID FROM knitting_program WHERE PO_NUMBER = ?";
 $checkStmt = mysqli_prepare($db, $checkSql);
 mysqli_stmt_bind_param($checkStmt, 's', $booking);
 mysqli_stmt_execute($checkStmt);
@@ -55,19 +55,18 @@ if (mysqli_num_rows($checkResult) > 0) {
     // Mapping of request fields to database columns
     $updateableColumns = [
         'sub_tid' => 'SUB_TID',
-        'mcno' => 'MCNO',
         'buyer' => 'BUYER',
         'sono' => 'SONO',
         'style' => 'STYLE',
-        'fabrics_type' => 'FABRICS_TYPE',
-        'yarn_count' => 'YARN_COUNT',
-        'yarn_type' => 'YARN_TYPE',
-        'finish_gsm' => 'FINISH_GSM',
-        'finish_dia' => 'FINISH_DIA',
-        'open_tube' => 'OPEN_TUBE',
-        'lot_no' => 'LOT_NO',
+        'fabrics_type' => 'FTYPE',
+        'yarn_count' => 'YCOUNT',
+        'yarn_type' => 'YTYPE',
+        'finish_gsm' => 'FGSM',
+        'finish_dia' => 'FDIA',
+        'open_tube' => 'O_T',
+        'lot_no' => 'LOT',
         'qty' => 'QTY',
-        'sl_vdq' => 'SL_VDQ',
+        'sl_vdq' => 'SL',
         'color' => 'COLOR'
     ];
     
@@ -88,7 +87,7 @@ if (mysqli_num_rows($checkResult) > 0) {
     }
     
     $updateValues[] = $booking; // for WHERE clause
-    $sql = "UPDATE knitting_program SET " . implode(', ', $updateFields) . " WHERE BOOKING = ?";
+    $sql = "UPDATE knitting_program SET " . implode(', ', $updateFields) . " WHERE PO_NUMBER = ?";
     $stmt = mysqli_prepare($db, $sql);
     
     if (!$stmt) {
@@ -144,19 +143,18 @@ while ($column = mysqli_fetch_assoc($columnsResult)) {
 $knownColumns = [
     'main_tid' => 'MAIN_TID',
     'sub_tid' => 'SUB_TID',
-    'mcno' => 'MCNO',
     'buyer' => 'BUYER',
-    'booking' => 'BOOKING',
+    'booking' => 'PO_NUMBER',
     'sono' => 'SONO',
     'style' => 'STYLE',
-    'fabrics_type' => 'FABRICS_TYPE',
-    'yarn_count' => 'YARN_COUNT',
-    'yarn_type' => 'YARN_TYPE',
-    'finish_gsm' => 'FINISH_GSM',
-    'finish_dia' => 'FINISH_DIA',
-    'open_tube' => 'OPEN_TUBE',
-    'lot_no' => 'LOT_NO',
-    'sl_vdq' => 'SL_VDQ',
+    'fabrics_type' => 'FTYPE',
+    'yarn_count' => 'YCOUNT',
+    'yarn_type' => 'YTYPE',
+    'finish_gsm' => 'FGSM',
+    'finish_dia' => 'FDIA',
+    'open_tube' => 'O_T',
+    'lot_no' => 'LOT',
+    'sl_vdq' => 'SL',
     'qty' => 'QTY',
     'color' => 'COLOR'
 ];
@@ -177,8 +175,16 @@ foreach ($knownColumns as $requestKey => $dbColumn) {
 
 // Add defaults for common columns if they exist and are missing
 if (isset($schemaColumns['SHIFT']) && !in_array('SHIFT', $insertFields, true)) {
+    $shiftHour = (int)date('G');
+    if ($shiftHour >= 6 && $shiftHour < 14) {
+        $autoShift = 'A';
+    } elseif ($shiftHour >= 14 && $shiftHour < 22) {
+        $autoShift = 'B';
+    } else {
+        $autoShift = 'C';
+    }
     $insertFields[] = 'SHIFT';
-    $insertValues[] = 'A-SHIFT';
+    $insertValues[] = $autoShift;
 }
 if (isset($schemaColumns['KNIT_M_DESCRIPTION']) && !in_array('KNIT_M_DESCRIPTION', $insertFields, true)) {
     $insertFields[] = 'KNIT_M_DESCRIPTION';

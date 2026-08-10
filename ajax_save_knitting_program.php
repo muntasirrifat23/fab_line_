@@ -65,7 +65,19 @@ $lotNo = isset($_POST['lot_no']) ? trim($_POST['lot_no']) : null;
 $knitMaterialCode = isset($_POST['knit_material_code']) ? trim($_POST['knit_material_code']) : null;
 $color = isset($_POST['color']) ? trim($_POST['color']) : null;
 $slVdq = isset($_POST['sl_vdq']) ? trim($_POST['sl_vdq']) : null;
+$grayGsm = isset($_POST['gray_gsm']) ? trim($_POST['gray_gsm']) : null;
+$feederPlan = isset($_POST['feeder_plan']) ? trim($_POST['feeder_plan']) : null;
 $mcnoQtyData = isset($_POST['mcno_qty']) ? $_POST['mcno_qty'] : [];
+
+// Auto-detect SHIFT based on current server time
+$hour = (int)date('G');
+if ($hour >= 6 && $hour < 14) {
+    $shift = 'A';
+} elseif ($hour >= 14 && $hour < 22) {
+    $shift = 'B';
+} else {
+    $shift = 'C';
+}
 
 // Validate required fields
 if ($booking === '') {
@@ -77,52 +89,69 @@ if ($booking === '') {
 
 if (!is_array($mcnoQtyData) || empty($mcnoQtyData)) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'At least one MCNO and quantity is required.']);
+    echo json_encode(['success' => false, 'message' => 'At least one quantity row is required.']);
     mysqli_close($db);
     exit();
 }
 
-// Check if booking already exists in knitting_program table
-$checkSql = "SELECT COUNT(*) as count FROM knitting_program WHERE BOOKING = ?";
-$checkStmt = mysqli_prepare($db, $checkSql);
-mysqli_stmt_bind_param($checkStmt, "s", $booking);
-mysqli_stmt_execute($checkStmt);
-$checkResult = mysqli_stmt_get_result($checkStmt);
-$row = mysqli_fetch_assoc($checkResult);
-$existingCount = (int)$row['count'];
-mysqli_stmt_close($checkStmt);
+// Reuse the existing MAIN_TID for this booking if already saved, otherwise create a new MAIN_TID
+$escapedBooking = mysqli_real_escape_string($db, $booking);
+$mainTid = null;
 
-// Always create a NEW MAIN_TID for every Save
-
-$tidResult = mysqli_query($db, "
-    SELECT
-        COALESCE(MAX(MAIN_TID), 1000000000) AS max_main,
-        COALESCE(MAX(SUB_TID), 2000000000) AS max_sub
-    FROM knitting_program
-");
-
-if (!$tidResult) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Failed to determine IDs: ' . mysqli_error($db)
-    ]);
-    mysqli_close($db);
-    exit();
+$existingMainResult = mysqli_query($db, "SELECT MAIN_TID FROM knitting_program WHERE PO_NUMBER = '$escapedBooking' ORDER BY KPTID DESC LIMIT 1");
+if ($existingMainResult && mysqli_num_rows($existingMainResult) > 0) {
+    $existingRow = mysqli_fetch_assoc($existingMainResult);
+    $mainTid = intval($existingRow['MAIN_TID']);
+    mysqli_free_result($existingMainResult);
 }
 
-$tidRow = mysqli_fetch_assoc($tidResult);
+if ($mainTid > 0) {
+    $tidResult = mysqli_query($db, "SELECT COALESCE(MAX(SUB_TID), 2000000000) AS max_sub FROM knitting_program");
+    if (!$tidResult) {
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Failed to determine SUB_TID: ' . mysqli_error($db)
+        ]);
+        mysqli_close($db);
+        exit();
+    }
 
-$mainTid = intval($tidRow['max_main']) + 1;
-if ($mainTid < 1000000001) {
-    $mainTid = 1000000001;
-}
-$nextSubTid = intval($tidRow['max_sub']) + 1;
-if ($nextSubTid < 2000000001) {
-    $nextSubTid = 2000000001;
-}
+    $tidRow = mysqli_fetch_assoc($tidResult);
+    $nextSubTid = intval($tidRow['max_sub']) + 1;
+    if ($nextSubTid < 2000000001) {
+        $nextSubTid = 2000000001;
+    }
+    mysqli_free_result($tidResult);
+} else {
+    $tidResult = mysqli_query($db, "
+        SELECT
+            COALESCE(MAX(MAIN_TID), 1000000000) AS max_main,
+            COALESCE(MAX(SUB_TID), 2000000000) AS max_sub
+        FROM knitting_program
+    ");
 
-mysqli_free_result($tidResult);
+    if (!$tidResult) {
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Failed to determine IDs: ' . mysqli_error($db)
+        ]);
+        mysqli_close($db);
+        exit();
+    }
+
+    $tidRow = mysqli_fetch_assoc($tidResult);
+    $mainTid = intval($tidRow['max_main']) + 1;
+    if ($mainTid < 1000000001) {
+        $mainTid = 1000000001;
+    }
+    $nextSubTid = intval($tidRow['max_sub']) + 1;
+    if ($nextSubTid < 2000000001) {
+        $nextSubTid = 2000000001;
+    }
+    mysqli_free_result($tidResult);
+}
 
 // Start transaction
 if (!mysqli_begin_transaction($db)) {
@@ -132,33 +161,32 @@ if (!mysqli_begin_transaction($db)) {
     exit();
 }
 
-
-
 // Prepare insert statement
 $insertSql = "INSERT INTO knitting_program (
     MAIN_TID,
     SUB_TID,
-    BOOKING,
+    PO_NUMBER,
     SONO,
     STYLE,
     BUYER,
-    SUPPLIER,
-    KNIT_M_DESCRIPTION,
-    MCNO,
-    MC_DIA,
+    COLOR,
     QTY,
+    FGSM,
+    FDIA,
+    O_T,
+    FTYPE,
+    YTYPE,
+    SUPPLIER,
+    YCOUNT,
+    SL,
+    MCDIA,
+    GGSM,
+    FEEDER_PLAN,
+    LOT,
     SHIFT,
-    YARN_TYPE,
-    YARN_COUNT,
-    FABRICS_TYPE,
-    FINISH_GSM,
-    FINISH_DIA,
-    OPEN_TUBE,
-    SL_VDQ,
-    LOT_NO,
     KNIT_MATERIAL_CODE,
-    COLOR
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    KNIT_M_DESCRIPTION
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 $stmt = mysqli_prepare($db, $insertSql);
 
@@ -173,14 +201,12 @@ if (!$stmt) {
 $insertedCount = 0;
 
 foreach ($mcnoQtyData as $row) {
-    $mcno = isset($row['mcno']) ? trim($row['mcno']) : '';
     $qty = isset($row['qty']) ? (float)$row['qty'] : 0;
-    $shift = isset($row['shift']) ? trim($row['shift']) : '';
 
-    if ($mcno === '' || $qty <= 0 || $shift === '') {
+    if ($qty <= 0) {
         mysqli_rollback($db);
         http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Each MCNO row needs a valid MCNO, quantity, and shift.']);
+        echo json_encode(['success' => false, 'message' => 'Each row needs a valid quantity.']);
         mysqli_stmt_close($stmt);
         mysqli_close($db);
         exit();
@@ -190,38 +216,39 @@ foreach ($mcnoQtyData as $row) {
     $currentSubTid = $nextSubTid++;
 
     mysqli_stmt_bind_param(
-    $stmt,
-    "iissssssssdsssssssssss",
-    $mainTid,
-    $currentSubTid,
-    $booking,
-    $sono,
-    $style,
-    $buyer,
-    $supplier,
-    $knitDescription,
-    $mcno,
-    $mcDia,
-    $qty,
-    $shift,
-    $yarnType,
-    $yarnCount,
-    $fabricsType,
-    $finishGsm,
-    $finishDia,
-    $openTube,
-    $slVdq,
-    $lotNo,
-    $knitMaterialCode,
-    $color
-);
+        $stmt,
+        "iisssssdsssssssssssssss",
+        $mainTid,
+        $currentSubTid,
+        $booking,
+        $sono,
+        $style,
+        $buyer,
+        $color,
+        $qty,
+        $finishGsm,
+        $finishDia,
+        $openTube,
+        $fabricsType,
+        $yarnType,
+        $supplier,
+        $yarnCount,
+        $slVdq,
+        $mcDia,
+        $grayGsm,
+        $feederPlan,
+        $lotNo,
+        $shift,
+        $knitMaterialCode,
+        $knitDescription
+    );
 
     if (!mysqli_stmt_execute($stmt)) {
         mysqli_rollback($db);
         http_response_code(500);
         echo json_encode([
             'success' => false,
-            'message' => 'Insert failed for MCNO ' . $mcno . ': ' . mysqli_stmt_error($stmt)
+            'message' => 'Insert failed for QTY ' . $qty . ': ' . mysqli_stmt_error($stmt)
         ]);
         mysqli_stmt_close($stmt);
         mysqli_close($db);
@@ -244,9 +271,10 @@ if (!mysqli_commit($db)) {
 
 $response = [
     'success' => true,
-    'message' => 'Program saved successfully. ' . $insertedCount . ' record(s) inserted.',
+    'message' => 'Program saved successfully. ' . $insertedCount . ' record(s) inserted. Shift: ' . $shift,
     'inserted_count' => $insertedCount,
-    'main_tid' => $mainTid
+    'main_tid' => $mainTid,
+    'shift' => $shift
 ];
 
 echo json_encode($response);

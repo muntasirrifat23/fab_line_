@@ -47,15 +47,15 @@ if (!$res || $res->num_rows == 0) {
 $prog = $res->fetch_assoc();
 $stmt->close();
 
-// 3. Obtain corresponding SUB_TID and BOOKING from program to load information from knitting_input (Rule 1 & Rule 2)
+// 3. Obtain corresponding SUB_TID and PO_NUMBER from program to load information from knitting_input (Rule 1 & Rule 2)
 $sub_tid = $prog['SUB_TID'] ?? '';
-$booking = $prog['BOOKING'] ?? '';
+$booking = $prog['PO_NUMBER'] ?? '';
 $input = null;
 
 if (!empty($sub_tid) || !empty($booking)) {
-    $stmt_in = $db->prepare("SELECT * FROM knitting_input WHERE KITID = ? OR BOOKING = ? OR BOOKING = ? LIMIT 1");
+    $stmt_in = $db->prepare("SELECT * FROM knitting_input WHERE KITID = ? OR PO_NUMBER = ? LIMIT 1");
     if ($stmt_in) {
-        $stmt_in->bind_param("sss", $sub_tid, $sub_tid, $booking);
+        $stmt_in->bind_param("ss", $sub_tid, $booking);
         $stmt_in->execute();
         $res_in = $stmt_in->get_result();
         if ($res_in && $res_in->num_rows > 0) {
@@ -71,22 +71,22 @@ $p_kptid            = intval($prog['KPTID']);
 $p_sub_tid          = $sub_tid;
 $p_buyer            = !empty($prog['BUYER']) ? $prog['BUYER'] : ($input['BUYER'] ?? '');
 $p_supplier         = !empty($prog['SUPPLIER']) ? $prog['SUPPLIER'] : ($input['SUPPLIER'] ?? '');
-$p_booking          = !empty($prog['BOOKING']) ? $prog['BOOKING'] : ($input['BOOKING'] ?? '');
+$p_booking          = !empty($prog['PO_NUMBER']) ? $prog['PO_NUMBER'] : ($input['PO_NUMBER'] ?? '');
 $p_sono             = !empty($prog['SONO']) ? $prog['SONO'] : ($input['SONO'] ?? '');
 $p_style            = !empty($prog['STYLE']) ? $prog['STYLE'] : ($input['STYLE'] ?? '');
-$p_mcno             = $prog['MCNO'] ?? '';
-$p_finish_dia       = !empty($prog['FINISH_DIA']) ? $prog['FINISH_DIA'] : ($input['FINISH_DIA'] ?? '');
-$p_finish_gsm       = !empty($prog['FINISH_GSM']) ? $prog['FINISH_GSM'] : ($input['FINISH_GSM'] ?? '');
+$p_mcno             = '';
+$p_finish_dia       = !empty($prog['FDIA']) ? $prog['FDIA'] : ($input['FINISH_DIA'] ?? '');
+$p_finish_gsm       = !empty($prog['FGSM']) ? $prog['FGSM'] : ($input['FINISH_GSM'] ?? '');
 $p_grey_gsm         = $p_finish_gsm;
-$p_open_tube        = !empty($prog['OPEN_TUBE']) ? $prog['OPEN_TUBE'] : ($input['OPEN_TUBE'] ?? 'O');
-$p_fabrics          = !empty($prog['FABRICS_TYPE']) ? $prog['FABRICS_TYPE'] : ($input['FABRICS_TYPE'] ?? '');
-$p_yarn_type        = !empty($prog['YARN_TYPE']) ? $prog['YARN_TYPE'] : ($input['YARN_TYPE'] ?? '');
-$p_yarn_count       = !empty($prog['YARN_COUNT']) ? $prog['YARN_COUNT'] : ($input['YARN_COUNT'] ?? '');
+$p_open_tube        = !empty($prog['O_T']) ? $prog['O_T'] : ($input['OPEN_TUBE'] ?? 'O');
+$p_fabrics          = !empty($prog['FTYPE']) ? $prog['FTYPE'] : ($input['FABRICS_TYPE'] ?? '');
+$p_yarn_type        = !empty($prog['YTYPE']) ? $prog['YTYPE'] : ($input['YARN_TYPE'] ?? '');
+$p_yarn_count       = !empty($prog['YCOUNT']) ? $prog['YCOUNT'] : ($input['YARN_COUNT'] ?? '');
 $p_color            = !empty($prog['COLOR']) ? $prog['COLOR'] : ($input['COLOR'] ?? '');
-$p_lot_no           = !empty($prog['LOT_NO']) ? $prog['LOT_NO'] : ($input['LOT_NO'] ?? '');
+$p_lot_no           = !empty($prog['LOT']) ? $prog['LOT'] : ($input['LOT_NO'] ?? '');
 $p_knit_m_desc      = !empty($prog['KNIT_M_DESCRIPTION']) ? $prog['KNIT_M_DESCRIPTION'] : ($input['KNIT_M_DESCRIPTION'] ?? '');
 $p_knit_mat_code    = !empty($prog['KNIT_MATERIAL_CODE']) ? $prog['KNIT_MATERIAL_CODE'] : ($input['KNIT_MATERIAL_CODE'] ?? '');
-$p_sl_vdq           = floatval(!empty($prog['SL_VDQ']) ? $prog['SL_VDQ'] : ($input['SL_VDQ'] ?? 0));
+$p_sl_vdq           = floatval(!empty($prog['SL']) ? $prog['SL'] : ($input['SL_VDQ'] ?? 0));
 
 $default_qty        = floatval($prog['QTY'] ?? 0);
 $prepared_by        = $_SESSION['username'] ?? '';
@@ -141,14 +141,6 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             if ($ins->execute()) {
                 $new_kcid = $ins->insert_id;
                 $ins->close();
-
-                // Rule 7: Update knitting_program.CARD_GENERATED = 1
-                $upd = $db->prepare("UPDATE knitting_program SET CARD_GENERATED = 1 WHERE KPTID = ?");
-                if ($upd) {
-                    $upd->bind_param("i", $p_kptid);
-                    $upd->execute();
-                    $upd->close();
-                }
 
                 header("Location: knit_card_view.php?id=" . $new_kcid . "&msg=" . urlencode("Knit Card generated successfully!"));
                 exit();

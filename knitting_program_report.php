@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -102,9 +102,7 @@
                             <th>DATE</th>
                             <th>MAIN TID</th>
                             <th>SUB TID</th>
-                            <th>BOOKING</th>
-                            <th>MCNO</th>
-                            <th>MC DIA</th>
+                            <th>PO NUMBER</th>
                             <th>SONO</th>
                             <th>STYLE</th>
                             <th>BUYER</th>
@@ -126,7 +124,7 @@
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="21" class="text-center small-muted">Loading data...</td>
+                            <td colspan="19" class="text-center small-muted">Loading data...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -142,18 +140,16 @@
             var tbody = $('#tableBody');
             tbody.empty();
             if (!data || data.length === 0) {
-                tbody.append('<tr><td colspan="21" class="text-center small-muted">No data found</td></tr>');
+                tbody.append('<tr><td colspan="19" class="text-center small-muted">No data found</td></tr>');
                 return;
             }
 
             data.forEach(function(row) {
                 var tr = $('<tr>');
-                tr.append($('<td>').text(row.CREATED_AT || ''));
+                tr.append($('<td>').text(row.CREATED_DATE || ''));
                 tr.append($('<td>').text(row.MAIN_TID || ''));
                 tr.append($('<td>').text(row.SUB_TID || ''));
-                tr.append($('<td>').text(row.BOOKING || ''));
-                tr.append($('<td>').text(row.MCNO || ''));
-                tr.append($('<td>').text(row.MC_DIA || ''));
+                tr.append($('<td>').text(row.PO_NUMBER || ''));
                 tr.append($('<td>').text(row.SONO || ''));
                 tr.append($('<td>').text(row.STYLE || ''));
                 tr.append($('<td>').text(row.BUYER || ''));
@@ -161,15 +157,15 @@
                 tr.append($('<td>').text(row.QTY || ''));
                 tr.append($('<td>').text(row.SHIFT || ''));
                 tr.append($('<td>').text(row.COLOR || ''));
-                                tr.append($('<td>').text(row.SL_VDQ || ''));
+                tr.append($('<td>').text(row.SL || ''));
 
-                tr.append($('<td>').text(row.YARN_TYPE || ''));
-                tr.append($('<td>').text(row.YARN_COUNT || ''));
-                tr.append($('<td>').text(row.FABRICS_TYPE || ''));
-                tr.append($('<td>').text(row.FINISH_GSM || ''));
-                tr.append($('<td>').text(row.FINISH_DIA || ''));
-                tr.append($('<td>').text(row.OPEN_TUBE || ''));
-                tr.append($('<td>').text(row.LOT_NO || ''));
+                tr.append($('<td>').text(row.YTYPE || ''));
+                tr.append($('<td>').text(row.YCOUNT || ''));
+                tr.append($('<td>').text(row.FTYPE || ''));
+                tr.append($('<td>').text(row.FGSM || ''));
+                tr.append($('<td>').text(row.FDIA || ''));
+                tr.append($('<td>').text(row.O_T || ''));
+                tr.append($('<td>').text(row.LOT || ''));
                 // tr.append($('<td>').text(row.KNIT_M_DESCRIPTION || ''));
                 // tr.append($('<td>').text(row.KNIT_MATERIAL_CODE || ''));
                 tbody.append(tr);
@@ -193,10 +189,10 @@
                 })
                 .done(function(resp) {
                     if (resp && resp.success) renderTableRows(resp.data);
-                    else $('#tableBody').html('<tr><td colspan="21" class="text-center small-muted">No data found</td></tr>');
+                    else $('#tableBody').html('<tr><td colspan="19" class="text-center small-muted">No data found</td></tr>');
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr><td colspan="21" class="text-center text-danger">Error searching</td></tr>');
+                    $('#tableBody').html('<tr><td colspan="19" class="text-center text-danger">Error searching</td></tr>');
                 })
                 .always(function() {
                     $('#searchBtn').prop('disabled', false).text('Search');
@@ -204,7 +200,7 @@
         }
 
         function loadAll() {
-            $('#tableBody').html('<tr><td colspan="21" class="text-center small-muted">Loading data...</td></tr>');
+            $('#tableBody').html('<tr><td colspan="19" class="text-center small-muted">Loading data...</td></tr>');
             $.ajax({
                     url: 'ajaxKnittingProgram_Report.php',
                     dataType: 'json',
@@ -212,10 +208,10 @@
                 })
                 .done(function(resp) {
                     if (resp && resp.success) renderTableRows(resp.data);
-                    else $('#tableBody').html('<tr><td colspan="21" class="text-center small-muted">No data returned</td></tr>');
+                    else $('#tableBody').html('<tr><td colspan="19" class="text-center small-muted">No data returned</td></tr>');
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr><td colspan="21" class="text-center text-danger">Error loading data</td></tr>');
+                    $('#tableBody').html('<tr><td colspan="19" class="text-center text-danger">Error loading data</td></tr>');
                 });
         }
 
