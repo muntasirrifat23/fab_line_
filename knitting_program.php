@@ -237,7 +237,7 @@
         /* yarn & fabric grid — same responsive */
         .yarn-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 1rem 1.8rem;
         }
 
@@ -598,7 +598,6 @@
 
     <!-- SEARCH -->
     <div class="card-unified">
-        <label style="margin-bottom: 4px;">Search by PO Number</label>
         <div class="search-controls">
             <input type="text" id="bookingInput" placeholder="Please enter PO number">
             <button class="btn-search" id="searchBtn"><i class="fa-solid fa-magnifying-glass me-1"></i>Search</button>
@@ -635,13 +634,14 @@
 
             <!-- YARN & FABRIC (3 cols → 2 on small) -->
             <div id="detailsContainer">
-                <div class="card-title" style="margin-top:1.8rem; border-top:2px solid #eef2f6; padding-top:1.2rem;"><i class="fa-solid fa-scissors"></i> Yarn &amp; Fabric Details</div>
+                <div class="card-title" style="margin-top:1.8rem; border-top:2px solid #eef2f6; padding-top:1.2rem;"><i class="fa-solid fa-scissors"></i> Enter Fabric Details</div>
                 <div class="yarn-grid">
                     <div class="form-group"><label>Supplier</label><input type="text" id="supplier" placeholder="Enter Supplier"></div>
                     <div class="form-group"><label>Yarn Count</label><input type="text" id="yarn_count" placeholder="Enter Yarn Count"></div>
                     <div class="form-group"><label>SL/VQ</label><input type="text" id="sl_vdq" placeholder="Enter SL/VQ"></div>
                     <div class="form-group"><label>MC DIA</label><input type="text" id="mc_dia" placeholder="Enter MC DIA"></div>
                     <div class="form-group"><label>Gray GSM</label><input type="text" id="gray_gsm" placeholder="Enter Gray GSM"></div>
+                    <div class="form-group"><label>Feeder Plan</label><input type="text" id="feeder_plan" placeholder="Enter Feeder Plan"></div>
                     <div class="form-group"><label>Lot No</label><input type="text" id="lot_no" placeholder="Enter Lot No"></div>
                 </div>
             </div>
@@ -756,6 +756,7 @@
             $('#open_tube').val(data.OPEN_TUBE || '');
             $('#fabrics_type').val(data.FABRICS_TYPE || '');
             $('#yarn_type').val(data.YARN_TYPE || '');
+            $('#feeder_plan').val(data.FEEDER_PLAN || '');
             $('#knit_material_code').val(data.KNIT_MATERIAL_CODE || '');
             $('#knit_m_description').val(data.KNIT_M_DESCRIPTION || '');
             $('#supplier').val(data.SUPPLIER || '');
@@ -804,6 +805,7 @@
             $('#sl_vdq').val(rowData.SL_VDQ || '');
             $('#mc_dia').val(rowData.MC_DIA || '');
             $('#gray_gsm').val(rowData.GRAY_GSM || '');
+            $('#feeder_plan').val(rowData.FEEDER_PLAN || '');
             $('#lot_no').val(rowData.LOT_NO || '');
 
             originalTargetQty = parseFloat(rowData.KNITTING_TARGET_QTY || rowData.QTY) || 0;
@@ -895,6 +897,7 @@
                 '#sl_vdq',
                 '#mc_dia',
                 '#gray_gsm',
+                '#feeder_plan',
                 '#lot_no',
                 '#knit_m_description'
             ];
@@ -1042,6 +1045,7 @@
                 '#sl_vdq',
                 '#mc_dia',
                 '#gray_gsm',
+                '#feeder_plan',
                 '#lot_no',
                 '#knit_m_description'
             ].join(', ');
@@ -1091,6 +1095,7 @@
                     fabrics_type: $('#fabrics_type').val(),
                     finish_gsm: $('#finish_gsm').val(),
                     gray_gsm: $('#gray_gsm').val(),
+                    feeder_plan: $('#feeder_plan').val(),
                     sl_vdq: $('#sl_vdq').val(),
                     color: $('#color').val(),
                     mc_dia: $('#mc_dia').val(),
