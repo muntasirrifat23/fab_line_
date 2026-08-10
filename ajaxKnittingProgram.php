@@ -20,24 +20,61 @@ if (!$db) {
     exit();
 }
 
-// Get booking parameter (PO number search value)
-$booking = isset($_GET['booking']) ? trim($_GET['booking']) : '';
+// Get search parameter (SUB_TID or PO/Booking number)
+$search = isset($_GET['sub_tid']) && trim($_GET['sub_tid']) !== '' 
+        ? trim($_GET['sub_tid']) 
+        : (isset($_GET['booking']) && trim($_GET['booking']) !== '' 
+            ? trim($_GET['booking']) 
+            : (isset($_POST['sub_tid']) ? trim($_POST['sub_tid']) : ''));
 
-if ($booking === '') {
+if ($search === '') {
     http_response_code(400);
     echo json_encode([
         'success' => false, 
-        'error' => 'PO number is required'
+        'error' => 'SUB_TID or PO/Booking number is required'
     ]);
     exit();
 }
 
-// Escape the PO number
-$b = mysqli_real_escape_string($db, $booking);
+// Escape the parameter
+$s = mysqli_real_escape_string($db, $search);
 
-// Get all data for this PO number - Updated to match your table structure
+// 1. First try searching knitting_program table by SUB_TID or KPTID
+$progQuery = "SELECT * FROM knitting_program WHERE SUB_TID = '$s' OR KPTID = '$s' LIMIT 1";
+$progRes = mysqli_query($db, $progQuery);
+
+if ($progRes && mysqli_num_rows($progRes) > 0) {
+    $progData = mysqli_fetch_assoc($progRes);
+    $bookingVal = mysqli_real_escape_string($db, $progData['BOOKING'] ?? '');
+    
+    // Fetch input record for supplementary details if available
+    $inputData = [];
+    if ($bookingVal !== '') {
+        $inQ = mysqli_query($db, "SELECT * FROM knitting_input WHERE BOOKING = '$bookingVal' LIMIT 1");
+        if ($inQ && mysqli_num_rows($inQ) > 0) {
+            $inputData = mysqli_fetch_assoc($inQ);
+        }
+    }
+    
+    $mergedData = array_merge($inputData, array_filter($progData, function($val) { return $val !== null && $val !== ''; }));
+    $mergedData['KNITTING_TARGET_QTY'] = $progData['QTY'] ?? ($inputData['KNITTING_TARGET_QTY'] ?? 0);
+    $mergedData['SUB_TID'] = $progData['SUB_TID'];
+    $mergedData['BOOKING'] = $progData['BOOKING'];
+    
+    echo json_encode([
+        'success' => true,
+        'data' => $mergedData,
+        'all_data' => [$mergedData],
+        'descriptions' => [$mergedData['KNIT_M_DESCRIPTION'] ?? ''],
+        'allocated_qty' => (float)($progData['QTY'] ?? 0),
+        'remaining_qty' => 0
+    ]);
+    exit();
+}
+
+// 2. Fallback: Search knitting_input table by BOOKING number
 $query = "SELECT 
-    PO_NUMBER AS BOOKING, 
+    BOOKING, 
     BUYER, 
     SONO,
     STYLE,
@@ -49,10 +86,10 @@ $query = "SELECT
     OPEN_TUBE, 
     KNIT_MATERIAL_CODE,
     KNIT_M_DESCRIPTION, 
-    QTY AS KNITTING_TARGET_QTY,
-    BUDAT AS BUDAT
+    KNITTING_TARGET_QTY,
+    BUDAT
 FROM knitting_input 
-WHERE PO_NUMBER = '$b'";
+WHERE BOOKING = '$s'";
 
 $result = mysqli_query($db, $query);
 
@@ -91,7 +128,7 @@ while ($row = mysqli_fetch_assoc($result)) {
 if (empty($allData)) {
     echo json_encode([
         'success' => false, 
-        'error' => 'No data found for PO NO: ' . $booking
+        'error' => 'No data found for SUB_TID / PO NO: ' . $search
     ]);
     exit();
 }
@@ -108,11 +145,10 @@ $response = [
 ];
 
 // Calculate already allocated qty from knitting_program table for this booking
-// Wrap in try/catch so a missing/empty knitting_program table never breaks the search
 $allocated = 0;
 $allocatedByDesc = [];
 try {
-    $allocQuery = "SELECT KNIT_M_DESCRIPTION, IFNULL(SUM(QTY),0) AS allocated_qty FROM knitting_program WHERE PO_NUMBER = '$b' GROUP BY KNIT_M_DESCRIPTION";
+    $allocQuery = "SELECT KNIT_M_DESCRIPTION, IFNULL(SUM(QTY),0) AS allocated_qty FROM knitting_program WHERE BOOKING = '$s' GROUP BY KNIT_M_DESCRIPTION";
     $allocRes = mysqli_query($db, $allocQuery);
     if ($allocRes) {
         while ($ar = mysqli_fetch_assoc($allocRes)) {
@@ -131,7 +167,6 @@ $response['allocated_by_description'] = $allocatedByDesc;
 
 // remaining for the default data row (firstRow); clients should use per-description remaining when available
 $response['remaining_qty'] = (float)$data['KNITTING_TARGET_QTY'] - ($allocatedByDesc[$data['KNIT_M_DESCRIPTION']] ?? 0);
-// ];
 
 echo json_encode($response);
 ?>
