@@ -108,17 +108,22 @@ $response = [
 ];
 
 // Calculate already allocated qty from knitting_program table for this booking
-$allocQuery = "SELECT KNIT_M_DESCRIPTION, IFNULL(SUM(QTY),0) AS allocated_qty FROM knitting_program WHERE BOOKING = '$b' GROUP BY KNIT_M_DESCRIPTION";
-$allocRes = mysqli_query($db, $allocQuery);
+// Wrap in try/catch so a missing/empty knitting_program table never breaks the search
 $allocated = 0;
 $allocatedByDesc = [];
-if ($allocRes) {
-    while ($ar = mysqli_fetch_assoc($allocRes)) {
-        $desc = isset($ar['KNIT_M_DESCRIPTION']) ? $ar['KNIT_M_DESCRIPTION'] : '';
-        $qty = isset($ar['allocated_qty']) ? (float)$ar['allocated_qty'] : 0;
-        $allocatedByDesc[$desc] = $qty;
-        $allocated += $qty;
+try {
+    $allocQuery = "SELECT KNIT_M_DESCRIPTION, IFNULL(SUM(QTY),0) AS allocated_qty FROM knitting_program WHERE BOOKING = '$b' GROUP BY KNIT_M_DESCRIPTION";
+    $allocRes = mysqli_query($db, $allocQuery);
+    if ($allocRes) {
+        while ($ar = mysqli_fetch_assoc($allocRes)) {
+            $desc = isset($ar['KNIT_M_DESCRIPTION']) ? $ar['KNIT_M_DESCRIPTION'] : '';
+            $qty = isset($ar['allocated_qty']) ? (float)$ar['allocated_qty'] : 0;
+            $allocatedByDesc[$desc] = $qty;
+            $allocated += $qty;
+        }
     }
+} catch (Throwable $e) {
+    // knitting_program table is missing/unavailable - treat allocation as zero
 }
 
 $response['allocated_qty'] = $allocated;
