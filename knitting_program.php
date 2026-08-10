@@ -603,7 +603,7 @@
             <button class="btn-search" id="searchBtn"><i class="fa-solid fa-magnifying-glass me-1"></i>Search</button>
             <button class="btn-clear" id="clearBtn"><i class="fa-solid fa-rotate-left me-1"></i>Clear</button>
         </div>
-        <div class="error-message" id="searchError"><i class="fa-solid fa-circle-exclamation me-1"></i>Please enter a valid PO</div>
+        <div class="error-message" id="searchError"><i class="fa-solid fa-circle-exclamation me-1"></i>Not available PO number</div>
     </div>
 
     <!-- FORM CONTAINER -->
@@ -727,12 +727,12 @@
                         setKnitMDescription(resp);
                     } else {
                         $('#formContainer').addClass('hidden');
-                        showAlert(resp.error || 'Booking not found', 'error');
+                        showPageAlert(resp.error || 'Not available PO number', 'error', 5000);
                     }
                 },
                 error: function() {
                     $('#formContainer').addClass('hidden');
-                    showAlert('Error loading data', 'error');
+                    showPageAlert('Not available PO number', 'error', 5000);
                 },
                 complete: function() {
                     $('#searchBtn').prop('disabled', false).html('<i class="fa-solid fa-magnifying-glass me-1"></i>Search');

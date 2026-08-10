@@ -91,7 +91,7 @@ while ($row = mysqli_fetch_assoc($result)) {
 if (empty($allData)) {
     echo json_encode([
         'success' => false, 
-        'error' => 'No data found for booking: ' . $booking
+        'error' => 'No data found for PO NO: ' . $booking
     ]);
     exit();
 }
