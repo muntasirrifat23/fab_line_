@@ -599,11 +599,7 @@
     <!-- SEARCH -->
     <div class="card-unified">
         <div class="search-controls">
-<<<<<<< HEAD
-            <input type="text" id="bookingInput" placeholder="Please Enter PO Number">
-=======
             <input type="text" id="bookingInput" placeholder="Please enter SUB_TID or PO Number">
->>>>>>> 56ff45c (fix: enable SUB_TID search support, update button labels, and add demo data script)
             <button class="btn-search" id="searchBtn"><i class="fa-solid fa-magnifying-glass me-1"></i>Search</button>
             <button class="btn-clear" id="clearBtn"><i class="fa-solid fa-rotate-left me-1"></i>Clear</button>
         </div>
