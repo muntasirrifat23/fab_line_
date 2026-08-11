@@ -291,10 +291,10 @@
 
             var style = document.createElement('style');
             style.textContent = '' +
-                '.pdf-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:2px solid #000000;border-radius:6px;padding:0;background:#ffffff;}' +
-                '.pdf-item{font-size:13px;line-height:1.7;border-bottom:1px solid #000000;border-right:1px solid #000000;padding:7px 12px;word-break:break-word;background:#ffffff;color:#000000;}' +
+                '.pdf-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:2px solid #d1d5db;border-radius:6px;padding:0;background:#ffffff;}' +
+                '.pdf-item{font-size:13px;line-height:1.7;border-bottom:1px solid #d1d5db;border-right:1px solid #d1d5db;padding:7px 12px;word-break:break-word;background:#ffffff;color:#000000;}' +
                 '.pdf-item:nth-child(2n){border-right:none;}' +
-                '.pdf-item-full{grid-column:1 / -1;border-right:none;border-top:2px solid #000000;}' +
+                '.pdf-item-full{grid-column:1 / -1;border-right:none;border-top:2px solid #d1d5db;}' +
                 '.pdf-label{font-weight:bold;color:#000000;}' +
                 '.pdf-value{margin-left:8px;color:#000000;}' +
                 document.body.appendChild(style);
