@@ -234,9 +234,10 @@
         function downloadRowPdf(row) {
             var fieldHTML = [
                 ['Date', row.CREATED_DATE],
-                ['Main TID', row.MAIN_TID],
-                ['Sub TID', row.SUB_TID],
-                ['PO Number', row.PO_NUMBER],
+                ['Shift', row.SHIFT],
+                ['Main Tid', row.MAIN_TID],
+                ['Sub Tid', row.SUB_TID],
+                ['Po Number', row.PO_NUMBER],
                 ['SONO', row.SONO],
                 ['Buyer', row.BUYER],
                 ['Style', row.STYLE],
@@ -247,21 +248,21 @@
                 ['Finish GSM', row.FGSM],
                 ['Finish Dia', row.FDIA],
                 ['Fabrics Type', row.FTYPE],
+                ['SL/VDQ', row.SL],
                 ['Yarn Type', row.YTYPE],
                 ['Yarn Count', row.YCOUNT],
-                ['SL/VDQ', row.SL],
                 ['MC Dia', row.MCDIA],
                 ['Gray GSM', row.GGSM],
-                ['Feeder Plan', row.FEEDER_PLAN],
-                ['Shift', row.SHIFT],
-                ['Lot No', row.LOT],
-                ['Knit M Description', row.KNIT_M_DESCRIPTION],
-                ['Knit Material Code', row.KNIT_MATERIAL_CODE]
+                ['Feeder Plan', row.FEEDER_PLAN, true],
+                ['Lot No', row.LOT, true],
+                ['KNIT M DESCRIPTION', row.KNIT_M_DESCRIPTION, true],
+                ['KNIT MATERIAL CODE', row.KNIT_MATERIAL_CODE, true]
             ];
 
             var rowsHTML = fieldHTML.map(function(f) {
                 var val = (f[1] === null || f[1] === undefined) ? '' : f[1];
-                return '<div class="pdf-item"><span class="pdf-label">' + f[0] + ' :</span><span class="pdf-value">' + val + '</span></div>';
+                var cls = f[2] ? 'pdf-item pdf-item-full' : 'pdf-item';
+                return '<div class="' + cls + '"><span class="pdf-label">' + f[0] + ' :</span><span class="pdf-value">' + val + '</span></div>';
             }).join('');
 
             var content = '' +
@@ -285,8 +286,9 @@
 
             var style = document.createElement('style');
             style.textContent = '' +
-                '.pdf-grid{display:grid;grid-template-columns:1fr;gap:6px 0;border:1px solid #e5e7eb;border-radius:8px;padding:14px;background:#f9fafb;}' +
+                '.pdf-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 30px;border:1px solid #e5e7eb;border-radius:8px;padding:14px;background:#f9fafb;}' +
                 '.pdf-item{font-size:13px;line-height:1.6;border-bottom:1px dashed #e5e7eb;padding:4px 2px;word-break:break-word;}' +
+                '.pdf-item-full{grid-column:1 / -1;}' +
                 '.pdf-label{font-weight:bold;color:#374151;}' +
                 '.pdf-value{margin-left:6px;color:#111827;}';
             document.body.appendChild(style);
