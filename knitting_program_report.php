@@ -154,8 +154,8 @@
                 var tr = $('<tr>');
                 var pdfBtn = $('<button>')
                     .attr('type', 'button')
-                    .addClass('btn btn-danger btn-sm pdf-row-btn')
-                    .html('<i class="fa-solid fa-file-pdf"></i> PDF')
+                    .addClass('btn btn-primary btn-sm pdf-row-btn')
+                    .html('<i class="fa-solid fa-file-pdf" style="background:none;border:none;box-shadow:none;transform:none;"></i> PDF')
                     .attr('title', 'Download PDF')
                     .on('click', function() {
                         downloadRowPdf(row);
