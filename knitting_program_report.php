@@ -101,8 +101,8 @@
                         <tr>
                             <th>PDF</th>
                             <th>DATE</th>
-                            <th>MAIN TID</th>
-                            <th>SUB TID</th>
+                            <th>MAIN PROGRAM</th>
+                            <th>PROGRAM</th>
                             <th>PO NO</th>
                             <th>SONO</th>
                             <th>BUYER</th>
@@ -235,8 +235,8 @@
             var fieldHTML = [
                 ['Date', row.CREATED_DATE],
                 ['Shift', row.SHIFT],
-                ['Main Tid', row.MAIN_TID],
-                ['Sub Tid', row.SUB_TID],
+                ['Main Program', row.MAIN_TID],
+                ['Program', row.SUB_TID],
                 ['Po Number', row.PO_NUMBER],
                 ['SONO', row.SONO],
                 ['Buyer', row.BUYER],
@@ -272,7 +272,7 @@
                     '</div>' +
                     '<div style="font-size:14px;font-weight:bold;margin-bottom:10px;">Program : ' + (row.SUB_TID || '') + '</div>' +
                     '<div class="pdf-grid">' + rowsHTML + '</div>' +
-                    '<div style="text-align:center;font-size:11px;color:#9ca3af;margin-top:16px;border-top:1px solid #e5e7eb;padding-top:8px;">' +
+                    '<div style="text-align:center;font-size:11px;color: black; margin-top:16px;border-top:1px solid #e5e7eb;padding-top:8px;">' +
                         'Generated from Knitting Program Report - ' + new Date().toLocaleString() +
                     '</div>' +
                 '</div>';
@@ -286,11 +286,12 @@
 
             var style = document.createElement('style');
             style.textContent = '' +
-                '.pdf-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 30px;border:1px solid #e5e7eb;border-radius:8px;padding:14px;background:#f9fafb;}' +
-                '.pdf-item{font-size:13px;line-height:1.6;border-bottom:1px dashed #e5e7eb;padding:4px 2px;word-break:break-word;}' +
-                '.pdf-item-full{grid-column:1 / -1;}' +
-                '.pdf-label{font-weight:bold;color:#374151;}' +
-                '.pdf-value{margin-left:6px;color:#111827;}';
+                '.pdf-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:2px solid #000000;border-radius:6px;padding:0;background:#ffffff;}' +
+                '.pdf-item{font-size:13px;line-height:1.7;border-bottom:1px solid #000000;border-right:1px solid #000000;padding:7px 12px;word-break:break-word;background:#ffffff;color:#000000;}' +
+                '.pdf-item:nth-child(2n){border-right:none;}' +
+                '.pdf-item-full{grid-column:1 / -1;border-right:none;border-top:2px solid #000000;}' +
+                '.pdf-label{font-weight:bold;color:#000000;}' +
+                '.pdf-value{margin-left:8px;color:#000000;}' +
             document.body.appendChild(style);
 
             html2canvas(tempDiv, {
