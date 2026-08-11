@@ -1,5 +1,6 @@
 <?php
-// Enable error reporting for debugging
+date_default_timezone_set('Asia/Dhaka');
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -69,11 +70,13 @@ $grayGsm = isset($_POST['gray_gsm']) ? trim($_POST['gray_gsm']) : null;
 $feederPlan = isset($_POST['feeder_plan']) ? trim($_POST['feeder_plan']) : null;
 $mcnoQtyData = isset($_POST['mcno_qty']) ? $_POST['mcno_qty'] : [];
 
-// Auto-detect SHIFT based on current server time
-$hour = (int)date('G');
-if ($hour >= 6 && $hour < 14) {
+// Auto-detect SHIFT based on Bangladesh time
+date_default_timezone_set('Asia/Dhaka');
+
+$bdHour = (int)date('G');
+if ($bdHour >= 6 && $bdHour < 14) {
     $shift = 'A';
-} elseif ($hour >= 14 && $hour < 22) {
+} elseif ($bdHour >= 14 && $bdHour < 22) {
     $shift = 'B';
 } else {
     $shift = 'C';
