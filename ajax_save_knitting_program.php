@@ -13,6 +13,9 @@ if (session_status() === PHP_SESSION_NONE) {
 
 $response = ['success' => false, 'message' => 'Failed to save program.'];
 
+// Logged-in user id (username / operator id)
+$uname = isset($_SESSION['username']) ? trim($_SESSION['username']) : '';
+
 $hostname = 'localhost';
 $username = 'root';
 $password = 'pgadmin';
@@ -188,8 +191,9 @@ $insertSql = "INSERT INTO knitting_program (
     LOT,
     SHIFT,
     KNIT_MATERIAL_CODE,
-    KNIT_M_DESCRIPTION
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    KNIT_M_DESCRIPTION,
+    UNAME
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 $stmt = mysqli_prepare($db, $insertSql);
 
@@ -220,7 +224,7 @@ foreach ($mcnoQtyData as $row) {
 
     mysqli_stmt_bind_param(
         $stmt,
-        "iisssssdsssssssssssssss",
+        "iisssssdssssssssssssssss",
         $mainTid,
         $currentSubTid,
         $booking,
@@ -243,7 +247,8 @@ foreach ($mcnoQtyData as $row) {
         $lotNo,
         $shift,
         $knitMaterialCode,
-        $knitDescription
+        $knitDescription,
+        $uname
     );
 
     if (!mysqli_stmt_execute($stmt)) {
