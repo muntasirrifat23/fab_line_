@@ -268,18 +268,25 @@
             }).join('');
 
             var content = '' +
-                '<div id="rowPdfCard" style="width:760px;padding:24px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">' +
-                '<div style="text-align:center;font-size:20px;font-weight:bold;color:#1e3a8a;border-bottom:3px solid #2563eb;padding-bottom:10px;margin-bottom:16px;">' +
+                '<div id="rowPdfCard" style="position:relative;width:760px;min-height:1050px;padding:24px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">' + '<div style="text-align:center;font-size:20px;font-weight:bold;color:#1e3a8a;border-bottom:3px solid #2563eb;padding-bottom:10px;margin-bottom:16px;">' +
                 'Knitting Program Report' +
                 '</div>' +
-                '<div style="display:flex;justify-content:space-between;align-items:center;width:100%;font-size:14px;font-weight:bold;margin-bottom:10px;">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;width:100%;font-size:14px;font-weight:bold;margin-bottom:10px; margin-left:10px;">' +
                 '<span>Program : ' + (row.SUB_TID || '') + '</span>' +
-                '<span>User : ' + (row.UNAME || '') + '</span>' +
+                '<span style="margin-right:20px;">User : ' + (row.UNAME || '') + '</span>' +
                 '</div>' +
                 '<div class="pdf-grid">' + rowsHTML + '</div>' +
                 '<div style="text-align:center;font-size:11px;color: black; margin-top:16px;border-top:1px solid #e5e7eb;padding-top:8px;">' +
                 'Generated from Knitting Program Report - ' + new Date().toLocaleString() +
                 '</div>' +
+                
+                '<div class="pdf-sign">' +
+                '<div class="pdf-sign-item"><div class="pdf-sign-line"></div><span>Supervisor</span></div>' +
+                '<div class="pdf-sign-item"><div class="pdf-sign-line"></div><span>Incharge</span></div>' +
+                '<div class="pdf-sign-item"><div class="pdf-sign-line"></div><span>AGM</span></div>' +
+                '<div class="pdf-sign-item"><div class="pdf-sign-line"></div><span>GM</span></div>' +
+                '</div>' +
+
                 '</div>';
 
             var tempDiv = document.createElement('div');
@@ -297,7 +304,36 @@
                 '.pdf-item-full{grid-column:1 / -1;border-right:none;border-top:2px solid #d1d5db;}' +
                 '.pdf-label{font-weight:bold;color:#000000;}' +
                 '.pdf-value{margin-left:8px;color:#000000;}' +
-                document.body.appendChild(style);
+                '.pdf-sign{' +
+                'position:absolute;' +
+                'left:24px;' +
+                'right:24px;' +
+                'bottom:55px;' +
+                'display:grid;' +
+                'grid-template-columns:1fr 1fr 1fr 1fr;' +
+                'gap:20px;' +
+                'padding:0 10px;' +
+                'text-align:center;' +
+                'font-size:13px;' +
+                'font-weight:bold;' +
+                'color:#000000;' +
+                '}' +
+
+                '.pdf-sign-item{' +
+                'display:flex;' +
+                'flex-direction:column;' +
+                'align-items:center;' +
+                'justify-content:flex-end;' +
+                'gap:8px;' +
+                '}' +
+
+                '.pdf-sign-line{' +
+                'width:80%;' +
+                'border-top:1px solid #000000;' +
+                'margin-top:0;' +
+                '}' +
+                '</style>';
+            document.body.appendChild(style);
 
             html2canvas(tempDiv, {
                 scale: 2,
