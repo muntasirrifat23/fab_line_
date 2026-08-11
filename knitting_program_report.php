@@ -99,32 +99,36 @@
                 <table class="table table-bordered table-striped table-hover table-sm">
                     <thead class="table-dark">
                         <tr>
+                            <th>PDF</th>
                             <th>DATE</th>
-                            <th>MAIN TID</th>
-                            <th>SUB TID</th>
-                            <th>PO NUMBER</th>
+                            <th>MAIN PROGRAM</th>
+                            <th>PROGRAM</th>
+                            <th>PO NO</th>
                             <th>SONO</th>
-                            <th>STYLE</th>
                             <th>BUYER</th>
+                            <th>STYLE</th>
+                            <th>COLOR</th>
                             <th>SUPPLIER</th>
                             <th>QTY</th>
-                            <th>SHIFT</th>
-                            <th>COLOR</th>
-                            <th>SL/VDQ</th>
-                            <th>YARN TYPE</th>
-                            <th>YARN COUNT</th>
-                            <th>FABRICS TYPE</th>
+                            <th>O / T</th>
                             <th>FINISH GSM</th>
                             <th>FINISH DIA</th>
-                            <th>OPEN / TUBE</th>
+                            <th>FABRICS TYPE</th>
+                            <th>YARN TYPE</th>
+                            <th>YARN COUNT</th>
+                            <th>SL/VDQ</th>
+                            <th>MCDIA</th>
+                            <th>GRAY GSM</th>
+                            <th>FEEDER PLAN</th>
+                            <th>SHIFT</th>
                             <th>LOT NO</th>
-                            <!-- <th>KNIT M DESCRIPTION</th>
-                            <th>KNIT MATERIAL CODE</th> -->
+                            <th>KNIT M DESCRIPTION</th>
+                            <th>KNIT MATERIAL CODE</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="19" class="text-center small-muted">Loading data...</td>
+                            <td colspan="25" class="text-center small-muted">Loading data...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -134,40 +138,53 @@
     </div>
 
     <script src="jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <script>
         function renderTableRows(data) {
             var tbody = $('#tableBody');
             tbody.empty();
             if (!data || data.length === 0) {
-                tbody.append('<tr><td colspan="19" class="text-center small-muted">No data found</td></tr>');
+                tbody.append('<tr><td colspan="25" class="text-center small-muted">No data found</td></tr>');
                 return;
             }
 
             data.forEach(function(row) {
                 var tr = $('<tr>');
+                var pdfBtn = $('<button>')
+                    .attr('type', 'button')
+                    .addClass('btn btn-primary btn-sm pdf-row-btn')
+                    .html('<i class="fa-solid fa-file-pdf" style="background:none;border:none;box-shadow:none;transform:none;"></i> PDF')
+                    .attr('title', 'Download PDF')
+                    .on('click', function() {
+                        downloadRowPdf(row);
+                    });
+                tr.append($('<td class="text-center">').append(pdfBtn));
                 tr.append($('<td>').text(row.CREATED_DATE || ''));
                 tr.append($('<td>').text(row.MAIN_TID || ''));
                 tr.append($('<td>').text(row.SUB_TID || ''));
                 tr.append($('<td>').text(row.PO_NUMBER || ''));
                 tr.append($('<td>').text(row.SONO || ''));
-                tr.append($('<td>').text(row.STYLE || ''));
                 tr.append($('<td>').text(row.BUYER || ''));
+                tr.append($('<td>').text(row.STYLE || ''));
+                tr.append($('<td>').text(row.COLOR || ''));
                 tr.append($('<td>').text(row.SUPPLIER || ''));
                 tr.append($('<td>').text(row.QTY || ''));
-                tr.append($('<td>').text(row.SHIFT || ''));
-                tr.append($('<td>').text(row.COLOR || ''));
-                tr.append($('<td>').text(row.SL || ''));
-
-                tr.append($('<td>').text(row.YTYPE || ''));
-                tr.append($('<td>').text(row.YCOUNT || ''));
-                tr.append($('<td>').text(row.FTYPE || ''));
+                tr.append($('<td>').text(row.O_T || ''));
                 tr.append($('<td>').text(row.FGSM || ''));
                 tr.append($('<td>').text(row.FDIA || ''));
-                tr.append($('<td>').text(row.O_T || ''));
+                tr.append($('<td>').text(row.FTYPE || ''));
+                tr.append($('<td>').text(row.YTYPE || ''));
+                tr.append($('<td>').text(row.YCOUNT || ''));
+                tr.append($('<td>').text(row.SL || ''));
+                tr.append($('<td>').text(row.MCDIA || ''));
+                tr.append($('<td>').text(row.GGSM || ''));
+                tr.append($('<td>').text(row.FEEDER_PLAN || ''));
+                tr.append($('<td>').text(row.SHIFT || ''));
                 tr.append($('<td>').text(row.LOT || ''));
-                // tr.append($('<td>').text(row.KNIT_M_DESCRIPTION || ''));
-                // tr.append($('<td>').text(row.KNIT_MATERIAL_CODE || ''));
+                tr.append($('<td>').text(row.KNIT_M_DESCRIPTION || ''));
+                tr.append($('<td>').text(row.KNIT_MATERIAL_CODE || ''));
                 tbody.append(tr);
             });
         }
@@ -189,10 +206,10 @@
                 })
                 .done(function(resp) {
                     if (resp && resp.success) renderTableRows(resp.data);
-                    else $('#tableBody').html('<tr><td colspan="19" class="text-center small-muted">No data found</td></tr>');
+                    else $('#tableBody').html('<tr><td colspan="25" class="text-center small-muted">No data found</td></tr>');
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr><td colspan="19" class="text-center text-danger">Error searching</td></tr>');
+                    $('#tableBody').html('<tr><td colspan="25" class="text-center text-danger">Error searching</td></tr>');
                 })
                 .always(function() {
                     $('#searchBtn').prop('disabled', false).text('Search');
@@ -200,7 +217,7 @@
         }
 
         function loadAll() {
-            $('#tableBody').html('<tr><td colspan="19" class="text-center small-muted">Loading data...</td></tr>');
+            $('#tableBody').html('<tr><td colspan="25" class="text-center small-muted">Loading data...</td></tr>');
             $.ajax({
                     url: 'ajaxKnittingProgram_Report.php',
                     dataType: 'json',
@@ -208,11 +225,137 @@
                 })
                 .done(function(resp) {
                     if (resp && resp.success) renderTableRows(resp.data);
-                    else $('#tableBody').html('<tr><td colspan="19" class="text-center small-muted">No data returned</td></tr>');
+                    else $('#tableBody').html('<tr><td colspan="25" class="text-center small-muted">No data returned</td></tr>');
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr><td colspan="19" class="text-center text-danger">Error loading data</td></tr>');
+                    $('#tableBody').html('<tr><td colspan="25" class="text-center text-danger">Error loading data</td></tr>');
                 });
+        }
+
+        // ---------- ROW PDF DOWNLOAD (image-style card) ----------
+        function downloadRowPdf(row) {
+            var fieldHTML = [
+                ['Date', row.CREATED_DATE],
+                ['Shift', row.SHIFT],
+                ['Main Program', row.MAIN_TID],
+                ['Program', row.SUB_TID],
+                ['Po Number', row.PO_NUMBER],
+                ['SONO', row.SONO],
+                ['Buyer', row.BUYER],
+                ['Style', row.STYLE],
+                ['Color', row.COLOR],
+                ['Supplier', row.SUPPLIER],
+                ['QTY', row.QTY],
+                ['Open / Tube', row.O_T],
+                ['Finish GSM', row.FGSM],
+                ['Finish Dia', row.FDIA],
+                ['Fabrics Type', row.FTYPE],
+                ['SL/VDQ', row.SL],
+                ['Yarn Type', row.YTYPE],
+                ['Yarn Count', row.YCOUNT],
+                ['MC Dia', row.MCDIA],
+                ['Gray GSM', row.GGSM],
+                ['Feeder Plan', row.FEEDER_PLAN, true],
+                ['Lot No', row.LOT, true],
+                ['KNIT M DESCRIPTION', row.KNIT_M_DESCRIPTION, true],
+                ['KNIT MATERIAL CODE', row.KNIT_MATERIAL_CODE, true]
+            ];
+
+            var rowsHTML = fieldHTML.map(function(f) {
+                var val = (f[1] === null || f[1] === undefined) ? '' : f[1];
+                var cls = f[2] ? 'pdf-item pdf-item-full' : 'pdf-item';
+                return '<div class="' + cls + '"><span class="pdf-label">' + f[0] + ' :</span><span class="pdf-value">' + val + '</span></div>';
+            }).join('');
+
+            var content = '' +
+                '<div id="rowPdfCard" style="position:relative;width:760px;min-height:1050px;padding:24px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">' + '<div style="text-align:center;font-size:20px;font-weight:bold;color:#1e3a8a;border-bottom:3px solid #2563eb;padding-bottom:10px;margin-bottom:16px;">' +
+                'Knitting Program Report' +
+                '</div>' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;width:100%;font-size:14px;font-weight:bold;margin-bottom:10px; margin-left:10px;">' +
+                '<span>Program : ' + (row.SUB_TID || '') + '</span>' +
+                '<span style="margin-right:20px;">User : ' + (row.UNAME || '') + '</span>' +
+                '</div>' +
+                '<div class="pdf-grid">' + rowsHTML + '</div>' +
+                '<div style="text-align:center;font-size:11px;color: black; margin-top:16px;border-top:1px solid #e5e7eb;padding-top:8px;">' +
+                'Generated from Knitting Program Report - ' + new Date().toLocaleString() +
+                '</div>' +
+                
+                '<div class="pdf-sign">' +
+                '<div class="pdf-sign-item"><div class="pdf-sign-line"></div><span>Supervisor</span></div>' +
+                '<div class="pdf-sign-item"><div class="pdf-sign-line"></div><span>Incharge</span></div>' +
+                '<div class="pdf-sign-item"><div class="pdf-sign-line"></div><span>AGM</span></div>' +
+                '<div class="pdf-sign-item"><div class="pdf-sign-line"></div><span>GM</span></div>' +
+                '</div>' +
+
+                '</div>';
+
+            var tempDiv = document.createElement('div');
+            tempDiv.innerHTML = content;
+            tempDiv.style.position = 'absolute';
+            tempDiv.style.left = '-9999px';
+            tempDiv.style.top = '0';
+            document.body.appendChild(tempDiv);
+
+            var style = document.createElement('style');
+            style.textContent = '' +
+                '.pdf-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:2px solid #d1d5db;border-radius:6px;padding:0;background:#ffffff;}' +
+                '.pdf-item{font-size:13px;line-height:1.7;border-bottom:1px solid #d1d5db;border-right:1px solid #d1d5db;padding:7px 12px;word-break:break-word;background:#ffffff;color:#000000;}' +
+                '.pdf-item:nth-child(2n){border-right:none;}' +
+                '.pdf-item-full{grid-column:1 / -1;border-right:none;border-top:2px solid #d1d5db;}' +
+                '.pdf-label{font-weight:bold;color:#000000;}' +
+                '.pdf-value{margin-left:8px;color:#000000;}' +
+                '.pdf-sign{' +
+                'position:absolute;' +
+                'left:24px;' +
+                'right:24px;' +
+                'bottom:55px;' +
+                'display:grid;' +
+                'grid-template-columns:1fr 1fr 1fr 1fr;' +
+                'gap:20px;' +
+                'padding:0 10px;' +
+                'text-align:center;' +
+                'font-size:13px;' +
+                'font-weight:bold;' +
+                'color:#000000;' +
+                '}' +
+
+                '.pdf-sign-item{' +
+                'display:flex;' +
+                'flex-direction:column;' +
+                'align-items:center;' +
+                'justify-content:flex-end;' +
+                'gap:8px;' +
+                '}' +
+
+                '.pdf-sign-line{' +
+                'width:80%;' +
+                'border-top:1px solid #000000;' +
+                'margin-top:0;' +
+                '}' +
+                '</style>';
+            document.body.appendChild(style);
+
+            html2canvas(tempDiv, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false
+            }).then(function(canvas) {
+                var imgData = canvas.toDataURL('image/png');
+                var jsPDFLib = window.jspdf;
+                var pdf = new jsPDFLib.jsPDF('p', 'mm', 'a4');
+                var pdfWidth = pdf.internal.pageSize.getWidth();
+                var pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save('Program_' + (row.SUB_TID || row.PO_NUMBER || 'Row') + '.pdf');
+                document.body.removeChild(tempDiv);
+                document.body.removeChild(style);
+            }).catch(function(err) {
+                console.error('PDF generation error:', err);
+                alert('Error generating PDF. Please try again.');
+                document.body.removeChild(tempDiv);
+                document.body.removeChild(style);
+            });
         }
 
         $(function() {
