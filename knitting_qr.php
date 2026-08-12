@@ -155,6 +155,8 @@ if ($dataAction === 'load' || $dataAction === 'search') {
 
     <script src="jquery.min.js"></script>
     <script src="js/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <script>
         function renderTableRows(data) {
@@ -217,36 +219,39 @@ if ($dataAction === 'load' || $dataAction === 'search') {
 
         <div class="qr-grid">
 
-            <div><b>Program :</b> ${row.MCARD||''}</div>
+            <div><b>KCTID :</b> ${row.KCTID||''}</div>
             <div><b>KPTID :</b> ${row.KPTID||''}</div>
-            <div><b>Shift :</b> ${row.SHIFT||''}</div>
-
-            <div><b>Buyer :</b> ${row.BUYER||''}</div>
+            <div><b>MCARD :</b> ${row.MCARD||''}</div>
+            <div><b>ROLL :</b> ${row.ROLL||''}</div>
+            <div><b>MCNO :</b> ${row.MCNO||''}</div>
+            <div><b>QTY :</b> ${row.QTY||''}</div>
             <div><b>PO Number :</b> ${row.PO_NUMBER||''}</div>
-
             <div><b>SONO :</b> ${row.SONO||''}</div>
+            <div><b>Buyer :</b> ${row.BUYER||''}</div>
             <div><b>Style :</b> ${row.STYLE||''}</div>
-
-            <div><b>Fabrics :</b> ${row.FTYPE||''}</div>
-            <div><b>Yarn Count :</b> ${row.YCOUNT||''}</div>
-
-            <div><b>Yarn Type :</b> ${row.YTYPE||''}</div>
-            <div><b>Finish GSM :</b> ${row.FGSM||''}</div>
-
-            <div><b>Finish Dia :</b> ${row.FDIA||''}</div>
-            <div><b>Open/Tube :</b> ${row.O_T||''}</div>
-
-            <div><b>Qty :</b> ${row.QTY||''}</div>
             <div><b>Color :</b> ${row.COLOR||''}</div>
-
+            <div><b>FGSM :</b> ${row.FGSM||''}</div>
+            <div><b>FDIA :</b> ${row.FDIA||''}</div>
+            <div><b>O_T :</b> ${row.O_T||''}</div>
+            <div><b>Fabrics :</b> ${row.FTYPE||''}</div>
+            <div><b>Yarn Type :</b> ${row.YTYPE||''}</div>
+            <div><b>Supplier :</b> ${row.SUPPLIER||''}</div>
+            <div><b>Yarn Count :</b> ${row.YCOUNT||''}</div>
             <div><b>SL/VDQ :</b> ${row.SL||''}</div>
-
+            <div><b>MC Dia :</b> ${row.MCDIA||''}</div>
+            <div><b>Gray GSM :</b> ${row.GGSM||''}</div>
+            <div><b>Feeder Plan :</b> ${row.FEEDER_PLAN||''}</div>
             <div><b>LOT NO :</b> ${row.LOT||''}</div>
+            <div><b>Shift :</b> ${row.SHIFT||''}</div>
+            <div><b>Knit Material Code :</b> ${row.KNIT_MATERIAL_CODE||''}</div>
+            <div><b>Knit M Description :</b> ${row.KNIT_M_DESCRIPTION||''}</div>
+            <div><b>Created Date :</b> ${row.CREATED_DATE||''}</div>
+            <div><b>User :</b> ${row.UNAME||''}</div>
 
         </div>
 
         <div class="qr-buttons">
-            <button class="btn btn-success btn-sm qr-download-btn">Download</button>
+            <button class="btn btn-success btn-sm qr-download-btn">Download PDF</button>
             <button class="btn btn-primary btn-sm qr-print-btn">Print QR</button>
             <button class="btn btn-danger btn-sm qr-cancel-btn">Cancel</button>
         </div>
@@ -262,9 +267,7 @@ if ($dataAction === 'load' || $dataAction === 'search') {
        function generateQrCode(row, target) {
     target.empty();
 
-    var qrText =
-        "Program: " + (row.MCARD || '') + "\n" +
-        "KPTID: " + (row.KPTID || '');
+    var qrText = String(row.ROLL || '');
 
     console.log(qrText);
 
@@ -279,21 +282,33 @@ if ($dataAction === 'load' || $dataAction === 'search') {
 }
 
         function downloadQrImage(container, filename) {
-            var img = container.find('img')[0];
-            var canvas = container.find('canvas')[0];
-            var link = document.createElement('a');
-            if (img) {
-                link.href = img.src;
-            } else if (canvas) {
-                link.href = canvas.toDataURL('image/png');
-            } else {
-                alert('QR code is not ready yet.');
+            var panel = container.closest('.qr-dropdown-panel')[0];
+            if (!panel) {
+                alert('QR panel is not available yet.');
                 return;
             }
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+
+            html2canvas(panel, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false
+            }).then(function(canvas) {
+                var imgData = canvas.toDataURL('image/png');
+                var jsPDFLib = window.jspdf;
+                var pdf = new jsPDFLib.jsPDF('p', 'mm', 'a4');
+                var pdfWidth = pdf.internal.pageSize.getWidth();
+                var pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                if (pdfHeight > pdf.internal.pageSize.getHeight()) {
+                    pdfHeight = pdf.internal.pageSize.getHeight();
+                }
+                var xOff = (pdfWidth - (canvas.width * pdfHeight) / canvas.height) / 2;
+                pdf.addImage(imgData, 'PNG', xOff, 0, (canvas.width * pdfHeight) / canvas.height, pdfHeight);
+                pdf.save(filename);
+            }).catch(function(err) {
+                console.error('PDF generation error:', err);
+                alert('Error generating PDF. Please try again.');
+            });
         }
 
         function printQrImage(container) {
@@ -380,7 +395,7 @@ if ($dataAction === 'load' || $dataAction === 'search') {
             var row = button.closest('tr');
             var data = button.data('row');
             var dropdownHtml =
-                '<tr class="qr-dropdown-row">' +
+                '<tr class="qr-dropdown-row" data-roll="' + (data.ROLL || '') + '">' +
                 '<td colspan="26" style="padding:10px;background:#f8f9fa;">' +
                 buildDropdownContent(data) +
                 '</td></tr>';
@@ -405,7 +420,7 @@ if ($dataAction === 'load' || $dataAction === 'search') {
 
         $(document).on('click', '.qr-download-btn', function() {
             var container = $(this).closest('.qr-dropdown-panel');
-            var filename = 'knitting-qr.png';
+            var filename = 'knitting-qr-' + (container.closest('.qr-dropdown-row').data('roll') || 'row') + '.pdf';
             downloadQrImage(container, filename);
         });
 
