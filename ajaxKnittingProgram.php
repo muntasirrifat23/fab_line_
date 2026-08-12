@@ -39,27 +39,28 @@ if ($search === '') {
 // Escape the parameter
 $s = mysqli_real_escape_string($db, $search);
 
-// 1. First try searching knitting_program table by SUB_TID or KPTID
-$progQuery = "SELECT * FROM knitting_program WHERE SUB_TID = '$s' OR KPTID = '$s' LIMIT 1";
+// 1. First try searching knitting_program table by PO_NUMBER or SUB_TID
+$progQuery = "SELECT * FROM knitting_program WHERE PO_NUMBER = '$s' OR SUB_TID = '$s' OR KPTID = '$s' LIMIT 1";
 $progRes = mysqli_query($db, $progQuery);
 
 if ($progRes && mysqli_num_rows($progRes) > 0) {
     $progData = mysqli_fetch_assoc($progRes);
-    $bookingVal = mysqli_real_escape_string($db, $progData['BOOKING'] ?? '');
+    $bookingVal = mysqli_real_escape_string($db, $progData['PO_NUMBER'] ?? '');
     
     // Fetch input record for supplementary details if available
     $inputData = [];
     if ($bookingVal !== '') {
-        $inQ = mysqli_query($db, "SELECT * FROM knitting_input WHERE BOOKING = '$bookingVal' LIMIT 1");
+        $inQ = mysqli_query($db, "SELECT * FROM knitting_input WHERE PO_NUMBER = '$bookingVal' LIMIT 1");
         if ($inQ && mysqli_num_rows($inQ) > 0) {
             $inputData = mysqli_fetch_assoc($inQ);
         }
     }
     
     $mergedData = array_merge($inputData, array_filter($progData, function($val) { return $val !== null && $val !== ''; }));
-    $mergedData['KNITTING_TARGET_QTY'] = $progData['QTY'] ?? ($inputData['KNITTING_TARGET_QTY'] ?? 0);
+    $mergedData['KNITTING_TARGET_QTY'] = $progData['QTY'] ?? ($inputData['QTY'] ?? 0);
     $mergedData['SUB_TID'] = $progData['SUB_TID'];
-    $mergedData['BOOKING'] = $progData['BOOKING'];
+    $mergedData['PO_NUMBER'] = $progData['PO_NUMBER'];
+    $mergedData['BOOKING'] = $progData['PO_NUMBER'];
     
     echo json_encode([
         'success' => true,
@@ -72,9 +73,9 @@ if ($progRes && mysqli_num_rows($progRes) > 0) {
     exit();
 }
 
-// 2. Fallback: Search knitting_input table by BOOKING number
+// 2. Fallback: Search knitting_input table by PO_NUMBER
 $query = "SELECT 
-    BOOKING, 
+    PO_NUMBER, 
     BUYER, 
     SONO,
     STYLE,
@@ -86,10 +87,10 @@ $query = "SELECT
     OPEN_TUBE, 
     KNIT_MATERIAL_CODE,
     KNIT_M_DESCRIPTION, 
-    KNITTING_TARGET_QTY,
+    QTY,
     BUDAT
 FROM knitting_input 
-WHERE BOOKING = '$s'";
+WHERE PO_NUMBER = '$s'";
 
 $result = mysqli_query($db, $query);
 
@@ -109,6 +110,7 @@ $firstRow = null;
 
 while ($row = mysqli_fetch_assoc($result)) {
     // Add default values for fields that don't exist in your table
+    $row['BOOKING'] = isset($row['PO_NUMBER']) ? $row['PO_NUMBER'] : '';
     $row['SUPPLIER'] = isset($row['SUPPLIER']) ? $row['SUPPLIER'] : '';
     $row['SONO'] = isset($row['SONO']) ? $row['SONO'] : '';
     $row['SL_VDQ'] = isset($row['SL_VDQ']) ? $row['SL_VDQ'] : '';
@@ -128,7 +130,7 @@ while ($row = mysqli_fetch_assoc($result)) {
 if (empty($allData)) {
     echo json_encode([
         'success' => false, 
-        'error' => 'No data found for SUB_TID / PO NO: ' . $search
+        'error' => 'No data found for PO NO: ' . $search
     ]);
     exit();
 }
@@ -148,7 +150,7 @@ $response = [
 $allocated = 0;
 $allocatedByDesc = [];
 try {
-    $allocQuery = "SELECT KNIT_M_DESCRIPTION, IFNULL(SUM(QTY),0) AS allocated_qty FROM knitting_program WHERE BOOKING = '$s' GROUP BY KNIT_M_DESCRIPTION";
+    $allocQuery = "SELECT KNIT_M_DESCRIPTION, IFNULL(SUM(QTY),0) AS allocated_qty FROM knitting_program WHERE PO_NUMBER = '$s' GROUP BY KNIT_M_DESCRIPTION";
     $allocRes = mysqli_query($db, $allocQuery);
     if ($allocRes) {
         while ($ar = mysqli_fetch_assoc($allocRes)) {
@@ -166,7 +168,7 @@ $response['allocated_qty'] = $allocated;
 $response['allocated_by_description'] = $allocatedByDesc;
 
 // remaining for the default data row (firstRow); clients should use per-description remaining when available
-$response['remaining_qty'] = (float)$data['KNITTING_TARGET_QTY'] - ($allocatedByDesc[$data['KNIT_M_DESCRIPTION']] ?? 0);
+$response['remaining_qty'] = (float)($data['KNITTING_TARGET_QTY'] ?? $data['QTY'] ?? 0) - ($allocatedByDesc[$data['KNIT_M_DESCRIPTION']] ?? 0);
 
 echo json_encode($response);
 ?>
