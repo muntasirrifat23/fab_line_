@@ -1,3 +1,38 @@
+﻿<?php
+// ------- In-file AJAX endpoint for knit_card_test data -------
+$dataAction = isset($_GET['action']) ? $_GET['action'] : (isset($_POST['action']) ? $_POST['action'] : '');
+
+if ($dataAction === 'load' || $dataAction === 'search') {
+    require_once 'config.php';
+    header('Content-Type: application/json');
+    header('X-Content-Type-Options: nosniff');
+
+    $where = '';
+    if ($dataAction === 'search') {
+        $booking = isset($_GET['booking']) ? trim($_GET['booking']) : (isset($_POST['booking']) ? trim($_POST['booking']) : '');
+        if ($booking !== '') {
+            $b = mysqli_real_escape_string($db, $booking);
+            $where = " WHERE PO_NUMBER LIKE '%$b%' OR SONO LIKE '%$b%' OR MCARD LIKE '%$b%' OR ROLL LIKE '%$b%' OR STYLE LIKE '%$b%'";
+        }
+    }
+
+    $query = "SELECT * FROM knit_card_test" . $where . " ORDER BY KCTID DESC";
+    $result = mysqli_query($db, $query);
+
+    if (!$result) {
+        echo json_encode(['success' => false, 'error' => 'Query error: ' . mysqli_error($db)]);
+        exit();
+    }
+
+    $rows = [];
+    while ($r = mysqli_fetch_assoc($result)) {
+        $rows[] = $r;
+    }
+
+    echo json_encode(['success' => true, 'count' => count($rows), 'data' => $rows]);
+    exit();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -78,30 +113,38 @@
             <div class="panel">
                 <table class="table table-bordered table-striped table-hover table-sm">
                     <thead class="table-dark">
-                        <tr>
+<tr>
                             <th>QR PRINT</th>
-                            <th>Program</th>
-                            <th>PO NUMBER</th>
-                            <th>SHIFT</th>
-                            <th>BUYER</th>
-                            <th>SONO</th>
-                            <th>STYLE</th>
-                            <th>FABRICS TYPE</th>
-                            <th>YARN COUNT</th>
-                            <th>YARN TYPE</th>
-                            <th>FINISH GSM</th>
-                            <th>FINISH DIA</th>
-                            <th>OPEN / TUBE</th>
+                            <th>ROLL</th>
+                            <th>MCNO</th>
                             <th>QTY</th>
+                            <th>PO NUMBER</th>
+                            <th>SONO</th>
+                            <th>BUYER</th>
+                            <th>STYLE</th>
                             <th>COLOR</th>
-                            <th>SL/VDQ</th>
-                            <th>LOT NO</th>
-
+                            <th>FGSM</th>
+                            <th>FDIA</th>
+                            <th>O_T</th>
+                            <th>FTYPE</th>
+                            <th>YTYPE</th>
+                            <th>SUPPLIER</th>
+                            <th>YCOUNT</th>
+                            <th>SL</th>
+                            <th>MCDIA</th>
+                            <th>GGSM</th>
+                            <th>FEEDER_PLAN</th>
+                            <th>LOT</th>
+                            <th>SHIFT</th>
+                            <th>KNIT_MATERIAL_CODE</th>
+                            <th>KNIT_M_DESCRIPTION</th>
+                            <th>CREATED_DATE</th>
+                            <th>UNAME</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="21" class="text-center small-muted">Loading data...</td>
+                            <td colspan="26" class="text-center small-muted">Loading data...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -118,7 +161,7 @@
             var tbody = $('#tableBody');
             tbody.empty();
             if (!data || data.length === 0) {
-                tbody.append('<tr><td colspan="16" class="text-center small-muted">No data found</td></tr>');
+                tbody.append('<tr><td colspan="26" class="text-center small-muted">No data found</td></tr>');
                 return;
             }
 
@@ -130,22 +173,31 @@
                     .data('row', row);
 
                 tr.append($('<td>').append(actionBtn));
-                tr.append($('<td>').text(row.SUB_TID || ''));
+                tr.append($('<td>').text(row.ROLL || ''));
+                tr.append($('<td>').text(row.MCNO || ''));
+                tr.append($('<td>').text(row.QTY || ''));
                 tr.append($('<td>').text(row.PO_NUMBER || ''));
-                tr.append($('<td>').text(row.SHIFT || ''));
-                tr.append($('<td>').text(row.BUYER || ''));
                 tr.append($('<td>').text(row.SONO || ''));
+                tr.append($('<td>').text(row.BUYER || ''));
                 tr.append($('<td>').text(row.STYLE || ''));
-                tr.append($('<td>').text(row.FTYPE || ''));
-                tr.append($('<td>').text(row.YCOUNT || ''));
-                tr.append($('<td>').text(row.YTYPE || ''));
+                tr.append($('<td>').text(row.COLOR || ''));
                 tr.append($('<td>').text(row.FGSM || ''));
                 tr.append($('<td>').text(row.FDIA || ''));
                 tr.append($('<td>').text(row.O_T || ''));
-                tr.append($('<td>').text(row.QTY || ''));
-                tr.append($('<td>').text(row.COLOR || ''));
+                tr.append($('<td>').text(row.FTYPE || ''));
+                tr.append($('<td>').text(row.YTYPE || ''));
+                tr.append($('<td>').text(row.SUPPLIER || ''));
+                tr.append($('<td>').text(row.YCOUNT || ''));
                 tr.append($('<td>').text(row.SL || ''));
+                tr.append($('<td>').text(row.MCDIA || ''));
+                tr.append($('<td>').text(row.GGSM || ''));
+                tr.append($('<td>').text(row.FEEDER_PLAN || ''));
                 tr.append($('<td>').text(row.LOT || ''));
+                tr.append($('<td>').text(row.SHIFT || ''));
+                tr.append($('<td>').text(row.KNIT_MATERIAL_CODE || ''));
+                tr.append($('<td>').text(row.KNIT_M_DESCRIPTION || ''));
+                tr.append($('<td>').text(row.CREATED_DATE || ''));
+                tr.append($('<td>').text(row.UNAME || ''));
 
                 tbody.append(tr);
             });
@@ -165,7 +217,7 @@
 
         <div class="qr-grid">
 
-            <div><b>Program :</b> ${row.SUB_TID||''}</div>
+            <div><b>Program :</b> ${row.MCARD||''}</div>
             <div><b>KPTID :</b> ${row.KPTID||''}</div>
             <div><b>Shift :</b> ${row.SHIFT||''}</div>
 
@@ -211,7 +263,7 @@
     target.empty();
 
     var qrText =
-        "Program: " + (row.SUB_TID || '') + "\n" +
+        "Program: " + (row.MCARD || '') + "\n" +
         "KPTID: " + (row.KPTID || '');
 
     console.log(qrText);
@@ -329,7 +381,7 @@
             var data = button.data('row');
             var dropdownHtml =
                 '<tr class="qr-dropdown-row">' +
-                '<td colspan="18" style="padding:10px;background:#f8f9fa;">' +
+                '<td colspan="26" style="padding:10px;background:#f8f9fa;">' +
                 buildDropdownContent(data) +
                 '</td></tr>';
             row.after(dropdownHtml);
@@ -370,8 +422,9 @@
             }
             $('#searchBtn').prop('disabled', true).text('Searching...');
             $.ajax({
-                    url: 'ajaxKnittingProgram_Report.php',
+                    url: 'knitting_qr.php',
                     data: {
+                        action: 'search',
                         booking: booking
                     },
                     dataType: 'json',
@@ -380,11 +433,11 @@
                 .done(function(resp) {
                     if (resp && resp.success) renderTableRows(resp.data);
                     else $('#tableBody').html(
-                    '<tr><td colspan="21" class="text-center small-muted">No data found</td></tr>');
+                    '<tr><td colspan="26" class="text-center small-muted">No data found</td></tr>');
                 })
                 .fail(function() {
                     $('#tableBody').html(
-                        '<tr><td colspan="16" class="text-center text-danger">Error searching</td></tr>');
+                        '<tr><td colspan="26" class="text-center text-danger">Error searching</td></tr>');
                 })
                 .always(function() {
                     $('#searchBtn').prop('disabled', false).text('Search');
@@ -392,20 +445,20 @@
         }
 
         function loadAll() {
-            $('#tableBody').html('<tr><td colspan="21" class="text-center small-muted">Loading data...</td></tr>');
+            $('#tableBody').html('<tr><td colspan="26" class="text-center small-muted">Loading data...</td></tr>');
             $.ajax({
-                    url: 'ajaxKnittingProgram_Report.php',
+                    url: 'knitting_qr.php?action=load',
                     dataType: 'json',
                     method: 'GET'
                 })
                 .done(function(resp) {
                     if (resp && resp.success) renderTableRows(resp.data);
                     else $('#tableBody').html(
-                    '<tr><td colspan="21" class="text-center small-muted">No data returned</td></tr>');
+                    '<tr><td colspan="26" class="text-center small-muted">No data returned</td></tr>');
                 })
                 .fail(function() {
                     $('#tableBody').html(
-                        '<tr><td colspan="21" class="text-center text-danger">Error loading data</td></tr>');
+                        '<tr><td colspan="26" class="text-center text-danger">Error loading data</td></tr>');
                 });
         }
 
