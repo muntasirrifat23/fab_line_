@@ -49,6 +49,7 @@ $open_tube = 'O';
 $lot_no = '';
 $knit_material_code = '';
 $operator_id = '';
+$mcno_id = '';
 
 // Auto-detect SHIFT based on current server time
 $hour_now = (int)date('G');
@@ -87,6 +88,7 @@ if ($is_edit) {
             $open_tube = $row['O_T'] ?? $row['open_tube'] ?? 'O';
             $lot_no = $row['LOT'] ?? $row['lot_no'] ?? '';
             $knit_material_code = $row['KNIT_MATERIAL_CODE'] ?? '';
+            $mcno_id = $row['MCNO_ID'] ?? '';
         } else {
             header("Location: knitting_program_list.php?error=Program+not+found");
             exit();
@@ -103,7 +105,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
     $supplier = trim($_POST['SUPPLIER'] ?? '');
     $knit_m_description = trim($_POST['KNIT_M_DESCRIPTION'] ?? '');
     $qty = floatval($_POST['QTY'] ?? 0);
-    $shift = $auto_shift;
+    $shift = trim($_POST['SHIFT'] ?? $auto_shift);
     $yarn_type = trim($_POST['YARN_TYPE'] ?? '');
     $yarn_count = trim($_POST['YARN_COUNT'] ?? '');
     $fabrics_type = trim($_POST['FABRICS_TYPE'] ?? '');
@@ -113,6 +115,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
     $lot_no = trim($_POST['LOT_NO'] ?? '');
     $knit_material_code = trim($_POST['KNIT_MATERIAL_CODE'] ?? '');
     $operator_id = trim($_POST['OPERATOR_ID'] ?? '');
+    $mcno_id = intval($_POST['MCNO_ID'] ?? 0);
     $main_tid = trim($_POST['MAIN_TID'] ?? '');
     $sub_tid = trim($_POST['SUB_TID'] ?? '');
 
@@ -135,17 +138,17 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
     if (empty($errors)) {
         if ($is_edit) {
             $sql = "UPDATE knitting_program SET 
-                MAIN_TID=?, SUB_TID=?, PO_NUMBER=?, SONO=?, STYLE=?, BUYER=?, SUPPLIER=?, 
-                KNIT_M_DESCRIPTION=?, QTY=?, SHIFT=?, YTYPE=?, YCOUNT=?, 
-                FTYPE=?, FGSM=?, FDIA=?, O_T=?, LOT=?, KNIT_MATERIAL_CODE=? 
+                MAIN_TID=?, SUB_TID=?, BOOKING=?, SONO=?, STYLE=?, BUYER=?, SUPPLIER=?,
+                KNIT_M_DESCRIPTION=?, QTY=?, SHIFT=?, YTYPE=?, YCOUNT=?,
+                FTYPE=?, FGSM=?, FDIA=?, O_T=?, LOT=?, KNIT_MATERIAL_CODE=?, MCNO_ID=?
                 WHERE KPTID=? OR id=?";
             $stmt = $db->prepare($sql);
             if ($stmt) {
                 $stmt->bind_param(
-                    "sssssssssdssssssssii",
+                    "sssssssssdssssssssiiii",
                     $main_tid, $sub_tid, $po_number, $sono, $style, $buyer, $supplier,
                     $knit_m_description, $qty, $shift, $yarn_type, $yarn_count,
-                    $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code, $edit_id, $edit_id
+                    $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code, $mcno_id, $edit_id, $edit_id
                 );
                 if ($stmt->execute()) {
                     header("Location: knitting_program_list.php?msg=Program+updated+successfully");
@@ -158,17 +161,17 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
             }
         } else {
             $sql = "INSERT INTO knitting_program (
-                MAIN_TID, SUB_TID, PO_NUMBER, SONO, STYLE, BUYER, SUPPLIER, 
-                KNIT_M_DESCRIPTION, QTY, SHIFT, YTYPE, YCOUNT, 
-                FTYPE, FGSM, FDIA, O_T, LOT, KNIT_MATERIAL_CODE
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                MAIN_TID, SUB_TID, BOOKING, SONO, STYLE, BUYER, SUPPLIER,
+                KNIT_M_DESCRIPTION, QTY, SHIFT, YTYPE, YCOUNT,
+                FTYPE, FGSM, FDIA, O_T, LOT, KNIT_MATERIAL_CODE, MCNO_ID
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $db->prepare($sql);
             if ($stmt) {
                 $stmt->bind_param(
-                    "sssssssssdssssssss",
+                    "sssssssssdssssssssi",
                     $main_tid, $sub_tid, $po_number, $sono, $style, $buyer, $supplier,
                     $knit_m_description, $qty, $shift, $yarn_type, $yarn_count,
-                    $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code
+                    $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code, $mcno_id
                 );
                 if ($stmt->execute()) {
                     header("Location: knitting_program_list.php?msg=New+program+added+successfully");
@@ -565,8 +568,19 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                         </div>
                     </div>
                     <div class="col-md-4">
+                        <label class="form-label">Machine No (MCNO) <span class="required-tag">*</span></label>
+                        <select name="MCNO_ID" id="mcnoSelect" class="form-select" required>
+                            <option value="">-- Select Machine --</option>
+                            <?php foreach ($mcno_list as $mc): ?>
+                                <option value="<?php echo htmlspecialchars($mc['MCNOID']); ?>" <?php echo ($mcno_id == $mc['MCNOID']) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($mc['MCNO']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
                         <label class="form-label">Shift <small class="text-muted">(Auto - Based on Time)</small></label>
-                        <input type="text" class="form-control" value="<?php echo htmlspecialchars($shift ?: $auto_shift); ?>" readonly>
+                        <input type="text" name="SHIFT" class="form-control" value="<?php echo htmlspecialchars($shift ?: $auto_shift); ?>">
                     </div>
                 </div>
             </div>

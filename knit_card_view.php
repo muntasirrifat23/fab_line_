@@ -19,18 +19,21 @@ if ($card_id <= 0) {
 // QR Code URL (public view)
 $qr_url = APP_BASE_URL . "/knit_card_public_view.php?id=" . $card_id;
 
-// ── Handle: Update Quantity Form (Only REQ_QTY is editable per business rules) ──
+// ── Handle: Update Header Form (MCNO + REQ_QTY are editable) ──
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_header'])) {
     $f_req_qty = floatval($_POST['REQ_QTY'] ?? 0);
+    $f_mcno    = trim($_POST['MCNO'] ?? '');
 
     if ($f_req_qty <= 0) {
         $error = "Required Quantity must be a positive number.";
+    } elseif (empty($f_mcno)) {
+        $error = "Machine Number (M/C No) is required.";
     } else {
-        $upd = $db->prepare("UPDATE knit_card SET REQ_QTY = ? WHERE KCID = ?");
+        $upd = $db->prepare("UPDATE knit_card SET REQ_QTY = ?, MCNO = ? WHERE KCID = ?");
         if ($upd) {
-            $upd->bind_param("di", $f_req_qty, $card_id);
+            $upd->bind_param("dsi", $f_req_qty, $f_mcno, $card_id);
             if ($upd->execute()) {
-                $msg = "Card Required Quantity updated successfully!";
+                $msg = "Card updated successfully! (M/C No & Quantity saved)";
             } else {
                 $error = "Failed to update: " . $db->error;
             }
@@ -104,8 +107,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_production_log'])
     }
 }
 
+// ── Fetch MCNO list for dropdown ──────────────────────────────────────────────
+$mcno_list = [];
+$mcno_res = $db->query("SELECT MCNO FROM mcno ORDER BY MCNO ASC");
+if ($mcno_res) {
+    while ($mcno_row = $mcno_res->fetch_assoc()) {
+        $mcno_list[] = $mcno_row['MCNO'];
+    }
+}
+
 // ── Fetch Knit Card Header ─────────────────────────────────────────────────
-$stmt = $db->prepare("SELECT kc.*, kp.PO_NUMBER AS kp_booking FROM knit_card kc LEFT JOIN knitting_program kp ON kc.KPTID = kp.KPTID WHERE kc.KCID = ?");
+$stmt = $db->prepare("SELECT kc.*, kp.BOOKING AS kp_booking FROM knit_card kc LEFT JOIN knitting_program kp ON kc.KPTID = kp.KPTID WHERE kc.KCID = ?");
 if ($stmt) {
     $stmt->bind_param("i", $card_id);
     $stmt->execute();
@@ -601,14 +613,24 @@ $completion_pct = ($target_qty > 0) ? min(100, round(($total_cum_produced / $tar
                 <div class="form-section-title mb-0 border-0 p-0">
                     <i class="fa-solid fa-sliders me-1"></i> Card Specifications Header
                 </div>
-                <small class="text-muted"><i class="fa-solid fa-lock me-1"></i> Auto-generated specs are read-only. Only Quantity can be modified.</small>
+                <small class="text-muted"><i class="fa-solid fa-lock me-1"></i> Auto-generated specs are read-only. M/C No and Quantity can be modified.</small>
             </div>
 
             <form method="POST" action="knit_card_view.php?id=<?php echo $card_id; ?>">
                 <input type="hidden" name="update_header" value="1">
 
                 <div class="row gx-3">
-                    <div class="col-md-2"><label class="form-label">M/C No</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['MCNO'] ?? ''); ?>" readonly></div>
+                    <div class="col-md-2">
+                        <label class="form-label text-primary fw-bold"><i class="fa-solid fa-pen-to-square me-1"></i> M/C No <span class="text-danger">*</span></label>
+                        <select name="MCNO" class="form-select fw-bold text-primary" style="border: 2px solid #2563eb; background:#eff6ff;" required>
+                            <option value="">-- Select Machine --</option>
+                            <?php foreach ($mcno_list as $mc): ?>
+                                <option value="<?php echo htmlspecialchars($mc); ?>" <?php echo (($card['MCNO'] ?? '') === $mc) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($mc); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
                     <div class="col-md-2"><label class="form-label">Finish Dia</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['FINISH_DIA'] ?? ''); ?>" readonly></div>
                     <div class="col-md-2"><label class="form-label">Grey GSM</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['GREY_GSM'] ?? ''); ?>" readonly></div>
                     <div class="col-md-2"><label class="form-label">Finish GSM</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['FINISH_GSM'] ?? ''); ?>" readonly></div>

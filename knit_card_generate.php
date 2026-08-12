@@ -47,13 +47,13 @@ if (!$res || $res->num_rows == 0) {
 $prog = $res->fetch_assoc();
 $stmt->close();
 
-// 3. Obtain corresponding SUB_TID and PO_NUMBER from program to load information from knitting_input (Rule 1 & Rule 2)
+// 3. Obtain corresponding SUB_TID and BOOKING from program to load information from knitting_input
 $sub_tid = $prog['SUB_TID'] ?? '';
-$booking = $prog['PO_NUMBER'] ?? '';
+$booking = $prog['BOOKING'] ?? '';
 $input = null;
 
 if (!empty($sub_tid) || !empty($booking)) {
-    $stmt_in = $db->prepare("SELECT * FROM knitting_input WHERE KITID = ? OR PO_NUMBER = ? LIMIT 1");
+    $stmt_in = $db->prepare("SELECT * FROM knitting_input WHERE KITID = ? OR BOOKING = CONVERT(? USING utf8mb4) LIMIT 1");
     if ($stmt_in) {
         $stmt_in->bind_param("ss", $sub_tid, $booking);
         $stmt_in->execute();
@@ -71,22 +71,22 @@ $p_kptid            = intval($prog['KPTID']);
 $p_sub_tid          = $sub_tid;
 $p_buyer            = !empty($prog['BUYER']) ? $prog['BUYER'] : ($input['BUYER'] ?? '');
 $p_supplier         = !empty($prog['SUPPLIER']) ? $prog['SUPPLIER'] : ($input['SUPPLIER'] ?? '');
-$p_booking          = !empty($prog['PO_NUMBER']) ? $prog['PO_NUMBER'] : ($input['PO_NUMBER'] ?? '');
+$p_booking          = !empty($prog['BOOKING']) ? $prog['BOOKING'] : ($input['BOOKING'] ?? '');
 $p_sono             = !empty($prog['SONO']) ? $prog['SONO'] : ($input['SONO'] ?? '');
 $p_style            = !empty($prog['STYLE']) ? $prog['STYLE'] : ($input['STYLE'] ?? '');
-$p_mcno             = '';
-$p_finish_dia       = !empty($prog['FDIA']) ? $prog['FDIA'] : ($input['FINISH_DIA'] ?? '');
-$p_finish_gsm       = !empty($prog['FGSM']) ? $prog['FGSM'] : ($input['FINISH_GSM'] ?? '');
+$p_mcno             = !empty($prog['MCNO']) ? $prog['MCNO'] : '';
+$p_finish_dia       = !empty($prog['FINISH_DIA']) ? $prog['FINISH_DIA'] : ($input['FINISH_DIA'] ?? '');
+$p_finish_gsm       = !empty($prog['FINISH_GSM']) ? $prog['FINISH_GSM'] : ($input['FINISH_GSM'] ?? '');
 $p_grey_gsm         = $p_finish_gsm;
-$p_open_tube        = !empty($prog['O_T']) ? $prog['O_T'] : ($input['OPEN_TUBE'] ?? 'O');
-$p_fabrics          = !empty($prog['FTYPE']) ? $prog['FTYPE'] : ($input['FABRICS_TYPE'] ?? '');
-$p_yarn_type        = !empty($prog['YTYPE']) ? $prog['YTYPE'] : ($input['YARN_TYPE'] ?? '');
-$p_yarn_count       = !empty($prog['YCOUNT']) ? $prog['YCOUNT'] : ($input['YARN_COUNT'] ?? '');
+$p_open_tube        = !empty($prog['OPEN_TUBE']) ? $prog['OPEN_TUBE'] : ($input['OPEN_TUBE'] ?? 'O');
+$p_fabrics          = !empty($prog['FABRICS_TYPE']) ? $prog['FABRICS_TYPE'] : ($input['FABRICS_TYPE'] ?? '');
+$p_yarn_type        = !empty($prog['YARN_TYPE']) ? $prog['YARN_TYPE'] : ($input['YARN_TYPE'] ?? '');
+$p_yarn_count       = !empty($prog['YARN_COUNT']) ? $prog['YARN_COUNT'] : ($input['YARN_COUNT'] ?? '');
 $p_color            = !empty($prog['COLOR']) ? $prog['COLOR'] : ($input['COLOR'] ?? '');
-$p_lot_no           = !empty($prog['LOT']) ? $prog['LOT'] : ($input['LOT_NO'] ?? '');
+$p_lot_no           = !empty($prog['LOT_NO']) ? $prog['LOT_NO'] : ($input['LOT_NO'] ?? '');
 $p_knit_m_desc      = !empty($prog['KNIT_M_DESCRIPTION']) ? $prog['KNIT_M_DESCRIPTION'] : ($input['KNIT_M_DESCRIPTION'] ?? '');
 $p_knit_mat_code    = !empty($prog['KNIT_MATERIAL_CODE']) ? $prog['KNIT_MATERIAL_CODE'] : ($input['KNIT_MATERIAL_CODE'] ?? '');
-$p_sl_vdq           = floatval(!empty($prog['SL']) ? $prog['SL'] : ($input['SL_VDQ'] ?? 0));
+$p_sl_vdq           = floatval(!empty($prog['SL_VDQ']) ? $prog['SL_VDQ'] : ($input['SL_VDQ'] ?? 0));
 
 $default_qty        = floatval($prog['QTY'] ?? 0);
 $prepared_by        = $_SESSION['username'] ?? '';
@@ -94,11 +94,23 @@ $authorised_by      = '';
 $error              = '';
 
 // 4. Save Logic (Rule 6 & Rule 7)
+// Fetch MCNO list for dropdown
+$mcno_list = [];
+$mcno_res = $db->query("SELECT MCNO FROM mcno ORDER BY MCNO ASC");
+if ($mcno_res) {
+    while ($mcno_row = $mcno_res->fetch_assoc()) {
+        $mcno_list[] = $mcno_row['MCNO'];
+    }
+}
+
 if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_knit_card'])) {
     $user_req_qty = floatval($_POST['REQ_QTY'] ?? 0);
+    $p_mcno       = trim($_POST['MCNO'] ?? '');
 
     if ($user_req_qty <= 0) {
         $error = "Required Quantity must be a positive number.";
+    } elseif (empty($p_mcno)) {
+        $error = "Machine Number (M/C No) is required.";
     } else {
         // Insert into knit_card
         $ins = $db->prepare("
@@ -142,6 +154,14 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                 $new_kcid = $ins->insert_id;
                 $ins->close();
 
+                // Mark the knitting_program as card generated
+                $upd = $db->prepare("UPDATE knitting_program SET CARD_GENERATED = 1 WHERE KPTID = ?");
+                if ($upd) {
+                    $upd->bind_param("i", $p_kptid);
+                    $upd->execute();
+                    $upd->close();
+                }
+
                 header("Location: knit_card_view.php?id=" . $new_kcid . "&msg=" . urlencode("Knit Card generated successfully!"));
                 exit();
             } else {
@@ -164,14 +184,18 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-teal: #0f172a;
-            --dark-teal: #0f172a;
-            --accent-green: #10b981;
-            --surface-bg: #f8fafc;
-            --card-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
-            --header-from:  #090d22;
-            --header-mid:   #0f172a;
-            --header-to:    #1e3a8a;
+            --bg-canvas: #f8fafc;
+            --surface-card: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --brand-blue: #2563eb;
+            --brand-blue-hover: #1d4ed8;
+            --brand-blue-light: #eff6ff;
+            --border-color: #e2e8f0;
+            --card-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.04), 0 8px 10px -6px rgba(15, 23, 42, 0.03);
+            --card-shadow-hover: 0 20px 30px -10px rgba(15, 23, 42, 0.08);
+            --header-gradient: linear-gradient(135deg, #090d22 0%, #0f172a 50%, #1e3a8a 100%);
             --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
         }
 
@@ -182,26 +206,55 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
 
         body {
             padding: 24px;
-            background-color: var(--surface-bg);
+            background-color: var(--bg-canvas);
             font-family: var(--font-main);
-            color: #334155;
+            color: var(--text-primary);
+            background-image: radial-gradient(circle at 10% 10%, rgba(37, 99, 235, 0.015) 0%, transparent 50%),
+                              radial-gradient(circle at 90% 90%, rgba(30, 58, 138, 0.015) 0%, transparent 50%);
         }
 
+        .main-container {
+            max-width: 1320px;
+            margin: 0 auto;
+        }
+
+        /* ── HEADER BANNER ── */
         .top-banner {
             position: relative;
-            background: linear-gradient(135deg, var(--header-from) 0%, var(--header-mid) 50%, var(--header-to) 100%);
+            background: var(--header-gradient);
             color: white;
-            padding: 32px 36px;
+            padding: 36px 40px;
             border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.16);
             margin-bottom: 28px;
             overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .top-banner::before {
+            content: '';
+            position: absolute;
+            width: 350px; height: 350px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.25) 0%, transparent 70%);
+            top: -100px; right: -50px;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .banner-icon-badge {
+            width: 58px; height: 58px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 26px; color: #60a5fa;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
         }
 
         .top-banner h1 {
             font-weight: 800;
-            font-size: 1.85rem;
+            font-size: 1.9rem;
             margin: 0 0 6px 0;
             letter-spacing: -0.5px;
             background: linear-gradient(135deg, #ffffff 60%, #93c5fd 100%);
@@ -209,123 +262,233 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             -webkit-text-fill-color: transparent;
         }
 
-        .nav-btn {
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 13.5px;
-            padding: 10px 20px;
+        .meta-pill {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            transition: all 0.25s ease;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 12.5px;
+            color: #cbd5e1;
+            font-weight: 600;
         }
-        .nav-btn:hover { transform: translateY(-2px); }
+        .meta-pill strong { color: #ffffff; }
 
         .btn-glass {
             background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.18);
             color: #f8fafc;
             backdrop-filter: blur(10px);
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 13.5px;
+            padding: 10px 20px;
+            transition: all 0.2s ease;
+            display: inline-flex; align-items: center; gap: 8px;
+            text-decoration: none;
         }
-        .btn-glass:hover { background: rgba(255, 255, 255, 0.15); color: #ffffff; }
+        .btn-glass:hover {
+            background: rgba(255, 255, 255, 0.18);
+            color: #ffffff;
+            transform: translateY(-2px);
+        }
 
-        .content-panel {
-            background: #ffffff;
+        /* ── EDITABLE ACTION CONTAINER ── */
+        .action-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 2px solid #bfdbfe;
             border-radius: 24px;
-            padding: 30px;
-            box-shadow: var(--card-shadow);
-            border: 1px solid #e2e8f0;
-            margin-bottom: 30px;
+            padding: 28px 32px;
+            box-shadow: 0 12px 30px rgba(37, 99, 235, 0.06);
+            margin-bottom: 28px;
+            position: relative;
         }
 
-        .form-section-title {
-            font-size: 15px;
+        .action-header-badge {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            font-size: 11px;
             font-weight: 800;
-            color: #0f172a;
+            padding: 4px 12px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .input-group-custom {
+            position: relative;
+        }
+
+        .form-control-editable, .form-select-editable {
+            background-color: #ffffff !important;
+            border: 2px solid #cbd5e1 !important;
+            border-radius: 14px !important;
+            padding: 12px 18px !important;
+            font-weight: 700 !important;
+            font-size: 1.05rem !important;
+            color: #0f172a !important;
+            transition: all 0.25s ease !important;
+        }
+
+        .form-control-editable:focus, .form-select-editable:focus {
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12) !important;
+        }
+
+        .input-group-addon {
+            background: #2563eb;
+            color: white;
+            font-weight: 800;
+            border: none;
+            padding: 0 20px;
+            border-top-right-radius: 14px !important;
+            border-bottom-right-radius: 14px !important;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* ── SPECIFICATION CARDS ── */
+        .specs-panel {
+            background: var(--surface-card);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-color);
+            margin-bottom: 28px;
+        }
+
+        .section-sub-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--text-primary);
             text-transform: uppercase;
             letter-spacing: 0.8px;
-            border-bottom: 2px solid #f1f5f9;
-            padding-bottom: 12px;
-            margin-bottom: 24px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 20px;
+        }
+        .section-sub-title i { color: #2563eb; }
+
+        .spec-grid-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 16px 20px;
+            height: 100%;
+            transition: all 0.2s ease;
+        }
+        .spec-grid-card:hover {
+            background: #ffffff;
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+            transform: translateY(-2px);
         }
 
-        .form-label {
-            font-size: 13px;
+        .spec-label {
+            font-size: 11.5px;
             font-weight: 700;
-            color: #475569;
-            margin-bottom: 6px;
-        }
-
-        .form-control[readonly], .form-control:disabled {
-            background-color: #f8fafc !important;
-            border-color: #e2e8f0 !important;
-            color: #64748b !important;
-            font-weight: 600;
-            cursor: not-allowed;
-        }
-
-        .editable-field {
-            background-color: #ffffff !important;
-            border: 2px solid #2563eb !important;
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1) !important;
-            font-weight: 800 !important;
-            font-size: 1.1rem !important;
-            color: #1e3a8a !important;
-        }
-
-        .editable-badge {
-            background: #dbeafe;
-            color: #1e40af;
-            font-size: 11px;
-            font-weight: 800;
-            padding: 3px 8px;
-            border-radius: 6px;
+            color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            margin-bottom: 6px;
+            display: flex; align-items: center; gap: 6px;
         }
 
-        .readonly-badge {
-            background: #f1f5f9;
-            color: #64748b;
-            font-size: 11px;
+        .spec-value {
+            font-size: 14.5px;
             font-weight: 700;
-            padding: 3px 8px;
-            border-radius: 6px;
-            text-transform: uppercase;
+            color: var(--text-primary);
+            word-break: break-word;
+        }
+
+        /* Custom display badges */
+        .badge-tube {
+            background: #e0f2fe; color: #0369a1;
+            padding: 3px 10px; border-radius: 8px; font-weight: 700; font-size: 12.5px;
+        }
+
+        /* ── FOOTER ACTIONS ── */
+        .footer-action-bar {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 14px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn-submit-primary {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            font-weight: 800;
+            font-size: 14px;
+            padding: 13px 32px;
+            border-radius: 14px;
+            border: none;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex; align-items: center; gap: 10px;
+        }
+        .btn-submit-primary:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 22px rgba(37, 99, 235, 0.45);
+        }
+
+        .btn-cancel-secondary {
+            background: #ffffff;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            font-weight: 700;
+            font-size: 14px;
+            padding: 13px 26px;
+            border-radius: 14px;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-cancel-secondary:hover {
+            background: #f1f5f9;
+            color: var(--text-primary);
+            border-color: #cbd5e1;
         }
     </style>
 </head>
 
 <body>
 
-    <div class="container-fluid" style="max-width: 1350px;">
+    <div class="main-container">
 
-        <!-- HEADER BANNER -->
+        <!-- ═══ HEADER BANNER ═══ -->
         <div class="top-banner">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                 <div class="d-flex align-items-center gap-3">
-                    <div style="width:54px; height:54px; border-radius:16px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; font-size:24px;">
-                        <i class="fa-solid fa-file-circle-plus"></i>
+                    <div class="banner-icon-badge">
+                        <i class="fa-solid fa-id-card"></i>
                     </div>
                     <div>
                         <h1>Generate Knit Card</h1>
-                        <p class="mb-0 text-white-50 small">Program ID: <strong class="text-white">#<?php echo $p_kptid; ?></strong> &nbsp;|&nbsp; Sub Transaction ID: <strong class="text-white"><?php echo htmlspecialchars($p_sub_tid); ?></strong></p>
+                        <div class="d-flex align-items-center gap-2 mt-1">
+                            <span class="meta-pill"><i class="fa-solid fa-hashtag text-info"></i> Program ID: <strong>#<?php echo $p_kptid; ?></strong></span>
+                            <span class="meta-pill"><i class="fa-solid fa-barcode text-info"></i> Sub Transaction ID: <strong><?php echo htmlspecialchars($p_sub_tid); ?></strong></span>
+                        </div>
                     </div>
                 </div>
                 <div>
-                    <a href="knitting_program_list.php" class="btn nav-btn btn-glass">
-                        <i class="fa-solid fa-arrow-left"></i> Cancel & Return
+                    <a href="knitting_program_list.php" class="btn-glass">
+                        <i class="fa-solid fa-arrow-left"></i> Return to Programs
                     </a>
                 </div>
             </div>
         </div>
 
         <?php if (!empty($error)): ?>
-            <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4 p-3">
-                <i class="fa-solid fa-triangle-exclamation me-2"></i> <?php echo htmlspecialchars($error); ?>
+            <div class="alert alert-danger alert-dismissible fade show rounded-4 mb-4 p-3 border-0 shadow-sm" style="background:#fef2f2; color:#991b1b;">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation fs-5"></i>
+                    <strong>Error:</strong> <?php echo htmlspecialchars($error); ?>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
@@ -334,105 +497,169 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             <input type="hidden" name="save_knit_card" value="1">
             <input type="hidden" name="program_id" value="<?php echo $p_kptid; ?>">
 
-            <!-- MAIN FORM PANEL -->
-            <div class="content-panel">
-
-                <!-- EDITABLE SECTION: QUANTITY ONLY -->
-                <div class="p-3 mb-4 rounded-4" style="background:#eff6ff; border:1px solid #bfdbfe;">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <label class="form-label mb-0 fs-6 text-primary fw-bold">
-                            <i class="fa-solid fa-pen-to-square me-1"></i> Required Quantity (KG)
+            <!-- ═══ TARGET PRODUCTION SETTINGS (EDITABLE) ═══ -->
+            <div class="action-card">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-sliders text-primary fs-5"></i>
+                        <h6 class="mb-0 fw-bold text-dark fs-6">Target Production Settings</h6>
+                    </div>
+                    <span class="action-header-badge"><i class="fa-solid fa-pen me-1"></i> Editable Fields</span>
+                </div>
+                <p class="small text-muted mb-4">Select or edit the knitting machine assignment and target production quantity for this Knit Card.</p>
+                
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-dark mb-2">
+                            <i class="fa-solid fa-gear me-1 text-primary"></i> Machine Number (M/C No) <span class="text-danger">*</span>
                         </label>
-                        <span class="editable-badge"><i class="fa-solid fa-unlock me-1"></i> Editable Field</span>
+                        <select name="MCNO" class="form-select form-select-editable" required>
+                            <option value="">-- Select Knitting Machine --</option>
+                            <?php foreach ($mcno_list as $mc): ?>
+                                <option value="<?php echo htmlspecialchars($mc); ?>" <?php echo ($p_mcno === $mc) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($mc); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
-                    <p class="small text-muted mb-2">Enter the target production quantity for this Knit Card. Only this quantity field is editable.</p>
-                    <div class="input-group input-group-lg">
-                        <input type="number" step="0.01" min="0.01" name="REQ_QTY" class="form-control editable-field" value="<?php echo htmlspecialchars($default_qty); ?>" required>
-                        <span class="input-group-text bg-primary text-white fw-bold">KG</span>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-dark mb-2">
+                            <i class="fa-solid fa-weight-hanging me-1 text-primary"></i> Required Quantity (KG) <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group input-group-custom">
+                            <input type="number" step="0.01" min="0.01" name="REQ_QTY" class="form-control form-control-editable" value="<?php echo htmlspecialchars($default_qty); ?>" required placeholder="Enter quantity in KG">
+                            <span class="input-group-text input-group-addon">KG</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ SPECIFICATIONS READONLY PANEL ═══ -->
+            <div class="specs-panel">
+                <div class="d-flex align-items-center justify-content-between mb-4 border-bottom pb-3">
+                    <div class="section-sub-title mb-0 border-0 p-0">
+                        <i class="fa-solid fa-microchip"></i> Program Specifications & Yarn Parameters
+                    </div>
+                    <span class="badge bg-light text-secondary border px-3 py-2 rounded-3 font-semibold" style="font-size:11px; letter-spacing:0.5px; text-transform:uppercase;">
+                        <i class="fa-solid fa-lock me-1 text-muted"></i> Auto-Populated from Program
+                    </span>
+                </div>
+
+                <!-- Category 1: Order & Sales Specs -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3 col-sm-6">
+                        <div class="spec-grid-card">
+                            <div class="spec-label"><i class="fa-solid fa-building"></i> Buyer Name</div>
+                            <div class="spec-value"><?php echo htmlspecialchars($p_buyer ?: 'N/A'); ?></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="spec-grid-card">
+                            <div class="spec-label"><i class="fa-solid fa-file-invoice"></i> Booking No</div>
+                            <div class="spec-value text-primary"><?php echo htmlspecialchars($p_booking ?: 'N/A'); ?></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="spec-grid-card">
+                            <div class="spec-label"><i class="fa-solid fa-cart-shopping"></i> Sales Order (SO No)</div>
+                            <div class="spec-value"><?php echo htmlspecialchars($p_sono ?: 'N/A'); ?></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="spec-grid-card">
+                            <div class="spec-label"><i class="fa-solid fa-shirt"></i> Style No</div>
+                            <div class="spec-value"><?php echo htmlspecialchars($p_style ?: 'N/A'); ?></div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- READ ONLY SECTION: AUTO GENERATED INFORMATION -->
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="form-section-title mb-0 border-0 p-0">
-                        <i class="fa-solid fa-lock me-1"></i> Auto-Generated Program Specifications
+                <!-- Category 2: Fabric Specs -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3 col-sm-6">
+                        <div class="spec-grid-card">
+                            <div class="spec-label"><i class="fa-solid fa-layer-group"></i> Fabric Type</div>
+                            <div class="spec-value"><?php echo htmlspecialchars($p_fabrics ?: 'N/A'); ?></div>
+                        </div>
                     </div>
-                    <span class="readonly-badge"><i class="fa-solid fa-lock me-1"></i> Read-Only (Non-Editable)</span>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="spec-grid-card">
+                            <div class="spec-label"><i class="fa-solid fa-ruler-horizontal"></i> Finish Dia</div>
+                            <div class="spec-value"><?php echo htmlspecialchars($p_finish_dia ?: 'N/A'); ?></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="spec-grid-card">
+                            <div class="spec-label"><i class="fa-solid fa-gauge-high"></i> Finish GSM</div>
+                            <div class="spec-value"><?php echo htmlspecialchars($p_finish_gsm ?: 'N/A'); ?></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="spec-grid-card">
+                            <div class="spec-label"><i class="fa-solid fa-circle-nodes"></i> Open / Tube</div>
+                            <div class="spec-value">
+                                <span class="badge-tube">
+                                    <?php echo $p_open_tube === 'T' ? 'Tube (T)' : 'Open (O)'; ?>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
+                <!-- Category 3: Yarn & Material Details -->
                 <div class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label">Buyer Name</label>
-                        <input type="text" class="form-control" value="<?php echo htmlspecialchars($p_buyer); ?>" readonly>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="spec-grid-card">
+                            <div class="spec-label"><i class="fa-solid fa-boxes-stacked"></i> Yarn Type</div>
+                            <div class="spec-value"><?php echo htmlspecialchars($p_yarn_type ?: 'N/A'); ?></div>
+                        </div>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Booking No</label>
-                        <input type="text" class="form-control" value="<?php echo htmlspecialchars($p_booking); ?>" readonly>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="spec-grid-card">
+                            <div class="spec-label"><i class="fa-solid fa-calculator"></i> Yarn Count</div>
+                            <div class="spec-value"><?php echo htmlspecialchars($p_yarn_count ?: 'N/A'); ?></div>
+                        </div>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Sales Order (SO No)</label>
-                        <input type="text" class="form-control" value="<?php echo htmlspecialchars($p_sono); ?>" readonly>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="spec-grid-card">
+                            <div class="spec-label"><i class="fa-solid fa-cubes"></i> Lot No</div>
+                            <div class="spec-value"><?php echo htmlspecialchars($p_lot_no ?: 'N/A'); ?></div>
+                        </div>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Style No</label>
-                        <input type="text" class="form-control" value="<?php echo htmlspecialchars($p_style); ?>" readonly>
-                    </div>
-
-                    <div class="col-md-3">
-                        <label class="form-label">Machine (M/C No)</label>
-                        <input type="text" class="form-control" value="<?php echo htmlspecialchars($p_mcno); ?>" readonly>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Finish Dia</label>
-                        <input type="text" class="form-control" value="<?php echo htmlspecialchars($p_finish_dia); ?>" readonly>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Finish GSM</label>
-                        <input type="text" class="form-control" value="<?php echo htmlspecialchars($p_finish_gsm); ?>" readonly>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Open / Tube</label>
-                        <input type="text" class="form-control" value="<?php echo $p_open_tube === 'T' ? 'Tube (T)' : 'Open (O)'; ?>" readonly>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="spec-grid-card">
+                            <div class="spec-label"><i class="fa-solid fa-palette"></i> Color</div>
+                            <div class="spec-value"><?php echo htmlspecialchars($p_color ?: 'N/A'); ?></div>
+                        </div>
                     </div>
 
-                    <div class="col-md-3">
-                        <label class="form-label">Fabric Type</label>
-                        <input type="text" class="form-control" value="<?php echo htmlspecialchars($p_fabrics); ?>" readonly>
+                    <div class="col-md-4 col-sm-6">
+                        <div class="spec-grid-card">
+                            <div class="spec-label"><i class="fa-solid fa-barcode"></i> Knit Material Code</div>
+                            <div class="spec-value text-break" style="font-size:13px; font-family:monospace; color:#334155;"><?php echo htmlspecialchars($p_knit_mat_code ?: 'N/A'); ?></div>
+                        </div>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Yarn Type</label>
-                        <input type="text" class="form-control" value="<?php echo htmlspecialchars($p_yarn_type); ?>" readonly>
+                    <div class="col-md-5 col-sm-6">
+                        <div class="spec-grid-card">
+                            <div class="spec-label"><i class="fa-solid fa-align-left"></i> Knit Description</div>
+                            <div class="spec-value" style="font-size:13px; font-weight:600;"><?php echo htmlspecialchars($p_knit_m_desc ?: 'N/A'); ?></div>
+                        </div>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Yarn Count</label>
-                        <input type="text" class="form-control" value="<?php echo htmlspecialchars($p_yarn_count); ?>" readonly>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Lot No</label>
-                        <input type="text" class="form-control" value="<?php echo htmlspecialchars($p_lot_no); ?>" readonly>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label">Knit Material Code</label>
-                        <input type="text" class="form-control" value="<?php echo htmlspecialchars($p_knit_mat_code); ?>" readonly>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Knit Description</label>
-                        <input type="text" class="form-control" value="<?php echo htmlspecialchars($p_knit_m_desc); ?>" readonly>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Card Generation Date</label>
-                        <input type="text" class="form-control" value="<?php echo htmlspecialchars($card_date); ?>" readonly>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="spec-grid-card">
+                            <div class="spec-label"><i class="fa-solid fa-calendar-check"></i> Generation Date</div>
+                            <div class="spec-value"><i class="fa-regular fa-calendar me-1 text-muted"></i> <?php echo htmlspecialchars($card_date); ?></div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- SUBMIT BUTTON -->
-                <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
-                    <a href="knitting_program_list.php" class="btn btn-outline-secondary px-4 py-2 fw-semibold" style="border-radius:12px;">
-                        Cancel
+                <!-- Footer Action Buttons -->
+                <div class="footer-action-bar mt-4">
+                    <a href="knitting_program_list.php" class="btn-cancel-secondary">
+                        <i class="fa-solid fa-xmark"></i> Cancel
                     </a>
-                    <button type="submit" class="btn btn-primary px-5 py-2 fw-bold" style="border-radius:12px; background:linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
-                        <i class="fa-solid fa-floppy-disk me-2"></i> Save & Generate Knit Card
+                    <button type="submit" class="btn-submit-primary">
+                        <i class="fa-solid fa-floppy-disk"></i> Save & Generate Knit Card
                     </button>
                 </div>
 
@@ -443,3 +670,4 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
 
 </body>
 </html>
+
