@@ -51,6 +51,17 @@
             font-size: 12px;
             color: #6b7280;
         }
+
+        .po-link {
+            color: #2563eb;
+            font-weight: 600;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .po-link:hover {
+            color: #1e40af;
+        }
     </style>
 </head>
 
@@ -143,7 +154,7 @@
                 tbody.append(`
             <tr>
                 <td>${row.BUDAT ?? ''}</td>
-                <td>${row.PO_NUMBER ?? ''}</td>
+                <td><a href="knitting_program.php?booking=${encodeURIComponent(row.PO_NUMBER ?? '')}" class="po-link">${row.PO_NUMBER ?? ''}</a></td>
                 <td>${row.SONO ?? ''}</td>
                 <td>${row.BUYER ?? ''}</td>
                 <td>${row.STYLE ?? ''}</td>
@@ -225,7 +236,15 @@
                 $('#searchInput').val('');
                 loadAll();
             });
-            loadAll();
+
+            var urlParams = new URLSearchParams(window.location.search);
+            var bookingParam = urlParams.get('booking');
+            if (bookingParam) {
+                $('#searchInput').val(bookingParam);
+                searchBooking();
+            } else {
+                loadAll();
+            }
         });
     </script>
 

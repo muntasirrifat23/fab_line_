@@ -1135,6 +1135,13 @@
 
             // initial row
             addMcnoRow();
+
+            var urlParams = new URLSearchParams(window.location.search);
+            var bookingParam = urlParams.get('booking');
+            if (bookingParam) {
+                $('#bookingInput').val(bookingParam);
+                loadFormData(bookingParam);
+            }
         });
 
     })(jQuery);
