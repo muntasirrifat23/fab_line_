@@ -70,7 +70,7 @@
             <div class="row g-3 align-items-end controls">
                 <div class="col-md-8">
                     <label class="form-label fw-semibold" style="font-size: larger; color: black;">
-                        Search Roll Or Booking No
+                        Search Roll Or PO Number
                     </label>
 
                     <div class="input-group input-group-sm d-flex align-items-center gap-2">
