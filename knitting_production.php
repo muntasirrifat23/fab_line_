@@ -630,8 +630,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
         'QTY': 'QTY',
         'SL_VDQ': 'SL / VDQ',
         'LOT_NO': 'Lot No',
-        'KCTID': 'KCTID',
-        'KPTID': 'KPTID',
         'MCARD': 'MCARD',
         'ROLL': 'ROLL',
         'SUPPLIER': 'Supplier',
@@ -820,8 +818,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
           QTY: m(row.QTY),
           SL_VDQ: m(row.SL),
           LOT_NO: m(row.LOT),
-          KCTID: m(row.KCTID),
-          KPTID: m(row.KPTID),
           MCARD: m(row.MCARD),
           ROLL: m(row.ROLL),
           SUPPLIER: m(row.SUPPLIER),
@@ -859,16 +855,16 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
           </div>
         `;
 
-        html += buildFieldRow(['ROLL', 'KCTID', 'KPTID']);
-        html += buildFieldRow(['MCARD', 'BOOKING', 'SONO']);
+        html += buildFieldRow(['ROLL', 'BOOKING', 'SONO']);
         html += buildFieldRow(['BUYER', 'STYLE', 'COLOR']);
         html += buildFieldRow(['MCNO', 'MC_DIA', 'SUPPLIER']);
         html += buildFieldRow(['SHIFT', 'YARN_TYPE', 'YARN_COUNT']);
         html += buildFieldRow(['FABRICS_TYPE', 'FINISH_GSM', 'FINISH_DIA']);
         html += buildFieldRow(['OPEN_TUBE', 'SL_VDQ', 'GGSM']);
-        html += buildFieldRow(['FEEDER_PLAN', 'LOT_NO', 'QTY']);
-        html += buildFieldRow(['KNIT_MATERIAL_CODE', 'CREATED_DATE', 'UNAME']);
-        html += buildFieldRow(['KNIT_M_DESCRIPTION']);
+        html += buildFieldRow(['FEEDER_PLAN',  'LOT_NO', 'QTY']);
+        // html += buildFieldRow([]);
+        html += buildFieldRow(['KNIT_MATERIAL_CODE', 'KNIT_M_DESCRIPTION']);
+        // html += buildFieldRow([]);
 
         html += `
           <button class="rescan-btn" onclick="window.location.reload();">
