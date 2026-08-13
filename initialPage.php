@@ -428,7 +428,7 @@ mysqli_close($db);
 
                 <div class="btn-grid">
                     <button class="w3-button w3-teal" name="subcontract_input" id="subcontract_input">
-                        <i class="fas fa-industry"></i> SUBCONTRACT INPUT
+                        <i class="fa-solid fa-clipboard-list"></i> SUBCONTRACT INPUT
                     </button>
 
                     <button class="w3-button w3-teal" name="knitting_program" id="knitting_program">
