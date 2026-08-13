@@ -1034,7 +1034,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
         renderEditForm();
       }
 
-      function renderEditForm() {
+function renderEditForm() {
         if (!scannedInfo || !scannedInfo.parsed) {
           return;
         }
@@ -1042,82 +1042,38 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
         const qtyValue = scannedInfo.QTY || '';
 
         const originalQty = scannedInfo.originalQTY || scannedInfo.QTY || '';
+
+        const buildFieldRow = (fields) => `
+          <div class="data-row default-row">
+            ${fields.map(field => `
+              <div class="field-block">
+                <span class="field-label">${FIELD_LABELS[field] || field}</span>
+                <span class="field-value">${scannedInfo[field] || '-'}</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+
         let html = `
           <div class="data-row header-row" style="border-left-color:#3b82f6;">
             <span class="label">✏️ Edit Mode <span class="scanned-badge" style="background:#3b82f6;">editing</span></span>
             <span class="value">${new Date().toLocaleTimeString()}</span>
           </div>
-          <div class="message-row" style="margin-bottom:8px;">Only <strong>Qty</strong> is editable. Maximum available qty: <strong>${originalQty || 'N/A'}</strong>.</div>
+          <div class="message-row" style="margin-bottom:8px;">Only <strong>REJ QTY</strong> is editable. Maximum available qty: <strong>${originalQty || 'N/A'}</strong>.</div>
+        `;
+
+        html += buildFieldRow(['ROLL', 'BOOKING', 'SONO']);
+        html += buildFieldRow(['BUYER', 'STYLE', 'COLOR']);
+        html += buildFieldRow(['MCNO', 'MC_DIA', 'SUPPLIER']);
+        html += buildFieldRow(['SHIFT', 'YARN_TYPE', 'YARN_COUNT']);
+        html += buildFieldRow(['FABRICS_TYPE', 'FINISH_GSM', 'FINISH_DIA']);
+        html += buildFieldRow(['OPEN_TUBE', 'SL_VDQ', 'GGSM']);
+        html += `
           <div class="data-row default-row">
             <div class="field-block">
-              <span class="field-label">${FIELD_LABELS.SUB_TID}</span>
-              <span class="field-value">${scannedInfo.SUB_TID || '-'}</span>
+              <span class="field-label">${FIELD_LABELS.FEEDER_PLAN}</span>
+              <span class="field-value">${scannedInfo.FEEDER_PLAN || '-'}</span>
             </div>
-            <div class="field-block">
-              <span class="field-label">${FIELD_LABELS.BOOKING}</span>
-              <span class="field-value">${scannedInfo.BOOKING || '-'}</span>
-            </div>
-            <div class="field-block">
-              <span class="field-label">${FIELD_LABELS.SONO}</span>
-              <span class="field-value">${scannedInfo.SONO || '-'}</span>
-            </div>
-            <div class="field-block">
-              <span class="field-label">${FIELD_LABELS.BUYER}</span>
-              <span class="field-value">${scannedInfo.BUYER || '-'}</span>
-            </div>
-          </div>
-          <div class="data-row default-row">
-            <div class="field-block">
-              <span class="field-label">${FIELD_LABELS.MCNO}</span>
-              <span class="field-value">${scannedInfo.MCNO || '-'}</span>
-            </div>
-            <div class="field-block">
-              <span class="field-label">${FIELD_LABELS.MC_DIA}</span>
-              <span class="field-value">${scannedInfo.MC_DIA || '-'}</span>
-            </div>
-            <div class="field-block">
-              <span class="field-label">${FIELD_LABELS.STYLE}</span>
-              <span class="field-value">${scannedInfo.STYLE || '-'}</span>
-            </div>
-            <div class="field-block">
-              <span class="field-label">${FIELD_LABELS.YARN_TYPE}</span>
-              <span class="field-value">${scannedInfo.YARN_TYPE || '-'}</span>
-            </div>
-          </div>
-          <div class="data-row default-row">
-            <div class="field-block">
-              <span class="field-label">${FIELD_LABELS.YARN_COUNT}</span>
-              <span class="field-value">${scannedInfo.YARN_COUNT || '-'}</span>
-            </div>
-            <div class="field-block">
-              <span class="field-label">${FIELD_LABELS.FABRICS_TYPE}</span>
-              <span class="field-value">${scannedInfo.FABRICS_TYPE || '-'}</span>
-            </div>
-            <div class="field-block">
-              <span class="field-label">${FIELD_LABELS.FINISH_GSM}</span>
-              <span class="field-value">${scannedInfo.FINISH_GSM || '-'}</span>
-            </div>
-            <div class="field-block">
-              <span class="field-label">${FIELD_LABELS.FINISH_DIA}</span>
-              <span class="field-value">${scannedInfo.FINISH_DIA || '-'}</span>
-            </div>
-          </div>
-          <div class="data-row default-row">
-            <div class="field-block">
-              <span class="field-label">${FIELD_LABELS.OPEN_TUBE}</span>
-              <span class="field-value">${scannedInfo.OPEN_TUBE || '-'}</span>
-            </div>
-            <div class="field-block">
-              <span class="field-label">${FIELD_LABELS.COLOR}</span>
-              <span class="field-value">${scannedInfo.COLOR || '-'}</span>
-            </div>
-            <div class="field-block">
-              <span class="field-label">${FIELD_LABELS.SL_VDQ}</span>
-              <span class="field-value">${scannedInfo.SL_VDQ || '-'}</span>
-            </div>
-        
-          </div>
-          <div class="data-row default-row single-row">
             <div class="field-block">
               <span class="field-label">${FIELD_LABELS.LOT_NO}</span>
               <span class="field-value">${scannedInfo.LOT_NO || '-'}</span>
@@ -1127,6 +1083,10 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
               <input type="text" class="field-input" id="edit-QTY" value="${qtyValue}">
             </div>
           </div>
+        `;
+        html += buildFieldRow(['KNIT_MATERIAL_CODE', 'KNIT_M_DESCRIPTION']);
+
+        html += `
           <button class="rescan-btn" onclick="window.location.reload();">
             <i class="fas fa-redo"></i> Scan Another QR
           </button>
