@@ -1,3 +1,28 @@
+<?php
+// ------- In-file AJAX endpoint: fetch knit_card_test row by ROLL -------
+if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
+    require_once 'config.php';
+    header('Content-Type: application/json');
+    header('X-Content-Type-Options: nosniff');
+
+    $roll = isset($_GET['roll']) ? trim($_GET['roll']) : '';
+    if ($roll === '') {
+        echo json_encode(['success' => false, 'error' => 'ROLL is required']);
+        exit();
+    }
+
+    $s = mysqli_real_escape_string($db, $roll);
+    $q = "SELECT * FROM knit_card_test WHERE ROLL = '$s' LIMIT 1";
+    $res = mysqli_query($db, $q);
+
+    if ($res && mysqli_num_rows($res) > 0) {
+        echo json_encode(['success' => true, 'data' => mysqli_fetch_assoc($res)]);
+    } else {
+        echo json_encode(['success' => false, 'error' => 'No data found for ROLL: ' . $roll]);
+    }
+    exit();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -589,7 +614,7 @@
 
       const FIELD_LABELS = {
         'SUB_TID': 'ROLL NO',
-        'BOOKING': 'Booking',
+        'BOOKING': 'PO NUMBER',
         'SONO': 'SONO',
         'BUYER': 'Buyer',
         'MCNO': 'Machine No',
@@ -604,7 +629,19 @@
         'COLOR': 'Color',
         'QTY': 'QTY',
         'SL_VDQ': 'SL / VDQ',
-        'LOT_NO': 'Lot No'
+        'LOT_NO': 'Lot No',
+        'KCTID': 'KCTID',
+        'KPTID': 'KPTID',
+        'MCARD': 'MCARD',
+        'ROLL': 'ROLL',
+        'SUPPLIER': 'Supplier',
+        'GGSM': 'Gray GSM',
+        'FEEDER_PLAN': 'Feeder Plan',
+        'SHIFT': 'Shift',
+        'KNIT_MATERIAL_CODE': 'Knit Material Code',
+        'KNIT_M_DESCRIPTION': 'Knit M Description',
+        'CREATED_DATE': 'Created Date',
+        'UNAME': 'User'
       };
 
       let scannedInfo = null;
@@ -761,14 +798,138 @@
         };
       }
 
+      // Render full data fetched from knit_card_test by ROLL
+      function renderRollData(row, qrText) {
+        const m = (v) => (v === null || v === undefined) ? '' : String(v);
+
+        scannedInfo = {
+          SUB_TID: m(row.ROLL),
+          BOOKING: m(row.PO_NUMBER),
+          SONO: m(row.SONO),
+          BUYER: m(row.BUYER),
+          MCNO: m(row.MCNO),
+          MC_DIA: m(row.MCDIA),
+          STYLE: m(row.STYLE),
+          YARN_TYPE: m(row.YTYPE),
+          YARN_COUNT: m(row.YCOUNT),
+          FABRICS_TYPE: m(row.FTYPE),
+          FINISH_GSM: m(row.FGSM),
+          FINISH_DIA: m(row.FDIA),
+          OPEN_TUBE: m(row.O_T),
+          COLOR: m(row.COLOR),
+          QTY: m(row.QTY),
+          SL_VDQ: m(row.SL),
+          LOT_NO: m(row.LOT),
+          KCTID: m(row.KCTID),
+          KPTID: m(row.KPTID),
+          MCARD: m(row.MCARD),
+          ROLL: m(row.ROLL),
+          SUPPLIER: m(row.SUPPLIER),
+          GGSM: m(row.GGSM),
+          FEEDER_PLAN: m(row.FEEDER_PLAN),
+          SHIFT: m(row.SHIFT),
+          KNIT_MATERIAL_CODE: m(row.KNIT_MATERIAL_CODE),
+          KNIT_M_DESCRIPTION: m(row.KNIT_M_DESCRIPTION),
+          CREATED_DATE: m(row.CREATED_DATE),
+          UNAME: m(row.UNAME),
+          raw: qrText,
+          parsed: true,
+          originalQTY: m(row.QTY),
+          edited: false
+        };
+
+        isEditMode = false;
+        hideActionContent();
+
+        const buildFieldRow = (fields) => `
+          <div class="data-row default-row">
+            ${fields.map(field => `
+              <div class="field-block">
+                <span class="field-label">${FIELD_LABELS[field] || field}</span>
+                <span class="field-value">${scannedInfo[field] || '-'}</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+
+        let html = `
+          <div class="data-row header-row" style="border-left-color:#4fc3f7;">
+            <span class="label">✅ QR Scanned <span class="scanned-badge">ROLL NO</span></span>
+            <span class="value">${new Date().toLocaleTimeString()}</span>
+          </div>
+        `;
+
+        html += buildFieldRow(['ROLL', 'KCTID', 'KPTID']);
+        html += buildFieldRow(['MCARD', 'BOOKING', 'SONO']);
+        html += buildFieldRow(['BUYER', 'STYLE', 'COLOR']);
+        html += buildFieldRow(['MCNO', 'MC_DIA', 'SUPPLIER']);
+        html += buildFieldRow(['SHIFT', 'YARN_TYPE', 'YARN_COUNT']);
+        html += buildFieldRow(['FABRICS_TYPE', 'FINISH_GSM', 'FINISH_DIA']);
+        html += buildFieldRow(['OPEN_TUBE', 'SL_VDQ', 'GGSM']);
+        html += buildFieldRow(['FEEDER_PLAN', 'LOT_NO', 'QTY']);
+        html += buildFieldRow(['KNIT_MATERIAL_CODE', 'CREATED_DATE', 'UNAME']);
+        html += buildFieldRow(['KNIT_M_DESCRIPTION']);
+
+        html += `
+          <button class="rescan-btn" onclick="window.location.reload();">
+            <i class="fas fa-redo"></i> Scan Another QR
+          </button>
+        `;
+
+        resultContainer.innerHTML = html;
+        renderProductionActions();
+      }
+
+      function renderUnstructuredData(text, msg) {
+        resultContainer.innerHTML = `
+          <div class="data-row header-row" style="border-left-color:#4fc3f7;">
+            <span class="label">✅ QR Scanned <span class="scanned-badge">raw</span></span>
+            <span class="value">${new Date().toLocaleTimeString()}</span>
+          </div>
+          <div class="data-row" style="border-left-color:#f59e0b; background:#1f2a3a;">
+            <span class="label" style="color:#fbbf24;">📌 Type:</span>
+            <span class="value">${msg || 'Unstructured scan data'}</span>
+          </div>
+          <div class="data-row" style="background:#0f172a; border-left-color:#6b7280; flex-wrap:wrap;">
+            <span class="label" style="color:#9ca3af; min-width:100%;">Raw Data:</span>
+            <span class="value" style="text-align:left; font-size:0.8rem; word-break:break-all; color:#d1d5db;">${text}</span>
+          </div>
+          <button class="rescan-btn" onclick="window.location.reload();">
+            <i class="fas fa-redo"></i> Scan Another QR
+          </button>
+        `;
+        hideActionContent();
+      }
+
       function renderScannedData(qrText) {
         if (!qrText || qrText.trim() === '') {
           renderDefaultData();
           return;
         }
 
-        if (!scannedInfo || scannedInfo.raw !== qrText) {
-          scannedInfo = parseQrText(qrText);
+        const text = String(qrText).trim();
+        const isBareRoll = /^\d+$/.test(text) || /^ROLL:\s*\d+$/i.test(text);
+
+        if (isBareRoll) {
+          const roll = text.replace(/^ROLL:\s*/i, '').trim();
+          fetch('knitting_production.php?action=get_roll&roll=' + encodeURIComponent(roll))
+            .then(r => r.json())
+            .then(res => {
+              if (res && res.success) {
+                renderRollData(res.data, text);
+              } else {
+                renderUnstructuredData(text, (res && res.error) || 'No data found for ROLL: ' + roll);
+              }
+            })
+            .catch(err => {
+              console.error('ROLL lookup failed:', err);
+              renderUnstructuredData(text, 'Failed to fetch ROLL data');
+            });
+          return;
+        }
+
+        if (!scannedInfo || scannedInfo.raw !== text) {
+          scannedInfo = parseQrText(text);
         }
         isEditMode = false;
         hideActionContent();
