@@ -13,7 +13,7 @@ if ($search !== '') {
 
     $conditions[] = "(
         ROLL LIKE '%$s%' 
-        OR BOOKING_NO LIKE '%$s%'
+        OR PO_NUMBER LIKE '%$s%'
         OR SONO LIKE '%$s%'
         OR MCNO LIKE '%$s%'
     )";

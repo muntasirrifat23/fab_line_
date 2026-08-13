@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -101,28 +101,35 @@
                         <tr>
                             <th>DATE</th>
                             <th>ROLL NO</th>
-                            <th>BOOKING</th>
-                            <th>MCNO</th>
-                            <th>QTY</th>
+                            <th>PO NUMBER</th>
+                            <th>OQTY</th>
                             <th>REJ QTY</th>
+                            <th>UQTY</th>
                             <th>SONO</th>
                             <th>BUYER</th>
                             <th>STYLE</th>
+                            <th>COLOR</th>
+                            <th>MCNO</th>
                             <th>MC DIA</th>
+                            <th>SUPPLIER</th>
+                            <th>SHIFT</th>
                             <th>YARN TYPE</th>
                             <th>YARN COUNT</th>
                             <th>FABRICS TYPE</th>
                             <th>FINISH GSM</th>
                             <th>FINISH DIA</th>
                             <th>OPEN / TUBE</th>
-                            <th>COLOR</th>
                             <th>SL/VDQ</th>
+                            <th>GRAY GSM</th>
+                            <th>FEEDER PLAN</th>
                             <th>LOT NO</th>
+                            <th>KNIT MATERIAL CODE</th>
+                            <th>KNIT M DES</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="21" class="text-center small-muted">Loading data...</td>
+                            <td colspan="26" class="text-center small-muted">Loading data...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -138,7 +145,7 @@
             var tbody = $('#tableBody');
             tbody.empty();
             if (!data || data.length === 0) {
-                tbody.append('<tr><td colspan="21" class="text-center small-muted">No Roll Or Booking No found</td></tr>');
+                tbody.append('<tr><td colspan="26" class="text-center small-muted">No Roll Or Booking No found</td></tr>');
                 return;
             }
 
@@ -146,23 +153,30 @@
                 var tr = $('<tr>');
                 tr.append($('<td>').text(row.BUDAT || ''));
                 tr.append($('<td>').text(row.ROLL || ''));
-                tr.append($('<td>').text(row.BOOKING_NO || ''));
-                tr.append($('<td>').text(row.MCNO || ''));
-                tr.append($('<td>').text(row.UQTY || ''));
+                tr.append($('<td>').text(row.PO_NUMBER || ''));
+                tr.append($('<td>').text(row.OQTY || ''));
                 tr.append($('<td>').text(row.RQTY || ''));
+                tr.append($('<td>').text(row.UQTY || ''));
                 tr.append($('<td>').text(row.SONO || ''));
                 tr.append($('<td>').text(row.BUYER || ''));
                 tr.append($('<td>').text(row.STYLE || ''));
+                tr.append($('<td>').text(row.COLOR || ''));
+                tr.append($('<td>').text(row.MCNO || ''));
                 tr.append($('<td>').text(row.MC_DIA || ''));
+                tr.append($('<td>').text(row.SUPPLIER || ''));
+                tr.append($('<td>').text(row.SHIFT || ''));
                 tr.append($('<td>').text(row.YARN_TYPE || ''));
                 tr.append($('<td>').text(row.YARN_COUNT || ''));
                 tr.append($('<td>').text(row.FABRICS_TYPE || ''));
                 tr.append($('<td>').text(row.FINISH_GSM || ''));
                 tr.append($('<td>').text(row.FINISH_DIA || ''));
                 tr.append($('<td>').text(row.OPEN_TUBE || ''));
-                tr.append($('<td>').text(row.COLOR || ''));
                 tr.append($('<td>').text(row.SL_VDQ || ''));
+                tr.append($('<td>').text(row.GRAY_GSM || ''));
+                tr.append($('<td>').text(row.FEEDER_PLAN || ''));
                 tr.append($('<td>').text(row.LOT_NO || ''));
+                tr.append($('<td>').text(row.KNIT_MATERIAL_CODE || ''));
+                tr.append($('<td>').text(row.KNIT_M_DES || ''));
                 tbody.append(tr);
             });
         }
@@ -190,13 +204,13 @@
                         renderTableRows(resp.data);
                     } else {
                         $('#tableBody').html(
-                            '<tr><td colspan="21" class="text-center small-muted">No data found</td></tr>'
+                            '<tr><td colspan="26" class="text-center small-muted">No data found</td></tr>'
                         );
                     }
                 })
                 .fail(function() {
                     $('#tableBody').html(
-                        '<tr><td colspan="21" class="text-center text-danger">Error searching</td></tr>'
+                        '<tr><td colspan="26" class="text-center text-danger">Error searching</td></tr>'
                     );
                 })
                 .always(function() {
@@ -207,7 +221,7 @@
         }
 
         function loadAll() {
-            $('#tableBody').html('<tr><td colspan="21" class="text-center small-muted">Loading data...</td></tr>');
+            $('#tableBody').html('<tr><td colspan="26" class="text-center small-muted">Loading data...</td></tr>');
             $.ajax({
                     url: 'ajaxKnittingProduction_Report.php',
                     dataType: 'json',
@@ -215,10 +229,10 @@
                 })
                 .done(function(resp) {
                     if (resp && resp.success) renderTableRows(resp.data);
-                    else $('#tableBody').html('<tr><td colspan="21" class="text-center small-muted">No data returned</td></tr>');
+                    else $('#tableBody').html('<tr><td colspan="26" class="text-center small-muted">No data returned</td></tr>');
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr><td colspan="21" class="text-center text-danger">Error loading data</td></tr>');
+                    $('#tableBody').html('<tr><td colspan="26" class="text-center text-danger">Error loading data</td></tr>');
                 });
         }
 
