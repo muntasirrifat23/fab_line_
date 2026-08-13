@@ -29,7 +29,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Report | Production</title>
+  <title>Knitting | Production</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <style>
@@ -1218,7 +1218,12 @@ function renderEditForm() {
           open_tube: scannedInfo.OPEN_TUBE || "",
           color: scannedInfo.COLOR || "",
           sl_vdq: scannedInfo.SL_VDQ || "",
+          supplier: scannedInfo.SUPPLIER || "",
+          gray_gsm: scannedInfo.GGSM || "",
+          feeder_plan: scannedInfo.FEEDER_PLAN || "",
           lot_no: scannedInfo.LOT_NO || "",
+          knit_material_code: scannedInfo.KNIT_MATERIAL_CODE || "",
+          knit_m_desc: scannedInfo.KNIT_M_DESCRIPTION || "",
 
           oqty: oqty,
           rqty: rqty,

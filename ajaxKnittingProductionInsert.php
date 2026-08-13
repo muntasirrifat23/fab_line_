@@ -69,6 +69,11 @@ $finish_dia   = val("finish_dia");
 $open_tube    = val("open_tube");
 $color        = val("color");
 $sl_vdq       = val("sl_vdq");
+$supplier     = val("supplier");
+$gray_gsm     = val("gray_gsm");
+$feeder_plan  = val("feeder_plan");
+$knit_material_code = val("knit_material_code");
+$knit_m_des   = val("knit_m_desc") ? val("knit_m_desc") : val("knit_m_description");
 
 $oqty         = val("oqty");
 $rqty         = val("rqty");
@@ -99,7 +104,7 @@ if ($rqty > $oqty) {
 }
 
 //========================
-// LOGGED-IN USER & TIME
+// LOGGED-IN USER & SHIFT
 //========================
 date_default_timezone_set('Asia/Dhaka');
 
@@ -115,9 +120,7 @@ if ($bdHour >= 6 && $bdHour < 14) {
     $shift = 'C';
 }
 
-$pdate = date('Y-m-d H:i:s'); // date + time of production
-$budat = date('Y-m-d');       // only date
-$cdate = date('Y-m-d H:i:s'); // date + time
+$budat = date('Y-m-d');      // only date
 
 //========================
 // DUPLICATE CHECK
@@ -152,33 +155,39 @@ mysqli_stmt_close($stmt);
  $sql = "INSERT INTO knitting_production
 (
 BUDAT,
-SHIFT,
-UNAME,
-UID,
-PDATE,
-CDATE,
 ROLL,
-BOOKING_NO,
+PO_NUMBER,
+OQTY,
+RQTY,
+UQTY,
 SONO,
-MCNO,
-MC_DIA,
 BUYER,
 STYLE,
+COLOR,
+MCNO,
+MC_DIA,
+SUPPLIER,
+SHIFT,
 YARN_TYPE,
 YARN_COUNT,
 FABRICS_TYPE,
 FINISH_GSM,
 FINISH_DIA,
 OPEN_TUBE,
-COLOR,
 SL_VDQ,
-OQTY,
-RQTY,
-UQTY,
-LOT_NO
+GRAY_GSM,
+FEEDER_PLAN,
+LOT_NO,
+KNIT_MATERIAL_CODE,
+KNIT_M_DES,
+UNAME,
+UID
 )
 VALUES
 (
+?,
+?,
+?,
 ?,
 ?,
 ?,
@@ -220,33 +229,36 @@ if(!$stmt){
 
 mysqli_stmt_bind_param(
     $stmt,
-    "sssssssssssssssssssssssss",
+    "ssssssssssssssssssssssssssss",
 
     $budat,
-    $shift,
-    $uname,
-    $uid,
-    $pdate,
-    $cdate,
     $roll,
     $booking,
+    $oqty,
+    $rqty,
+    $uqty,
     $sono,
-    $mcno,
-    $mc_dia,
     $buyer,
     $style,
+    $color,
+    $mcno,
+    $mc_dia,
+    $supplier,
+    $shift,
     $yarn_type,
     $yarn_count,
     $fabrics_type,
     $finish_gsm,
     $finish_dia,
     $open_tube,
-    $color,
     $sl_vdq,
-    $oqty,
-    $rqty,
-    $uqty,
-    $lot_no
+    $gray_gsm,
+    $feeder_plan,
+    $lot_no,
+    $knit_material_code,
+    $knit_m_des,
+    $uname,
+    $uid
 );
 
 if(!mysqli_stmt_execute($stmt)){
