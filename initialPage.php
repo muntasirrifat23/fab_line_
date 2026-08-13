@@ -27,6 +27,11 @@ if (isset($_POST['knitting_input'])) {
     header('location:knitting_input.php');
     exit();
 }
+if (isset($_POST['subcontract_input'])) {
+    $_SESSION['lineNo'] = $_POST['option'];
+    header('location:subcontract_input.php');
+    exit();
+}
 if (isset($_POST['knitting_program'])) {
     $_SESSION['lineNo'] = $_POST['option'];
     header('location:knitting_program.php');
@@ -422,6 +427,10 @@ mysqli_close($db);
 
 
                 <div class="btn-grid">
+                    <button class="w3-button w3-teal" name="subcontract_input" id="subcontract_input">
+                        <i class="fas fa-industry"></i> SUBCONTRACT INPUT
+                    </button>
+
                     <button class="w3-button w3-teal" name="knitting_program" id="knitting_program">
                         <i class="fas fa-industry"></i> KNITTING PROGRAM
                     </button>
