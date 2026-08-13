@@ -99,6 +99,27 @@ if ($rqty > $oqty) {
 }
 
 //========================
+// LOGGED-IN USER & TIME
+//========================
+date_default_timezone_set('Asia/Dhaka');
+
+$uid   = isset($_SESSION['operator_id']) ? trim($_SESSION['operator_id']) : (isset($_SESSION['username']) ? trim($_SESSION['username']) : '');
+$uname = isset($_SESSION['operator_name']) ? trim($_SESSION['operator_name']) : (isset($_SESSION['username']) ? trim($_SESSION['username']) : '');
+
+$bdHour = (int)date('G');
+if ($bdHour >= 6 && $bdHour < 14) {
+    $shift = 'A';
+} elseif ($bdHour >= 14 && $bdHour < 22) {
+    $shift = 'B';
+} else {
+    $shift = 'C';
+}
+
+$pdate = date('Y-m-d H:i:s'); // date + time of production
+$budat = date('Y-m-d');       // only date
+$cdate = date('Y-m-d H:i:s'); // date + time
+
+//========================
 // DUPLICATE CHECK
 //========================
 
@@ -131,6 +152,11 @@ mysqli_stmt_close($stmt);
  $sql = "INSERT INTO knitting_production
 (
 BUDAT,
+SHIFT,
+UNAME,
+UID,
+PDATE,
+CDATE,
 ROLL,
 BOOKING_NO,
 SONO,
@@ -172,6 +198,11 @@ VALUES
 ?,
 ?,
 ?,
+?,
+?,
+?,
+?,
+?,
 ?
 )";
 
@@ -187,13 +218,16 @@ if(!$stmt){
     exit;
 }
 
-$budat=date("Y-m-d");
-
 mysqli_stmt_bind_param(
     $stmt,
-    "ssssssssssssssssssss",
+    "sssssssssssssssssssssssss",
 
     $budat,
+    $shift,
+    $uname,
+    $uid,
+    $pdate,
+    $cdate,
     $roll,
     $booking,
     $sono,
