@@ -248,6 +248,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
+        var currentRowData = null;
+
         // ---------- RENDER TABLE ----------
         function renderTableRows(data) {
             var tbody = $('#tableBody');
@@ -285,8 +287,22 @@
             });
         }
 
-        // ---------- BUILD DROPDOWN CONTENT (full row data by field/column name) ----------
+        // ---------- BUILD DROPDOWN CONTENT (menu only - actions performed on click) ----------
         function buildDropdownContent(row) {
+            return `
+                <div class="qr-dropdown-panel">
+                    <div class="print-header" style="font-size:16px;text-align:center;">Knitting Test Inspection Report</div>
+                    <div class="print-title">What would you like to do?</div>
+                    <div class="qr-buttons">
+                        <button type="button" class="btn btn-success btn-sm qr-download-btn" data-roll="${row.ROLL || ''}">Download PDF</button>
+                        <button type="button" class="btn btn-primary btn-sm qr-print-btn" data-roll="${row.ROLL || ''}">Print</button>
+                        <button type="button" class="btn btn-danger btn-sm qr-cancel-btn">Cancel</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function buildRowDataHTML(row) {
             var fieldMap = {
                 'DATE': row.BUDAT,
                 'ROLL': row.ROLL,
@@ -331,33 +347,22 @@
                 'C MARK': row.CMARK
             };
 
-            var grid = '';
+            var html = '';
             for (var key in fieldMap) {
                 var val = (fieldMap[key] !== undefined && fieldMap[key] !== null) ? fieldMap[key] : '';
                 if (val !== '') {
-                    grid += `<div class="qr-data-item-2col"><span class="field">${key}:</span> <span class="value">${val}</span></div>`;
+                    html += `<div class="qr-data-item-2col"><span class="field">${key}:</span> <span class="value">${val}</span></div>`;
                 }
             }
-            if (grid === '') {
-                grid = '<div class="text-muted text-center">No data available</div>';
+            if (html === '') {
+                html = '<div class="text-muted text-center">No data available</div>';
             }
-
-            return `
-                <div class="qr-dropdown-panel">
-                    <div class="print-header" style="font-size:16px;text-align:center;">Knitting Test Inspection Report</div>
-                    <div class="print-title">Full Row Data</div>
-                    <div class="qr-data-grid-2col">${grid}</div>
-                    <div class="qr-buttons">
-                        <button type="button" class="btn btn-success btn-sm qr-download-btn" data-roll="${row.ROLL || ''}">Download PDF</button>
-                        <button type="button" class="btn btn-primary btn-sm qr-print-btn" data-roll="${row.ROLL || ''}">Print</button>
-                        <button type="button" class="btn btn-danger btn-sm qr-cancel-btn">Cancel</button>
-                    </div>
-                </div>
-            `;
+            return html;
         }
 
         // ---------- OPEN / CLOSE DROPDOWN ----------
         function closeDropdown() {
+            currentRowData = null;
             $('.qr-dropdown-row').remove();
             $('.qr-action-btn').removeClass('active');
         }
@@ -366,6 +371,7 @@
             closeDropdown();
             var row = $(button).closest('tr');
             var data = $(button).data('rowData');
+            currentRowData = data;
             var dropdownHtml =
                 '<tr class="qr-dropdown-row">' +
                 '<td colspan="42" style="padding:12px;background:#f8f9fa;">' +
@@ -389,33 +395,47 @@
         });
 
         $(document).on('click', '.qr-download-btn', function() {
-            var panel = $(this).closest('.qr-dropdown-panel')[0];
             var roll = $(this).data('roll') || 'row';
-            if (!panel) {
+            if (!currentRowData) {
                 alert('No data to generate PDF.');
                 return;
             }
-            downloadPDF(panel, roll);
+            downloadPDF(currentRowData, roll);
         });
 
         $(document).on('click', '.qr-print-btn', function() {
-            var panel = $(this).closest('.qr-dropdown-panel')[0];
-            if (!panel) {
+            if (!currentRowData) {
                 alert('No data to print.');
                 return;
             }
-            printPanel(panel);
+            printPanel(currentRowData);
         });
 
-        // ---------- DOWNLOAD PDF (no QR - full row data only) ----------
-        // container is a DOM element
-        function downloadPDF(container, roll) {
-            if (!container) {
+        function buildReportPanel(row) {
+            var dataHTML = buildRowDataHTML(row);
+            var panel = document.createElement('div');
+            panel.className = 'qr-dropdown-panel';
+            panel.style.maxWidth = '900px';
+            panel.style.margin = '0 auto';
+            panel.innerHTML =
+                '<div class="print-header" style="font-size:16px;text-align:center;">Knitting Test Inspection Report</div>' +
+                '<div class="qr-data-grid-2col" style="max-height:none;overflow:visible;border:1px solid #e9ecef;">' + dataHTML + '</div>';
+            return panel;
+        }
+
+        function downloadPDF(row, roll) {
+            if (!row) {
                 alert('No data to generate PDF.');
                 return;
             }
 
-            html2canvas(container, {
+            var panel = buildReportPanel(row);
+            document.body.appendChild(panel);
+            panel.style.position = 'fixed';
+            panel.style.left = '-9999px';
+            panel.style.top = '0';
+
+            html2canvas(panel, {
                 scale: 2,
                 useCORS: true,
                 backgroundColor: '#ffffff',
@@ -435,37 +455,35 @@
             }).catch(function(err) {
                 console.error('PDF generation error:', err);
                 alert('Error generating PDF. Please try again.');
+            }).then(function() {
+                if (panel.parentNode) {
+                    panel.parentNode.removeChild(panel);
+                }
             });
         }
 
-        // ---------- PRINT (no QR - full row data only) ----------
-        // container is a DOM element
-        function printPanel(container) {
-            if (!container) {
+        function printPanel(row) {
+            if (!row) {
                 alert('No data to print.');
                 return;
             }
 
-            var clone = container.cloneNode(true);
-            var buttons = clone.querySelector('.qr-buttons');
-            if (buttons) {
-                buttons.parentNode.removeChild(buttons);
-            }
+            var dataHTML = buildRowDataHTML(row);
 
             var printStyles = '<style>' +
                 '@page{size:A4 portrait;margin:15mm;}' +
                 'body{margin:0;padding:10mm;font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;}' +
-                '.qr-dropdown-panel{width:100%;padding:0;border:none;box-shadow:none;}' +
                 '.qr-data-grid-2col{display:grid;grid-template-columns:1fr 1fr;gap:4px 30px;font-size:13px;}' +
                 '.qr-data-item-2col{border-bottom:1px solid #eee;padding:5px 0;}' +
                 '.qr-data-item-2col .field{font-weight:600;color:#1e293b;}' +
                 '.qr-data-item-2col .value{color:#334155;}' +
-                '.print-header,.print-title{text-align:center;}' +
-                '.print-title{margin-bottom:12px;}' +
-                '.qr-buttons{display:none !important;}' +
+                '.print-header{font-size:16px;font-weight:bold;text-align:center;margin-bottom:6px;}' +
+                '.print-title{text-align:center;font-size:16px;font-weight:600;margin-bottom:12px;border-bottom:2px solid #333;padding-bottom:10px;}' +
                 '</style>';
 
-            var printHtml = '<html><head><title>Print Inspection Report</title>' + printStyles + '</head><body>' + clone.outerHTML +
+            var printHtml = '<html><head><title>Print Inspection Report</title>' + printStyles + '</head><body>' +
+                '<div class="print-header">Knitting Test Inspection Report</div>' +
+                '<div class="qr-data-grid-2col">' + dataHTML + '</div>' +
                 '</body></html>';
 
             var iframe = document.createElement('iframe');
