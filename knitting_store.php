@@ -1,905 +1,1131 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Knitting | Store</title>
-    
-    <!-- Bootstrap 5 & Font Awesome -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-    
-    <style>
-        body {
-            background: #f0f2f5;
-            padding: 20px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .scanner-container {
-            max-width: 750px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-        }
-        
-        .scanner-header {
-            text-align: center;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e9ecef;
-            margin-bottom: 20px;
-        }
-        
-        .scanner-header h2 {
-            color: #1f2937;
-            font-weight: 700;
-        }
-        
-        .scanner-header p {
-            color: #6b7280;
-            font-size: 14px;
-        }
-        
-        #video-container {
-            background: #000;
-            border-radius: 12px;
-            overflow: hidden;
-            position: relative;
-            min-height: 320px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-        
-        #video {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-        
-        #scan-overlay {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 200px;
-            height: 200px;
-            border: 3px solid rgba(255, 255, 255, 0.7);
-            border-radius: 12px;
-            box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.3);
-            pointer-events: none;
-        }
-        
-        #scan-overlay::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            width: 30px;
-            height: 30px;
-            border-top: 4px solid #00ff88;
-            border-left: 4px solid #00ff88;
-            border-radius: 4px 0 0 0;
-        }
-        
-        #scan-overlay::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            right: -2px;
-            width: 30px;
-            height: 30px;
-            border-bottom: 4px solid #00ff88;
-            border-right: 4px solid #00ff88;
-            border-radius: 0 0 4px 0;
-        }
-        
-        .scan-line {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 180px;
-            height: 2px;
-            background: #00ff88;
-            animation: scanMove 2s ease-in-out infinite;
-            box-shadow: 0 0 15px #00ff88;
-        }
-        
-        @keyframes scanMove {
-            0%, 100% { top: 25%; }
-            50% { top: 75%; }
-        }
-        
-        .scanner-controls {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            margin-top: 18px;
-            flex-wrap: wrap;
-        }
-        
-        .scanner-controls .btn {
-            min-width: 140px;
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-weight: 600;
-        }
-        
-        .btn-start {
-            background: #10b981;
-            border: none;
-            color: white;
-        }
-        
-        .btn-start:hover {
-            background: #059669;
-            color: white;
-        }
-        
-        .btn-stop {
-            background: #ef4444;
-            border: none;
-            color: white;
-        }
-        
-        .btn-stop:hover {
-            background: #dc2626;
-            color: white;
-        }
-        
-        /* Data Display */
-        .data-display {
-            margin-top: 20px;
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 20px;
-            border: 1px solid #e9ecef;
-            display: none;
-        }
-        
-        .data-display.active {
-            display: block;
-        }
-        
-        .data-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4px 25px;
-            font-size: 0.85rem;
-        }
-        
-        .data-item {
-            border-bottom: 1px solid #e9ecef;
-            padding: 5px 0;
-        }
-        
-        .data-item .field {
-            font-weight: 600;
-            color: #1e293b;
-        }
-        
-        .data-item .value {
-            color: #334155;
-            word-break: break-word;
-        }
-        
-        /* Rack Selection */
-        .rack-section {
-            margin-top: 20px;
-            padding: 20px;
-            background: white;
-            border-radius: 12px;
-            border: 1px solid #e9ecef;
-            display: none;
-        }
-        
-        .rack-section.active {
-            display: block;
-        }
-        
-        .rack-section h6 {
-            font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 15px;
-        }
-        
-        .rack-group {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-bottom: 15px;
-        }
-        
-        .rack-group .btn {
-            min-width: 60px;
-            border-radius: 8px;
-            font-weight: 600;
-        }
-        
-        .rack-group .btn-outline-primary.active-rack {
-            background: #2563eb;
-            color: white;
-            border-color: #2563eb;
-        }
-        
-        .sub-rack-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 10px;
-            padding: 12px;
-            background: #f8fafc;
-            border-radius: 8px;
-            border: 1px dashed #d1d5db;
-            min-height: 50px;
-        }
-        
-        .sub-rack-group .btn {
-            min-width: 55px;
-            border-radius: 6px;
-            font-size: 13px;
-        }
-        
-        .sub-rack-group .btn-outline-secondary.active-sub {
-            background: #6b7280;
-            color: white;
-            border-color: #6b7280;
-        }
-        
-        .rack-actions {
-            margin-top: 15px;
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-        }
-        
-        .rack-actions .btn {
-            min-width: 100px;
-            border-radius: 8px;
-        }
-        
-        .btn-save {
-            background: #2563eb;
-            border: none;
-            color: white;
-        }
-        
-        .btn-save:hover {
-            background: #1d4ed8;
-            color: white;
-        }
-        
-        .btn-save:disabled {
-            background: #93a3b8;
-            cursor: not-allowed;
-        }
-        
-        .btn-reset {
-            background: #e5e7eb;
-            border: none;
-            color: #374151;
-        }
-        
-        .btn-reset:hover {
-            background: #d1d5db;
-            color: #1f2937;
-        }
-        
-        /* Status Message */
-        .status-msg {
-            margin-top: 12px;
-            padding: 10px 16px;
-            border-radius: 8px;
-            font-size: 14px;
-            display: none;
-        }
-        
-        .status-msg.show {
-            display: block;
-        }
-        
-        .status-msg.success {
-            background: #d1fae5;
-            color: #065f46;
-            border: 1px solid #a7f3d0;
-        }
-        
-        .status-msg.error {
-            background: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fecaca;
-        }
-        
-        .status-msg.info {
-            background: #dbeafe;
-            color: #1e40af;
-            border: 1px solid #bfdbfe;
-        }
-        
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #2563eb;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 8px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .manual-input-section {
-            margin-top: 15px;
-            padding: 15px;
-            background: #f8fafc;
-            border-radius: 10px;
-            border: 1px solid #e9ecef;
-        }
-        
-        .manual-input-section .btn {
-            border-radius: 8px;
-        }
-        
-        @media (max-width: 576px) {
-            .scanner-container {
-                padding: 15px;
-            }
-            .data-grid {
-                grid-template-columns: 1fr;
-            }
-            .scanner-controls .btn {
-                min-width: 100px;
-                font-size: 13px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Knitting | Store</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+      background: #c7c8ca;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+    }
+
+    .card {
+      max-width: 650px;
+      width: 100%;
+      background: #141b2b;
+      border-radius: 40px;
+      padding: 24px 20px 30px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      border: 1px solid #2e3a52;
+      transition: 0.2s;
+    }
+
+    .store-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding: 0 4px;
+    }
+
+    .store-header h2 {
+      color: #e3ecfc;
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .store-header h2 i {
+      color: #4fc3f7;
+      margin-right: 8px;
+    }
+
+    .store-header .badge-store {
+      margin-left: auto;
+      background: #1d8b5e;
+      color: white;
+      font-size: 0.7rem;
+      padding: 3px 14px;
+      border-radius: 100px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .scanner-container {
+      position: relative;
+      background: #1e2740;
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: inset 0 0 0 1px #33405e, 0 8px 20px rgba(0, 0, 0, 0.5);
+      margin-bottom: 24px;
+      min-height: 300px;
+    }
+
+    #qr-reader {
+      width: 100%;
+      padding: 0 !important;
+      background: #0f1625;
+    }
+
+    #qr-reader video {
+      border-radius: 28px;
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .scan-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      border-radius: 28px;
+      box-shadow: inset 0 0 0 2px rgba(0, 255, 200, 0.3);
+    }
+
+    .scan-overlay::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 70%;
+      height: 70%;
+      transform: translate(-50%, -50%);
+      border: 2px solid rgba(0, 255, 200, 0.5);
+      border-radius: 20px;
+      box-shadow: 0 0 30px rgba(0, 255, 200, 0.1);
+      animation: pulse-border 2.2s infinite ease-in-out;
+    }
+
+    @keyframes pulse-border {
+      0% {
+        opacity: 0.4;
+        transform: translate(-50%, -50%) scale(0.96);
+      }
+
+      50% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.02);
+      }
+
+      100% {
+        opacity: 0.4;
+        transform: translate(-50%, -50%) scale(0.96);
+      }
+    }
+
+    .camera-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      padding: 0 6px;
+    }
+
+    .status-badge {
+      background: #1f2a40;
+      padding: 8px 18px;
+      border-radius: 100px;
+      color: #a0b3d9;
+      font-size: 0.85rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid #2e3d5a;
+    }
+
+    .status-badge i {
+      color: #4fc3f7;
+      font-size: 0.9rem;
+    }
+
+    .btn-icon {
+      background: #1f2a40;
+      border: 1px solid #33415e;
+      color: #cbd5f0;
+      width: 44px;
+      height: 44px;
+      border-radius: 40px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-icon:hover {
+      background: #2b3857;
+      border-color: #5f79b0;
+      color: white;
+    }
+
+    .btn-icon:active {
+      transform: scale(0.92);
+    }
+
+    .result-panel {
+      background: #101826;
+      border-radius: 28px;
+      padding: 18px 20px 16px;
+      margin-top: 20px;
+      border: 1px solid #29364f;
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
+      overflow-y: auto;
+    }
+
+    .result-panel::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .result-panel::-webkit-scrollbar-track {
+      background: #0f1625;
+      border-radius: 10px;
+    }
+
+    .result-panel::-webkit-scrollbar-thumb {
+      background: #2e3d5a;
+      border-radius: 10px;
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #8ea4d6;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      font-size: 0.9rem;
+      border-bottom: 1px dashed #27344d;
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+    }
+
+    .result-header i {
+      color: #4fc3f7;
+    }
+
+    #result-content {
+      min-height: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      word-break: break-word;
+    }
+
+    .data-row {
+      background: #1a2337;
+      padding: 8px 14px;
+      border-radius: 12px;
+      border-left: 4px solid #4fc3f7;
+      color: #e3ecfc;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .data-row .label {
+      color: #8bb1ff;
+      font-weight: 600;
+      min-width: 140px;
+    }
+
+    .data-row .value {
+      color: #e3ecfc;
+      text-align: right;
+      flex: 1;
+      margin-left: 10px;
+    }
+
+    .data-row.default-row {
+      display: grid !important;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 14px;
+      align-items: flex-start;
+      height: auto;
+      min-height: auto;
+    }
+
+    .data-row.default-row>div {
+      min-width: 0;
+    }
+
+    .data-row.default-row div div:first-child {
+      font-size: 11px;
+      color: #8fa5cf;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+    }
+
+    .data-row.default-row div div:last-child {
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      line-height: 1.45;
+    }
+
+    .field-block {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: auto;
+    }
+
+    .field-block .field-label {
+      font-size: 0.7rem;
+      color: #8fa5cf;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.85;
+    }
+
+    .field-block .field-value {
+      font-size: 0.95rem;
+      color: #ffffff;
+      font-weight: 700;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      line-height: 1.3;
+    }
+
+    .data-row.header-row {
+      border-left-color: #f59e0b;
+      background: #1f2a3a;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .data-row.header-row .label {
+      color: #fbbf24;
+    }
+
+    .data-row.header-row .value {
+      color: #fde68a;
+    }
+
+    .scanned-badge {
+      background: #1d8b5e;
+      color: white;
+      font-size: 0.7rem;
+      padding: 2px 14px;
+      border-radius: 100px;
+      display: inline-block;
+      margin-left: 8px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .rack-section {
+      margin-top: 18px;
+    }
+
+    .rack-section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #8ea4d6;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      font-size: 0.9rem;
+      border-bottom: 1px dashed #27344d;
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+    }
+
+    .rack-section-title i {
+      color: #4fc3f7;
+    }
+
+    .rack-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .rack-group .btn {
+      flex: 1 1 auto;
+      min-width: 72px;
+      border-radius: 14px;
+      font-weight: 600;
+      background: #1f2a40;
+      border: 1px solid #33415e;
+      color: #cbd5f0;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .rack-group .btn:hover {
+      background: #2b3857;
+      border-color: #5f79b0;
+      color: white;
+    }
+
+    .rack-group .btn.active-rack {
+      background: linear-gradient(135deg, #4fc3f7, #2563eb);
+      border-color: #4fc3f7;
+      color: white;
+      box-shadow: 0 8px 18px rgba(79, 195, 247, 0.25);
+    }
+
+    .sub-rack-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      padding: 12px;
+      background: #111827;
+      border-radius: 16px;
+      border: 1px dashed #33415e;
+      min-height: 50px;
+    }
+
+    .sub-rack-group .btn {
+      min-width: 60px;
+      border-radius: 12px;
+      font-weight: 600;
+      background: #1a2337;
+      border: 1px solid #33415e;
+      color: #a0b3d9;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .sub-rack-group .btn:hover {
+      background: #2b3857;
+      color: white;
+    }
+
+    .sub-rack-group .btn.active-sub {
+      background: linear-gradient(135deg, #10b981, #0f766e);
+      border-color: #10b981;
+      color: white;
+    }
+
+    .sub-rack-group .sub-placeholder {
+      color: #5b6f97;
+      font-size: 0.8rem;
+      align-self: center;
+    }
+
+    .rack-actions {
+      margin-top: 16px;
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    .btn-action {
+      flex: 1 1 120px;
+      min-width: 120px;
+      border: none;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+      color: #fff;
+      background: #1f2a40;
+    }
+
+    .btn-action:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
+    }
+
+    .btn-action.save {
+      background: linear-gradient(135deg, #10b981, #0f766e);
+    }
+
+    .btn-action.reset {
+      background: linear-gradient(135deg, #64748b, #475569);
+    }
+
+    .btn-action:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .message-row {
+      background: #10263d;
+      color: #c7e0ff;
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid #2d4a72;
+      font-size: 0.94rem;
+      line-height: 1.5;
+      margin-top: 14px;
+    }
+
+    .message-row.success {
+      background: #142f1f;
+      border-color: #166534;
+      color: #c7f6d1;
+    }
+
+    .message-row.error {
+      background: #3f1d1d;
+      border-color: #b91c1c;
+      color: #fee2e2;
+    }
+
+    .rescan-btn {
+      margin-top: 10px;
+      background: #1f2a40;
+      border: 1px solid #33415e;
+      color: #cbd5f0;
+      padding: 8px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: 0.2s;
+    }
+
+    .rescan-btn:hover {
+      background: #2b3857;
+      border-color: #5f79b0;
+      color: white;
+    }
+
+    @media (max-width: 480px) {
+      .card {
+        padding: 16px;
+      }
+
+      .data-row {
+        font-size: 0.8rem;
+        padding: 6px 10px;
+        flex-wrap: wrap;
+      }
+
+      .data-row .label {
+        min-width: 80px;
+        font-size: 0.75rem;
+      }
+
+      .data-row .value {
+        font-size: 0.8rem;
+      }
+
+      .scanner-container {
+        min-height: 200px;
+      }
+
+      .rack-actions {
+        flex-direction: column;
+      }
+    }
+
+    @media(max-width:768px) {
+      .data-row.default-row {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
+      }
+    }
+
+    @media(max-width:480px) {
+      .data-row.default-row {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+    }
+  </style>
 </head>
+
 <body>
+  <div class="card">
+    <div class="store-header">
+      <h2><i class="fa-solid fa-warehouse"></i>Knitting Store</h2>
+      <span class="badge-store">STORE</span>
+    </div>
 
-<div class="scanner-container">
-    <div class="scanner-header">
-        <h2><i class="fa-solid fa-qrcode me-2" style="color:#2563eb;"></i> QR Scanner</h2>
-        <p>Scan QR code to view and assign rack location</p>
+    <div class="scanner-container" id="scannerContainer">
+      <div id="qr-reader"></div>
+      <div class="scan-overlay"></div>
     </div>
-    
-    <!-- Video Container -->
-    <div id="video-container">
-        <video id="video" playsinline></video>
-        <div id="scan-overlay"></div>
-        <div class="scan-line"></div>
-        <div style="position:absolute;bottom:15px;left:50%;transform:translateX(-50%);color:white;font-size:12px;background:rgba(0,0,0,0.5);padding:5px 15px;border-radius:20px;pointer-events:none;z-index:10;">
-            Point the camera at the QR code
+
+    <div class="camera-controls" id="cameraControls">
+      <div class="status-badge">
+        <i class="fas fa-video"></i>
+        <span id="camera-status">Ready</span>
+      </div>
+      <button class="btn-icon" id="toggle-camera-btn" title="Restart / switch camera">
+        <i class="fas fa-sync-alt"></i>
+      </button>
+    </div>
+
+    <div class="result-panel">
+      <div class="result-header">
+        <i class="fas fa-qrcode"></i>
+        <span>Scanned Data</span>
+        <span style="margin-left: auto; font-size: 0.7rem; background: #1f2a40; padding: 2px 12px; border-radius: 40px; color: #91a9da;">live</span>
+      </div>
+      <div id="result-content">
+        <!-- Default content will be injected by JS -->
+      </div>
+      <div id="rack-section" class="rack-section" style="display:none;">
+        <div class="rack-section-title">
+          <i class="fas fa-warehouse"></i>
+          <span>Select Rack Location</span>
         </div>
-    </div>
-    
-    <!-- Controls -->
-    <div class="scanner-controls">
-        <button class="btn btn-start" id="startScanBtn">
-            <i class="fa-solid fa-play me-1"></i> Start Scan
-        </button>
-        <button class="btn btn-stop" id="stopScanBtn">
-            <i class="fa-solid fa-stop me-1"></i> Stop
-        </button>
-    </div>
-    
-    <!-- Manual Input -->
-    <div class="manual-input-section">
-        <div class="row g-2">
-            <div class="col-md-8">
-                <input type="text" id="manualRollInput" class="form-control" placeholder="Enter ROLL number manually">
-            </div>
-            <div class="col-md-4">
-                <button class="btn btn-primary w-100" id="manualFetchBtn">
-                    <i class="fa-solid fa-magnifying-glass me-1"></i> Fetch
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Status Message -->
-    <div id="statusMsg" class="status-msg"></div>
-    
-    <!-- Data Display -->
-    <div class="data-display" id="dataDisplay">
-        <h6 class="mb-2"><i class="fa-regular fa-rectangle-list me-1"></i> Scanned Data</h6>
-        <div class="data-grid" id="scannedData"></div>
-    </div>
-    
-    <!-- Rack Selection -->
-    <div class="rack-section" id="rackSection">
-        <h6><i class="fa-solid fa-warehouse me-1"></i> Select Rack Location</h6>
-        
         <div class="rack-group" id="rackGroup">
-            <button class="btn btn-outline-primary" data-rack="A">A</button>
-            <button class="btn btn-outline-primary" data-rack="B">B</button>
-            <button class="btn btn-outline-primary" data-rack="C">C</button>
+          <button type="button" class="btn" data-rack="A">A</button>
+          <button type="button" class="btn" data-rack="B">B</button>
+          <button type="button" class="btn" data-rack="C">C</button>
         </div>
-        
         <div class="sub-rack-group" id="subRackGroup">
-            <span class="text-muted" style="font-size:13px;">Select a rack above to see sub-racks</span>
+          <span class="sub-placeholder">Select a rack above to see sub-racks</span>
         </div>
-        
         <div class="rack-actions">
-            <button class="btn btn-reset" id="resetRackBtn">
-                <i class="fa-solid fa-rotate-left me-1"></i> Reset
-            </button>
-            <button class="btn btn-save" id="saveRackBtn">
-                <i class="fa-solid fa-floppy-disk me-1"></i> Save
-            </button>
+          <button class="btn-action reset" type="button" id="resetRackBtn">
+            <i class="fas fa-undo"></i> Reset
+          </button>
+          <button class="btn-action save" type="button" id="saveRackBtn" disabled>
+            <i class="fas fa-save"></i> Save Rack
+          </button>
         </div>
+      </div>
+      <div id="message"></div>
     </div>
-</div>
 
-<!-- Scripts -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js"></script>
+    <!-- FOOTER -->
+    <div class="footer-note" style="margin-top:16px; text-align:center; color:#44557a; letter-spacing:0.5px;">
+      <button class="btn btn-dark"
+        onclick="window.location.href='initialPage.php';"
+        style="background-color:white;
+               color:black;
+               padding:12px;
+               border-radius:8px;
+               cursor:pointer;
+               transition:all .2s ease;
+               font-weight:bold;
+               font-size:1rem;">
+        <i class="fa-solid fa-arrow-left" style="margin-right:6px;"></i>
+        Back to Initial Page
+      </button>
+    </div>
+  </div>
 
-<script>
-    // ---------- GLOBALS ----------
-    let scannerActive = false;
-    let scanLoopActive = false;
-    let stream = null;
-    let scanCanvas = null;
-    let scanContext = null;
-    let barcodeDetector = null;
-    let currentScannedData = null;
-    let selectedRack = null;
-    let selectedSubRack = null;
-    let isProcessing = false;
-    
-    // Sub-rack options
-    const subRackOptions = {
-        'A': ['A1', 'A2', 'A3'],
-        'B': ['B1', 'B2', 'B3'],
-        'C': ['C1', 'C2', 'C3']
-    };
-    
-    // ---------- API CALLS ----------
-    function initScannerCanvas() {
-        if (!scanCanvas) {
-            scanCanvas = document.createElement('canvas');
-            scanCanvas.style.display = 'none';
-            document.body.appendChild(scanCanvas);
-        }
-        if (!scanContext) {
-            scanContext = scanCanvas.getContext('2d');
-        }
-    }
+  <script>
+    (function() {
+      "use strict";
 
-    async function scanFrame() {
-        if (!scannerActive || !scanLoopActive) return;
+      const resultContainer = document.getElementById('result-content');
+      const messageContainer = document.getElementById('message');
+      const cameraStatus = document.getElementById('camera-status');
+      const scannerContainer = document.getElementById('scannerContainer');
+      const cameraControls = document.getElementById('cameraControls');
+      const rackSection = document.getElementById('rack-section');
+      const rackGroup = document.getElementById('rackGroup');
+      const subRackGroup = document.getElementById('subRackGroup');
+      const resetRackBtn = document.getElementById('resetRackBtn');
+      const saveRackBtn = document.getElementById('saveRackBtn');
 
-        const video = document.getElementById('video');
-        if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth > 0 && video.videoHeight > 0) {
-            scanCanvas.width = video.videoWidth;
-            scanCanvas.height = video.videoHeight;
-            scanContext.drawImage(video, 0, 0, scanCanvas.width, scanCanvas.height);
+      const FIELD_LABELS = {
+        BUDAT: 'DATE',
+        ROLL: 'ROLL',
+        PO_NUMBER: 'PO NUMBER',
+        QTY: 'QTY',
+        SONO: 'SONO',
+        BUYER: 'BUYER',
+        STYLE: 'STYLE',
+        COLOR: 'COLOR',
+        MCNO: 'MACHINE NO',
+        MC_DIA: 'MC DIA',
+        SUPPLIER: 'SUPPLIER',
+        SHIFT: 'SHIFT',
+        YTYPE: 'YARN TYPE',
+        YCOUNT: 'YARN COUNT',
+        FTYPE: 'FABRICS TYPE',
+        FGSM: 'FINISH GSM',
+        FDIA: 'FINISH DIA',
+        O_T: 'OPEN/TUBE',
+        SL: 'SL/VDQ',
+        GGSM: 'GRAY GSM',
+        FPLAN: 'FEEDER PLAN',
+        LOTNO: 'LOT NO',
+        MATERIAL_CODE: 'MATERIAL CODE',
+        M_DES: 'MATERIAL DESC',
+        RACK: 'RACK',
+        TT: 'TT',
+        PATTA: 'PATTA',
+        SLUB: 'SLUB',
+        YC_SPOT: 'YC SPOT',
+        OILSPOT: 'OIL SPOT',
+        FF: 'FF',
+        SEEDS: 'SEEDS',
+        MSTITCH: 'M/STITCH',
+        SINKERMARK: 'SINKER MARK',
+        NEEDLEMARK: 'NEEDLE MARK',
+        LYCOUT: 'LYC OUT',
+        OILLINE: 'OIL LINE',
+        HOLE: 'HOLE',
+        LOOP: 'LOOP',
+        SETUP: 'SETUP',
+        CMARK: 'C MARK',
+        TPOINT: 'T.POINT'
+      };
 
-            let qrText = null;
+      const subRackOptions = {
+        'A': ['A1', 'A2', 'A3', 'A4'],
+        'B': ['B1', 'B2', 'B3', 'B4'],
+        'C': ['C1', 'C2', 'C3', 'C4']
+      };
 
-            if (barcodeDetector) {
-                try {
-                    const barcodes = await barcodeDetector.detect(scanCanvas);
-                    if (barcodes && barcodes.length > 0) {
-                        qrText = barcodes[0].rawValue || barcodes[0].boundingBox || null;
-                    }
-                } catch (detectorError) {
-                    console.warn('BarcodeDetector failed:', detectorError);
-                }
-            }
+      let scannedInfo = null;
+      let selectedRack = null;
+      let selectedSubRack = null;
+      let html5QrCode = null;
+      let isScanning = false;
 
-            if (!qrText) {
-                const imageData = scanContext.getImageData(0, 0, scanCanvas.width, scanCanvas.height);
-                const code = jsQR(imageData.data, imageData.width, imageData.height);
-                if (code && code.data) {
-                    qrText = code.data;
-                }
-            }
+      function renderDefaultData() {
+        scannedInfo = null;
+        hideRackSection();
+        resultContainer.innerHTML = `
+          <div class="data-row header-row"><span class="label">Default Information</span><span class="value"></span></div>
+          <div class="data-row default-row"><span class="label">Status</span><span class="value">Awaiting QR scan</span></div>
+        `;
+      }
 
-            if (qrText) {
-                scanLoopActive = false;
-                processScannedData(qrText);
-                return;
-            }
-        }
+      function showMessage(msg, type) {
+        messageContainer.innerHTML = `<div class="message-row ${type || ''}">${msg}</div>`;
+      }
 
-        requestAnimationFrame(scanFrame);
-    }
+      function clearMessage() {
+        messageContainer.innerHTML = '';
+      }
 
-    function fetchDataByRoll(roll) {
-        return new Promise((resolve, reject) => {
-            $.ajax({
-                url: 'ajaxKnitting_store.php',
-                method: 'GET',
-                data: { action: 'get_by_roll', roll: roll },
-                dataType: 'json'
-            })
-            .done(function(resp) {
-                if (resp && resp.success) {
-                    resolve(resp.data);
-                } else {
-                    reject(resp.error || 'No data found');
-                }
-            })
-            .fail(function(xhr, status, error) {
-                reject('AJAX request failed: ' + error);
-            });
-        });
-    }
-    
-    function saveRackData(roll, rack) {
-        return new Promise((resolve, reject) => {
-            $.ajax({
-                url: 'ajaxKnitting_store.php',
-                method: 'POST',
-                data: JSON.stringify({ action: 'save_rack', ROLL: roll, RACK: rack }),
-                contentType: 'application/json',
-                dataType: 'json'
-            })
-            .done(function(resp) {
-                if (resp && resp.success) {
-                    resolve(resp);
-                } else {
-                    reject(resp.error || 'Save failed');
-                }
-            })
-            .fail(function(xhr, status, error) {
-                reject('AJAX request failed: ' + error);
-            });
-        });
-    }
-    
-    // ---------- SCANNER FUNCTIONS ----------
-    async function startScanner() {
-        try {
-            stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'environment' }
-            });
-            
-            const video = document.getElementById('video');
-            video.srcObject = stream;
-            await video.play();
-            
-            initScannerCanvas();
-            if ('BarcodeDetector' in window) {
-                try {
-                    barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
-                } catch (e) {
-                    console.warn('BarcodeDetector init failed:', e);
-                    barcodeDetector = null;
-                }
-            }
+      function extractRollFromQR(qrText) {
+        const text = String(qrText || '').trim();
+        if (!text) return null;
 
-            scannerActive = true;
-            scanLoopActive = true;
-            scanFrame();
-            showStatus('Scanner started. Point camera at QR code.', 'info');
-            document.getElementById('startScanBtn').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-1"></i> Scanning...';
-            
-        } catch (err) {
-            console.error('Camera error:', err);
-            showStatus('Unable to access camera. Please allow camera permissions.', 'error');
-            document.getElementById('startScanBtn').innerHTML = '<i class="fa-solid fa-play me-1"></i> Start Scan';
-        }
-    }
-    
-    function stopScanner() {
-        scannerActive = false;
-        scanLoopActive = false;
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-            stream = null;
-        }
-        const video = document.getElementById('video');
-        video.srcObject = null;
-        document.getElementById('startScanBtn').innerHTML = '<i class="fa-solid fa-play me-1"></i> Start Scan';
-        showStatus('Scanner stopped.', 'info');
-    }
-    
-    // ---------- PROCESS SCANNED DATA ----------
-    async function processScannedData(data) {
-        if (isProcessing) return;
-        isProcessing = true;
-        
-        try {
-            // If data is a string (QR text), try to extract ROLL
-            if (typeof data === 'string') {
-                // Try to extract roll number from various QR formats
-                let roll = extractRollFromQR(data);
-                
-                if (roll) {
-                    showStatus(`Searching for ROLL: ${roll}...`, 'info');
-                    
-                    const dbData = await fetchDataByRoll(roll);
-                    if (dbData) {
-                        currentScannedData = dbData;
-                        displayData(dbData);
-                        document.getElementById('rackSection').classList.add('active');
-                        showStatus('QR Code scanned successfully! Select rack location.', 'success');
-                        stopScanner();
-                        return;
-                    }
-                    showStatus(`No data found for ROLL: ${roll}`, 'error');
-                    return;
-                }
-                
-                showStatus('Invalid QR code. Please scan a valid knitting QR.', 'error');
-                return;
-            }
-            
-            // If data is already an object
-            if (data && typeof data === 'object') {
-                currentScannedData = data;
-                displayData(data);
-                document.getElementById('rackSection').classList.add('active');
-                showStatus('QR Code scanned successfully! Select rack location.', 'success');
-                stopScanner();
-            }
-            
-        } catch (error) {
-            showStatus('Error: ' + error, 'error');
-        } finally {
-            isProcessing = false;
-        }
-    }
-    
-    // Extract roll number from any QR format
-    function extractRollFromQR(qrText) {
-        if (!qrText || typeof qrText !== 'string') return null;
-        var text = qrText.trim();
-        
-        // Format 1: Pipe-delimited (from knitting_qr.php)
-        // SUB_TID|BOOKING|SONO|BUYER|MCNO|MC_DIA|STYLE|...
         if (text.indexOf('|') !== -1) {
-            var parts = text.split('|');
-            var first = (parts[0] || '').trim();
-            if (first.length > 0) return first;
+          const first = text.split('|')[0].trim();
+          if (first.length > 0) return first;
         }
-        
-        // Format 2: KEY: VALUE newline format (from knitting_inspection_report_test.php)
-        // ROLL: 12345
-        var m = text.match(/ROLL:\s*([^\n\r]+)/i);
+
+        let m = text.match(/ROLL:\s*([^\n\r]+)/i);
         if (m && m[1]) return m[1].trim();
-        
-        // Format 3: SUB_TID: value
-        m = text.match(/SUB_TID:\s*([^\n\r]+)/i);
-        if (m && m[1]) return m[1].trim();
-        
-        // Format 4: Plain numeric (just a roll number directly)
+
         if (/^\d+$/.test(text) && text.length >= 2) return text;
-        
+
         return null;
-    }
-    
-    // ---------- DISPLAY DATA ----------
-    function displayData(data) {
-        const dataDiv = document.getElementById('scannedData');
-        let html = '';
-        
-        const displayFields = [
-            'BUDAT', 'ROLL', 'BOOKING_NO', 'SONO', 'MCNO', 'MC_DIA', 'BUYER', 'STYLE',
-            'YARN_TYPE', 'YARN_COUNT', 'FABRICS_TYPE', 'FINISH_GSM', 'FINISH_DIA', 'OPEN_TUBE',
-            'COLOR', 'SL_VDQ', 'UQTY', 'LOT_NO', 'T_POINT', 'ACCEPT'
-        ];
-        
-        const fieldLabels = {
-            'BUDAT': 'DATE',
-            'ROLL': 'ROLL',
-            'BOOKING_NO': 'BOOKING',
-            'SONO': 'SONO',
-            'MCNO': 'MC NO',
-            'MC_DIA': 'MC DIA',
-            'BUYER': 'BUYER',
-            'STYLE': 'STYLE',
-            'YARN_TYPE': 'YARN TYPE',
-            'YARN_COUNT': 'YARN COUNT',
-            'FABRICS_TYPE': 'FABRICS TYPE',
-            'FINISH_GSM': 'FINISH GSM',
-            'FINISH_DIA': 'FINISH DIA',
-            'OPEN_TUBE': 'OPEN/TUBE',
-            'COLOR': 'COLOR',
-            'SL_VDQ': 'SL/VDQ',
-            'UQTY': 'UQTY',
-            'LOT_NO': 'LOT NO',
-            'T_POINT': 'T.POINT',
-            'ACCEPT': 'ACCEPT'
-        };
-        
-        displayFields.forEach(field => {
-            const val = data[field] || '';
-            if (val !== '') {
-                const label = fieldLabels[field] || field;
-                html += `<div class="data-item"><span class="field">${label}:</span> <span class="value">${val}</span></div>`;
-            }
-        });
-        
-        // Show existing rack if any
-        if (data.RACK) {
-            html += `<div class="data-item" style="background:#dbeafe;padding:6px 8px;border-radius:4px;border-bottom-color:#93c5fd;">
-                <span class="field">RACK:</span> <span class="value" style="font-weight:600;color:#1d4ed8;">${data.RACK}</span>
-            </div>`;
-        }
-        
-        dataDiv.innerHTML = html;
-        document.getElementById('dataDisplay').classList.add('active');
-    }
-    
-    // ---------- RACK SELECTION ----------
-    function updateSubRacks(rack) {
-        const subGroup = document.getElementById('subRackGroup');
-        const options = subRackOptions[rack] || [];
-        
-        subGroup.innerHTML = '';
-        if (options.length === 0) {
-            subGroup.innerHTML = '<span class="text-muted" style="font-size:13px;">No sub-racks available</span>';
-            return;
-        }
-        
-        options.forEach(opt => {
-            const btn = document.createElement('button');
-            btn.className = 'btn btn-outline-secondary';
-            btn.textContent = opt;
-            btn.dataset.subrack = opt;
-            btn.onclick = function() {
-                subGroup.querySelectorAll('.btn').forEach(b => b.classList.remove('active-sub'));
-                this.classList.add('active-sub');
-                selectedSubRack = opt;
-                showStatus(`Selected: ${selectedRack} - ${selectedSubRack}`, 'info');
-            };
-            subGroup.appendChild(btn);
-        });
-        
-        selectedSubRack = null;
-    }
-    
-    // ---------- RACK BUTTON EVENTS ----------
-    document.querySelectorAll('#rackGroup .btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('#rackGroup .btn').forEach(b => b.classList.remove('active-rack'));
-            this.classList.add('active-rack');
-            selectedRack = this.dataset.rack;
-            updateSubRacks(selectedRack);
-            showStatus(`Selected Rack: ${selectedRack}`, 'info');
-        });
-    });
-    
-    // ---------- SAVE RACK ----------
-    document.getElementById('saveRackBtn').addEventListener('click', async function() {
-        if (!currentScannedData) {
-            showStatus('No data scanned. Please scan a QR code first.', 'error');
-            return;
-        }
-        
-        if (!selectedRack) {
-            showStatus('Please select a rack (A, B, or C).', 'error');
-            return;
-        }
-        
-        if (!selectedSubRack) {
-            showStatus('Please select a sub-rack location.', 'error');
-            return;
-        }
-        
-        const roll = currentScannedData.ROLL;
-        if (!roll) {
-            showStatus('No ROLL number found in scanned data.', 'error');
-            return;
-        }
-        
-        const saveBtn = document.getElementById('saveRackBtn');
-        saveBtn.disabled = true;
-        saveBtn.innerHTML = '<span class="loading-spinner"></span> Saving...';
-        
-        try {
-            const result = await saveRackData(roll, selectedSubRack);
-            showStatus(`✅ Successfully saved to Rack: ${selectedSubRack}`, 'success');
-            
-            // Update the displayed data with new rack
-            currentScannedData.RACK = selectedSubRack;
-            displayData(currentScannedData);
-            
-        } catch (error) {
-            showStatus('Error: ' + error, 'error');
-        } finally {
-            saveBtn.disabled = false;
-            saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i> Save';
-        }
-    });
-    
-    // ---------- RESET RACK ----------
-    document.getElementById('resetRackBtn').addEventListener('click', function() {
+      }
+
+      function buildFieldRow(fields) {
+        return `
+          <div class="data-row default-row">
+            ${fields.map(function(field) {
+              return `
+                <div class="field-block">
+                  <span class="field-label">${FIELD_LABELS[field] || field}</span>
+                  <span class="field-value">${scannedInfo[field] !== undefined && scannedInfo[field] !== null && scannedInfo[field] !== '' ? scannedInfo[field] : '-'}</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+      }
+
+      function renderScannedData(row) {
+        scannedInfo = row;
+        clearMessage();
+        showRackSection();
+
+        let html = `
+          <div class="data-row header-row" style="border-left-color:#4fc3f7;">
+            <span class="label">✅ QR Scanned <span class="scanned-badge">ROLL NO</span></span>
+            <span class="value">${new Date().toLocaleTimeString()}</span>
+          </div>
+        `;
+
+        html += buildFieldRow(['ROLL', 'PO_NUMBER', 'QTY']);
+        html += buildFieldRow(['BUDAT', 'SONO', 'BUYER']);
+        html += buildFieldRow(['STYLE', 'COLOR', 'MCNO']);
+        html += buildFieldRow(['MC_DIA', 'SUPPLIER', 'SHIFT']);
+        html += buildFieldRow(['YTYPE', 'YCOUNT', 'FTYPE']);
+        html += buildFieldRow(['FGSM', 'FDIA', 'O_T']);
+        html += buildFieldRow(['SL', 'GGSM', 'FPLAN']);
+        html += buildFieldRow(['LOTNO', 'MATERIAL_CODE', 'M_DES']);
+        html += buildFieldRow(['TT', 'PATTA', 'SLUB']);
+        html += buildFieldRow(['YC_SPOT', 'OILSPOT', 'FF']);
+        html += buildFieldRow(['SEEDS', 'MSTITCH', 'SINKERMARK']);
+        html += buildFieldRow(['NEEDLEMARK', 'LYCOUT', 'OILLINE']);
+        html += buildFieldRow(['HOLE', 'LOOP', 'SETUP']);
+        html += buildFieldRow(['CMARK', 'TPOINT']);
+
+        html += `
+          <button class="rescan-btn" onclick="window.location.reload();">
+            <i class="fas fa-redo"></i> Scan Another QR
+          </button>
+        `;
+
+        resultContainer.innerHTML = html;
+        updateRackDisplay();
+      }
+
+      function showRackSection() {
+        rackSection.style.display = 'block';
+      }
+
+      function hideRackSection() {
+        rackSection.style.display = 'none';
+        resetRackSelection();
+      }
+
+      function resetRackSelection() {
         selectedRack = null;
         selectedSubRack = null;
-        
-        document.querySelectorAll('#rackGroup .btn').forEach(b => b.classList.remove('active-rack'));
-        document.getElementById('subRackGroup').innerHTML = '<span class="text-muted" style="font-size:13px;">Select a rack above to see sub-racks</span>';
-        
-        showStatus('Rack selection reset.', 'info');
-    });
-    
-    // ---------- STATUS MESSAGE ----------
-    function showStatus(msg, type = 'info') {
-        const el = document.getElementById('statusMsg');
-        el.textContent = msg;
-        el.className = 'status-msg show ' + type;
-        
-        if (type !== 'error') {
-            clearTimeout(el._timeout);
-            el._timeout = setTimeout(() => {
-                el.classList.remove('show');
-            }, 8000);
-        }
-    }
-    
-    // ---------- MANUAL FETCH ----------
-    document.getElementById('manualFetchBtn').addEventListener('click', function() {
-        const roll = document.getElementById('manualRollInput').value.trim();
-        if (!roll) {
-            showStatus('Please enter a ROLL number.', 'error');
-            return;
-        }
-        
-        showStatus(`Fetching data for ROLL: ${roll}...`, 'info');
-        
-        fetchDataByRoll(roll)
-            .then(data => {
-                if (data) {
-                    currentScannedData = data;
-                    displayData(data);
-                    document.getElementById('rackSection').classList.add('active');
-                    showStatus('Data fetched successfully! Select rack location.', 'success');
-                    if (scannerActive) stopScanner();
-                }
-            })
-            .catch(error => {
-                showStatus('Error: ' + error, 'error');
-            });
-    });
-    
-    // Press Enter key in manual input
-    document.getElementById('manualRollInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            document.getElementById('manualFetchBtn').click();
-        }
-    });
-    
-    // ---------- SCANNER CONTROLS ----------
-    document.getElementById('startScanBtn').addEventListener('click', function() {
-        if (scannerActive) {
-            showStatus('Scanner is already running.', 'info');
-            return;
-        }
-        startScanner();
-    });
-    
-    document.getElementById('stopScanBtn').addEventListener('click', function() {
-        stopScanner();
-        showStatus('Scanner stopped.', 'info');
-    });
-    
-    // ---------- VIDEO CLICK ----------
-    document.getElementById('video-container').addEventListener('click', function() {
-        if (scannerActive) {
-            showStatus('Scanning... point the camera at the QR code.', 'info');
-        } else {
-            showStatus('Start the scanner first.', 'info');
-        }
-    });
-    
-    // ---------- INIT ----------
-    $(function() {
-        showStatus('Click "Start Scan" to begin scanning QR codes.', 'info');
-    });
-</script>
+        rackGroup.querySelectorAll('.btn').forEach(function(b) {
+          b.classList.remove('active-rack');
+        });
+        subRackGroup.innerHTML = '<span class="sub-placeholder">Select a rack above to see sub-racks</span>';
+        saveRackBtn.disabled = true;
+      }
 
+      function updateRackDisplay() {
+        if (!scannedInfo) return;
+
+        const existingRack = scannedInfo.RACK;
+        if (existingRack) {
+          const match = existingRack.match(/^([A-Z])(.*)$/i);
+          if (match) {
+            setActiveRack(match[1].toUpperCase());
+            if (match[2]) {
+              setActiveSubRack(existingRack.toUpperCase());
+            }
+          }
+        }
+      }
+
+      function setActiveRack(rack) {
+        rackGroup.querySelectorAll('.btn').forEach(function(b) {
+          b.classList.remove('active-rack');
+          if (b.dataset.rack === rack) b.classList.add('active-rack');
+        });
+        selectedRack = rack;
+        updateSubRacks(rack);
+      }
+
+      function setActiveSubRack(sub) {
+        selectedSubRack = sub;
+        subRackGroup.querySelectorAll('.btn').forEach(function(b) {
+          b.classList.remove('active-sub');
+          if (b.textContent.trim().toUpperCase() === sub) b.classList.add('active-sub');
+        });
+        saveRackBtn.disabled = false;
+      }
+
+      function updateSubRacks(rack) {
+        const options = subRackOptions[rack] || [];
+        subRackGroup.innerHTML = '';
+
+        if (options.length === 0) {
+          subRackGroup.innerHTML = '<span class="sub-placeholder">No sub-racks available</span>';
+          selectedSubRack = null;
+          saveRackBtn.disabled = true;
+          return;
+        }
+
+        options.forEach(function(opt) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'btn';
+          btn.textContent = opt;
+          btn.onclick = function() {
+            setActiveSubRack(opt);
+            showMessage('Selected: ' + selectedRack + ' - ' + opt, '');
+          };
+          subRackGroup.appendChild(btn);
+        });
+
+        selectedSubRack = null;
+        saveRackBtn.disabled = true;
+      }
+
+      rackGroup.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn');
+        if (!btn) return;
+        setActiveRack(btn.dataset.rack);
+        showMessage('Selected Rack: ' + selectedRack, '');
+      });
+
+      function fetchDataByRoll(roll) {
+        return new Promise(function(resolve, reject) {
+          fetch('ajaxKnitting_store.php?action=get_by_roll&roll=' + encodeURIComponent(roll))
+            .then(function(r) { return r.json(); })
+            .then(function(resp) {
+              if (resp && resp.success) {
+                resolve(resp.data);
+              } else {
+                reject((resp && resp.error) || 'No data found');
+              }
+            })
+            .catch(function(err) {
+              reject(err);
+            });
+        });
+      }
+
+      function saveRackData(roll, rack) {
+        return new Promise(function(resolve, reject) {
+          fetch('ajaxKnitting_store.php?action=save_rack', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'save_rack', ROLL: roll, RACK: rack })
+          })
+          .then(function(r) { return r.json(); })
+          .then(function(resp) {
+            if (resp && resp.success) {
+              resolve(resp);
+            } else {
+              reject((resp && resp.error) || 'Save failed');
+            }
+          })
+          .catch(function(err) {
+            reject(err);
+          });
+        });
+      }
+
+      function processScannedData(decodedText) {
+        const roll = extractRollFromQR(decodedText);
+
+        if (!roll) {
+          renderBareData(decodedText, 'Unrecognized QR data');
+          showMessage('Invalid QR code. Please scan a valid knitting QR.', 'error');
+          return;
+        }
+
+        cameraStatus.innerText = 'Searching...';
+        cameraStatus.style.color = '#fbbf24';
+
+        fetchDataByRoll(roll)
+          .then(function(row) {
+            renderScannedData(row);
+            cameraStatus.innerText = 'Found';
+            cameraStatus.style.color = '#7dd3fc';
+            showMessage('QR Code scanned successfully! Select rack location.', 'success');
+          })
+          .catch(function(err) {
+            cameraStatus.innerText = 'Not found';
+            cameraStatus.style.color = '#f7a1a1';
+            renderBareData(decodedText, 'No data found for ROLL: ' + roll);
+            showMessage((err && err.message) || String(err), 'error');
+          });
+      }
+
+      function renderBareData(text, msg) {
+        resultContainer.innerHTML = `
+          <div class="data-row header-row" style="border-left-color:#f59e0b; background:#1f2a3a;">
+            <span class="label" style="color:#fbbf24;">📌 ${msg || 'No data'}</span>
+            <span class="value"></span>
+          </div>
+          <div class="data-row" style="background:#0f172a; border-left-color:#6b7280; flex-wrap:wrap;">
+            <span class="label" style="color:#9ca3af; min-width:100%;">Scanned Data:</span>
+            <span class="value" style="text-align:left; font-size:0.8rem; word-break:break-all; color:#d1d5db;">${text}</span>
+          </div>
+          <button class="rescan-btn" onclick="window.location.reload();">
+            <i class="fas fa-redo"></i> Scan Another QR
+          </button>
+        `;
+        hideRackSection();
+      }
+
+      resetRackBtn.addEventListener('click', function() {
+        resetRackSelection();
+        showMessage('Rack selection reset.', '');
+      });
+
+      saveRackBtn.addEventListener('click', function() {
+        if (!scannedInfo) {
+          showMessage('No data scanned. Please scan a QR code first.', 'error');
+          return;
+        }
+        if (!selectedRack || !selectedSubRack) {
+          showMessage('Please select a rack and sub-rack location.', 'error');
+          return;
+        }
+
+        const roll = scannedInfo.ROLL || '';
+        const rack = selectedSubRack.toUpperCase();
+
+        saveRackBtn.disabled = true;
+        saveRackBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+        saveRackData(roll, rack)
+          .then(function(resp) {
+            scannedInfo.RACK = rack;
+            showMessage('✅ ' + (resp.message || ('Saved to Rack: ' + rack)) + '<br><small>Page will reload in 2 seconds...</small>', 'success');
+            saveRackBtn.innerHTML = '<i class="fas fa-save"></i> Save Rack';
+            setTimeout(function() {
+              window.location.reload();
+            }, 2000);
+          })
+          .catch(function(err) {
+            showMessage('❌ ' + ((err && err.message) || String(err)), 'error');
+            saveRackBtn.disabled = false;
+            saveRackBtn.innerHTML = '<i class="fas fa-save"></i> Save Rack';
+          });
+      });
+
+      function startScanner() {
+        if (html5QrCode) {
+          html5QrCode.stop().then(function() {
+            html5QrCode.clear();
+            startNewScanner();
+          }).catch(function() {
+            startNewScanner();
+          });
+        } else {
+          startNewScanner();
+        }
+      }
+
+      function startNewScanner() {
+        if (html5QrCode) {
+          try {
+            html5QrCode.stop();
+            html5QrCode.clear();
+          } catch (e) {}
+          html5QrCode = null;
+        }
+
+        const qrReaderElement = document.getElementById('qr-reader');
+        qrReaderElement.innerHTML = '';
+
+        html5QrCode = new Html5Qrcode("qr-reader");
+
+        const config = {
+          fps: 30,
+          qrbox: {
+            width: 240,
+            height: 240
+          },
+          aspectRatio: 1.0
+        };
+
+        html5QrCode.start(
+          { facingMode: "environment" },
+          config,
+          onScanSuccess,
+          function(err) {}
+        ).then(function() {
+          isScanning = true;
+          cameraStatus.innerText = 'Scanning';
+          cameraStatus.style.color = '#8bcbff';
+          scannerContainer.style.display = 'block';
+          cameraControls.style.display = 'flex';
+        }).catch(function(err) {
+          console.error("Camera start error:", err);
+          cameraStatus.innerText = 'Camera error';
+          cameraStatus.style.color = '#f7a1a1';
+          resultContainer.innerHTML = `
+            <div class="data-row default-row" style="border-left-color:#c44;">
+              <span class="label"><i class="fas fa-exclamation-triangle"></i> Camera unavailable</span>
+              <span class="value" style="font-size:0.8rem;">${err.message || 'Please allow camera access'}</span>
+            </div>
+            <button class="rescan-btn" onclick="window.location.reload();">
+              <i class="fas fa-redo"></i> Retry Camera
+            </button>
+          `;
+        });
+      }
+
+      function onScanSuccess(decodedText, decodedResult) {
+        console.log('QR Scanned:', decodedText);
+        if (navigator.vibrate) navigator.vibrate(20);
+
+        if (html5QrCode) {
+          html5QrCode.stop().then(function() {
+            isScanning = false;
+            cameraStatus.innerText = 'Scan complete';
+            cameraStatus.style.color = '#7dd3fc';
+            scannerContainer.style.display = 'none';
+            cameraControls.style.display = 'none';
+            processScannedData(decodedText);
+          }).catch(function() {
+            processScannedData(decodedText);
+          });
+        } else {
+          processScannedData(decodedText);
+        }
+      }
+
+      function restartScanner() {
+        scannerContainer.style.display = 'block';
+        cameraControls.style.display = 'flex';
+        if (html5QrCode) {
+          html5QrCode.stop().then(function() {
+            html5QrCode.clear();
+            startNewScanner();
+          }).catch(function() {
+            startNewScanner();
+          });
+        } else {
+          startNewScanner();
+        }
+        cameraStatus.innerText = 'Restarting...';
+        setTimeout(function() {
+          if (isScanning) {
+            cameraStatus.innerText = 'Scanning';
+          }
+        }, 400);
+      }
+
+      document.getElementById('toggle-camera-btn').addEventListener('click', function(e) {
+        e.preventDefault();
+        restartScanner();
+      });
+
+      document.addEventListener('DOMContentLoaded', function() {
+        renderDefaultData();
+        setTimeout(function() {
+          startScanner();
+        }, 500);
+      });
+
+      window.addEventListener('beforeunload', function() {
+        if (html5QrCode) {
+          try {
+            html5QrCode.stop();
+            html5QrCode.clear();
+          } catch (e) {}
+        }
+      });
+
+    })();
+  </script>
 </body>
+
 </html>
