@@ -13,7 +13,7 @@ $start_date    = isset($_GET['start_date']) ? trim($_GET['start_date']) : '';
 $end_date      = isset($_GET['end_date'])   ? trim($_GET['end_date'])   : '';
 
 // Build query using real column names
-$query  = "SELECT kc.*, kp.BOOKING AS kp_booking
+$query  = "SELECT kc.*, kp.PO_NUMBER AS kp_booking
            FROM knit_card kc
            LEFT JOIN knitting_program kp ON kc.KPTID = kp.KPTID
            WHERE 1=1";
@@ -428,52 +428,7 @@ if ($result && $result->num_rows > 0) {
             </div>
         </div>
 
-        <!-- Filter Panel -->
-        <div class="filter-panel">
-            <h6 class="fw-bold mb-3 text-dark d-flex align-items-center gap-2"><i class="fa-solid fa-filter" style="color:var(--primary-teal);"></i> Filter Knit Cards</h6>
-            <form method="GET" action="knit_card_report.php" class="row g-3">
-                <div class="col-12 col-md-6 col-lg-3">
-                    <label class="form-label small fw-bold text-secondary mb-1">Buyer Name</label>
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-light text-secondary"><i class="fa-solid fa-user"></i></span>
-                        <input type="text" name="buyer" class="form-control" placeholder="Search Buyer..." value="<?php echo htmlspecialchars($buyer_filter); ?>">
-                    </div>
-                </div>
-                <div class="col-12 col-md-6 col-lg-2">
-                    <label class="form-label small fw-bold text-secondary mb-1">Machine (M/C No)</label>
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-light text-secondary"><i class="fa-solid fa-hard-drive"></i></span>
-                        <input type="text" name="mc_no" class="form-control" placeholder="e.g. 87" value="<?php echo htmlspecialchars($mc_no_filter); ?>">
-                    </div>
-                </div>
-                <div class="col-12 col-md-6 col-lg-2">
-                    <label class="form-label small fw-bold text-secondary mb-1">From Date</label>
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-light text-secondary"><i class="fa-regular fa-calendar"></i></span>
-                        <input type="date" name="start_date" class="form-control" value="<?php echo htmlspecialchars($start_date); ?>">
-                    </div>
-                </div>
-                <div class="col-12 col-md-6 col-lg-2">
-                    <label class="form-label small fw-bold text-secondary mb-1">To Date</label>
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-light text-secondary"><i class="fa-regular fa-calendar"></i></span>
-                        <input type="date" name="end_date" class="form-control" value="<?php echo htmlspecialchars($end_date); ?>">
-                    </div>
-                </div>
-                <div class="col-12 col-md-6 col-lg-3 d-flex">
-                    <div class="d-flex align-items-end h-100 mt-4 w-100">
-                        <div class="d-flex gap-2 w-100">
-                            <button type="submit" class="btn btn-sm btn-primary flex-grow-1 fw-semibold" style="border-radius:10px; background-color:#1a56db; border-color:#1a56db;">
-                                <i class="fa-solid fa-magnifying-glass me-1"></i> Apply Filter
-                            </button>
-                            <a href="knit_card_report.php" class="btn btn-sm btn-outline-secondary px-3 fw-semibold" style="border-radius:10px; display: inline-flex; align-items: center; justify-content: center;">
-                                <i class="fa-solid fa-rotate-left me-1"></i> Reset
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </div>
+
 
         <!-- Table -->
         <div class="content-panel">
@@ -485,7 +440,7 @@ if ($result && $result->num_rows > 0) {
                             <th>Card Date</th>
                             <th>M/C No</th>
                             <th>Buyer</th>
-                            <th>Booking No</th>
+                            <th>PO Number</th>
                             <th>Style</th>
                             <th>Fabric Type</th>
                             <th>Yarn Type</th>

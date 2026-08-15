@@ -478,9 +478,11 @@ if ($result && $result->num_rows > 0) {
                     <a href="initialPage.php" class="btn nav-btn btn-glass">
                         <i class="fa-solid fa-arrow-left"></i> Dashboard
                     </a>
+                    <!--
                     <a href="knitting_program_form.php" class="btn nav-btn btn-blue-solid">
                         <i class="fa-solid fa-plus"></i> New Knit Card
                     </a>
+                    -->
                     <a href="knit_card_report.php" class="btn nav-btn btn-glass">
                         <i class="fa-solid fa-id-card"></i> All Knit Cards
                     </a>

@@ -259,7 +259,7 @@ if ($prod_stmt) {
             <tr>
                 <th>Buyer</th>
                 <td><strong><?php echo htmlspecialchars($card['BUYER'] ?? ''); ?></strong></td>
-                <th>Booking No</th>
+                <th>PO Number</th>
                 <td><?php echo htmlspecialchars($card['BOOKING'] ?? ''); ?></td>
             </tr>
             <tr>

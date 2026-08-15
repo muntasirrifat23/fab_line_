@@ -550,8 +550,8 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                         <i class="fa-solid fa-gears"></i>
                     </div>
                     <div>
-                        <h2 class="section-title">1. Booking Lookup & Machine Allocation</h2>
-                        <p class="section-subtitle">Fetch details directly from SAP Booking database and select assigned machine</p>
+                        <h2 class="section-title">1. PO Number Lookup & Machine Allocation</h2>
+                        <p class="section-subtitle">Fetch details directly from SAP PO Number database and select assigned machine</p>
                     </div>
                 </div>
 
@@ -599,23 +599,23 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
 
                 <div class="row g-4">
                     <div class="col-md-3">
-                        <label class="form-label">SONO <small class="text-muted">(Database Fixed)</small></label>
+                        <label class="form-label">SONO</label>
                         <input type="text" name="SONO" id="sonoInput" class="form-control" placeholder="SONO..." value="<?php echo htmlspecialchars($sono); ?>" readonly>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">STYLE <small class="text-muted">(Database Fixed)</small></label>
+                        <label class="form-label">STYLE</label>
                         <input type="text" name="STYLE" id="styleInput" class="form-control" placeholder="STYLE..." value="<?php echo htmlspecialchars($style); ?>" readonly>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">BUYER <small class="text-muted">(Database Fixed)</small></label>
+                        <label class="form-label">BUYER</label>
                         <input type="text" name="BUYER" id="buyerInput" class="form-control" placeholder="BUYER..." value="<?php echo htmlspecialchars($buyer); ?>" readonly>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">SUPPLIER <small class="text-muted">(Database Fixed)</small></label>
+                        <label class="form-label">SUPPLIER</label>
                         <input type="text" name="SUPPLIER" id="supplierInput" class="form-control" placeholder="SUPPLIER..." value="<?php echo htmlspecialchars($supplier); ?>" readonly>
                     </div>
                     <div class="col-md-12">
-                        <label class="form-label">KNIT_M_DESCRIPTION <small class="text-muted">(Database Fixed)</small></label>
+                        <label class="form-label">KNIT_M_DESCRIPTION</label>
                         <select name="KNIT_M_DESCRIPTION" id="descSelect" class="form-select">
                             <option value="<?php echo htmlspecialchars($knit_m_description); ?>">
                                 <?php echo htmlspecialchars($knit_m_description ?: '-- Select Fabric Description --'); ?>
@@ -633,44 +633,44 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                     </div>
                     <div>
                         <h2 class="section-title">3. Technical Specifications</h2>
-                        <p class="section-subtitle">Yarn count, dia, GSM, tube type and material codes (Fixed from DB)</p>
+                        <p class="section-subtitle">Yarn count, dia, GSM, tube type and material codes</p>
                     </div>
                 </div>
 
                 <div class="row g-4">
                     <div class="col-md-3">
-                        <label class="form-label">YARN_TYPE <small class="text-muted">(Fixed)</small></label>
+                        <label class="form-label">YARN_TYPE</label>
                         <input type="text" name="YARN_TYPE" id="yarnTypeInput" class="form-control" value="<?php echo htmlspecialchars($yarn_type); ?>" readonly>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">YARN_COUNT <small class="text-muted">(Fixed)</small></label>
+                        <label class="form-label">YARN_COUNT</label>
                         <input type="text" name="YARN_COUNT" id="yarnCountInput" class="form-control" value="<?php echo htmlspecialchars($yarn_count); ?>" readonly>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">FABRICS_TYPE <small class="text-muted">(Fixed)</small></label>
+                        <label class="form-label">FABRICS_TYPE</label>
                         <input type="text" name="FABRICS_TYPE" id="fabricsTypeInput" class="form-control" value="<?php echo htmlspecialchars($fabrics_type); ?>" readonly>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">FINISH_GSM <small class="text-muted">(Fixed)</small></label>
+                        <label class="form-label">FINISH_GSM</label>
                         <input type="text" name="FINISH_GSM" id="finishGsmInput" class="form-control" value="<?php echo htmlspecialchars($finish_gsm); ?>" readonly>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">FINISH_DIA <small class="text-muted">(Fixed)</small></label>
+                        <label class="form-label">FINISH_DIA</label>
                         <input type="text" name="FINISH_DIA" id="finishDiaInput" class="form-control" value="<?php echo htmlspecialchars($finish_dia); ?>" readonly>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">OPEN_TUBE <small class="text-muted">(Fixed)</small></label>
+                        <label class="form-label">OPEN_TUBE</label>
                         <select name="OPEN_TUBE" id="openTubeSelect" class="form-select" style="pointer-events: none; background-color: #e2e8f0; font-weight: 700;">
                             <option value="O" <?php echo ($open_tube == 'O') ? 'selected' : ''; ?>>Open (O)</option>
                             <option value="T" <?php echo ($open_tube == 'T') ? 'selected' : ''; ?>>Tube (T)</option>
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">LOT_NO <small class="text-muted">(Fixed)</small></label>
+                        <label class="form-label">LOT_NO</label>
                         <input type="text" name="LOT_NO" id="lotNoInput" class="form-control" value="<?php echo htmlspecialchars($lot_no); ?>" readonly>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">KNIT_MATERIAL_CODE <small class="text-muted">(Fixed)</small></label>
+                        <label class="form-label">KNIT_MATERIAL_CODE</label>
                         <input type="text" name="KNIT_MATERIAL_CODE" id="knitMaterialCodeInput" class="form-control" value="<?php echo htmlspecialchars($knit_material_code); ?>" readonly>
                     </div>
                 </div>
@@ -733,7 +733,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                 var $btn = $(this);
                 var booking = $('#bookingInput').val().trim();
                 if (!booking) {
-                    alert('Please enter a BOOKING number first.');
+                    alert('Please enter a PO Number first.');
                     return;
                 }
                 
@@ -771,7 +771,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                                 descSelect.append(new Option(d.KNIT_M_DESCRIPTION, d.KNIT_M_DESCRIPTION));
                             }
                         } else {
-                            alert(resp.error || 'No data found for this BOOKING.');
+                            alert(resp.error || 'No data found for this PO Number.');
                         }
                     },
                     error: function() {

@@ -471,9 +471,11 @@ if ($result && $result->num_rows > 0) {
                     <a href="initialPage.php" class="btn nav-btn btn-glass">
                         <i class="fa-solid fa-arrow-left"></i> Dashboard
                     </a>
+                    <!--
                     <a href="knitting_program_form.php" class="btn nav-btn btn-blue-solid">
                         <i class="fa-solid fa-plus"></i> New Program
                     </a>
+                    -->
                     <a href="knit_card_report.php" class="btn nav-btn btn-glass">
                         <i class="fa-solid fa-id-card"></i> All Knit Cards
                     </a>
@@ -532,31 +534,7 @@ if ($result && $result->num_rows > 0) {
             </div>
         </div>
 
-        <!-- Search & Filter -->
-        <div class="search-panel">
-            <form method="GET" action="knit_card.php" class="row g-3 align-items-end">
-                <div class="col-md-3">
-                    <label class="form-label small fw-bold text-secondary mb-1">Filter by Buyer</label>
-                    <input type="text" name="buyer" class="form-control form-control-sm" placeholder="Buyer name..." value="<?php echo htmlspecialchars($buyer_filter); ?>">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label small fw-bold text-secondary mb-1">Filter by PO Number</label>
-                    <input type="text" name="booking_no" class="form-control form-control-sm" placeholder="PO Number..." value="<?php echo htmlspecialchars($booking_filter); ?>">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label small fw-bold text-secondary mb-1">Filter by Shift</label>
-                    <input type="text" name="shift" class="form-control form-control-sm" placeholder="Shift..." value="<?php echo htmlspecialchars($shift_filter); ?>">
-                </div>
-                <div class="col-md-3 d-flex gap-2">
-                    <button type="submit" class="btn btn-teal btn-sm px-4 flex-grow-1 fw-semibold">
-                        <i class="fa-solid fa-magnifying-glass me-1"></i> Filter
-                    </button>
-                    <a href="knit_card.php" class="btn btn-outline-secondary btn-sm px-3 fw-semibold">
-                        <i class="fa-solid fa-rotate-left me-1"></i> Reset
-                    </a>
-                </div>
-            </form>
-        </div>
+
 
         <!-- Data Table -->
         <div class="table-panel">

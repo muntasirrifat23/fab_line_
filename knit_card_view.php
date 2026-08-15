@@ -29,20 +29,86 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_header'])) {
     } elseif (empty($f_mcno)) {
         $error = "Machine Number (M/C No) is required.";
     } else {
-        $upd = $db->prepare("UPDATE knit_card SET REQ_QTY = ?, MCNO = ? WHERE KCID = ?");
-        if ($upd) {
+        // Start Transaction
+        $db->begin_transaction();
+
+        try {
+            // First fetch the KPTID for this card
+            $stmt_kptid = $db->prepare("SELECT KPTID FROM knit_card WHERE KCID = ?");
+            if (!$stmt_kptid) {
+                throw new Exception("Database error: " . $db->error);
+            }
+            $stmt_kptid->bind_param("i", $card_id);
+            $stmt_kptid->execute();
+            $res_kptid = $stmt_kptid->get_result();
+            if (!$res_kptid || $res_kptid->num_rows === 0) {
+                $stmt_kptid->close();
+                throw new Exception("Knit Card not found.");
+            }
+            $card_kptid = intval($res_kptid->fetch_assoc()['KPTID']);
+            $stmt_kptid->close();
+
+            // Lock the knitting_program row to prevent concurrent modifications on this program
+            $stmt_lock = $db->prepare("SELECT QTY FROM knitting_program WHERE KPTID = ? FOR UPDATE");
+            if (!$stmt_lock) {
+                throw new Exception("Database lock error: " . $db->error);
+            }
+            $stmt_lock->bind_param("i", $card_kptid);
+            $stmt_lock->execute();
+            $res_lock = $stmt_lock->get_result();
+            if (!$res_lock || $res_lock->num_rows === 0) {
+                $stmt_lock->close();
+                throw new Exception("Knitting program not found.");
+            }
+            $lock_row = $res_lock->fetch_assoc();
+            $stmt_lock->close();
+
+            $program_qty_locked = floatval($lock_row['QTY'] ?? 0);
+
+            // Fetch the sum of REQ_QTY of other cards for this program (excluding this card)
+            $stmt_other = $db->prepare("SELECT SUM(REQ_QTY) AS other_carded FROM knit_card WHERE KPTID = ? AND KCID != ?");
+            if (!$stmt_other) {
+                throw new Exception("Database query error: " . $db->error);
+            }
+            $stmt_other->bind_param("ii", $card_kptid, $card_id);
+            $stmt_other->execute();
+            $res_other = $stmt_other->get_result();
+            $other_carded = 0.00;
+            if ($res_other && $row_other = $res_other->fetch_assoc()) {
+                $other_carded = floatval($row_other['other_carded'] ?? 0);
+            }
+            $stmt_other->close();
+
+            $max_allowed_qty = $program_qty_locked - $other_carded;
+
+            if ($f_req_qty > $max_allowed_qty) {
+                throw new Exception("Required quantity cannot exceed the remaining program quantity (" . number_format($max_allowed_qty, 2) . " KG).");
+            }
+
+            // Update the card
+            $upd = $db->prepare("UPDATE knit_card SET REQ_QTY = ?, MCNO = ? WHERE KCID = ?");
+            if (!$upd) {
+                throw new Exception("Failed to prepare update query: " . $db->error);
+            }
             $upd->bind_param("dsi", $f_req_qty, $f_mcno, $card_id);
-            if ($upd->execute()) {
-                $msg = "Card updated successfully! (M/C No & Quantity saved)";
-            } else {
-                $error = "Failed to update: " . $db->error;
+            if (!$upd->execute()) {
+                $upd_err = $upd->error;
+                $upd->close();
+                throw new Exception("Failed to update Knit Card: " . $upd_err);
             }
             $upd->close();
-        } else {
-            $error = "Prepare failed: " . $db->error;
+
+            // Commit Transaction
+            $db->commit();
+            $msg = "Card updated successfully! (M/C No & Quantity saved)";
+
+        } catch (Exception $e) {
+            $db->rollback();
+            $error = $e->getMessage();
         }
     }
 }
+
 
 // ── Handle: Add Production Log ─────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_production_log'])) {
@@ -117,7 +183,7 @@ if ($mcno_res) {
 }
 
 // ── Fetch Knit Card Header ─────────────────────────────────────────────────
-$stmt = $db->prepare("SELECT kc.*, kp.BOOKING AS kp_booking FROM knit_card kc LEFT JOIN knitting_program kp ON kc.KPTID = kp.KPTID WHERE kc.KCID = ?");
+$stmt = $db->prepare("SELECT kc.*, kp.PO_NUMBER AS kp_booking FROM knit_card kc LEFT JOIN knitting_program kp ON kc.KPTID = kp.KPTID WHERE kc.KCID = ?");
 if ($stmt) {
     $stmt->bind_param("i", $card_id);
     $stmt->execute();
@@ -164,6 +230,34 @@ if ($op_res) {
 
 $target_qty     = floatval($card['REQ_QTY'] ?? 0);
 $completion_pct = ($target_qty > 0) ? min(100, round(($total_cum_produced / $target_qty) * 100, 1)) : 0;
+
+// Calculate the maximum allowed quantity for this card (to enforce in HTML and validation) (Rule 10)
+$program_kptid = intval($card['KPTID']);
+$stmt_pqty = $db->prepare("SELECT QTY FROM knitting_program WHERE KPTID = ?");
+$program_qty = 0.00;
+if ($stmt_pqty) {
+    $stmt_pqty->bind_param("i", $program_kptid);
+    $stmt_pqty->execute();
+    $res_pqty = $stmt_pqty->get_result();
+    if ($res_pqty && $row_pqty = $res_pqty->fetch_assoc()) {
+        $program_qty = floatval($row_pqty['QTY'] ?? 0);
+    }
+    $stmt_pqty->close();
+}
+
+$stmt_sum_other = $db->prepare("SELECT SUM(REQ_QTY) AS other_carded FROM knit_card WHERE KPTID = ? AND KCID != ?");
+$other_carded = 0.00;
+if ($stmt_sum_other) {
+    $stmt_sum_other->bind_param("ii", $program_kptid, $card_id);
+    $stmt_sum_other->execute();
+    $res_sum_other = $stmt_sum_other->get_result();
+    if ($res_sum_other && $row_sum_other = $res_sum_other->fetch_assoc()) {
+        $other_carded = floatval($row_sum_other['other_carded'] ?? 0);
+    }
+    $stmt_sum_other->close();
+}
+
+$max_allowed_qty = max(0.00, $program_qty - $other_carded);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -641,7 +735,7 @@ $completion_pct = ($target_qty > 0) ? min(100, round(($total_cum_produced / $tar
                 <div class="row gx-3">
                     <div class="col-md-2"><label class="form-label">Buyer</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['BUYER'] ?? ''); ?>" readonly></div>
                     <div class="col-md-2"><label class="form-label">Supplier</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['SUPPLIER'] ?? ''); ?>" readonly></div>
-                    <div class="col-md-2"><label class="form-label">Booking No</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['BOOKING'] ?? ''); ?>" readonly></div>
+                    <div class="col-md-2"><label class="form-label">PO Number</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['BOOKING'] ?? ''); ?>" readonly></div>
                     <div class="col-md-2"><label class="form-label">SONO</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['SONO'] ?? ''); ?>" readonly></div>
                     <div class="col-md-2"><label class="form-label">Style</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['STYLE'] ?? ''); ?>" readonly></div>
                     <div class="col-md-2"><label class="form-label">Fabric Type</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['FABRICS_TYPE'] ?? ''); ?>" readonly></div>
@@ -653,7 +747,8 @@ $completion_pct = ($target_qty > 0) ? min(100, round(($total_cum_produced / $tar
                     <div class="col-md-3"><label class="form-label">Lot No</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['LOT_NO'] ?? ''); ?>" readonly></div>
                     <div class="col-md-3">
                         <label class="form-label text-primary fw-bold"><i class="fa-solid fa-pen-to-square me-1"></i> Req Qty (KG) - Editable</label>
-                        <input type="number" step="0.01" min="0.01" name="REQ_QTY" class="form-control fw-bold text-primary" style="border: 2px solid #2563eb; background:#eff6ff;" value="<?php echo htmlspecialchars($card['REQ_QTY'] ?? ''); ?>" required>
+                        <input type="number" step="0.01" min="0.01" max="<?php echo htmlspecialchars($max_allowed_qty); ?>" name="REQ_QTY" class="form-control fw-bold text-primary" style="border: 2px solid #2563eb; background:#eff6ff;" value="<?php echo htmlspecialchars($card['REQ_QTY'] ?? ''); ?>" required>
+                        <small class="text-muted" style="font-size: 11px;">Max allowed: <strong><?php echo number_format($max_allowed_qty, 2); ?> KG</strong> (Prog: <?php echo number_format($program_qty, 2); ?>, Other: <?php echo number_format($other_carded, 2); ?>)</small>
                     </div>
                     <div class="col-md-2"><label class="form-label">Prepared By</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['PREPARED_BY'] ?? ''); ?>" readonly></div>
                 </div>

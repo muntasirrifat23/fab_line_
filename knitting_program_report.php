@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -164,7 +164,7 @@
                 tr.append($('<td>').text(row.CREATED_DATE || ''));
                 tr.append($('<td>').text(row.MAIN_TID || ''));
                 tr.append($('<td>').text(row.SUB_TID || ''));
-                tr.append($('<td>').text(row.PO_NUMBER || ''));
+                tr.append($('<td>').text(row.PO_NUMBER || row.BOOKING || ''));
                 tr.append($('<td>').text(row.SONO || ''));
                 tr.append($('<td>').text(row.BUYER || ''));
                 tr.append($('<td>').text(row.STYLE || ''));
@@ -236,10 +236,10 @@
         function downloadRowPdf(row) {
             var fieldHTML = [
                 ['Date', row.CREATED_DATE],
-                ['Shift', row.SHIFT],
+                ['Po Number', row.PO_NUMBER],
                 ['Main Program', row.MAIN_TID],
                 ['Program', row.SUB_TID],
-                ['Po Number', row.PO_NUMBER],
+                ['Booking No', row.BOOKING],
                 ['SONO', row.SONO],
                 ['Buyer', row.BUYER],
                 ['Style', row.STYLE],

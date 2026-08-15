@@ -152,7 +152,7 @@ if ($prod_result && $prod_result->num_rows > 0) {
             <!-- Right -->
             <table class="spec-table">
                 <tr><td class="lbl">Buyer</td><td class="val">: <?php echo htmlspecialchars($card['BUYER'] ?? ''); ?></td></tr>
-                <tr><td class="lbl">Booking No.</td><td class="val">: <?php echo htmlspecialchars($card['BOOKING'] ?? ''); ?></td></tr>
+                <tr><td class="lbl">PO Number</td><td class="val">: <?php echo htmlspecialchars($card['BOOKING'] ?? ''); ?></td></tr>
                 <tr><td class="lbl">Style No</td><td class="val">: <?php echo htmlspecialchars($card['STYLE'] ?? ''); ?></td></tr>
                 <tr><td class="lbl">Fabric Type</td><td class="val">: <?php echo htmlspecialchars($card['FABRICS_TYPE'] ?? ''); ?></td></tr>
                 <tr><td class="lbl">Yarn Type</td><td class="val">: <?php echo htmlspecialchars($card['YARN_TYPE'] ?? ''); ?></td></tr>
