@@ -677,29 +677,13 @@
         MATERIAL_CODE: 'MATERIAL CODE',
         M_DES: 'MATERIAL DESC',
         RACK: 'RACK',
-        TT: 'TT',
-        PATTA: 'PATTA',
-        SLUB: 'SLUB',
-        YC_SPOT: 'YC SPOT',
-        OILSPOT: 'OIL SPOT',
-        FF: 'FF',
-        SEEDS: 'SEEDS',
-        MSTITCH: 'M/STITCH',
-        SINKERMARK: 'SINKER MARK',
-        NEEDLEMARK: 'NEEDLE MARK',
-        LYCOUT: 'LYC OUT',
-        OILLINE: 'OIL LINE',
-        HOLE: 'HOLE',
-        LOOP: 'LOOP',
-        SETUP: 'SETUP',
-        CMARK: 'C MARK',
         TPOINT: 'T.POINT'
       };
 
       const subRackOptions = {
-        'A': ['A1', 'A2', 'A3', 'A4'],
-        'B': ['B1', 'B2', 'B3', 'B4'],
-        'C': ['C1', 'C2', 'C3', 'C4']
+        'A': ['A1', 'A2', 'A3'],
+        'B': ['B1', 'B2', 'B3'],
+        'C': ['C1', 'C2', 'C3']
       };
 
       let scannedInfo = null;
@@ -770,19 +754,14 @@
         `;
 
         html += buildFieldRow(['ROLL', 'PO_NUMBER', 'QTY']);
-        html += buildFieldRow(['BUDAT', 'SONO', 'BUYER']);
+        html += buildFieldRow(['SONO', 'SHIFT', 'BUYER']);
         html += buildFieldRow(['STYLE', 'COLOR', 'MCNO']);
-        html += buildFieldRow(['MC_DIA', 'SUPPLIER', 'SHIFT']);
-        html += buildFieldRow(['YTYPE', 'YCOUNT', 'FTYPE']);
-        html += buildFieldRow(['FGSM', 'FDIA', 'O_T']);
-        html += buildFieldRow(['SL', 'GGSM', 'FPLAN']);
-        html += buildFieldRow(['LOTNO', 'MATERIAL_CODE', 'M_DES']);
-        html += buildFieldRow(['TT', 'PATTA', 'SLUB']);
-        html += buildFieldRow(['YC_SPOT', 'OILSPOT', 'FF']);
-        html += buildFieldRow(['SEEDS', 'MSTITCH', 'SINKERMARK']);
-        html += buildFieldRow(['NEEDLEMARK', 'LYCOUT', 'OILLINE']);
-        html += buildFieldRow(['HOLE', 'LOOP', 'SETUP']);
-        html += buildFieldRow(['CMARK', 'TPOINT']);
+        html += buildFieldRow(['MC_DIA', 'SUPPLIER', 'YTYPE']);
+        html += buildFieldRow(['YCOUNT', 'O_T', 'SL']);
+        html += buildFieldRow(['FTYPE', 'FGSM', 'FDIA']);
+        html += buildFieldRow(['GGSM', 'FPLAN', 'LOTNO']);
+        html += buildFieldRow(['TPOINT', 'MATERIAL_CODE']);
+        html += buildFieldRow(['M_DES']);
 
         html += `
           <button class="rescan-btn" onclick="window.location.reload();">
@@ -883,7 +862,9 @@
       function fetchDataByRoll(roll) {
         return new Promise(function(resolve, reject) {
           fetch('ajaxKnitting_store.php?action=get_by_roll&roll=' + encodeURIComponent(roll))
-            .then(function(r) { return r.json(); })
+            .then(function(r) {
+              return r.json();
+            })
             .then(function(resp) {
               if (resp && resp.success) {
                 resolve(resp.data);
@@ -900,21 +881,29 @@
       function saveRackData(roll, rack) {
         return new Promise(function(resolve, reject) {
           fetch('ajaxKnitting_store.php?action=save_rack', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'save_rack', ROLL: roll, RACK: rack })
-          })
-          .then(function(r) { return r.json(); })
-          .then(function(resp) {
-            if (resp && resp.success) {
-              resolve(resp);
-            } else {
-              reject((resp && resp.error) || 'Save failed');
-            }
-          })
-          .catch(function(err) {
-            reject(err);
-          });
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                action: 'save_rack',
+                ROLL: roll,
+                RACK: rack
+              })
+            })
+            .then(function(r) {
+              return r.json();
+            })
+            .then(function(resp) {
+              if (resp && resp.success) {
+                resolve(resp);
+              } else {
+                reject((resp && resp.error) || 'Save failed');
+              }
+            })
+            .catch(function(err) {
+              reject(err);
+            });
         });
       }
 
@@ -1035,8 +1024,9 @@
           aspectRatio: 1.0
         };
 
-        html5QrCode.start(
-          { facingMode: "environment" },
+        html5QrCode.start({
+            facingMode: "environment"
+          },
           config,
           onScanSuccess,
           function(err) {}
