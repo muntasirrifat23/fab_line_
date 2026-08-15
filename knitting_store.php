@@ -27,7 +27,7 @@
     .card {
       max-width: 650px;
       width: 100%;
-      background: #141b2b;
+      background: linear-gradient(145deg, #123a2f, #0b2420);
       border-radius: 40px;
       padding: 24px 20px 30px;
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
@@ -260,7 +260,7 @@
 
     .data-row.default-row {
       display: grid !important;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      grid-template-columns: repeat(4, 1fr);
       gap: 14px;
       align-items: flex-start;
       height: auto;
@@ -753,15 +753,12 @@
           </div>
         `;
 
-        html += buildFieldRow(['ROLL', 'PO_NUMBER', 'QTY']);
-        html += buildFieldRow(['SONO', 'SHIFT', 'BUYER']);
-        html += buildFieldRow(['STYLE', 'COLOR', 'MCNO']);
-        html += buildFieldRow(['MC_DIA', 'SUPPLIER', 'YTYPE']);
-        html += buildFieldRow(['YCOUNT', 'O_T', 'SL']);
-        html += buildFieldRow(['FTYPE', 'FGSM', 'FDIA']);
-        html += buildFieldRow(['GGSM', 'FPLAN', 'LOTNO']);
-        html += buildFieldRow(['TPOINT', 'MATERIAL_CODE']);
-        html += buildFieldRow(['M_DES']);
+        html += buildFieldRow(['ROLL', 'PO_NUMBER', 'QTY', 'SONO']);
+        html += buildFieldRow(['SHIFT', 'BUYER', 'STYLE', 'COLOR']);
+        html += buildFieldRow(['MCNO', 'MC_DIA', 'SUPPLIER', 'YTYPE']);
+        html += buildFieldRow(['YCOUNT', 'O_T', 'SL', 'FTYPE']);
+        html += buildFieldRow(['FGSM', 'FDIA', 'GGSM', 'FPLAN']);
+        html += buildFieldRow(['LOTNO', 'TPOINT', 'MATERIAL_CODE', 'M_DES']);
 
         html += `
           <button class="rescan-btn" onclick="window.location.reload();">
