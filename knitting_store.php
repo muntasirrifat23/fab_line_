@@ -607,11 +607,11 @@
           <span class="sub-placeholder">Select a rack above to see sub-racks</span>
         </div>
         <div class="rack-actions">
-          <button class="btn-action reset" type="button" id="resetRackBtn">
-            <i class="fas fa-undo"></i> Reset
-          </button>
           <button class="btn-action save" type="button" id="saveRackBtn" disabled>
             <i class="fas fa-save"></i> Save Rack
+          </button>
+          <button class="btn-action reset" type="button" id="resetRackBtn">
+            <i class="fas fa-undo"></i> Reset
           </button>
         </div>
       </div>
@@ -879,17 +879,16 @@
       }
 
       function saveRackData(roll, rack) {
+        var payload = Object.assign({}, scannedInfo || {});
+        payload.ROLL = roll;
+        payload.RACK = rack;
         return new Promise(function(resolve, reject) {
-          fetch('ajaxKnitting_store.php?action=save_rack', {
+          fetch('ajaxKnittingStore_Insert.php', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'
               },
-              body: JSON.stringify({
-                action: 'save_rack',
-                ROLL: roll,
-                RACK: rack
-              })
+              body: JSON.stringify(payload)
             })
             .then(function(r) {
               return r.json();
@@ -898,7 +897,7 @@
               if (resp && resp.success) {
                 resolve(resp);
               } else {
-                reject((resp && resp.error) || 'Save failed');
+                reject(resp || { error: 'Save failed' });
               }
             })
             .catch(function(err) {
@@ -982,7 +981,11 @@
             }, 2000);
           })
           .catch(function(err) {
-            showMessage('❌ ' + ((err && err.message) || String(err)), 'error');
+            var msg = (err && err.message) || String(err);
+            if (!(err && err.messager_exist)) {
+              msg = '❌ ' + msg;
+            }
+            showMessage(msg, 'error');
             saveRackBtn.disabled = false;
             saveRackBtn.innerHTML = '<i class="fas fa-save"></i> Save Rack';
           });
