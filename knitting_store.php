@@ -16,7 +16,7 @@
 
     body {
       font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
-      background: #c7c8ca;
+      background: linear-gradient(135deg, #b9efe6, #a4d9f6, #c9f2dd);
       min-height: 100vh;
       display: flex;
       justify-content: center;
@@ -27,11 +27,11 @@
     .card {
       max-width: 650px;
       width: 100%;
-      background: linear-gradient(145deg, #123a2f, #0b2420);
+      background: #eef5f3;
       border-radius: 40px;
       padding: 24px 20px 30px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-      border: 1px solid #2e3a52;
+      box-shadow: 0 20px 45px rgba(10, 60, 55, 0.3);
+      border: 1px solid #b5d8d2;
       transition: 0.2s;
     }
 
@@ -44,14 +44,14 @@
     }
 
     .store-header h2 {
-      color: #e3ecfc;
-      font-size: 1.35rem;
-      font-weight: 700;
+      color: #083a36;
+      font-size: 1.4rem;
+      font-weight: 800;
       letter-spacing: 0.5px;
     }
 
     .store-header h2 i {
-      color: #4fc3f7;
+      color: #0f7a6f;
       margin-right: 8px;
     }
 
@@ -68,10 +68,10 @@
 
     .scanner-container {
       position: relative;
-      background: #1e2740;
+      background: #d9ede9;
       border-radius: 28px;
       overflow: hidden;
-      box-shadow: inset 0 0 0 1px #33405e, 0 8px 20px rgba(0, 0, 0, 0.5);
+      box-shadow: inset 0 0 0 1px #b5d8d2, 0 8px 20px rgba(10, 60, 55, 0.18);
       margin-bottom: 24px;
       min-height: 300px;
     }
@@ -79,7 +79,7 @@
     #qr-reader {
       width: 100%;
       padding: 0 !important;
-      background: #0f1625;
+      background: #e6f4f1;
     }
 
     #qr-reader video {
@@ -140,27 +140,27 @@
     }
 
     .status-badge {
-      background: #1f2a40;
+      background: #dcebe8;
       padding: 8px 18px;
       border-radius: 100px;
-      color: #a0b3d9;
+      color: #083a36;
       font-size: 0.85rem;
-      font-weight: 500;
+      font-weight: 600;
       display: flex;
       align-items: center;
       gap: 8px;
-      border: 1px solid #2e3d5a;
+      border: 1px solid #9fc8c1;
     }
 
     .status-badge i {
-      color: #4fc3f7;
+      color: #0f7a6f;
       font-size: 0.9rem;
     }
 
     .btn-icon {
-      background: #1f2a40;
-      border: 1px solid #33415e;
-      color: #cbd5f0;
+      background: #dcebe8;
+      border: 1px solid #9fc8c1;
+      color: #083a36;
       width: 44px;
       height: 44px;
       border-radius: 40px;
@@ -173,9 +173,9 @@
     }
 
     .btn-icon:hover {
-      background: #2b3857;
-      border-color: #5f79b0;
-      color: white;
+      background: #c3dcd7;
+      border-color: #0f7a6f;
+      color: #042f2c;
     }
 
     .btn-icon:active {
@@ -183,12 +183,12 @@
     }
 
     .result-panel {
-      background: #101826;
+      background: #e2efec;
       border-radius: 28px;
       padding: 18px 20px 16px;
       margin-top: 20px;
-      border: 1px solid #29364f;
-      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
+      border: 1px solid #a9cdc6;
+      box-shadow: inset 0 2px 6px rgba(10, 60, 55, 0.1);
       overflow-y: auto;
     }
 
@@ -197,12 +197,12 @@
     }
 
     .result-panel::-webkit-scrollbar-track {
-      background: #0f1625;
+      background: #cfdfdb;
       border-radius: 10px;
     }
 
     .result-panel::-webkit-scrollbar-thumb {
-      background: #2e3d5a;
+      background: #7fb0a7;
       border-radius: 10px;
     }
 
@@ -210,17 +210,17 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      color: #8ea4d6;
-      font-weight: 500;
+      color: #083a36;
+      font-weight: 700;
       letter-spacing: 0.3px;
       font-size: 0.9rem;
-      border-bottom: 1px dashed #27344d;
+      border-bottom: 1px dashed #9fc8c1;
       padding-bottom: 10px;
       margin-bottom: 12px;
     }
 
     .result-header i {
-      color: #4fc3f7;
+      color: #0f7a6f;
     }
 
     #result-content {
@@ -232,27 +232,28 @@
     }
 
     .data-row {
-      background: #1a2337;
+      background: #d6e9e5;
       padding: 8px 14px;
       border-radius: 12px;
-      border-left: 4px solid #4fc3f7;
-      color: #e3ecfc;
+      border-left: 4px solid #0f7a6f;
+      color: #062e2b;
       font-size: 0.9rem;
       line-height: 1.4;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 2px 6px rgba(10, 60, 55, 0.12);
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
     .data-row .label {
-      color: #8bb1ff;
-      font-weight: 600;
+      color: #0b4f47;
+      font-weight: 700;
       min-width: 140px;
     }
 
     .data-row .value {
-      color: #e3ecfc;
+      color: #062e2b;
+      font-weight: 600;
       text-align: right;
       flex: 1;
       margin-left: 10px;
@@ -273,15 +274,16 @@
 
     .data-row.default-row div div:first-child {
       font-size: 11px;
-      color: #8fa5cf;
+      color: #0b4f47;
+      font-weight: 700;
       margin-bottom: 5px;
       text-transform: uppercase;
     }
 
     .data-row.default-row div div:last-child {
-      color: #fff;
+      color: #052522;
       font-size: 16px;
-      font-weight: 600;
+      font-weight: 700;
       white-space: normal;
       overflow-wrap: anywhere;
       word-break: break-word;
@@ -297,16 +299,17 @@
 
     .field-block .field-label {
       font-size: 0.7rem;
-      color: #8fa5cf;
+      color: #0b4f47;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      opacity: 0.85;
+      opacity: 1;
     }
 
     .field-block .field-value {
       font-size: 0.95rem;
-      color: #ffffff;
-      font-weight: 700;
+      color: #042e2b;
+      font-weight: 800;
       white-space: normal;
       overflow-wrap: anywhere;
       word-break: break-word;
@@ -315,17 +318,19 @@
 
     .data-row.header-row {
       border-left-color: #f59e0b;
-      background: #1f2a3a;
-      font-weight: 600;
+      background: #c8e2dd;
+      font-weight: 700;
       font-size: 0.95rem;
     }
 
     .data-row.header-row .label {
-      color: #fbbf24;
+      color: #8a4a00;
+      font-weight: 800;
     }
 
     .data-row.header-row .value {
-      color: #fde68a;
+      color: #7c3d00;
+      font-weight: 700;
     }
 
     .scanned-badge {
@@ -348,17 +353,17 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      color: #8ea4d6;
-      font-weight: 500;
+      color: #083a36;
+      font-weight: 700;
       letter-spacing: 0.3px;
       font-size: 0.9rem;
-      border-bottom: 1px dashed #27344d;
+      border-bottom: 1px dashed #9fc8c1;
       padding-bottom: 10px;
       margin-bottom: 12px;
     }
 
     .rack-section-title i {
-      color: #4fc3f7;
+      color: #0f7a6f;
     }
 
     .rack-group {
@@ -372,10 +377,10 @@
       flex: 1 1 auto;
       min-width: 72px;
       border-radius: 14px;
-      font-weight: 600;
-      background: #1f2a40;
-      border: 1px solid #33415e;
-      color: #cbd5f0;
+      font-weight: 700;
+      background: #dcebe8;
+      border: 1px solid #9fc8c1;
+      color: #083a36;
       padding: 12px 16px;
       font-size: 0.95rem;
       cursor: pointer;
@@ -383,16 +388,16 @@
     }
 
     .rack-group .btn:hover {
-      background: #2b3857;
-      border-color: #5f79b0;
-      color: white;
+      background: #c3dcd7;
+      border-color: #0f7a6f;
+      color: #042f2c;
     }
 
     .rack-group .btn.active-rack {
-      background: linear-gradient(135deg, #4fc3f7, #2563eb);
-      border-color: #4fc3f7;
+      background: linear-gradient(135deg, #0f7a6f, #0b4f47);
+      border-color: #0f7a6f;
       color: white;
-      box-shadow: 0 8px 18px rgba(79, 195, 247, 0.25);
+      box-shadow: 0 8px 18px rgba(10, 60, 55, 0.3);
     }
 
     .sub-rack-group {
@@ -401,19 +406,19 @@
       flex-wrap: wrap;
       margin-top: 10px;
       padding: 12px;
-      background: #111827;
+      background: #d6e9e5;
       border-radius: 16px;
-      border: 1px dashed #33415e;
+      border: 1px dashed #7fb0a7;
       min-height: 50px;
     }
 
     .sub-rack-group .btn {
       min-width: 60px;
       border-radius: 12px;
-      font-weight: 600;
-      background: #1a2337;
-      border: 1px solid #33415e;
-      color: #a0b3d9;
+      font-weight: 700;
+      background: #e4f1ee;
+      border: 1px solid #9fc8c1;
+      color: #0b4f47;
       padding: 10px 14px;
       font-size: 0.85rem;
       cursor: pointer;
@@ -421,19 +426,20 @@
     }
 
     .sub-rack-group .btn:hover {
-      background: #2b3857;
-      color: white;
+      background: #c3dcd7;
+      color: #042f2c;
     }
 
     .sub-rack-group .btn.active-sub {
-      background: linear-gradient(135deg, #10b981, #0f766e);
+      background: linear-gradient(135deg, #10b981, #0b4f47);
       border-color: #10b981;
       color: white;
     }
 
     .sub-rack-group .sub-placeholder {
-      color: #5b6f97;
-      font-size: 0.8rem;
+      color: #0b4f47;
+      font-weight: 600;
+      font-size: 0.85rem;
       align-self: center;
     }
 
@@ -455,7 +461,7 @@
       cursor: pointer;
       transition: 0.2s;
       color: #fff;
-      background: #1f2a40;
+      background: linear-gradient(135deg, #0f766e, #134e4a);
     }
 
     .btn-action:hover {
@@ -503,9 +509,10 @@
 
     .rescan-btn {
       margin-top: 10px;
-      background: #1f2a40;
-      border: 1px solid #33415e;
-      color: #cbd5f0;
+      background: #dcebe8;
+      border: 1px solid #9fc8c1;
+      color: #083a36;
+      font-weight: 600;
       padding: 8px 20px;
       border-radius: 20px;
       cursor: pointer;
@@ -514,9 +521,9 @@
     }
 
     .rescan-btn:hover {
-      background: #2b3857;
-      border-color: #5f79b0;
-      color: white;
+      background: #c3dcd7;
+      border-color: #0f7a6f;
+      color: #042f2c;
     }
 
     @media (max-width: 480px) {
@@ -588,7 +595,7 @@
       <div class="result-header">
         <i class="fas fa-qrcode"></i>
         <span>Scanned Data</span>
-        <span style="margin-left: auto; font-size: 0.7rem; background: #1f2a40; padding: 2px 12px; border-radius: 40px; color: #91a9da;">live</span>
+        <span style="margin-left: auto; font-size: 0.7rem; background: #14b8a6; padding: 2px 12px; border-radius: 40px; color: #ffffff;">live</span>
       </div>
       <div id="result-content">
         <!-- Default content will be injected by JS -->
@@ -619,13 +626,14 @@
     </div>
 
     <!-- FOOTER -->
-    <div class="footer-note" style="margin-top:16px; text-align:center; color:#44557a; letter-spacing:0.5px;">
+    <div class="footer-note" style="margin-top:16px; text-align:center; color:#115e59; letter-spacing:0.5px;">
       <button class="btn btn-dark"
         onclick="window.location.href='initialPage.php';"
-        style="background-color:white;
-               color:black;
-               padding:12px;
-               border-radius:8px;
+        style="background-color:#083a36;
+               color:white;
+               padding:12px 18px;
+               border:none;
+               border-radius:10px;
                cursor:pointer;
                transition:all .2s ease;
                font-weight:bold;
@@ -932,13 +940,13 @@
 
       function renderBareData(text, msg) {
         resultContainer.innerHTML = `
-          <div class="data-row header-row" style="border-left-color:#f59e0b; background:#1f2a3a;">
-            <span class="label" style="color:#fbbf24;">📌 ${msg || 'No data'}</span>
+          <div class="data-row header-row" style="border-left-color:#f59e0b; background:#c8e2dd;">
+            <span class="label" style="color:#8a4a00; font-weight:800;">📌 ${msg || 'No data'}</span>
             <span class="value"></span>
           </div>
-          <div class="data-row" style="background:#0f172a; border-left-color:#6b7280; flex-wrap:wrap;">
-            <span class="label" style="color:#9ca3af; min-width:100%;">Scanned Data:</span>
-            <span class="value" style="text-align:left; font-size:0.8rem; word-break:break-all; color:#d1d5db;">${text}</span>
+          <div class="data-row" style="background:#d6e9e5; border-left-color:#6b7280; flex-wrap:wrap;">
+            <span class="label" style="color:#0b4f47; font-weight:700; min-width:100%;">Scanned Data:</span>
+            <span class="value" style="text-align:left; font-size:0.8rem; word-break:break-all; color:#052522; font-weight:600;">${text}</span>
           </div>
           <button class="rescan-btn" onclick="window.location.reload();">
             <i class="fas fa-redo"></i> Scan Another QR
