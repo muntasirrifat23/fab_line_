@@ -127,48 +127,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_production_log'])
     } else {
         $production_qty = $a_shift + $b_shift + $c_shift;
 
-        // Fetch REQ_QTY from knit_card
-        $qs = $db->prepare("SELECT REQ_QTY FROM knit_card WHERE KCID = ?");
-        $qs->bind_param("i", $card_id);
-        $qs->execute();
-        $qr = $qs->get_result()->fetch_assoc();
-        $target_qty = $qr ? floatval($qr['REQ_QTY']) : 0.00;
-        $qs->close();
+        // Start Transaction
+        $db->begin_transaction();
 
-        // Fetch previous CUM_TOTAL
-        $ps = $db->prepare("SELECT CUM_TOTAL FROM knit_card_production WHERE KCID = ? ORDER BY LOG_DATE DESC, KCPID DESC LIMIT 1");
-        $ps->bind_param("i", $card_id);
-        $ps->execute();
-        $pr_res = $ps->get_result();
-        $prev_cum = 0.00;
-        if ($pr_res && $pr_res->num_rows > 0) {
-            $prev_cum = floatval($pr_res->fetch_assoc()['CUM_TOTAL']);
-        }
-        $ps->close();
+        try {
+            // Fetch REQ_QTY from knit_card with row-level lock (FOR UPDATE)
+            $qs = $db->prepare("SELECT REQ_QTY FROM knit_card WHERE KCID = ? FOR UPDATE");
+            if (!$qs) {
+                throw new Exception("Prepare failed: " . $db->error);
+            }
+            $qs->bind_param("i", $card_id);
+            if (!$qs->execute()) {
+                throw new Exception("Execute failed: " . $qs->error);
+            }
+            $qr = $qs->get_result()->fetch_assoc();
+            if (!$qr) {
+                $qs->close();
+                throw new Exception("Knit Card not found.");
+            }
+            $target_qty = floatval($qr['REQ_QTY']);
+            $qs->close();
 
-        $cum_total = $prev_cum + $production_qty;
-        $balance   = max(0, $target_qty - $cum_total);
+            // Fetch previous CUM_TOTAL with lock (FOR UPDATE)
+            $ps = $db->prepare("SELECT CUM_TOTAL FROM knit_card_production WHERE KCID = ? ORDER BY LOG_DATE DESC, KCPID DESC LIMIT 1 FOR UPDATE");
+            if (!$ps) {
+                throw new Exception("Prepare failed: " . $db->error);
+            }
+            $ps->bind_param("i", $card_id);
+            if (!$ps->execute()) {
+                throw new Exception("Execute failed: " . $ps->error);
+            }
+            $pr_res = $ps->get_result();
+            $prev_cum = 0.00;
+            if ($pr_res && $pr_res->num_rows > 0) {
+                $prev_cum = floatval($pr_res->fetch_assoc()['CUM_TOTAL']);
+            }
+            $ps->close();
 
-        // Insert production log using real column names
-        $ins = $db->prepare("
-            INSERT INTO knit_card_production
-                (KCID, LOG_DATE, A_SHIFT_QTY, B_SHIFT_QTY, C_SHIFT_QTY, PRODUCTION_QTY, CUM_TOTAL, BALANCE, OPERATOR_A, OPERATOR_B, OPERATOR_C)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ");
-        if ($ins) {
+            $cum_total = $prev_cum + $production_qty;
+            $balance   = max(0, $target_qty - $cum_total);
+
+            // Insert production log using real column names
+            $ins = $db->prepare("
+                INSERT INTO knit_card_production
+                    (KCID, LOG_DATE, A_SHIFT_QTY, B_SHIFT_QTY, C_SHIFT_QTY, PRODUCTION_QTY, CUM_TOTAL, BALANCE, OPERATOR_A, OPERATOR_B, OPERATOR_C)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+            if (!$ins) {
+                throw new Exception("Prepare failed: " . $db->error);
+            }
             $ins->bind_param(
                 "isddddddsss",
                 $card_id, $log_date, $a_shift, $b_shift, $c_shift, $production_qty, $cum_total, $balance,
                 $operator_a, $operator_b, $operator_c
             );
-            if ($ins->execute()) {
-                $msg = "Daily production entry logged successfully!";
-            } else {
-                $error = "Error adding production log: " . $db->error;
+            if (!$ins->execute()) {
+                $ins_err = $ins->error;
+                $ins->close();
+                throw new Exception("Failed to insert production log: " . $ins_err);
             }
             $ins->close();
-        } else {
-            $error = "Prepare failed: " . $db->error;
+
+            // Commit Transaction
+            $db->commit();
+            $msg = "Daily production entry logged successfully!";
+        } catch (Exception $e) {
+            $db->rollback();
+            $error = "Error adding production log: " . $e->getMessage();
         }
     }
 }
