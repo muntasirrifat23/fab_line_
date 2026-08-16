@@ -14,8 +14,8 @@ if ($card_id <= 0) {
     exit();
 }
 
-// Build dynamic QR Code URL for scanning (points to public unauthenticated view)
-$qr_url = APP_BASE_URL . "/knit_card_public_view.php?id=" . $card_id;
+// Build simplified QR Code payload (e.g., KC-12) for less dense QR codes
+$qr_payload = "KC-" . $card_id;
 
 // Fetch Card Header using real KCID column
 $stmt = $db->prepare("SELECT * FROM knit_card WHERE KCID = ?");
@@ -244,7 +244,6 @@ if ($prod_stmt) {
             <!-- Prominent QR Code for Printed Floor Card -->
             <div class="text-center print-qr-box" style="width: 140px;">
                 <div id="print_qrcode" style="width: 130px; height: 130px; margin: 0 auto; padding: 4px; background: #fff; border: 1px solid #000;"></div>
-                <div style="font-size: 8.5px; font-weight: 700; text-transform: uppercase; margin-top: 4px; line-height: 1.1;">Scan for live production status</div>
             </div>
         </div>
 
@@ -371,7 +370,7 @@ if ($prod_stmt) {
             var printQrBox = document.getElementById("print_qrcode");
             if (printQrBox) {
                 new QRCode(printQrBox, {
-                    text: "<?php echo $qr_url; ?>",
+                    text: "<?php echo $qr_payload; ?>",
                     width: 130,
                     height: 130,
                     colorDark: "#000000",

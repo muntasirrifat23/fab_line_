@@ -16,8 +16,8 @@ if ($card_id <= 0) {
     exit();
 }
 
-// QR Code URL (public view)
-$qr_url = APP_BASE_URL . "/knit_card_public_view.php?id=" . $card_id;
+// Build simplified QR Code payload (e.g., KC-12) for less dense QR codes
+$qr_payload = "KC-" . $card_id;
 
 // ── Handle: Update Header Form (MCNO + REQ_QTY are editable) ──
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_header'])) {
@@ -918,7 +918,7 @@ $max_allowed_qty = max(0.00, $program_qty - $other_carded);
             <div class="custom-modal-body">
                 <div class="qr-img-wrapper"><div id="modal_qrcode"></div></div>
                 <p class="qr-caption">Scan to view live card</p>
-                <p class="qr-url-text"><?php echo htmlspecialchars($qr_url); ?></p>
+                <p class="qr-url-text"><?php echo htmlspecialchars($qr_payload); ?></p>
             </div>
             <div class="custom-modal-footer">
                 <button type="button" class="btn btn-secondary custom-modal-btn" id="btnCloseQrModal">Close</button>
@@ -938,7 +938,7 @@ $max_allowed_qty = max(0.00, $program_qty - $other_carded);
 
             if (qrBox && typeof QRCode !== 'undefined') {
                 new QRCode(qrBox, {
-                    text: "<?php echo $qr_url; ?>",
+                    text: "<?php echo $qr_payload; ?>",
                     width: 220, height: 220,
                     colorDark: "#000000", colorLight: "#ffffff",
                     correctLevel: QRCode.CorrectLevel.H
