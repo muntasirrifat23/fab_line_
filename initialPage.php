@@ -57,6 +57,11 @@ if (isset($_POST['knitting_store'])) {
     header('location:knitting_store.php');
     exit();
 }
+if (isset($_POST['dyeing_batch_card'])) {
+    $_SESSION['lineNo'] = $_POST['option'];
+    header('location:dyeing_batch_card.php');
+    exit();
+}
 if (isset($_POST['user_management'])) {
     $_SESSION['lineNo'] = $_POST['option'];
     header('location:user_management.php');
@@ -469,6 +474,10 @@ mysqli_close($db);
 
                     <button class="w3-button w3-teal" name="knitting_store" id="knitting_store">
                         <i class="fas fa-warehouse"></i> Knitting Store
+                    </button>
+
+                    <button class="w3-button w3-teal" name="dyeing_batch_card" id="dyeing_batch_card">
+                        <i class="fas fa-warehouse"></i> Batch Card 
                     </button>
 
                     <button class="w3-button w3-teal" name="user_management" id="user_management">
