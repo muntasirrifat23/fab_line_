@@ -270,7 +270,7 @@ mysqli_close($db);
 
         .btn-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             gap: 12px;
             margin: 24px 0;
         }
@@ -382,8 +382,12 @@ mysqli_close($db);
 
         @media (max-width: 1100px) {
             .btn-grid {
+<<<<<<< HEAD
                 grid-template-columns: repeat(3, 1fr);
                 gap: 12px;
+=======
+                grid-template-columns: repeat(5, 1fr);
+>>>>>>> 2d6647a70e218ef38c0bb94a09caf0d8c2f1f222
             }
         }
 
@@ -430,6 +434,10 @@ mysqli_close($db);
                 gap: 6px;
             }
         }
+
+        .btn-grid .w3-button {
+            text-transform: none !important;
+        }
     </style>
 </head>
 
@@ -441,26 +449,6 @@ mysqli_close($db);
         </div>
         <div class="glass-panel">
             <form action="initialPage.php" method="post">
-                <!-- <div class="selection-row">
-                    <div class="select-box">
-                        <i class="fas fa-building"></i>
-                        <select name="sFLOOR" id="sidFLOOR" class="w3-select">
-                            <option value="FLOOR-01">FLOOR-01</option>
-                            <option value="FLOOR-02">FLOOR-02</option>
-                            <option value="FLOOR-03">FLOOR-03</option>
-                            <option value="FLOOR-04">FLOOR-04</option>
-                            <option value="FLOOR-05">FLOOR-05</option>
-                        </select>
-                    </div>
-                    <div class="select-box">
-                        <i class="fas fa-code-branch"></i>
-                        <select name="option" id="sidLINE" class="w3-select">
-                            <option value="DEFAULT">DEFAULT</option>
-                        </select>
-                    </div>
-                </div> -->
-
-
 
                 <div class="btn-grid">
                     <button class="w3-button w3-teal" name="subcontract_input" id="subcontract_input">
@@ -468,7 +456,11 @@ mysqli_close($db);
                     </button>
 
                     <button class="w3-button w3-teal" name="knitting_program" id="knitting_program">
+<<<<<<< HEAD
                         <i class="fas fa-industry"></i> Knitting Program
+=======
+                        <i class="fas fa-industry"></i> Knitting Program PROGRAM
+>>>>>>> 2d6647a70e218ef38c0bb94a09caf0d8c2f1f222
                     </button>
 
                     <button class="w3-button w3-teal" name="knit_card" id="knit_card">
@@ -497,11 +489,9 @@ mysqli_close($db);
                 </div>
 
                 <div class="btn-grid">
-                    <!-- <button class="w3-button w3-teal" name="users" id="usersBtn"><i class="fas fa-users"></i> All Users</button>
-                    <button class="w3-button w3-teal" name="users_update" id="updateUserBtn"><i class="fas fa-user-edit"></i> Update User</button>
-                  -->
-                    <button class="w3-button w3-black" name="uploadCSV" id="uploadCSV"><i class="fas fa-upload"></i> UPLOAD CSV</button>
+                    <button class="w3-button w3-black" name="uploadCSV" id="uploadCSV"><i class="fas fa-upload"></i> Upload CSV</button>
                 </div>
+                
             </form>
         </div>
     </div>
