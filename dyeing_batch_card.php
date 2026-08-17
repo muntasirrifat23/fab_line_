@@ -298,6 +298,50 @@ if (!isset($_SESSION['username'])) {
         <div id="msgBox" class="msg-box"></div>
 
         <div class="panel">
+            <div class="panel-title"><i class="fa-solid fa-table-list"></i> Batch Rolls
+                <span class="card-no-badge" style="margin-left:8px; background:#ccfbf1; color:#065f46; border-color:#99f6e4;" id="rollCount">0 roll</span>
+            </div>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>ROLL</th>
+                            <th>PO_NUMBER</th>
+                            <th>RACK</th>
+                            <th>QTY</th>
+                            <th>SONO</th>
+                            <th>BUYER</th>
+                            <th>STYLE</th>
+                            <th>COLOR</th>
+                            <th>MCNO</th>
+                            <th>MCDIA</th>
+                            <th>SUPPLIER</th>
+                            <th>YTYPE</th>
+                            <th>YCOUNT</th>
+                            <th>O_T</th>
+                            <th>SL</th>
+                            <th>FTYPE</th>
+                            <th>FGSM</th>
+                            <th>FDIA</th>
+                            <th>GGSM</th>
+                            <th>FEEDER_PLAN</th>
+                            <th>LOT_NO</th>
+                            <th>ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rollsBody">
+                        <tr class="empty-row"><td colspan="23">No roll added yet. Select rolls from the list below.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="footer-actions">
+                <button class="btn btn-amber" id="createCardBtn"><i class="fa-solid fa-clipboard-check"></i> Create Batch Card</button>
+                <button class="btn btn-slate" id="newCardBtn"><i class="fa-solid fa-plus"></i> New Batch Card</button>
+            </div>
+        </div>
+
+        <div class="panel">
             <div class="panel-title"><i class="fa-solid fa-magnifying-glass"></i> Knitting Store Rolls</div>
             <div class="search-row">
                 <input type="text" id="searchInput" class="search-input"
@@ -339,50 +383,6 @@ if (!isset($_SESSION['username'])) {
                         <tr class="empty-row"><td colspan="23">Loading...</td></tr>
                     </tbody>
                 </table>
-            </div>
-        </div>
-
-        <div class="panel">
-            <div class="panel-title"><i class="fa-solid fa-table-list"></i> Batch Rolls
-                <span class="card-no-badge" style="margin-left:8px; background:#ccfbf1; color:#065f46; border-color:#99f6e4;" id="rollCount">0 roll</span>
-            </div>
-            <div class="table-scroll">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>ROLL</th>
-                            <th>PO_NUMBER</th>
-                            <th>RACK</th>
-                            <th>QTY</th>
-                            <th>SONO</th>
-                            <th>BUYER</th>
-                            <th>STYLE</th>
-                            <th>COLOR</th>
-                            <th>MCNO</th>
-                            <th>MCDIA</th>
-                            <th>SUPPLIER</th>
-                            <th>YTYPE</th>
-                            <th>YCOUNT</th>
-                            <th>O_T</th>
-                            <th>SL</th>
-                            <th>FTYPE</th>
-                            <th>FGSM</th>
-                            <th>FDIA</th>
-                            <th>GGSM</th>
-                            <th>FEEDER_PLAN</th>
-                            <th>LOT_NO</th>
-                            <th>ACTION</th>
-                        </tr>
-                    </thead>
-                    <tbody id="rollsBody">
-                        <tr class="empty-row"><td colspan="23">No roll added yet. Select rolls from the list above.</td></tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="footer-actions">
-                <button class="btn btn-amber" id="createCardBtn"><i class="fa-solid fa-clipboard-check"></i> Create Batch Card</button>
-                <button class="btn btn-slate" id="newCardBtn"><i class="fa-solid fa-plus"></i> New Batch Card</button>
             </div>
         </div>
     </div>
