@@ -270,7 +270,7 @@ mysqli_close($db);
 
         .btn-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 12px;
             margin: 24px 0;
         }
@@ -382,12 +382,8 @@ mysqli_close($db);
 
         @media (max-width: 1100px) {
             .btn-grid {
-<<<<<<< HEAD
                 grid-template-columns: repeat(3, 1fr);
                 gap: 12px;
-=======
-                grid-template-columns: repeat(5, 1fr);
->>>>>>> 2d6647a70e218ef38c0bb94a09caf0d8c2f1f222
             }
         }
 
@@ -456,11 +452,7 @@ mysqli_close($db);
                     </button>
 
                     <button class="w3-button w3-teal" name="knitting_program" id="knitting_program">
-<<<<<<< HEAD
                         <i class="fas fa-industry"></i> Knitting Program
-=======
-                        <i class="fas fa-industry"></i> Knitting Program PROGRAM
->>>>>>> 2d6647a70e218ef38c0bb94a09caf0d8c2f1f222
                     </button>
 
                     <button class="w3-button w3-teal" name="knit_card" id="knit_card">
