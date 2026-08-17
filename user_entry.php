@@ -10,10 +10,12 @@ $editValue = "";
 $rawUserType = isset($_SESSION['user_type']) ? $_SESSION['user_type'] : (isset($_SESSION['username']) ? $_SESSION['username'] : '');
 // Normalize to lowercase for consistent comparison
 $urTYP = strtolower(trim($rawUserType));
+$uname = strtolower(trim(isset($_SESSION['username']) ? $_SESSION['username'] : ''));
+$userRole = strtolower(trim(isset($_SESSION['user_role']) ? $_SESSION['user_role'] : ''));
 
-// Define allowed types (all lowercase)
-$allowedTypes = ['admin', 'ppq30', 'ppq34', 'ppq70'];
-$isAllowed = in_array($urTYP, $allowedTypes);
+// Define allowed users (all lowercase) – based on username, same list as users.php
+$allowedUsers = ['admin', 'abuhena', 'test', 'ppq30', 'ppq34', 'ppq70', 'ppq57', 'ppl04'];
+$isAllowed = in_array($uname, $allowedUsers) || in_array($userRole, ['admin', 'superadmin']) || in_array($urTYP, $allowedUsers);
 
 // If not allowed, prevent any POST action (submit, update, delete)
 if (!$isAllowed && $_SERVER["REQUEST_METHOD"] == "POST") {

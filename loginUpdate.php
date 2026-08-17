@@ -117,20 +117,50 @@ if (isset($_POST['submit'])) {
             </form>
 
             <form id="userForm" style="display:none;" autocomplete="off">
-                <div class="mb-3">
-                    <label class="form-label fw-bold">New ID</label>
-                    <input type="text" name="username" class="form-control"
-                        placeholder="Enter New User ID" autocomplete="off">
+                <!-- Account type selection -->
+                <div class="row text-center mb-3" id="typeMenu">
+                    <div class="col-6">
+                        <button type="button" class="type-btn w-100 active" data-type="users">Users</button>
+                    </div>
+                    <div class="col-6">
+                        <button type="button" class="type-btn w-100" data-type="operator">Knitting Operator</button>
+                    </div>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Email</label>
-                    <input type="email" name="email" class="form-control"
-                        placeholder="Enter New Email" autocomplete="off">
+                <input type="hidden" name="user_type" id="userType" value="users">
+
+                <!-- Users fields -->
+                <div id="fieldsUsers">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Username</label>
+                        <input type="text" name="username" class="form-control"
+                            placeholder="Enter New Username" autocomplete="off">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">User Email</label>
+                        <input type="email" name="email" class="form-control"
+                            placeholder="Enter New Email" autocomplete="off">
+                    </div>
+                </div>
+
+                <!-- Knitting Operator fields -->
+                <div id="fieldsOperator" style="display:none;">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Operator Name</label>
+                        <input type="text" name="operator_name" class="form-control"
+                            placeholder="Enter Operator Name" autocomplete="off">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Operator Email</label>
+                        <input type="email" name="operator_email" class="form-control"
+                            placeholder="Enter Operator Email" autocomplete="off">
+                    </div>
                 </div>
 
                 <!-- Passwords are auto-generated (123) -->
-                <button type="submit" class="btn btn-primary w-100">Create User</button>
+                <button type="submit" class="btn btn-primary w-100">Create</button>
                 <button type="button" class="btn back-btn-create w-100" onclick="window.location.href='user_management.php'">
                     <i class="bi bi-arrow-left-circle"></i> Back to User Management
                 </button>
@@ -185,6 +215,27 @@ if (isset($_POST['submit'])) {
                     $("#msgBox").html("<div class='alert alert-danger'>Server Error</div>");
                 }
             });
+        });
+
+        // Account type toggle (Users / Knitting Operator)
+        $("#typeMenu .type-btn").click(function(e) {
+            e.preventDefault();
+
+            $("#typeMenu .type-btn").removeClass("active");
+            $(this).addClass("active");
+
+            let type = $(this).data("type");
+            $("#userType").val(type);
+
+            if (type === "operator") {
+                $("#fieldsUsers").hide();
+                $("#fieldsOperator").show();
+            } else {
+                $("#fieldsOperator").hide();
+                $("#fieldsUsers").show();
+            }
+
+            $("#msgBox").html("");
         });
 
         // Restore ID
@@ -350,6 +401,28 @@ if (isset($_POST['submit'])) {
         }
 
         #tabMenu .nav-link.active {
+            background: linear-gradient(135deg, #00c6ff, #0072ff);
+            color: white;
+            box-shadow: 0 0 15px rgba(0, 198, 255, 0.5);
+        }
+
+        /* account type buttons */
+        #typeMenu .type-btn {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            color: #ddd;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        #typeMenu .type-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        #typeMenu .type-btn.active {
             background: linear-gradient(135deg, #00c6ff, #0072ff);
             color: white;
             box-shadow: 0 0 15px rgba(0, 198, 255, 0.5);

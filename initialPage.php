@@ -108,6 +108,9 @@ mysqli_close($db);
     <link rel="stylesheet" type="text/css" href="css/w3.css">
     <link rel="stylesheet" type="text/css" href="css/mycss.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary-1: #1e3a8a;
@@ -273,11 +276,12 @@ mysqli_close($db);
         }
 
         .btn-grid .w3-button {
-            padding: 14px 12px;
+            padding: 14px 10px;
             border-radius: 20px;
             font-weight: 700;
-            font-size: 0.95rem;
-            letter-spacing: 0.5px;
+            font-size: 1.2rem;
+            font-family: 'Poppins', 'Segoe UI', system-ui, -apple-system, 'Roboto', Arial, sans-serif;
+            letter-spacing: 0.2px;
             border: none;
             cursor: pointer;
             box-shadow: var(--shadow-sm);
@@ -287,7 +291,23 @@ mysqli_close($db);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 4px;
+            gap: 8px;
+            flex-wrap: nowrap;
+            min-height: 64px;
+            line-height: 1.3;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .btn-grid .w3-button .fa-solid,
+        .btn-grid .w3-button .fa,
+        .btn-grid .w3-button i {
+            flex-shrink: 0;
+            line-height: 1;
+        }
+
+        .btn-grid .w3-button {
+            text-transform: none;
         }
 
         .btn-grid .w3-button:hover {
@@ -362,14 +382,21 @@ mysqli_close($db);
 
         @media (max-width: 1100px) {
             .btn-grid {
-                grid-template-columns: repeat(4, 1fr);
+                grid-template-columns: repeat(3, 1fr);
+                gap: 12px;
             }
         }
 
         @media (max-width: 768px) {
             .btn-grid {
                 grid-template-columns: repeat(3, 1fr);
-                gap: 12px;
+                gap: 10px;
+            }
+
+            .btn-grid .w3-button {
+                font-size: 1rem;
+                padding: 12px 8px;
+                min-height: 56px;
             }
 
             .selection-row {
@@ -391,7 +418,16 @@ mysqli_close($db);
 
         @media (max-width: 480px) {
             .btn-grid {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+
+            .btn-grid .w3-button {
+                font-size: 0.88rem;
+                padding: 10px 4px;
+                min-height: 48px;
+                letter-spacing: 0;
+                gap: 6px;
             }
         }
     </style>
@@ -428,35 +464,35 @@ mysqli_close($db);
 
                 <div class="btn-grid">
                     <button class="w3-button w3-teal" name="subcontract_input" id="subcontract_input">
-                        <i class="fa-solid fa-clipboard-list"></i> SUBCONTRACT INPUT
+                        <i class="fa-solid fa-clipboard-list"></i> Subcontract Input
                     </button>
 
                     <button class="w3-button w3-teal" name="knitting_program" id="knitting_program">
-                        <i class="fas fa-industry"></i> KNITTING PROGRAM
+                        <i class="fas fa-industry"></i> Knitting Program
                     </button>
 
                     <button class="w3-button w3-teal" name="knit_card" id="knit_card">
-                        <i class="fas fa-industry"></i> KNIT CARD
+                        <i class="fas fa-industry"></i> Knit Card
                     </button>
 
                     <button class="w3-button w3-teal" name="knitting_production" id="knitting_production">
-                        <i class="fas fa-industry"></i> KNITTING PRODUCTION
+                        <i class="fas fa-industry"></i> Knitting Production
                     </button>
 
                     <button class="w3-button w3-teal" name="knitting_inspection" id="knitting_inspection">
-                        <i class="fas fa-clipboard-check"></i> KNITTING INSPECTION
+                        <i class="fas fa-clipboard-check"></i> Knitting Inspection
                     </button>
 
                     <button class="w3-button w3-teal" name="knitting_store" id="knitting_store">
-                        <i class="fas fa-warehouse"></i> KNITTING STORE
+                        <i class="fas fa-warehouse"></i> Knitting Store
                     </button>
 
                     <button class="w3-button w3-teal" name="user_management" id="user_management">
-                        <i class="fas fa-users-cog"></i> USER MANAGEMENT
+                        <i class="fas fa-users-cog"></i> User Management
                     </button>
 
                     <button class="w3-button w3-teal" name="report" id="report">
-                        <i class="fas fa-chart-bar"></i> ALL REPORTS
+                        <i class="fas fa-chart-bar"></i> All Reports
                     </button>
                 </div>
 
