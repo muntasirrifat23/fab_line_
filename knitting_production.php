@@ -41,7 +41,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
 
     body {
       font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
-      background: #c7c8ca;
+      background: linear-gradient(135deg, #e2e8f0, #f8fafc, #dbeafe);
       min-height: 100vh;
       display: flex;
       justify-content: center;
@@ -52,20 +52,20 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
     .card {
       max-width: 650px;
       width: 100%;
-      background: #141b2b;
+      background: #ffffff;
       border-radius: 40px;
       padding: 24px 20px 30px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-      border: 1px solid #2e3a52;
+      box-shadow: 0 20px 45px rgba(30, 60, 120, 0.2);
+      border: 1px solid #dbe4ef;
       transition: 0.2s;
     }
 
     .scanner-container {
       position: relative;
-      background: #1e2740;
+      background: #eef2f7;
       border-radius: 28px;
       overflow: hidden;
-      box-shadow: inset 0 0 0 1px #33405e, 0 8px 20px rgba(0, 0, 0, 0.5);
+      box-shadow: inset 0 0 0 1px #d7e0ea, 0 8px 20px rgba(30, 60, 120, 0.12);
       margin-bottom: 24px;
       min-height: 300px;
     }
@@ -73,7 +73,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
     #qr-reader {
       width: 100%;
       padding: 0 !important;
-      background: #0f1625;
+      background: #f4f7fb;
     }
 
     #qr-reader video {
@@ -134,27 +134,27 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
     }
 
     .status-badge {
-      background: #1f2a40;
+      background: #eef2f7;
       padding: 8px 18px;
       border-radius: 100px;
-      color: #a0b3d9;
+      color: #334155;
       font-size: 0.85rem;
-      font-weight: 500;
+      font-weight: 600;
       display: flex;
       align-items: center;
       gap: 8px;
-      border: 1px solid #2e3d5a;
+      border: 1px solid #cbd5e1;
     }
 
     .status-badge i {
-      color: #4fc3f7;
+      color: #2563eb;
       font-size: 0.9rem;
     }
 
     .btn-icon {
-      background: #1f2a40;
-      border: 1px solid #33415e;
-      color: #cbd5f0;
+      background: #eef2f7;
+      border: 1px solid #cbd5e1;
+      color: #334155;
       width: 44px;
       height: 44px;
       border-radius: 40px;
@@ -167,9 +167,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
     }
 
     .btn-icon:hover {
-      background: #2b3857;
-      border-color: #5f79b0;
-      color: white;
+      background: #e2e8f0;
+      border-color: #2563eb;
+      color: #1e3a8a;
     }
 
     .btn-icon:active {
@@ -177,12 +177,12 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
     }
 
     .result-panel {
-      background: #101826;
+      background: #f4f7fb;
       border-radius: 28px;
       padding: 18px 20px 16px;
       margin-top: 20px;
-      border: 1px solid #29364f;
-      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
+      border: 1px solid #d7e0ea;
+      box-shadow: inset 0 2px 6px rgba(30, 60, 120, 0.06);
       /* max-height: 00px; */
       overflow-y: auto;
     }
@@ -192,12 +192,12 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
     }
 
     .result-panel::-webkit-scrollbar-track {
-      background: #0f1625;
+      background: #e2e8f0;
       border-radius: 10px;
     }
 
     .result-panel::-webkit-scrollbar-thumb {
-      background: #2e3d5a;
+      background: #94a3b8;
       border-radius: 10px;
     }
 
@@ -205,17 +205,17 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
       display: flex;
       align-items: center;
       gap: 8px;
-      color: #8ea4d6;
-      font-weight: 500;
+      color: #334155;
+      font-weight: 700;
       letter-spacing: 0.3px;
       font-size: 0.9rem;
-      border-bottom: 1px dashed #27344d;
+      border-bottom: 1px dashed #cbd5e1;
       padding-bottom: 10px;
       margin-bottom: 12px;
     }
 
     .result-header i {
-      color: #4fc3f7;
+      color: #2563eb;
     }
 
     #result-content {
@@ -227,27 +227,28 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
     }
 
     .data-row {
-      background: #1a2337;
+      background: #eef2f7;
       padding: 8px 14px;
       border-radius: 12px;
-      border-left: 4px solid #4fc3f7;
-      color: #e3ecfc;
+      border-left: 4px solid #2563eb;
+      color: #1e293b;
       font-size: 0.9rem;
       line-height: 1.4;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 2px 6px rgba(30, 60, 120, 0.08);
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
     .data-row .label {
-      color: #8bb1ff;
-      font-weight: 600;
+      color: #475569;
+      font-weight: 700;
       min-width: 140px;
     }
 
     .data-row .value {
-      color: #e3ecfc;
+      color: #0f172a;
+      font-weight: 600;
       text-align: right;
       flex: 1;
       margin-left: 10px;
@@ -280,15 +281,16 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
 
     .data-row.default-row div div:first-child {
       font-size: 11px;
-      color: #8fa5cf;
+      color: #475569;
+      font-weight: 700;
       margin-bottom: 5px;
       text-transform: uppercase;
     }
 
     .data-row.default-row div div:last-child {
-      color: #fff;
+      color: #0f172a;
       font-size: 16px;
-      font-weight: 600;
+      font-weight: 700;
 
       /* Important */
       white-space: normal;
@@ -306,16 +308,17 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
 
     .field-block .field-label {
       font-size: 0.7rem;
-      color: #8fa5cf;
+      color: #475569;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      opacity: 0.85;
+      opacity: 1;
     }
 
     .field-block .field-value {
       font-size: 0.95rem;
-      color: #ffffff;
-      font-weight: 700;
+      color: #0f172a;
+      font-weight: 800;
       white-space: normal;
       overflow-wrap: anywhere;
       word-break: break-word;
@@ -323,30 +326,32 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
     }
 
     .data-row.default-row .label {
-      color: #a0b9f0;
+      color: #475569;
     }
 
     .data-row.default-row .value {
-      color: #b7c9f0;
+      color: #0f172a;
     }
 
     .data-row.header-row {
       border-left-color: #f59e0b;
-      background: #1f2a3a;
-      font-weight: 600;
+      background: #e8eef6;
+      font-weight: 700;
       font-size: 0.95rem;
     }
 
     .data-row.header-row .label {
-      color: #fbbf24;
+      color: #92400e;
+      font-weight: 800;
     }
 
     .data-row.header-row .value {
-      color: #fde68a;
+      color: #78350f;
+      font-weight: 700;
     }
 
     .empty-message {
-      color: #5b6f97;
+      color: #64748b;
       font-style: italic;
       padding: 10px 0 6px 6px;
       font-size: 0.9rem;
@@ -380,8 +385,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
       gap: 10px;
       justify-content: center;
       align-items: center;
-      background: #111827;
-      border: 1px solid #2e3a52;
+      background: #eef2f7;
+      border: 1px solid #d7e0ea;
       border-radius: 18px;
       padding: 14px;
     }
@@ -397,7 +402,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
       cursor: pointer;
       transition: 0.2s;
       color: #fff;
-      background: #1f2a40;
+      background: linear-gradient(135deg, #475569, #334155);
     }
 
     .btn-action:hover {
@@ -426,20 +431,25 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
 
     .field-input {
       width: 100%;
-      background: #0f172a;
-      border: 1px solid #33415e;
-      color: #e3ecfc;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #0f172a;
       border-radius: 12px;
       padding: 10px 12px;
       font-size: 0.95rem;
       outline: none;
     }
 
+    .field-input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+    }
+
     .field-label {
       display: block;
       margin-bottom: 5px;
       font-size: 0.8rem;
-      color: #94a3b8;
+      color: #475569;
     }
 
     .field-row {
@@ -450,11 +460,11 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
     }
 
     .message-row {
-      background: #10263d;
-      color: #c7e0ff;
+      background: #eff6ff;
+      color: #1e3a8a;
       padding: 12px 14px;
       border-radius: 16px;
-      border: 1px solid #2d4a72;
+      border: 1px solid #bfdbfe;
       font-size: 0.94rem;
       line-height: 1.5;
     }
@@ -472,7 +482,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
     }
 
     .edit-form-row {
-      background: #1a2337;
+      background: #eef2f7;
       padding: 10px 14px;
       border-radius: 12px;
       margin-top: 4px;
@@ -480,7 +490,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
 
     .edit-form-row .field-label {
       font-size: 0.75rem;
-      color: #8ea4d6;
+      color: #475569;
       margin-bottom: 2px;
     }
 
@@ -491,9 +501,10 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
 
     .rescan-btn {
       margin-top: 10px;
-      background: #1f2a40;
-      border: 1px solid #33415e;
-      color: #cbd5f0;
+      background: #eef2f7;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+      font-weight: 600;
       padding: 8px 20px;
       border-radius: 20px;
       cursor: pointer;
@@ -502,9 +513,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
     }
 
     .rescan-btn:hover {
-      background: #2b3857;
-      border-color: #5f79b0;
-      color: white;
+      background: #e2e8f0;
+      border-color: #2563eb;
+      color: #1e3a8a;
     }
 
     @media (max-width: 480px) {
@@ -571,7 +582,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
       <div class="result-header">
         <i class="fas fa-qrcode"></i>
         <span>Scanned Data</span>
-        <span style="margin-left: auto; font-size: 0.7rem; background: #1f2a40; padding: 2px 12px; border-radius: 40px; color: #91a9da;">live</span>
+        <span style="margin-left: auto; font-size: 0.7rem; background: #2563eb; padding: 2px 12px; border-radius: 40px; color: #ffffff;">live</span>
       </div>
       <div id="result-content">
         <!-- Default content will be injected by JS -->
@@ -579,13 +590,14 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
       <div id="action-content" class="action-content"></div>
     </div>
     <!-- FOOTER -->
-    <div class="footer-note" style="margin-top:6px; text-align:center; color:#44557a; letter-spacing:0.5px;">
+    <div class="footer-note" style="margin-top:6px; text-align:center; color:#334155; letter-spacing:0.5px;">
       <button class="btn btn-dark"
         onclick="window.location.href='initialPage.php';"
-        style="background-color:white;
-               color:black;
-               padding:12px;
-               border-radius:8px;
+        style="background-color:#1e3a8a;
+               color:white;
+               padding:12px 18px;
+               border:none;
+               border-radius:10px;
                cursor:pointer;
                transition:all .2s ease;
                font-weight:bold;
@@ -882,13 +894,13 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
             <span class="label">✅ QR Scanned <span class="scanned-badge">raw</span></span>
             <span class="value">${new Date().toLocaleTimeString()}</span>
           </div>
-          <div class="data-row" style="border-left-color:#f59e0b; background:#1f2a3a;">
-            <span class="label" style="color:#fbbf24;">📌 Type:</span>
+          <div class="data-row" style="border-left-color:#f59e0b; background:#e8eef6;">
+            <span class="label" style="color:#92400e;">📌 Type:</span>
             <span class="value">${msg || 'Unstructured scan data'}</span>
           </div>
-          <div class="data-row" style="background:#0f172a; border-left-color:#6b7280; flex-wrap:wrap;">
-            <span class="label" style="color:#9ca3af; min-width:100%;">Raw Data:</span>
-            <span class="value" style="text-align:left; font-size:0.8rem; word-break:break-all; color:#d1d5db;">${text}</span>
+          <div class="data-row" style="background:#eef2f7; border-left-color:#6b7280; flex-wrap:wrap;">
+            <span class="label" style="color:#475569; min-width:100%;">Raw Data:</span>
+            <span class="value" style="text-align:left; font-size:0.8rem; word-break:break-all; color:#0f172a;">${text}</span>
           </div>
           <button class="rescan-btn" onclick="window.location.reload();">
             <i class="fas fa-redo"></i> Scan Another QR
@@ -936,13 +948,13 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
               <span class="label">✅ QR Scanned <span class="scanned-badge">raw</span></span>
               <span class="value">${new Date().toLocaleTimeString()}</span>
             </div>
-            <div class="data-row" style="border-left-color:#f59e0b; background:#1f2a3a;">
-              <span class="label" style="color:#fbbf24;">📌 Type:</span>
+            <div class="data-row" style="border-left-color:#f59e0b; background:#e8eef6;">
+              <span class="label" style="color:#92400e;">📌 Type:</span>
               <span class="value">Unstructured scan data</span>
             </div>
-            <div class="data-row" style="background:#0f172a; border-left-color:#6b7280; flex-wrap:wrap;">
-              <span class="label" style="color:#9ca3af; min-width:100%;">Raw Data:</span>
-              <span class="value" style="text-align:left; font-size:0.8rem; word-break:break-all; color:#d1d5db;">${scannedInfo.raw}</span>
+            <div class="data-row" style="background:#eef2f7; border-left-color:#6b7280; flex-wrap:wrap;">
+              <span class="label" style="color:#475569; min-width:100%;">Raw Data:</span>
+              <span class="value" style="text-align:left; font-size:0.8rem; word-break:break-all; color:#0f172a;">${scannedInfo.raw}</span>
             </div>
            <button class="rescan-btn" onclick="window.location.reload();">
               <i class="fas fa-redo"></i> Scan Another QR
