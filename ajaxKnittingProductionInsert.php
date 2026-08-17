@@ -142,7 +142,7 @@ if (mysqli_num_rows($result) > 0) {
 
     echo json_encode([
         "success" => false,
-        "message" => "Already production done.",
+        "message" => "Already production done. Scan another roll.",
         "duplicate" => true
     ]);
 

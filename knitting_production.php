@@ -1,26 +1,26 @@
 <?php
 // ------- In-file AJAX endpoint: fetch knit_card_test row by ROLL -------
 if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
-    require_once 'config.php';
-    header('Content-Type: application/json');
-    header('X-Content-Type-Options: nosniff');
+  require_once 'config.php';
+  header('Content-Type: application/json');
+  header('X-Content-Type-Options: nosniff');
 
-    $roll = isset($_GET['roll']) ? trim($_GET['roll']) : '';
-    if ($roll === '') {
-        echo json_encode(['success' => false, 'error' => 'ROLL is required']);
-        exit();
-    }
-
-    $s = mysqli_real_escape_string($db, $roll);
-    $q = "SELECT * FROM knit_card_test WHERE ROLL = '$s' LIMIT 1";
-    $res = mysqli_query($db, $q);
-
-    if ($res && mysqli_num_rows($res) > 0) {
-        echo json_encode(['success' => true, 'data' => mysqli_fetch_assoc($res)]);
-    } else {
-        echo json_encode(['success' => false, 'error' => 'No data found for ROLL: ' . $roll]);
-    }
+  $roll = isset($_GET['roll']) ? trim($_GET['roll']) : '';
+  if ($roll === '') {
+    echo json_encode(['success' => false, 'error' => 'ROLL is required']);
     exit();
+  }
+
+  $s = mysqli_real_escape_string($db, $roll);
+  $q = "SELECT * FROM knit_card_test WHERE ROLL = '$s' LIMIT 1";
+  $res = mysqli_query($db, $q);
+
+  if ($res && mysqli_num_rows($res) > 0) {
+    echo json_encode(['success' => true, 'data' => mysqli_fetch_assoc($res)]);
+  } else {
+    echo json_encode(['success' => false, 'error' => 'No data found for ROLL: ' . $roll]);
+  }
+  exit();
 }
 ?>
 <!DOCTYPE html>
@@ -579,6 +579,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
     </div>
 
     <div class="result-panel">
+      <h2 style="text-align: center; text-decoration-line: underline; text-decoration-style: dotted; text-underline-offset: 8px;">
+        Knitting Production
+      </h2>
       <div class="result-header">
         <i class="fas fa-qrcode"></i>
         <span>Scanned Data</span>
@@ -873,7 +876,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
         html += buildFieldRow(['SHIFT', 'YARN_TYPE', 'YARN_COUNT']);
         html += buildFieldRow(['FABRICS_TYPE', 'FINISH_GSM', 'FINISH_DIA']);
         html += buildFieldRow(['OPEN_TUBE', 'SL_VDQ', 'GGSM']);
-        html += buildFieldRow(['FEEDER_PLAN',  'LOT_NO', 'QTY']);
+        html += buildFieldRow(['FEEDER_PLAN', 'LOT_NO', 'QTY']);
         // html += buildFieldRow([]);
         html += buildFieldRow(['KNIT_MATERIAL_CODE', 'KNIT_M_DESCRIPTION']);
         // html += buildFieldRow([]);
@@ -1046,7 +1049,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
         renderEditForm();
       }
 
-function renderEditForm() {
+      function renderEditForm() {
         if (!scannedInfo || !scannedInfo.parsed) {
           return;
         }
@@ -1307,7 +1310,6 @@ function renderEditForm() {
         actionContainer.innerHTML = `
         <div class="message-row ${type}">
             ${message}<br>
-            <small>Page will reload in 2 seconds...</small>
         </div>
     `;
 
