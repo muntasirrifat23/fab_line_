@@ -267,7 +267,7 @@ mysqli_close($db);
 
         .btn-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             gap: 12px;
             margin: 24px 0;
         }
@@ -362,7 +362,7 @@ mysqli_close($db);
 
         @media (max-width: 1100px) {
             .btn-grid {
-                grid-template-columns: repeat(4, 1fr);
+                grid-template-columns: repeat(5, 1fr);
             }
         }
 
@@ -405,27 +405,7 @@ mysqli_close($db);
         </div>
         <div class="glass-panel">
             <form action="initialPage.php" method="post">
-                <!-- <div class="selection-row">
-                    <div class="select-box">
-                        <i class="fas fa-building"></i>
-                        <select name="sFLOOR" id="sidFLOOR" class="w3-select">
-                            <option value="FLOOR-01">FLOOR-01</option>
-                            <option value="FLOOR-02">FLOOR-02</option>
-                            <option value="FLOOR-03">FLOOR-03</option>
-                            <option value="FLOOR-04">FLOOR-04</option>
-                            <option value="FLOOR-05">FLOOR-05</option>
-                        </select>
-                    </div>
-                    <div class="select-box">
-                        <i class="fas fa-code-branch"></i>
-                        <select name="option" id="sidLINE" class="w3-select">
-                            <option value="DEFAULT">DEFAULT</option>
-                        </select>
-                    </div>
-                </div> -->
-
-
-
+                
                 <div class="btn-grid">
                     <button class="w3-button w3-teal" name="subcontract_input" id="subcontract_input">
                         <i class="fa-solid fa-clipboard-list"></i> SUBCONTRACT INPUT
