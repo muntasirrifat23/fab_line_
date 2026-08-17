@@ -598,11 +598,48 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
 .data-row.default-row .value {
     white-space: nowrap;
 }
+
+    .production-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding: 0 4px;
+    }
+
+    .production-header h2 {
+      color: #083a36;
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      margin: 0;
+    }
+
+    .production-header h2 i {
+      color: #0f7a6f;
+      margin-right: 8px;
+    }
+
+    .production-header .badge-production {
+      margin-left: auto;
+      background: #2563eb;
+      color: white;
+      font-size: 0.7rem;
+      padding: 3px 14px;
+      border-radius: 100px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
   </style>
 </head>
 
 <body>
   <div class="card" id="mainCard">
+    <div class="production-header">
+      <h2><i class="fa-solid fa-industry"></i>Knitting Production</h2>
+      <span class="badge-production">PRODUCTION</span>
+    </div>
+
     <div class="scanner-container" id="scannerContainer">
       <div id="qr-reader"></div>
       <div class="scan-overlay"></div>
@@ -619,9 +656,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
     </div>
 
     <div class="result-panel">
-      <h2 style="text-align: center; text-decoration-line: underline; text-decoration-style: dotted; text-underline-offset: 8px;">
-        Knitting Production
-      </h2>
       <div class="result-header">
         <i class="fas fa-qrcode"></i>
         <span>Scanned Data</span>
