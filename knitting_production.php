@@ -54,10 +54,14 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
       width: 100%;
       background: #ffffff;
       border-radius: 40px;
-      padding: 24px 20px 30px;
+      padding: 24px 24px 30px;
       box-shadow: 0 20px 45px rgba(30, 60, 120, 0.2);
       border: 1px solid #dbe4ef;
-      transition: 0.2s;
+      transition: max-width 0.3s ease;
+    }
+
+    .card.expanded {
+      max-width: 900px;
     }
 
     .scanner-container {
@@ -260,15 +264,35 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
       gap: 14px;
     }
 
+    .half-row {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 14px;
+    }
+
+    .knit-pair {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 14px;
+    }
+
+    .knit-flow .knit-pair {
+      grid-column: span 6;
+    }
+
     @media (max-width:480px) {
       .single-row {
+        grid-template-columns: 1fr 1fr !important;
+      }
+
+      .half-row {
         grid-template-columns: 1fr 1fr !important;
       }
     }
 
     .data-row.default-row {
       display: grid !important;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      grid-template-columns: repeat(7, 1fr);
       gap: 14px;
       align-items: flex-start;
       height: auto;
@@ -549,20 +573,36 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
 
     @media(max-width:768px) {
       .data-row.default-row {
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+      }
+
+      .knit-flow .knit-pair {
+        grid-column: 1 / -1;
       }
     }
 
     @media(max-width:480px) {
       .data-row.default-row {
-        grid-template-columns: repeat(2, 1fr) !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+      }
+
+      .knit-flow .knit-pair {
+        grid-column: 1 / -1;
       }
     }
+
+    .data-row.default-row .label {
+    white-space: nowrap;
+}
+
+.data-row.default-row .value {
+    white-space: nowrap;
+}
   </style>
 </head>
 
 <body>
-  <div class="card">
+  <div class="card" id="mainCard">
     <div class="scanner-container" id="scannerContainer">
       <div id="qr-reader"></div>
       <div class="scan-overlay"></div>
@@ -852,8 +892,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
         isEditMode = false;
         hideActionContent();
 
-        const buildFieldRow = (fields) => `
-          <div class="data-row default-row">
+        const buildFieldRow = (fields, extraClass) => `
+          <div class="data-row default-row ${extraClass || ''}">
             ${fields.map(field => `
               <div class="field-block">
                 <span class="field-label">${FIELD_LABELS[field] || field}</span>
@@ -870,16 +910,28 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
           </div>
         `;
 
-        html += buildFieldRow(['ROLL', 'BOOKING', 'SONO']);
-        html += buildFieldRow(['BUYER', 'STYLE', 'COLOR']);
-        html += buildFieldRow(['MCNO', 'MC_DIA', 'SUPPLIER']);
-        html += buildFieldRow(['SHIFT', 'YARN_TYPE', 'YARN_COUNT']);
-        html += buildFieldRow(['FABRICS_TYPE', 'FINISH_GSM', 'FINISH_DIA']);
-        html += buildFieldRow(['OPEN_TUBE', 'SL_VDQ', 'GGSM']);
-        html += buildFieldRow(['FEEDER_PLAN', 'LOT_NO', 'QTY']);
-        // html += buildFieldRow([]);
-        html += buildFieldRow(['KNIT_MATERIAL_CODE', 'KNIT_M_DESCRIPTION']);
-        // html += buildFieldRow([]);
+        html += `
+          <div class="data-row default-row knit-flow">
+            ${['ROLL', 'BOOKING', 'SONO', 'BUYER', 'STYLE', 'COLOR', 'MCNO',
+              'MC_DIA', 'SUPPLIER', 'SHIFT', 'YARN_TYPE', 'YARN_COUNT', 'FABRICS_TYPE', 'FINISH_GSM',
+              'FINISH_DIA', 'OPEN_TUBE', 'SL_VDQ', 'GGSM', 'FEEDER_PLAN', 'LOT_NO', 'QTY'].map(field => `
+              <div class="field-block">
+                <span class="field-label">${FIELD_LABELS[field] || field}</span>
+                <span class="field-value">${scannedInfo[field] || '-'}</span>
+              </div>
+            `).join('')}
+            <div class="knit-pair">
+              <div class="field-block">
+                <span class="field-label">${FIELD_LABELS.KNIT_MATERIAL_CODE}</span>
+                <span class="field-value">${scannedInfo.KNIT_MATERIAL_CODE || '-'}</span>
+              </div>
+              <div class="field-block">
+                <span class="field-label">${FIELD_LABELS.KNIT_M_DESCRIPTION}</span>
+                <span class="field-value">${scannedInfo.KNIT_M_DESCRIPTION || '-'}</span>
+              </div>
+            </div>
+          </div>
+        `;
 
         html += `
           <button class="rescan-btn" onclick="window.location.reload();">
@@ -966,8 +1018,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
           return;
         }
 
-        const buildFieldRow = (fields) => `
-          <div class="data-row default-row">
+        const buildFieldRow = (fields, extraClass) => `
+          <div class="data-row default-row ${extraClass || ''}">
             ${fields.map(field => `
               <div class="field-block">
                 <span class="field-label">${FIELD_LABELS[field] || field}</span>
@@ -984,23 +1036,11 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
           </div>
         `;
 
-        html += buildFieldRow(['SUB_TID', 'BOOKING', 'SONO']);
-        html += buildFieldRow(['MCNO', 'MC_DIA', 'BUYER']);
-        html += buildFieldRow(['STYLE', 'YARN_TYPE', 'YARN_COUNT']);
-        html += buildFieldRow(['FABRICS_TYPE', 'FINISH_GSM', 'FINISH_DIA']);
-        html += buildFieldRow(['OPEN_TUBE', 'COLOR', 'SL_VDQ']);
+        html += buildFieldRow(['SUB_TID', 'BOOKING', 'SONO', 'MCNO', 'MC_DIA', 'BUYER', 'STYLE']);
+        html += buildFieldRow(['YARN_TYPE', 'YARN_COUNT', 'FABRICS_TYPE', 'FINISH_GSM', 'FINISH_DIA', 'OPEN_TUBE', 'COLOR']);
+        html += buildFieldRow(['SL_VDQ', 'LOT_NO', 'QTY']);
 
         html += `
-          <div class="data-row default-row single-row">
-            <div class="field-block">
-              <span class="field-label">${FIELD_LABELS.LOT_NO}</span>
-              <span class="field-value">${scannedInfo.LOT_NO || '-'}</span>
-            </div>
-            <div class="field-block">
-              <span class="field-label">${FIELD_LABELS.QTY}</span>
-              <span class="field-value">${scannedInfo.QTY || '-'}</span>
-            </div>
-          </div>
           <button class="rescan-btn" onclick="window.location.reload();">
             <i class="fas fa-redo"></i> Scan Another QR
           </button>
@@ -1058,8 +1098,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
 
         const originalQty = scannedInfo.originalQTY || scannedInfo.QTY || '';
 
-        const buildFieldRow = (fields) => `
-          <div class="data-row default-row">
+        const buildFieldRow = (fields, extraClass) => `
+          <div class="data-row default-row ${extraClass || ''}">
             ${fields.map(field => `
               <div class="field-block">
                 <span class="field-label">${FIELD_LABELS[field] || field}</span>
@@ -1077,29 +1117,32 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
           <div class="message-row" style="margin-bottom:8px;">Only <strong>REJ QTY</strong> is editable. Maximum available qty: <strong>${originalQty || 'N/A'}</strong>.</div>
         `;
 
-        html += buildFieldRow(['ROLL', 'BOOKING', 'SONO']);
-        html += buildFieldRow(['BUYER', 'STYLE', 'COLOR']);
-        html += buildFieldRow(['MCNO', 'MC_DIA', 'SUPPLIER']);
-        html += buildFieldRow(['SHIFT', 'YARN_TYPE', 'YARN_COUNT']);
-        html += buildFieldRow(['FABRICS_TYPE', 'FINISH_GSM', 'FINISH_DIA']);
-        html += buildFieldRow(['OPEN_TUBE', 'SL_VDQ', 'GGSM']);
         html += `
-          <div class="data-row default-row">
-            <div class="field-block">
-              <span class="field-label">${FIELD_LABELS.FEEDER_PLAN}</span>
-              <span class="field-value">${scannedInfo.FEEDER_PLAN || '-'}</span>
-            </div>
-            <div class="field-block">
-              <span class="field-label">${FIELD_LABELS.LOT_NO}</span>
-              <span class="field-value">${scannedInfo.LOT_NO || '-'}</span>
-            </div>
+          <div class="data-row default-row knit-flow">
+            ${['ROLL', 'BOOKING', 'SONO', 'BUYER', 'STYLE', 'COLOR', 'MCNO',
+              'MC_DIA', 'SUPPLIER', 'SHIFT', 'YARN_TYPE', 'YARN_COUNT', 'FABRICS_TYPE', 'FINISH_GSM',
+              'FINISH_DIA', 'OPEN_TUBE', 'SL_VDQ', 'GGSM', 'FEEDER_PLAN', 'LOT_NO'].map(field => `
+              <div class="field-block">
+                <span class="field-label">${FIELD_LABELS[field] || field}</span>
+                <span class="field-value">${scannedInfo[field] || '-'}</span>
+              </div>
+            `).join('')}
             <div class="field-block">
               <span class="field-label">REJ QTY</span>
               <input type="text" class="field-input" id="edit-QTY" value="${qtyValue}">
             </div>
+            <div class="knit-pair">
+              <div class="field-block">
+                <span class="field-label">${FIELD_LABELS.KNIT_MATERIAL_CODE}</span>
+                <span class="field-value">${scannedInfo.KNIT_MATERIAL_CODE || '-'}</span>
+              </div>
+              <div class="field-block">
+                <span class="field-label">${FIELD_LABELS.KNIT_M_DESCRIPTION}</span>
+                <span class="field-value">${scannedInfo.KNIT_M_DESCRIPTION || '-'}</span>
+              </div>
+            </div>
           </div>
         `;
-        html += buildFieldRow(['KNIT_MATERIAL_CODE', 'KNIT_M_DESCRIPTION']);
 
         html += `
           <button class="rescan-btn" onclick="window.location.reload();">
@@ -1405,6 +1448,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
         console.log('QR Scanned:', decodedText);
         scanCount++;
         if (navigator.vibrate) navigator.vibrate(20);
+
+        const cardEl = document.getElementById('mainCard');
+        if (cardEl) cardEl.classList.add('expanded');
 
         if (html5QrCode) {
           html5QrCode.stop().then(() => {

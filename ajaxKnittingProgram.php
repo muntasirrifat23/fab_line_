@@ -39,8 +39,10 @@ if ($search === '') {
 // Escape the parameter
 $s = mysqli_real_escape_string($db, $search);
 
-// 1. First try searching knitting_program table by PO_NUMBER or SUB_TID
-$progQuery = "SELECT * FROM knitting_program WHERE PO_NUMBER = '$s' OR SUB_TID = '$s' OR KPTID = '$s' LIMIT 1";
+// 1. Only search knitting_program table when the query is a program ID (SUB_TID / KPTID).
+//    PO number searches must always use the input table so that already-programmed
+//    quantities can be subtracted correctly from the target.
+$progQuery = "SELECT * FROM knitting_program WHERE SUB_TID = '$s' OR KPTID = '$s' LIMIT 1";
 $progRes = mysqli_query($db, $progQuery);
 
 if ($progRes && mysqli_num_rows($progRes) > 0) {
