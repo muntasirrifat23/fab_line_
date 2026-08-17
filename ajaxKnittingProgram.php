@@ -39,30 +39,48 @@ if ($search === '') {
 // Escape the parameter
 $s = mysqli_real_escape_string($db, $search);
 
+<<<<<<< HEAD
 // 1. Only search knitting_program table when the query is a program ID (SUB_TID / KPTID).
 //    PO number searches must always use the input table so that already-programmed
 //    quantities can be subtracted correctly from the target.
+=======
+// 1. First try searching knitting_program table by SUB_TID or KPTID
+>>>>>>> 56ff45c (fix: enable SUB_TID search support, update button labels, and add demo data script)
 $progQuery = "SELECT * FROM knitting_program WHERE SUB_TID = '$s' OR KPTID = '$s' LIMIT 1";
 $progRes = mysqli_query($db, $progQuery);
 
 if ($progRes && mysqli_num_rows($progRes) > 0) {
     $progData = mysqli_fetch_assoc($progRes);
+<<<<<<< HEAD
     $bookingVal = mysqli_real_escape_string($db, $progData['PO_NUMBER'] ?? '');
+=======
+    $bookingVal = mysqli_real_escape_string($db, $progData['BOOKING'] ?? '');
+>>>>>>> 56ff45c (fix: enable SUB_TID search support, update button labels, and add demo data script)
     
     // Fetch input record for supplementary details if available
     $inputData = [];
     if ($bookingVal !== '') {
+<<<<<<< HEAD
         $inQ = mysqli_query($db, "SELECT * FROM knitting_input WHERE PO_NUMBER = '$bookingVal' LIMIT 1");
+=======
+        $inQ = mysqli_query($db, "SELECT * FROM knitting_input WHERE BOOKING = '$bookingVal' LIMIT 1");
+>>>>>>> 56ff45c (fix: enable SUB_TID search support, update button labels, and add demo data script)
         if ($inQ && mysqli_num_rows($inQ) > 0) {
             $inputData = mysqli_fetch_assoc($inQ);
         }
     }
     
     $mergedData = array_merge($inputData, array_filter($progData, function($val) { return $val !== null && $val !== ''; }));
+<<<<<<< HEAD
     $mergedData['KNITTING_TARGET_QTY'] = $progData['QTY'] ?? ($inputData['QTY'] ?? 0);
     $mergedData['SUB_TID'] = $progData['SUB_TID'];
     $mergedData['PO_NUMBER'] = $progData['PO_NUMBER'];
     $mergedData['BOOKING'] = $progData['PO_NUMBER'];
+=======
+    $mergedData['KNITTING_TARGET_QTY'] = $progData['QTY'] ?? ($inputData['KNITTING_TARGET_QTY'] ?? 0);
+    $mergedData['SUB_TID'] = $progData['SUB_TID'];
+    $mergedData['BOOKING'] = $progData['BOOKING'];
+>>>>>>> 56ff45c (fix: enable SUB_TID search support, update button labels, and add demo data script)
     
     echo json_encode([
         'success' => true,
@@ -75,9 +93,15 @@ if ($progRes && mysqli_num_rows($progRes) > 0) {
     exit();
 }
 
+<<<<<<< HEAD
 // 2. Fallback: Search knitting_input table by PO_NUMBER
 $query = "SELECT 
     PO_NUMBER, 
+=======
+// 2. Fallback: Search knitting_input table by BOOKING number
+$query = "SELECT 
+    BOOKING, 
+>>>>>>> 56ff45c (fix: enable SUB_TID search support, update button labels, and add demo data script)
     BUYER, 
     SONO,
     STYLE,
@@ -89,10 +113,17 @@ $query = "SELECT
     OPEN_TUBE, 
     KNIT_MATERIAL_CODE,
     KNIT_M_DESCRIPTION, 
+<<<<<<< HEAD
     QTY,
     BUDAT
 FROM knitting_input 
 WHERE PO_NUMBER = '$s'";
+=======
+    KNITTING_TARGET_QTY,
+    BUDAT
+FROM knitting_input 
+WHERE BOOKING = '$s'";
+>>>>>>> 56ff45c (fix: enable SUB_TID search support, update button labels, and add demo data script)
 
 $result = mysqli_query($db, $query);
 
@@ -132,7 +163,11 @@ while ($row = mysqli_fetch_assoc($result)) {
 if (empty($allData)) {
     echo json_encode([
         'success' => false, 
+<<<<<<< HEAD
         'error' => 'No data found for PO NO: ' . $search
+=======
+        'error' => 'No data found for SUB_TID / PO NO: ' . $search
+>>>>>>> 56ff45c (fix: enable SUB_TID search support, update button labels, and add demo data script)
     ]);
     exit();
 }
@@ -152,7 +187,11 @@ $response = [
 $allocated = 0;
 $allocatedByDesc = [];
 try {
+<<<<<<< HEAD
     $allocQuery = "SELECT KNIT_M_DESCRIPTION, IFNULL(SUM(QTY),0) AS allocated_qty FROM knitting_program WHERE PO_NUMBER = '$s' GROUP BY KNIT_M_DESCRIPTION";
+=======
+    $allocQuery = "SELECT KNIT_M_DESCRIPTION, IFNULL(SUM(QTY),0) AS allocated_qty FROM knitting_program WHERE BOOKING = '$s' GROUP BY KNIT_M_DESCRIPTION";
+>>>>>>> 56ff45c (fix: enable SUB_TID search support, update button labels, and add demo data script)
     $allocRes = mysqli_query($db, $allocQuery);
     if ($allocRes) {
         while ($ar = mysqli_fetch_assoc($allocRes)) {
@@ -170,7 +209,11 @@ $response['allocated_qty'] = $allocated;
 $response['allocated_by_description'] = $allocatedByDesc;
 
 // remaining for the default data row (firstRow); clients should use per-description remaining when available
+<<<<<<< HEAD
 $response['remaining_qty'] = (float)($data['KNITTING_TARGET_QTY'] ?? $data['QTY'] ?? 0) - ($allocatedByDesc[$data['KNIT_M_DESCRIPTION']] ?? 0);
+=======
+$response['remaining_qty'] = (float)$data['KNITTING_TARGET_QTY'] - ($allocatedByDesc[$data['KNIT_M_DESCRIPTION']] ?? 0);
+>>>>>>> 56ff45c (fix: enable SUB_TID search support, update button labels, and add demo data script)
 
 echo json_encode($response);
 ?>
