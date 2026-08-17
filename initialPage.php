@@ -394,6 +394,10 @@ mysqli_close($db);
                 grid-template-columns: repeat(2, 1fr);
             }
         }
+
+        .btn-grid .w3-button {
+            text-transform: none !important;
+        }
     </style>
 </head>
 
@@ -405,14 +409,14 @@ mysqli_close($db);
         </div>
         <div class="glass-panel">
             <form action="initialPage.php" method="post">
-                
+
                 <div class="btn-grid">
                     <button class="w3-button w3-teal" name="subcontract_input" id="subcontract_input">
-                        <i class="fa-solid fa-clipboard-list"></i> SUBCONTRACT INPUT
+                        <i class="fa-solid fa-clipboard-list"></i> Subcontract Input
                     </button>
 
                     <button class="w3-button w3-teal" name="knitting_program" id="knitting_program">
-                        <i class="fas fa-industry"></i> KNITTING PROGRAM
+                        <i class="fas fa-industry"></i> Knitting Program PROGRAM
                     </button>
 
                     <button class="w3-button w3-teal" name="knit_card" id="knit_card">
@@ -441,11 +445,9 @@ mysqli_close($db);
                 </div>
 
                 <div class="btn-grid">
-                    <!-- <button class="w3-button w3-teal" name="users" id="usersBtn"><i class="fas fa-users"></i> All Users</button>
-                    <button class="w3-button w3-teal" name="users_update" id="updateUserBtn"><i class="fas fa-user-edit"></i> Update User</button>
-                  -->
-                    <button class="w3-button w3-black" name="uploadCSV" id="uploadCSV"><i class="fas fa-upload"></i> UPLOAD CSV</button>
+                    <button class="w3-button w3-black" name="uploadCSV" id="uploadCSV"><i class="fas fa-upload"></i> Upload CSV</button>
                 </div>
+                
             </form>
         </div>
     </div>
