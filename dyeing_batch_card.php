@@ -6,6 +6,15 @@ if (!isset($_SESSION['username'])) {
     echo "<script>alert('You must be logged in'); window.location.href='login.php';</script>";
     exit;
 }
+
+// Start each page load with a fresh batch so old session rolls never linger
+if (!isset($_SESSION['dyeing_batch']) || !is_array($_SESSION['dyeing_batch'])) {
+    $_SESSION['dyeing_batch'] = [];
+}
+$_SESSION['dyeing_batch']['rolls'] = [];
+unset($_SESSION['dyeing_batch']['card_no']);
+unset($_SESSION['dyeing_batch']['created_at']);
+unset($_SESSION['dyeing_batch']['saved']);
 ?>
 
 <!DOCTYPE html>
@@ -31,7 +40,8 @@ if (!isset($_SESSION['username'])) {
         }
 
         .wrap {
-            max-width: 1200px;
+            width: 90%;
+            max-width: 1800px;
             margin: 0 auto;
         }
 
@@ -161,7 +171,7 @@ if (!isset($_SESSION['username'])) {
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
         }
 
         thead th {
@@ -284,6 +294,19 @@ if (!isset($_SESSION['username'])) {
             border-radius: 100px;
             font-weight: 700;
             font-size: 0.75rem;
+        }
+
+        .card-group-row {
+            background: #0f766e;
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .card-group-row em {
+            font-style: normal;
+            opacity: 0.85;
+            font-weight: 500;
         }
     </style>
 </head>
@@ -480,54 +503,87 @@ if (!isset($_SESSION['username'])) {
             tbody.innerHTML = html;
         }
 
-        function renderRolls(rolls) {
+        function rollRow(i, row, deletable) {
+            var actionHtml = deletable
+                ? '<button class="delete-btn" title="Remove from batch" onclick="deleteRoll(\'' + escAttr(row.ROLL) + '\')"><i class="fa-solid fa-trash"></i></button>'
+                : '';
+            return '<tr>' +
+                '<td><strong>' + (i + 1) + '</strong></td>' +
+                '<td><span class="roll-badge">' + esc(row.ROLL) + '</span></td>' +
+                '<td>' + esc(row.PO_NUMBER) + '</td>' +
+                '<td>' + esc(row.RACK) + '</td>' +
+                '<td>' + esc(row.QTY) + '</td>' +
+                '<td>' + esc(row.SONO) + '</td>' +
+                '<td>' + esc(row.BUYER) + '</td>' +
+                '<td>' + esc(row.STYLE) + '</td>' +
+                '<td>' + esc(row.COLOR) + '</td>' +
+                '<td>' + esc(row.MCNO) + '</td>' +
+                '<td>' + esc(row.MCDIA) + '</td>' +
+                '<td>' + esc(row.SUPPLIER) + '</td>' +
+                '<td>' + esc(row.YTYPE) + '</td>' +
+                '<td>' + esc(row.YCOUNT) + '</td>' +
+                '<td>' + esc(row.O_T) + '</td>' +
+                '<td>' + esc(row.SL) + '</td>' +
+                '<td>' + esc(row.FTYPE) + '</td>' +
+                '<td>' + esc(row.FGSM) + '</td>' +
+                '<td>' + esc(row.FDIA) + '</td>' +
+                '<td>' + esc(row.GGSM) + '</td>' +
+                '<td>' + esc(row.FEEDER_PLAN) + '</td>' +
+                '<td>' + esc(row.LOT_NO) + '</td>' +
+                '<td>' + actionHtml + '</td>' +
+                '</tr>';
+        }
+
+        function renderEmptyBatch() {
+            document.getElementById('rollsBody').innerHTML = '<tr class="empty-row"><td colspan="23">Select rolls from the list below to view batch data.</td></tr>';
+            document.getElementById('rollCount').textContent = '0 roll';
+        }
+
+        function renderBatch(currentRolls) {
             var tbody = document.getElementById('rollsBody');
             var count = document.getElementById('rollCount');
 
-            if (!rolls || rolls.length === 0) {
-                tbody.innerHTML = '<tr class="empty-row"><td colspan="23">No roll added yet. Select rolls from the list above.</td></tr>';
+            if (!currentRolls || currentRolls.length === 0) {
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="23">Select rolls from the list below to view batch data.</td></tr>';
                 count.textContent = '0 roll';
                 return;
             }
 
-            count.textContent = rolls.length + ' roll' + (rolls.length > 1 ? 's' : '');
+            var html = '<tr class="card-group-row"><td colspan="23">' +
+                '<i class="fa-solid fa-pen-to-square"></i> Current Batch (not created yet) — ' + currentRolls.length + ' roll(s)' +
+                '</td></tr>';
 
-            var html = '';
-            rolls.forEach(function(row, i) {
-                html += '<tr>' +
-                    '<td><strong>' + (i + 1) + '</strong></td>' +
-                    '<td><span class="roll-badge">' + esc(row.ROLL) + '</span></td>' +
-                    '<td>' + esc(row.PO_NUMBER) + '</td>' +
-                    '<td>' + esc(row.RACK) + '</td>' +
-                    '<td>' + esc(row.QTY) + '</td>' +
-                    '<td>' + esc(row.SONO) + '</td>' +
-                    '<td>' + esc(row.BUYER) + '</td>' +
-                    '<td>' + esc(row.STYLE) + '</td>' +
-                    '<td>' + esc(row.COLOR) + '</td>' +
-                    '<td>' + esc(row.MCNO) + '</td>' +
-                    '<td>' + esc(row.MCDIA) + '</td>' +
-                    '<td>' + esc(row.SUPPLIER) + '</td>' +
-                    '<td>' + esc(row.YTYPE) + '</td>' +
-                    '<td>' + esc(row.YCOUNT) + '</td>' +
-                    '<td>' + esc(row.O_T) + '</td>' +
-                    '<td>' + esc(row.SL) + '</td>' +
-                    '<td>' + esc(row.FTYPE) + '</td>' +
-                    '<td>' + esc(row.FGSM) + '</td>' +
-                    '<td>' + esc(row.FDIA) + '</td>' +
-                    '<td>' + esc(row.GGSM) + '</td>' +
-                    '<td>' + esc(row.FEEDER_PLAN) + '</td>' +
-                    '<td>' + esc(row.LOT_NO) + '</td>' +
-                    '<td><button class="delete-btn" title="Remove from batch" onclick="deleteRoll(\'' + escAttr(row.ROLL) + '\')"><i class="fa-solid fa-trash"></i></button></td>' +
-                    '</tr>';
+            currentRolls.forEach(function(row, i) {
+                html += rollRow(i, row, true);
             });
+
             tbody.innerHTML = html;
+            count.textContent = currentRolls.length + ' roll' + (currentRolls.length > 1 ? 's' : '');
+        }
+
+        function setCardDisplay(resp) {
+            var card = null;
+            if (resp && resp.card_no !== null && resp.card_no !== undefined && resp.card_no !== '') {
+                card = resp.card_no;
+            } else if (resp && resp.next_card_no !== null && resp.next_card_no !== undefined && resp.next_card_no !== '') {
+                card = resp.next_card_no;
+            } else {
+                card = '-';
+            }
+            document.getElementById('cardNo').textContent = card;
         }
 
         function refreshAll() {
+            if (!isUserSelectionMode) {
+                renderEmptyBatch();
+                setCardDisplay({ card_no: null, next_card_no: null });
+                return;
+            }
+
             apiGet('get_batch', '').then(function(resp) {
                 if (resp && resp.success) {
-                    document.getElementById('cardNo').textContent = resp.card_no || '-';
-                    renderRolls(resp.rolls || []);
+                    setCardDisplay(resp);
+                    renderBatch(resp.rolls || []);
                 }
             });
             loadStore(document.getElementById('searchInput').value.trim());
@@ -535,6 +591,7 @@ if (!isset($_SESSION['username'])) {
 
         function addRoll(roll) {
             hideMsg();
+            isUserSelectionMode = true;
             apiPost('add_roll', { ROLL: roll }).then(function(resp) {
                 if (resp && resp.success) {
                     showMsg('Roll ' + roll + ' added to batch card.', 'success');
@@ -546,6 +603,7 @@ if (!isset($_SESSION['username'])) {
         }
 
         function deleteRoll(roll) {
+            isUserSelectionMode = true;
             apiPost('delete_roll', { ROLL: roll }).then(function(resp) {
                 if (resp && resp.success) {
                     showMsg('Roll ' + roll + ' removed from this batch card.', 'success');
@@ -575,35 +633,47 @@ if (!isset($_SESSION['username'])) {
         });
 
         document.getElementById('createCardBtn').addEventListener('click', function() {
-            apiPost('create_card', {}).then(function(resp) {
+            var btn = this;
+            btn.disabled = true;
+            var old = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating...';
+            isUserSelectionMode = true;
+            fetch('ajaxDyeing_batch_card_Insert.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            }).then(function(r) { return r.json(); }).then(function(resp) {
                 if (resp && resp.success) {
-                    document.getElementById('cardNo').textContent = resp.card_no;
-                    showMsg('Batch Card <strong>' + resp.card_no + '</strong> created with ' + resp.count + ' roll(s)!', 'success');
-                    refreshAll();
+                    showMsg(resp.message, 'success');
+                    setTimeout(function() { location.reload(); }, 2500);
                 } else {
                     showMsg(resp.message || 'Could not create batch card', 'error');
                 }
+            }).catch(function() {
+                showMsg('Server Error', 'error');
+            }).then(function() {
+                btn.disabled = false;
+                btn.innerHTML = old;
             });
         });
 
         document.getElementById('newCardBtn').addEventListener('click', function() {
             if (!confirm('Start a new batch card? This clears the current roll list.')) return;
+            isUserSelectionMode = true;
             apiPost('new_card', {}).then(function(resp) {
                 if (resp && resp.success) {
-                    document.getElementById('cardNo').textContent = '-';
+                    setCardDisplay(resp);
                     showMsg('New batch card started. Select rolls to add.', 'success');
                     refreshAll();
                 }
             });
         });
 
+        var isUserSelectionMode = false;
+
+        renderEmptyBatch();
+        setCardDisplay({ card_no: null, next_card_no: null });
         loadStore('');
-        apiGet('get_batch', '').then(function(resp) {
-            if (resp && resp.success) {
-                document.getElementById('cardNo').textContent = resp.card_no || '-';
-                renderRolls(resp.rolls || []);
-            }
-        });
     </script>
 </body>
 
