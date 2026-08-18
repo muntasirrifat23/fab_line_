@@ -105,7 +105,8 @@
 
         table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
             font-size: 1.12rem;
             min-width: 1400px;
         }
@@ -117,6 +118,7 @@
             text-align: left;
             font-weight: 700;
             white-space: nowrap;
+            border: 1px solid #ffffff;
             position: sticky;
             top: 0;
             z-index: 5;
@@ -217,10 +219,10 @@
                     <thead>
                         <tr>
                             <th>ACTION</th>
-                            <th>CARD NO</th>
                             <th>DATE</th>
-                            <th>RACK</th>
+                            <th>BATCH CARD</th>
                             <th>ROLL NO</th>
+                            <th>RACK</th>
                             <th>PO NUMBER</th>
                             <th>QTY</th>
                             <th>SONO</th>
@@ -261,10 +263,10 @@
 
     <script>
         var COLS = [
-            { key: 'BCMTID', label: 'Card No' },
             { key: 'BUDAT', label: 'Date' },
-            { key: 'RACK', label: 'Rack' },
+            { key: 'BCMTID', label: 'Batch Card' },
             { key: 'ROLL', label: 'Roll No' },
+            { key: 'RACK', label: 'Rack' },
             { key: 'PO_NUMBER', label: 'PO Number' },
             { key: 'QTY', label: 'QTY' },
             { key: 'SONO', label: 'SONO' },
