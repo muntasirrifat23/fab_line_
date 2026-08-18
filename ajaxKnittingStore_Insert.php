@@ -1,5 +1,4 @@
 <?php
-// ajaxKnittingStore_Insert.php
 include 'config.php';
 
 header('Content-Type: application/json');
@@ -16,7 +15,6 @@ if (!$input) {
     exit;
 }
 
-// Reject if action is explicitly set to a non-insert value (safety)
 if (isset($input['action']) && $input['action'] !== 'insert_store') {
     echo json_encode(['success' => false, 'error' => 'Invalid action']);
     exit;
@@ -30,7 +28,6 @@ if ($roll === '' || $rack === '') {
     exit;
 }
 
-// Only allow rack values like A3 / B2 (letter + number)
 if (!preg_match('/^[a-zA-Z]\d+$/', $rack)) {
     echo json_encode(['success' => false, 'error' => 'Invalid rack format. Use format like A3 or B2.']);
     exit;
@@ -38,7 +35,6 @@ if (!preg_match('/^[a-zA-Z]\d+$/', $rack)) {
 
 $rack = strtoupper($rack);
 
-// Reject if this roll already exists in knitting_store (no duplicate rows for same roll)
 $chk = mysqli_query($db, "SELECT KSTID FROM knitting_store WHERE ROLL = '" . mysqli_real_escape_string($db, $roll) . "' LIMIT 1");
 if ($chk && mysqli_num_rows($chk) > 0) {
     echo json_encode(['success' => false, 'messager_exist' => true, 'message' => 'Data already exists for this Roll number in Knitting Store.']);
@@ -73,8 +69,25 @@ $lotno      = val($input, 'LOTNO');
 $tpoint     = val($input, 'TPOINT');
 $mcode      = val($input, 'MATERIAL_CODE');
 $mdesc      = val($input, 'M_DES');
-$uname      = val($input, 'UNAME');
-$uid        = val($input, 'UID');
+
+$curUser = isset($_SESSION['username']) ? trim($_SESSION['username']) : '';
+$uname   = $curUser;
+$uid     = $curUser;
+
+if ($curUser !== '') {
+    $esc = mysqli_real_escape_string($db, $curUser);
+    $r = mysqli_query($db, "SELECT USER_ID, USER_NAME FROM users WHERE USER_ID = '$esc' OR USER_NAME = '$esc' LIMIT 1");
+    if ($r && ($row = mysqli_fetch_assoc($r))) {
+        $uid   = $row['USER_ID'];
+        $uname = $row['USER_NAME'];
+    } else {
+        $r2 = mysqli_query($db, "SELECT OPERATOR_ID, OPERATOR_NAME FROM knitting_operator WHERE OPERATOR_ID = '$esc' LIMIT 1");
+        if ($r2 && ($row2 = mysqli_fetch_assoc($r2))) {
+            $uid   = $row2['OPERATOR_ID'];
+            $uname = $row2['OPERATOR_NAME'];
+        }
+    }
+}
 
 $sql = "INSERT INTO knitting_store
         (BUDAT, RACK, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR, MCNO, MCDIA,

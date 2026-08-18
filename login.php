@@ -242,7 +242,7 @@
           <input type="button" value="Login For Production Apps" onclick="login(1)">
           <input type="button" style="display: none;" value="Login For Graphically Apps" onclick="login(2)" class="w3-blue-grey">
           <div class="operator-hint">
-            <i class="fas fa-info-circle"></i> Use USER_ID or OPERATOR_ID to login
+            <i class="fas fa-info-circle"></i> Use USER ID or OPERATOR ID to login
           </div>
           <br>
           <input type="button" value="Change Password" onclick="toggleChangePwd()">
