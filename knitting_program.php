@@ -1036,7 +1036,12 @@
                 if (e.which === 13) $('#searchBtn').click();
             });
             $('#bookingInput').on('input', function() {
+                this.value = this.value.toUpperCase();
                 $('#searchError').removeClass('show');
+            });
+
+            $('#knittingForm input[type="text"]').on('input', function() {
+                this.value = this.value.toUpperCase();
             });
 
             var manualFieldSelectors = [
