@@ -90,6 +90,16 @@
             background: #475569;
         }
 
+        #backBtn {
+            border: 1px solid transparent;
+        }
+
+        #backBtn:hover {
+            background: #ffffff !important;
+            border: 1px solid #000000;
+            color: #000000;
+        }
+
         .table-card {
             background: #fff;
             border: 1px solid #e2e8f0;
