@@ -19,14 +19,16 @@ if (isset($_POST['login_user'])) {
         exit();
     }
     
-    // First, check in users table (regular users)
+    // First, check in users table (regular users) – login by USER_ID
     $password_md5 = md5($password);
-    $query = "SELECT * FROM users WHERE username='$username' AND password='$password_md5'";
+    $query = "SELECT * FROM users WHERE USER_ID='$username' AND password='$password_md5'";
     $results = mysqli_query($db, $query);
     
     if (mysqli_num_rows($results) == 1) {
         $user_data = mysqli_fetch_assoc($results);
-        $_SESSION['username'] = $username;
+        $_SESSION['username'] = $user_data['USER_ID'];
+        $_SESSION['user_name'] = $user_data['USER_NAME'] ?? $user_data['USER_ID'];
+        $_SESSION['user_id'] = $user_data['USER_ID'];
         $_SESSION['user_type'] = 'user';
         $_SESSION['user_role'] = $user_data['role'] ?? 'user';
         $_SESSION['success'] = "You are now logged in";

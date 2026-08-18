@@ -25,7 +25,7 @@ if (isset($_POST['change_password'])) {
     return false;
   }
 
-  $query = "SELECT password FROM users WHERE username = '$username' LIMIT 1";
+  $query = "SELECT password FROM users WHERE USER_ID = '$username' LIMIT 1";
   $res = mysqli_query($db, $query);
   if (!$res) {
     echo 'Server error';
@@ -37,7 +37,7 @@ if (isset($_POST['change_password'])) {
 
     if (check_password_match($stored_password, $oldp)) {
       $new_md5 = md5($newp);
-      $update = "UPDATE users SET password = '$new_md5' WHERE username = '$username'";
+      $update = "UPDATE users SET password = '$new_md5' WHERE USER_ID = '$username'";
       if (mysqli_query($db, $update)) {
         echo 'OK';
       } else {
@@ -47,7 +47,7 @@ if (isset($_POST['change_password'])) {
       echo 'Old password not correct';
     }
   } else {
-    echo 'Username not found';
+    echo 'User ID not found';
   }
 }
 exit;

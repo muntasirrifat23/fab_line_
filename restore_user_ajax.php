@@ -10,7 +10,7 @@ if(isset($_POST['submit'])){
         exit;
     }
 
-    $checkUser = mysqli_query($db, "SELECT id FROM users WHERE username='$username'");
+    $checkUser = mysqli_query($db, "SELECT id FROM users WHERE USER_ID='$username'");
     if(mysqli_num_rows($checkUser) == 0){
         echo json_encode(["status"=>"error", "message"=>"User ID not found"]);
         exit;
@@ -18,7 +18,7 @@ if(isset($_POST['submit'])){
 
     $newPassword = md5("123"); // reset password to 123
 
-    $update = mysqli_query($db, "UPDATE users SET password='$newPassword' WHERE username='$username'");
+    $update = mysqli_query($db, "UPDATE users SET password='$newPassword' WHERE USER_ID='$username'");
     if($update){
         echo json_encode(["status"=>"success", "message"=>"Password reset to '123' successfully"]);
     } else {

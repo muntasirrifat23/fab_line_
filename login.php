@@ -228,7 +228,7 @@
         <div class="col"><img src="image/fabline.jpg" alt="Proline Logo"></div>
         <div class="col">
           <div class="hide-md-lg"></div>
-          <input type="text" name="username" id="uname" placeholder="Username / Operator ID" required>
+          <input type="text" name="username" id="uname" placeholder="User ID / Operator ID" required>
           <div style="position:relative;">
             <input type="password" name="password" id="upass" placeholder="Password" required>
           </div>
@@ -242,7 +242,7 @@
           <input type="button" value="Login For Production Apps" onclick="login(1)">
           <input type="button" style="display: none;" value="Login For Graphically Apps" onclick="login(2)" class="w3-blue-grey">
           <div class="operator-hint">
-            <i class="fas fa-info-circle"></i> Use OPERATOR_ID or regular username to login
+            <i class="fas fa-info-circle"></i> Use USER_ID or OPERATOR_ID to login
           </div>
           <br>
           <input type="button" value="Change Password" onclick="toggleChangePwd()">

@@ -30,8 +30,8 @@ if (isset($_POST['submit'])) {
             exit;
         }
 
-        // CHECK USERNAME EXISTS
-        $checkUser = mysqli_query($db, "SELECT id FROM users WHERE username='$username'");
+        // CHECK USER ID EXISTS
+        $checkUser = mysqli_query($db, "SELECT id FROM users WHERE USER_ID='$username'");
         if (mysqli_num_rows($checkUser) > 0) {
             echo json_encode(["status" => "error", "message" => "User ID already exists"]);
             exit;
@@ -47,8 +47,8 @@ if (isset($_POST['submit'])) {
         // insert with auto password '123'
         $hashedPassword = md5(trim($autoPassword));
 
-        $sql = "INSERT INTO users (username, email, password) 
-                VALUES ('$username', '$email', '$hashedPassword')";
+        $sql = "INSERT INTO users (USER_ID, USER_NAME, email, password) 
+                VALUES ('$username', '$username', '$email', '$hashedPassword')";
 
         if (mysqli_query($db, $sql)) {
             echo json_encode(["status" => "success", "message" => "User Created Successfully (Password: 123)"]);

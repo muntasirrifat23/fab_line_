@@ -29,7 +29,7 @@ if (isset($_POST['submit'])) {
             echo "<script>alert('Username max 10 characters');</script>";
         }
         // duplicate check
-        $check = mysqli_query($db, "SELECT id FROM users WHERE username='$username'");
+        $check = mysqli_query($db, "SELECT id FROM users WHERE USER_ID='$username'");
         if (mysqli_num_rows($check) > 0) {
             echo "<script>alert('User already exists');</script>";
         } else {
@@ -38,8 +38,8 @@ if (isset($_POST['submit'])) {
             $hashedPassword = md5(trim($password));
 
             // insert
-            $sql = "INSERT INTO users (username, email, password) 
-                    VALUES ('$username', '$email', '$hashedPassword')";
+            $sql = "INSERT INTO users (USER_ID, USER_NAME, email, password) 
+                    VALUES ('$username', '$username', '$email', '$hashedPassword')";
 
             if (mysqli_query($db, $sql)) {
                 echo "<script>alert('New ID Created Successfully (Password: 123)'); window.location.href='initialPage.php';</script>";
