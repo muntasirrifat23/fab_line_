@@ -273,6 +273,20 @@ $user = strtolower($_SESSION['username'] ?? '');
           </div>
         </div>
 
+        <!-- 6. Knitting Store Report -->
+        <div class="col-md-4 mb-3 d-flex">
+          <div class="report-card w-100 card-bg">
+            <form method="POST" action="knitting_store_report.php" class="h-100 w-100">
+              <button type="submit" class="btn btn-report">
+                <i class="fa-solid fa-warehouse  card-btn"></i>
+                <span class="floor-text">
+                  <span>Knitting Store Report</span>
+                </span>
+              </button>
+            </form>
+          </div>
+        </div>
+
         <!-- 001. Knitting Test Inspection Report -->
         <div class="col-md-4 mb-3 d-flex">
           <div class="report-card w-100 card-bg">
@@ -287,19 +301,7 @@ $user = strtolower($_SESSION['username'] ?? '');
           </div>
         </div>
 
-        <!-- 5. Knitting Store Report -->
-        <!-- <div class="col-md-4 mb-3 d-flex">
-          <div class="report-card w-100 card-bg">
-            <form method="POST" action="knitting_store_report.php" class="h-100 w-100">
-              <button type="submit" class="btn btn-report">
-                <i class="fa-solid fa-warehouse  card-btn"></i>
-                <span class="floor-text">
-                  <span>Knitting Store Report</span>
-                </span>
-              </button>
-            </form>
-          </div>
-        </div> -->
+
 
         <!-- 00. Knitting QR Report -->
         <div class="col-md-4 mb-3 d-flex">
