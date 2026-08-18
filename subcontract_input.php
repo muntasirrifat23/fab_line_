@@ -5,9 +5,16 @@ date_default_timezone_set('Asia/Dhaka');
 
 $message = '';
 $messageType = '';
-$keepForm = true;
+$keepForm = false;
+
+if (isset($_SESSION['subcontract_msg'])) {
+    $message = $_SESSION['subcontract_msg'];
+    $messageType = 'success';
+    unset($_SESSION['subcontract_msg']);
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_subcontract'])) {
+    $keepForm = true;
     $budat = trim($_POST['budat'] ?? '');
     $po    = trim($_POST['po_number'] ?? '');
     $sono  = trim($_POST['sono'] ?? '');
@@ -69,9 +76,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_subcontract'])) 
                 $cbudat
             );
             if (mysqli_stmt_execute($stmt)) {
-                $message = 'Subcontract input saved successfully for PO ' . $po . '.';
-                $messageType = 'success';
-                $keepForm = false;
+                mysqli_stmt_close($stmt);
+                $_SESSION['subcontract_msg'] = 'Subcontract input saved successfully for PO ' . $po . '.';
+                header('Location: subcontract_input.php');
+                exit;
             } else {
                 $message = 'Save failed: ' . mysqli_stmt_error($stmt);
                 $messageType = 'error';
