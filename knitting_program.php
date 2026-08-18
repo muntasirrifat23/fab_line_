@@ -994,6 +994,8 @@
 
         // ---------- ready ----------
         $(function() {
+            sessionStorage.removeItem('kp_booking');
+
             $('#backBtn').on('click', function() {
                 window.location.href = 'initialPage.php';
             });
@@ -1010,6 +1012,7 @@
             });
 
             $('#clearBtn').on('click', function() {
+                sessionStorage.removeItem('kp_booking');
                 $('#bookingInput').val('');
                 $('#formContainer').addClass('hidden');
                 $('#alertBox').html('');
@@ -1118,6 +1121,7 @@
                     dataType: 'json',
                     success: function(resp) {
                         if (resp.success) {
+                            sessionStorage.removeItem('kp_booking');
                             showAlert(resp.message || 'Saved!', 'success', 1500);
                             setTimeout(function() { window.location.reload(); }, 1500);
                         } else {

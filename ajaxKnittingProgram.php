@@ -132,7 +132,7 @@ while ($row = mysqli_fetch_assoc($result)) {
 if (empty($allData)) {
     echo json_encode([
         'success' => false, 
-        'error' => 'No data found for SUB_TID / PO NO: ' . $search
+        'error' => 'No data found for PO NO: ' . $search
     ]);
     exit();
 }
