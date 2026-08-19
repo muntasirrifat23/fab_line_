@@ -339,9 +339,9 @@ if (!isset($_SESSION['username'])) {
         <div class="panel">
             <div class="panel-title"><i class="fa-solid fa-clipboard-list"></i> Select Batch Card</div>
             <div class="search-row">
-                <div style="position:relative; flex:1; min-width:320px;">
+                <div style="position:relative; flex:1; min-width:460px;">
                     <input type="text" id="cardSearch" class="search-input"
-                        placeholder="Search by Batch Card No (e.g. 4000000006)">
+                        placeholder="Enter Batch Card" style="width:100%;">
                     <div id="suggestBox"
                         style="position:absolute; top:100%; left:0; right:0; background:#fff; border:1px solid #cbd5e1; border-radius:10px; margin-top:4px; max-height:240px; overflow-y:auto; display:none; z-index:50;"></div>
                 </div>
@@ -380,7 +380,7 @@ if (!isset($_SESSION['username'])) {
             <div class="panel-title"><i class="fa-solid fa-scissors"></i> Split Qty &amp; Suggestions</div>
             <div class="split-row">
                 <input type="number" id="splitQty" class="qty-input" min="0" step="0.01"
-                    placeholder="Enter split qty (e.g. 600)" style="max-width:280px;">
+                    placeholder="Enter Split Qty" style="max-width:280px;">
                 <button class="btn btn-green" id="suggestBtn"><i class="fa-solid fa-wand-magic-sparkles"></i> Suggest</button>
             </div>
             <div class="status-line" id="suggestStatus"></div>
@@ -755,6 +755,12 @@ if (!isset($_SESSION['username'])) {
                 e.preventDefault();
                 hideSuggestions();
                 loadCard();
+            }
+        });
+        document.getElementById('splitQty').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                renderSuggestions();
             }
         });
         document.getElementById('suggestBtn').addEventListener('click', renderSuggestions);
