@@ -23,7 +23,7 @@ unset($_SESSION['dyeing_batch']['saved']);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dyeing Batch Card</title>
+    <title>Dyeing | Batch Card</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * {
@@ -355,7 +355,7 @@ unset($_SESSION['dyeing_batch']['saved']);
 <body>
     <div class="wrap">
         <div class="top-bar">
-            <a href="dyeing_batch_card_report.php" class="back-btn" id="backBtn"><i class="fas fa-arrow-left"></i> Back to Report</a>
+            <a href="initialPage.php" class="back-btn" id="backBtn"><i class="fas fa-arrow-left"></i> Back to Report</a>
 
             <h1><i class="fa-solid fa-vial-circle-check"></i> Dyeing Batch Card</h1>
             <span class="card-no-badge"><i class="fa-solid fa-hashtag"></i> Batch Card: <span id="cardNo">-</span></span>

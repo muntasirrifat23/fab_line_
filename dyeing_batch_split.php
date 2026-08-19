@@ -14,7 +14,7 @@ if (!isset($_SESSION['username'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dyeing Batch Split</title>
+    <title>Dyeing | Batch Split</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * {
@@ -329,7 +329,7 @@ if (!isset($_SESSION['username'])) {
 <body>
     <div class="wrap">
         <div class="top-bar">
-            <a href="dyeing_batch_card_report.php" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Report</a>
+            <a href="initialPage.php" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Report</a>
             <h1><i class="fa-solid fa-scissors"></i> Dyeing Batch Split</h1>
             <span class="badge" id="cardBadge" style="background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.35);">Select a card</span>
         </div>
