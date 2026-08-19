@@ -144,6 +144,7 @@
             border-bottom: 1px solid #eef2f7;
             white-space: nowrap;
             color: #1e293b;
+            line-height: 2.6;
         }
 
         tbody td:first-child {
@@ -307,20 +308,26 @@
             return String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
 
-        function downloadPDF(roll) {
-            var row = null;
+        function downloadPDF(bcmtid) {
+            var rows = [];
             for (var i = 0; i < currentData.length; i++) {
-                if (String(currentData[i].ROLL) === String(roll)) { row = currentData[i]; break; }
+                if (String(currentData[i].BCMTID) === String(bcmtid)) { rows.push(currentData[i]); }
             }
-            if (!row) { alert('Data not found for this roll.'); return; }
+            if (!rows.length) { alert('Data not found for this batch card.'); return; }
+            var first = rows[0];
 
-            var fieldHTML = COLS.map(function(c) {
-                return [c.label, row[c.key]];
-            });
-
-            var rowsHTML = fieldHTML.map(function(f) {
-                var val = (f[1] === null || f[1] === undefined) ? '' : f[1];
-                return '<div class="pdf-item"><span class="pdf-label">' + f[0] + ' :</span><span class="pdf-value">' + val + '</span></div>';
+            var partsHTML = rows.map(function(r, idx) {
+                var fieldHTML = COLS.map(function(c) {
+                    return [c.label, r[c.key]];
+                });
+                var rowsHTML = fieldHTML.map(function(f) {
+                    var val = (f[1] === null || f[1] === undefined) ? '' : f[1];
+                    return '<div class="pdf-item"><span class="pdf-label">' + f[0] + ' :</span><span class="pdf-value">' + val + '</span></div>';
+                }).join('');
+                var partHeader = (rows.length > 1)
+                    ? '<div style="font-size:14px;font-weight:bold;color:#1e3a8a;margin:14px 0 6px;">Part - ' + (idx + 1) + '</div>'
+                    : '';
+                return partHeader + '<div class="pdf-grid">' + rowsHTML + '</div>';
             }).join('');
 
             var content = '' +
@@ -329,10 +336,11 @@
                 'Dyeing Batch Card Report' +
                 '</div>' +
                 '<div style="display:flex;justify-content:space-between;align-items:center;width:100%;font-size:14px;font-weight:bold;margin-bottom:10px; margin-left:10px;">' +
-                '<span>Roll : ' + (row.ROLL || '') + '</span>' +
-                '<span style="margin-right:20px;">User : ' + (row.UNAME || '') + '</span>' +
+                '<span>Batch Card : ' + (first.BCMTID || '') + '</span>' +
+                '<span style="margin-right:20px;">User : ' + (first.UNAME || '') + '</span>' +
                 '</div>' +
-                '<div class="pdf-grid">' + rowsHTML + '</div>' +
+                '<div style="font-size:13px;font-weight:bold;margin-left:10px;margin-bottom:6px;">Total Parts : ' + rows.length + '</div>' +
+                partsHTML +
                 '<div style="text-align:center;font-size:11px;color: black; margin-top:16px;border-top:1px solid #e5e7eb;padding-top:8px;">' +
                 'Generated from Dyeing Batch Card Report - ' + new Date().toLocaleString() +
                 '</div>' +
@@ -399,9 +407,18 @@
                 var jsPDFLib = window.jspdf;
                 var pdf = new jsPDFLib.jsPDF('p', 'mm', 'a4');
                 var pdfWidth = pdf.internal.pageSize.getWidth();
-                var pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                pdf.save('Dyeing_Batch_Card_' + (row.ROLL || 'Roll') + '.pdf');
+                var pageHeight = pdf.internal.pageSize.getHeight();
+                var imgHeight = (canvas.height * pdfWidth) / canvas.width;
+                var position = 0;
+                pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+                var remaining = imgHeight;
+                while (remaining > pageHeight) {
+                    position -= pageHeight;
+                    remaining -= pageHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+                }
+                pdf.save('Dyeing_Batch_Card_' + (first.BCMTID || 'Card') + '.pdf');
                 document.body.removeChild(tempDiv);
                 document.body.removeChild(style);
                 showToast('PDF downloaded');
@@ -435,13 +452,34 @@
                 tbody.append('<tr class="empty-row"><td colspan="26">No data found</td></tr>');
                 return;
             }
+            var groups = {};
+            var order = [];
             currentData.forEach(function(row) {
+                var key = (row.BCMTID !== null && row.BCMTID !== undefined) ? String(row.BCMTID) : '';
+                if (!groups.hasOwnProperty(key)) {
+                    groups[key] = [];
+                    order.push(key);
+                }
+                groups[key].push(row);
+            });
+            order.forEach(function(key) {
+                var groupRows = groups[key];
+                var first = groupRows[0];
                 var tr = $('<tr>');
                 tr.append($('<td>').html(
-                    '<button class="btn-print-row" onclick="downloadPDF(\'' + esc(row.ROLL).replace(/'/g, '&#39;') + '\')"><i class="fa-solid fa-file-pdf"></i> PDF</button>'
+                    '<button class="btn-print-row" onclick="downloadPDF(\'' + esc(first.BCMTID).replace(/'/g, '&#39;') + '\')"><i class="fa-solid fa-file-pdf"></i> PDF</button>'
                 ));
                 COLS.forEach(function(c) {
-                    tr.append($('<td>').text(row[c.key] || ''));
+                    if (c.key === 'BCMTID') {
+                        tr.append($('<td>').text(first[c.key] || ''));
+                    } else if (groupRows.length > 1) {
+                        var linesHTML = groupRows.map(function(r) {
+                            return esc(r[c.key] || '');
+                        }).join('<br>');
+                        tr.append($('<td>').html(linesHTML));
+                    } else {
+                        tr.append($('<td>').text(first[c.key] || ''));
+                    }
                 });
                 tbody.append(tr);
             });
