@@ -316,7 +316,7 @@
             if (!rows.length) { alert('Data not found for this batch card.'); return; }
             var first = rows[0];
 
-            var partsHTML = rows.map(function(r, idx) {
+            var pagesHTML = rows.map(function(r, idx) {
                 var fieldHTML = COLS.map(function(c) {
                     return [c.label, r[c.key]];
                 });
@@ -324,34 +324,28 @@
                     var val = (f[1] === null || f[1] === undefined) ? '' : f[1];
                     return '<div class="pdf-item"><span class="pdf-label">' + f[0] + ' :</span><span class="pdf-value">' + val + '</span></div>';
                 }).join('');
-                var partHeader = (rows.length > 1)
-                    ? '<div style="font-size:14px;font-weight:bold;color:#1e3a8a;margin:14px 0 6px;">Part - ' + (idx + 1) + '</div>'
-                    : '';
-                return partHeader + '<div class="pdf-grid">' + rowsHTML + '</div>';
+                return '' +
+                    '<div class="pdf-page">' +
+                    '<div class="pdf-head">Dyeing Batch Card Report</div>' +
+                    '<div class="pdf-meta">' +
+                    '<span>Batch Card : ' + (first.BCMTID || '') + '</span>' +
+                    '<span>User : ' + (first.UNAME || '') + '</span>' +
+                    '</div>' +
+                    '<div class="pdf-part-label">Part - ' + (idx + 1) + ' of ' + rows.length + '</div>' +
+                    '<div class="pdf-grid">' + rowsHTML + '</div>' +
+                    '<div class="pdf-footer">Generated from Dyeing Batch Card Report - ' + new Date().toLocaleString() + '</div>' +
+                    '<div class="pdf-sign">' +
+                    '<div class="pdf-sign-item"><div class="pdf-sign-line"></div><span>Supervisor</span></div>' +
+                    '<div class="pdf-sign-item"><div class="pdf-sign-line"></div><span>Incharge</span></div>' +
+                    '<div class="pdf-sign-item"><div class="pdf-sign-line"></div><span>AGM</span></div>' +
+                    '<div class="pdf-sign-item"><div class="pdf-sign-line"></div><span>GM</span></div>' +
+                    '</div>' +
+                    '</div>';
             }).join('');
 
             var content = '' +
-                '<div id="rowPdfCard" style="position:relative;width:760px;min-height:1050px;padding:24px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">' +
-                '<div style="text-align:center;font-size:20px;font-weight:bold;color:#1e3a8a;border-bottom:3px solid #2563eb;padding-bottom:10px;margin-bottom:16px;">' +
-                'Dyeing Batch Card Report' +
-                '</div>' +
-                '<div style="display:flex;justify-content:space-between;align-items:center;width:100%;font-size:14px;font-weight:bold;margin-bottom:10px; margin-left:10px;">' +
-                '<span>Batch Card : ' + (first.BCMTID || '') + '</span>' +
-                '<span style="margin-right:20px;">User : ' + (first.UNAME || '') + '</span>' +
-                '</div>' +
-                '<div style="font-size:13px;font-weight:bold;margin-left:10px;margin-bottom:6px;">Total Parts : ' + rows.length + '</div>' +
-                partsHTML +
-                '<div style="text-align:center;font-size:11px;color: black; margin-top:16px;border-top:1px solid #e5e7eb;padding-top:8px;">' +
-                'Generated from Dyeing Batch Card Report - ' + new Date().toLocaleString() +
-                '</div>' +
-
-                '<div class="pdf-sign">' +
-                '<div class="pdf-sign-item"><div class="pdf-sign-line"></div><span>Supervisor</span></div>' +
-                '<div class="pdf-sign-item"><div class="pdf-sign-line"></div><span>Incharge</span></div>' +
-                '<div class="pdf-sign-item"><div class="pdf-sign-line"></div><span>AGM</span></div>' +
-                '<div class="pdf-sign-item"><div class="pdf-sign-line"></div><span>GM</span></div>' +
-                '</div>' +
-
+                '<div id="rowPdfCard" style="position:relative;">' +
+                pagesHTML +
                 '</div>';
 
             var tempDiv = document.createElement('div');
@@ -363,15 +357,57 @@
 
             var style = document.createElement('style');
             style.textContent = '' +
+                '.pdf-page{' +
+                'position:relative;' +
+                'width:760px;' +
+                'height:1050px;' +
+                'padding:30px;' +
+                'margin:0 auto 24px;' +
+                'box-sizing:border-box;' +
+                'background:#ffffff;' +
+                'font-family:Arial,Helvetica,sans-serif;' +
+                'color:#1f2937;' +
+                '}' +
+                '.pdf-head{' +
+                'text-align:center;' +
+                'font-size:20px;' +
+                'font-weight:bold;' +
+                'color:#1e3a8a;' +
+                'border-bottom:3px solid #2563eb;' +
+                'padding-bottom:10px;' +
+                'margin-bottom:14px;' +
+                '}' +
+                '.pdf-meta{' +
+                'display:flex;' +
+                'justify-content:space-between;' +
+                'align-items:center;' +
+                'font-size:14px;' +
+                'font-weight:bold;' +
+                'margin-bottom:6px;' +
+                '}' +
+                '.pdf-part-label{' +
+                'font-size:13px;' +
+                'font-weight:bold;' +
+                'color:#1e3a8a;' +
+                'margin-bottom:6px;' +
+                '}' +
                 '.pdf-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:2px solid #d1d5db;border-radius:6px;padding:0;background:#ffffff;}' +
                 '.pdf-item{font-size:13px;line-height:1.7;border-bottom:1px solid #d1d5db;border-right:1px solid #d1d5db;padding:7px 12px;word-break:break-word;background:#ffffff;color:#000000;}' +
                 '.pdf-item:nth-child(2n){border-right:none;}' +
                 '.pdf-label{font-weight:bold;color:#000000;}' +
                 '.pdf-value{margin-left:8px;color:#000000;}' +
+                '.pdf-footer{' +
+                'text-align:center;' +
+                'font-size:11px;' +
+                'color:#000000;' +
+                'margin-top:16px;' +
+                'border-top:1px solid #e5e7eb;' +
+                'padding-top:8px;' +
+                '}' +
                 '.pdf-sign{' +
                 'position:absolute;' +
-                'left:24px;' +
-                'right:24px;' +
+                'left:30px;' +
+                'right:30px;' +
                 'bottom:55px;' +
                 'display:grid;' +
                 'grid-template-columns:1fr 1fr 1fr 1fr;' +
@@ -397,27 +433,27 @@
                 '</style>';
             document.body.appendChild(style);
 
-            html2canvas(tempDiv, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                logging: false
-            }).then(function(canvas) {
-                var imgData = canvas.toDataURL('image/png');
-                var jsPDFLib = window.jspdf;
-                var pdf = new jsPDFLib.jsPDF('p', 'mm', 'a4');
+            var pageEls = tempDiv.querySelectorAll('.pdf-page');
+            var pdf = null;
+            var jsPDFLib = window.jspdf;
+            var capturePromises = [];
+            tempDiv.style.width = '760px';
+            pageEls.forEach(function(pageEl) {
+                capturePromises.push(html2canvas(pageEl, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    logging: false
+                }));
+            });
+            Promise.all(capturePromises).then(function(canvases) {
+                pdf = new jsPDFLib.jsPDF('p', 'mm', 'a4');
                 var pdfWidth = pdf.internal.pageSize.getWidth();
-                var pageHeight = pdf.internal.pageSize.getHeight();
-                var imgHeight = (canvas.height * pdfWidth) / canvas.width;
-                var position = 0;
-                pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-                var remaining = imgHeight;
-                while (remaining > pageHeight) {
-                    position -= pageHeight;
-                    remaining -= pageHeight;
-                    pdf.addPage();
-                    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-                }
+                canvases.forEach(function(canvas, i) {
+                    var pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                    if (i > 0) pdf.addPage();
+                    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
+                });
                 pdf.save('Dyeing_Batch_Card_' + (first.BCMTID || 'Card') + '.pdf');
                 document.body.removeChild(tempDiv);
                 document.body.removeChild(style);
