@@ -467,7 +467,7 @@ mysqli_close($db);
                     </button>
 
                     <button class="w3-button w3-teal" name="knit_card" id="knit_card">
-                        <i class="fas fa-industry"></i> Knit Card
+                        <i class="fas fa-tag"></i> Knit Card
                     </button>
 
                     <button class="w3-button w3-teal" name="knitting_production" id="knitting_production">
@@ -484,11 +484,11 @@ mysqli_close($db);
 
                     <!-- Dyeing Buttons -->
                     <button class="w3-button w3-teal" name="dyeing_batch_card" id="dyeing_batch_card">
-                        <i class="fas fa-warehouse"></i> Batch Card 
+                        <i class="fas fa-id-card"></i> Batch Card 
                     </button>
 
                     <button class="w3-button w3-teal" name="dyeing_batch_split" id="dyeing_batch_split">
-                        <i class="fas fa-warehouse"></i> Batch Split 
+                        <i class="fas fa-scissors"></i> Batch Split 
                     </button>
                     <button class="w3-button w3-teal" name="user_management" id="user_management">
                         <i class="fas fa-users-cog"></i> User Management
