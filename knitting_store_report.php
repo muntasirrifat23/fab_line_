@@ -109,7 +109,7 @@
 
         .table-scroll {
             overflow-x: auto;
-            max-height: 68vh;
+            max-height: calc(100vh - 180px);
             overflow-y: auto;
         }
 
@@ -228,10 +228,10 @@
                         <tr>
                             <th>ACTION</th>
                             <th>DATE</th>
-                            <th>RACK</th>
                             <th>ROLL NO</th>
                             <th>PO NUMBER</th>
                             <th>QTY</th>
+                            <th>RACK</th>
                             <th>SONO</th>
                             <th>SHIFT</th>
                             <th>BUYER</th>
@@ -271,10 +271,10 @@
     <script>
         var COLS = [
             { key: 'BUDAT', label: 'Date' },
-            { key: 'RACK', label: 'Rack' },
             { key: 'ROLL', label: 'Roll No' },
             { key: 'PO_NUMBER', label: 'PO Number' },
             { key: 'QTY', label: 'QTY' },
+            { key: 'RACK', label: 'Rack' },
             { key: 'SONO', label: 'SONO' },
             { key: 'SHIFT', label: 'Shift' },
             { key: 'BUYER', label: 'Buyer' },
