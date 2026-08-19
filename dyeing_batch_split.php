@@ -307,7 +307,8 @@ if (!isset($_SESSION['username'])) {
             font-weight: 600;
             color: #0f766e;
             font-size: 0.88rem;
-            padding: 2px 0;
+            padding: 6px 0;
+            line-height: 1.7;
         }
 
         .preview-total {
@@ -396,7 +397,7 @@ if (!isset($_SESSION['username'])) {
                     <div class="preview-total" id="partATotal"></div>
                 </div>
                 <div class="preview-box" id="partBBox">
-                    <h4>Part B (merged into 1 roll)</h4>
+                    <h4>Part B (merged another batch card)</h4>
                     <div id="partBRolls"></div>
                     <div class="preview-total" id="partBTotal"></div>
                 </div>
@@ -694,23 +695,25 @@ if (!isset($_SESSION['username'])) {
             });
             var bRolls = '';
             var bSum = 0;
+            var bCount = 0;
             currentRolls.forEach(function(r, i) {
                 if (!selIds[i]) {
                     bRolls += '<div class="roll-line"><span class="roll-badge">' + esc(r.ROLL) + '</span>  Qty: ' + esc(r.QTY) + '</div>';
                     bSum += qtyOf(r);
+                    bCount++;
                 }
             });
             bSum = Math.round(bSum * 100) / 100;
 
             document.getElementById('partARolls').innerHTML =
-                '<div class="roll-line" style="font-weight:800; color:#059669;">→ ' + currentCard + '-A</div>' + aRolls;
+                '<div class="roll-line" style="font-weight:800; color:#059669;">Batch Card: ' + currentCard + '-A</div>' + aRolls;
             document.getElementById('partATotal').textContent =
                 'Total A: ' + c.sum + '  (' + c.ids.length + ' roll' + (c.ids.length > 1 ? 's' : '') + ')';
 
             document.getElementById('partBRolls').innerHTML =
-                '<div class="roll-line" style="font-weight:800; color:#059669;">→ ' + currentCard + '-B</div>' + bRolls;
+                '<div class="roll-line" style="font-weight:800; color:#059669;">Batch Card: ' + currentCard + '-B</div>' + bRolls;
             document.getElementById('partBTotal').textContent =
-                'Total B: ' + bSum + '  (merged into 1 roll)';
+                'Total B: ' + bSum + '  (' + bCount + ' roll' + (bCount > 1 ? 's' : '') + ')';
 
             document.getElementById('previewPanel').style.display = 'block';
             hideMsg();
@@ -722,7 +725,7 @@ if (!isset($_SESSION['username'])) {
                 return;
             }
             var selRolls = selectedCombo.ids.map(function(i) { return currentRolls[i].ROLL; });
-            if (!confirm('Split batch card ' + currentCard + '?\n\nPart A: ' + currentCard + '-A (' + selectedCombo.sum + ' qty)\nPart B: ' + currentCard + '-B (remaining qty merged into 1 roll)')) return;
+            if (!confirm('Split batch card ' + currentCard + '?\n\nPart A: ' + currentCard + '-A (' + selectedCombo.sum + ' qty)\nPart B: ' + currentCard + '-B (remaining qty merged another batch card)')) return;
 
             var btn = document.getElementById('splitBtn');
             btn.disabled = true;
