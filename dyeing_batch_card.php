@@ -55,6 +55,8 @@ unset($_SESSION['dyeing_batch']['saved']);
             border-radius: 18px;
             margin-bottom: 18px;
             flex-wrap: wrap;
+            position: relative;
+            justify-content: space-between;
         }
 
         .top-bar h1 {
@@ -64,10 +66,13 @@ unset($_SESSION['dyeing_batch']['saved']);
             display: flex;
             align-items: center;
             gap: 10px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
         }
 
         .card-no-badge {
-            margin-left: auto;
             background: rgba(255, 255, 255, 0.15);
             border: 1px solid rgba(255, 255, 255, 0.35);
             padding: 6px 14px;
@@ -308,14 +313,52 @@ unset($_SESSION['dyeing_batch']['saved']);
             opacity: 0.85;
             font-weight: 500;
         }
+
+        .filter-select {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 7px 10px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            color: #134e4a;
+            outline: none;
+        }
+
+        .filter-select:focus {
+            border-color: #0d9488;
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 8px 18px;
+            background: black;
+            color: white;
+            border: 2px solid black;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: 0.25s ease;
+        }
+
+        .back-btn:hover {
+            background: white;
+            color: black;
+            text-decoration: none;
+        }
     </style>
 </head>
 
 <body>
     <div class="wrap">
         <div class="top-bar">
+            <a href="dyeing_batch_card_report.php" class="back-btn" id="backBtn"><i class="fas fa-arrow-left"></i> Back to Report</a>
+
             <h1><i class="fa-solid fa-vial-circle-check"></i> Dyeing Batch Card</h1>
-            <span class="card-no-badge"><i class="fa-solid fa-hashtag"></i> Card: <span id="cardNo">-</span></span>
+            <span class="card-no-badge"><i class="fa-solid fa-hashtag"></i> Batch Card: <span id="cardNo">-</span></span>
         </div>
 
         <div id="msgBox" class="msg-box"></div>
@@ -354,7 +397,9 @@ unset($_SESSION['dyeing_batch']['saved']);
                         </tr>
                     </thead>
                     <tbody id="rollsBody">
-                        <tr class="empty-row"><td colspan="23">No roll added yet. Select rolls from the list below.</td></tr>
+                        <tr class="empty-row">
+                            <td colspan="23">No roll added yet. Select rolls from the list below.</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -399,11 +444,21 @@ unset($_SESSION['dyeing_batch']['saved']);
                             <th>GGSM</th>
                             <th>FEEDER_PLAN</th>
                             <th>LOT_NO</th>
-                            <th>ACTION</th>
+                            <th>ACTION
+                                <span style="display:block; margin-top:5px;">
+                                    <select id="actionFilter" class="filter-select">
+                                        <option value="all">All</option>
+                                        <option value="add">ADD</option>
+                                        <option value="added">Added</option>
+                                    </select>
+                                </span>
+                            </th>
                         </tr>
                     </thead>
                     <tbody id="storeBody">
-                        <tr class="empty-row"><td colspan="23">Loading...</td></tr>
+                        <tr class="empty-row">
+                            <td colspan="23">Loading...</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -433,15 +488,21 @@ unset($_SESSION['dyeing_batch']['saved']);
         }
 
         function apiGet(action, params) {
-            return fetch('ajaxDyeing_batch_card.php?action=' + action + '&' + params).then(function(r) { return r.json(); });
+            return fetch('ajaxDyeing_batch_card.php?action=' + action + '&' + params).then(function(r) {
+                return r.json();
+            });
         }
 
         function apiPost(action, payload) {
             return fetch('ajaxDyeing_batch_card.php?action=' + action, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(payload || {})
-            }).then(function(r) { return r.json(); });
+            }).then(function(r) {
+                return r.json();
+            });
         }
 
         function loadStore(searchTerm) {
@@ -458,16 +519,37 @@ unset($_SESSION['dyeing_batch']['saved']);
             });
         }
 
+        var storeRolls = [];
+
+        function currentActionFilter() {
+            var f = document.getElementById('actionFilter');
+            return f ? f.value : 'all';
+        }
+
         function renderStore(rolls) {
             var tbody = document.getElementById('storeBody');
+            storeRolls = rolls || [];
 
-            if (!rolls || rolls.length === 0) {
-                tbody.innerHTML = '<tr class="empty-row"><td colspan="23">No rolls found in knitting store.</td></tr>';
+            var filter = currentActionFilter();
+            var filtered = storeRolls;
+            if (filter === 'add') {
+                filtered = storeRolls.filter(function(r) {
+                    return !r.in_batch;
+                });
+            } else if (filter === 'added') {
+                filtered = storeRolls.filter(function(r) {
+                    return r.in_batch;
+                });
+            }
+
+            if (!filtered || filtered.length === 0) {
+                var msg = storeRolls.length === 0 ? 'No rolls found in knitting store.' : 'No roll matches the selected filter.';
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="23">' + msg + '</td></tr>';
                 return;
             }
 
             var html = '';
-            rolls.forEach(function(row, i) {
+            filtered.forEach(function(row, i) {
                 var actionHtml;
                 if (row.in_batch) {
                     actionHtml = '<span class="added-tag"><i class="fa-solid fa-check"></i> Added</span>';
@@ -504,9 +586,9 @@ unset($_SESSION['dyeing_batch']['saved']);
         }
 
         function rollRow(i, row, deletable) {
-            var actionHtml = deletable
-                ? '<button class="delete-btn" title="Remove from batch" onclick="deleteRoll(\'' + escAttr(row.ROLL) + '\')"><i class="fa-solid fa-trash"></i></button>'
-                : '';
+            var actionHtml = deletable ?
+                '<button class="delete-btn" title="Remove from batch" onclick="deleteRoll(\'' + escAttr(row.ROLL) + '\')"><i class="fa-solid fa-trash"></i></button>' :
+                '';
             return '<tr>' +
                 '<td><strong>' + (i + 1) + '</strong></td>' +
                 '<td><span class="roll-badge">' + esc(row.ROLL) + '</span></td>' +
@@ -576,7 +658,10 @@ unset($_SESSION['dyeing_batch']['saved']);
         function refreshAll() {
             if (!isUserSelectionMode) {
                 renderEmptyBatch();
-                setCardDisplay({ card_no: null, next_card_no: null });
+                setCardDisplay({
+                    card_no: null,
+                    next_card_no: null
+                });
                 return;
             }
 
@@ -592,7 +677,9 @@ unset($_SESSION['dyeing_batch']['saved']);
         function addRoll(roll) {
             hideMsg();
             isUserSelectionMode = true;
-            apiPost('add_roll', { ROLL: roll }).then(function(resp) {
+            apiPost('add_roll', {
+                ROLL: roll
+            }).then(function(resp) {
                 if (resp && resp.success) {
                     showMsg('Roll ' + roll + ' added to batch card.', 'success');
                     refreshAll();
@@ -604,7 +691,9 @@ unset($_SESSION['dyeing_batch']['saved']);
 
         function deleteRoll(roll) {
             isUserSelectionMode = true;
-            apiPost('delete_roll', { ROLL: roll }).then(function(resp) {
+            apiPost('delete_roll', {
+                ROLL: roll
+            }).then(function(resp) {
                 if (resp && resp.success) {
                     showMsg('Roll ' + roll + ' removed from this batch card.', 'success');
                     refreshAll();
@@ -625,6 +714,14 @@ unset($_SESSION['dyeing_batch']['saved']);
             loadStore('');
         });
 
+        document.getElementById('actionFilter').addEventListener('change', function() {
+            renderStore(storeRolls);
+        });
+
+        document.getElementById('backBtn').addEventListener('click', function(e) {
+            window.location.href = 'dyeing_batch_card_report.php';
+        });
+
         document.getElementById('searchInput').addEventListener('keyup', function(e) {
             if (e.key === 'Enter') {
                 hideMsg();
@@ -640,12 +737,18 @@ unset($_SESSION['dyeing_batch']['saved']);
             isUserSelectionMode = true;
             fetch('ajaxDyeing_batch_card_Insert.php', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({})
-            }).then(function(r) { return r.json(); }).then(function(resp) {
+            }).then(function(r) {
+                return r.json();
+            }).then(function(resp) {
                 if (resp && resp.success) {
                     showMsg(resp.message, 'success');
-                    setTimeout(function() { location.reload(); }, 2500);
+                    setTimeout(function() {
+                        location.reload();
+                    }, 2500);
                 } else {
                     showMsg(resp.message || 'Could not create batch card', 'error');
                 }
@@ -672,7 +775,10 @@ unset($_SESSION['dyeing_batch']['saved']);
         var isUserSelectionMode = false;
 
         renderEmptyBatch();
-        setCardDisplay({ card_no: null, next_card_no: null });
+        setCardDisplay({
+            card_no: null,
+            next_card_no: null
+        });
         loadStore('');
     </script>
 </body>
