@@ -566,7 +566,7 @@
 
         $(function() {
             $('#backBtn').on('click', function() {
-                window.location.href = 'initialPage.php';
+                window.location.href = 'report.php';
             });
             $('#searchBtn').on('click', searchBooking);
             $('#clearBtn').on('click', function() {
