@@ -109,7 +109,7 @@
 
         .table-scroll {
             overflow-x: auto;
-            max-height: 68vh;
+            max-height: calc(100vh - 180px);
             overflow-y: auto;
         }
 
