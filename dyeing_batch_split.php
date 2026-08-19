@@ -533,6 +533,11 @@ if (!isset($_SESSION['username'])) {
                     '<td>' + esc(row.COLOR) + '</td>' +
                     '</tr>';
             });
+            html += '<tr style="background:#ccfbf1; font-weight:800; border-top:2px solid #0f766e;">' +
+                '<td colspan="4" style="text-align:right; color:#065f46;">Total QTY</td>' +
+                '<td style="color:#065f46;">' + esc(total) + '</td>' +
+                '<td colspan="3"></td>' +
+                '</tr>';
             tbody.innerHTML = html;
             document.getElementById('cardTotal').textContent = total;
         }
@@ -600,6 +605,28 @@ if (!isset($_SESSION['username'])) {
                 return;
             }
             document.getElementById('splitQty').value = qty;
+
+            var total = 0;
+            currentRolls.forEach(function(r) { total += qtyOf(r); });
+            total = Math.round(total * 100) / 100;
+
+            if (qty > total) {
+                showMsg('Over Qty: ' + qty + ' exceeds card total (' + total + '). Enter a qty less than ' + total + '.', 'error');
+                box.innerHTML = '';
+                document.getElementById('suggestStatus').innerHTML = '';
+                document.getElementById('previewPanel').style.display = 'none';
+                selectedCombo = null;
+                return;
+            }
+
+            if (qty === total) {
+                showMsg('Matched: ' + qty + ' equals the full card total (' + total + '). Keep at least one roll for Part B, so enter a smaller qty.', 'error');
+                box.innerHTML = '';
+                document.getElementById('suggestStatus').innerHTML = '';
+                document.getElementById('previewPanel').style.display = 'none';
+                selectedCombo = null;
+                return;
+            }
 
             var tol = 0.01;
             var res = findCombinations(currentRolls, qty, tol);
