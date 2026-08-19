@@ -20,7 +20,7 @@ if (!isset($_SESSION['dyeing_batch']['rolls']) || !is_array($_SESSION['dyeing_ba
 $rolls = array_values($_SESSION['dyeing_batch']['rolls']);
 
 if (count($rolls) === 0) {
-    echo json_encode(['success' => false, 'message' => 'Scan / select at least one roll to create a batch card']);
+    echo json_encode(['success' => false, 'message' => 'Select at least one roll to create a batch card']);
     exit;
 }
 

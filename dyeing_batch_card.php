@@ -405,7 +405,6 @@ unset($_SESSION['dyeing_batch']['saved']);
             </div>
             <div class="footer-actions">
                 <button class="btn btn-amber" id="createCardBtn"><i class="fa-solid fa-clipboard-check"></i> Create Batch Card</button>
-                <button class="btn btn-slate" id="newCardBtn"><i class="fa-solid fa-plus"></i> New Batch Card</button>
             </div>
         </div>
 
@@ -760,7 +759,7 @@ unset($_SESSION['dyeing_batch']['saved']);
             });
         });
 
-        document.getElementById('newCardBtn').addEventListener('click', function() {
+        document.getElementById('newCardBtn') && document.getElementById('newCardBtn').addEventListener('click', function() {
             if (!confirm('Start a new batch card? This clears the current roll list.')) return;
             isUserSelectionMode = true;
             apiPost('new_card', {}).then(function(resp) {
