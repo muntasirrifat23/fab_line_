@@ -264,7 +264,7 @@ $user = strtolower($_SESSION['username'] ?? '');
           <div class="report-card w-100 card-bg">
             <form method="POST" action="knitting_inspection_report.php" class="h-100 w-100">
               <button type="submit" class="btn btn-report">
-                <i class="fa-solid fa-boxes-stacked card-btn"></i>
+                <i class="fa-solid fa-clipboard-check card-btn"></i>
                 <span class="floor-text">
                   <span>Knitting Inspection Report</span>
                 </span>
@@ -293,7 +293,7 @@ $user = strtolower($_SESSION['username'] ?? '');
           <div class="report-card w-100 card-bg">
             <form method="POST" action="dyeing_batch_card_report.php" class="h-100 w-100">
               <button type="submit" class="btn btn-report">
-                <i class="fa-solid fa-warehouse  card-btn"></i>
+                <i class="fa-solid fa-id-card card-btn"></i>
                 <span class="floor-text">
                   <span>Dyeing Batch Card Report</span>
                 </span>
@@ -307,7 +307,7 @@ $user = strtolower($_SESSION['username'] ?? '');
           <div class="report-card w-100 card-bg">
             <form method="POST" action="knitting_inspection_report_test.php" class="h-100 w-100">
               <button type="submit" class="btn btn-report">
-                <i class="fa-solid fa-boxes-stacked card-btn"></i>
+                <i class="fa-solid fa-vial card-btn"></i>
                 <span class="floor-text">
                   <span>K Test Inspection</span>
                 </span>
