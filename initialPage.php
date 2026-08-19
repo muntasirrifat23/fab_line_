@@ -62,6 +62,11 @@ if (isset($_POST['dyeing_batch_card'])) {
     header('location:dyeing_batch_card.php');
     exit();
 }
+if (isset($_POST['dyeing_batch_split'])) {
+    $_SESSION['lineNo'] = $_POST['option'];
+    header('location:dyeing_batch_split.php');
+    exit();
+}
 if (isset($_POST['user_management'])) {
     $_SESSION['lineNo'] = $_POST['option'];
     header('location:user_management.php');
@@ -456,6 +461,7 @@ mysqli_close($db);
                         <i class="fa-solid fa-clipboard-list"></i> Subcontract Input
                     </button>
 
+                    <!-- Knitting Buttons -->
                     <button class="w3-button w3-teal" name="knitting_program" id="knitting_program">
                         <i class="fas fa-industry"></i> Knitting Program
                     </button>
@@ -476,10 +482,14 @@ mysqli_close($db);
                         <i class="fas fa-warehouse"></i> Knitting Store
                     </button>
 
+                    <!-- Dyeing Buttons -->
                     <button class="w3-button w3-teal" name="dyeing_batch_card" id="dyeing_batch_card">
                         <i class="fas fa-warehouse"></i> Batch Card 
                     </button>
 
+                    <button class="w3-button w3-teal" name="dyeing_batch_split" id="dyeing_batch_split">
+                        <i class="fas fa-warehouse"></i> Batch Split 
+                    </button>
                     <button class="w3-button w3-teal" name="user_management" id="user_management">
                         <i class="fas fa-users-cog"></i> User Management
                     </button>
