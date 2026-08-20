@@ -241,11 +241,11 @@ session_start();
 
         <div class="col-12 col-md-4 d-flex">
           <div class="report-card-item w-100" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
-            <form method="POST" action="user_entry.php" class="h-100 w-100">
+            <form method="POST" action="users_all.php" class="h-100 w-100">
               <button type="submit" class="btn-report-style">
                 <i class="fa-solid fa-user-lock"></i>
                 <span class="floor-text">
-                  <span>Lock/ Unlock Users</span>
+                  <span>All Users</span>
                 </span>
               </button>
             </form>
