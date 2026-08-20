@@ -226,14 +226,15 @@ switch ($action) {
             }
         }
 
-        // Part B: merge remaining rolls into one roll
+        // Part B: keep each remaining roll as its own row under card-B (same data, only BCMTID changes)
         if ($ok) {
-            $bRow = $remRolls[0];
-            $bRow['QTY'] = (string)$remSum;
-            $res = insertSplitRow($db, $budat, $cardB, $cardB, $bRow);
-            if (!$res['ok']) {
-                $ok = false;
-                $errorMsg = $res['error'];
+            foreach ($remRolls as $row) {
+                $res = insertSplitRow($db, $budat, $cardB, strval($row['ROLL']), $row);
+                if (!$res['ok']) {
+                    $ok = false;
+                    $errorMsg = $res['error'];
+                    break;
+                }
             }
         }
 
@@ -248,11 +249,34 @@ switch ($action) {
             $dl->close();
         }
 
+        // Log the split operation
+        if ($ok) {
+            $uname = isset($_SESSION['username']) ? $_SESSION['username'] : '';
+            $st = $db->prepare(
+                "INSERT INTO dyeing_batch_split (ORIGINAL_BCMTID, CARD_A, CARD_B, QTY_A, QTY_B, ROLL_A_COUNT, ROLL_B_COUNT, UNAME)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+            );
+            if (!$st) {
+                $ok = false;
+                $errorMsg = 'Split log prepare error: ' . $db->error;
+            } else {
+                $selCount = count($selRolls);
+                $remCount = count($remRolls);
+                $st->bind_param('sssddiis', $card, $cardA, $cardB, $selSum, $remSum, $selCount, $remCount, $uname);
+                // 'd' for ORIGINAL_BCMTID is intentional-string passed with 'd'? fix below
+                if (!$st->execute()) {
+                    $ok = false;
+                    $errorMsg = 'Split log insert error: ' . $st->error;
+                }
+                $st->close();
+            }
+        }
+
         if ($ok) {
             $db->commit();
             echo json_encode([
                 'success' => true,
-                'message' => 'Batch card ' . $card . ' split into ' . $cardA . ' (' . count($selRolls) . ' roll(s), qty ' . number_format($selSum, 2) . ') and ' . $cardB . ' (1 roll, qty ' . number_format($remSum, 2) . ').'
+                'message' => 'Batch card ' . $card . ' split into ' . $cardA . ' (' . count($selRolls) . ' roll(s), qty ' . number_format($selSum, 2) . ') and ' . $cardB . ' (' . count($remRolls) . ' roll(s), qty ' . number_format($remSum, 2) . ').'
             ]);
         } else {
             $db->rollback();

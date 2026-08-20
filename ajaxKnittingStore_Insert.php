@@ -46,6 +46,13 @@ function val($input, $key) {
 }
 
 $budat      = val($input, 'BUDAT');
+
+// If the scanned card's BUDAT is not today's date, insert with today's date.
+$todayBudat = date('Y-m-d');
+if ($budat !== $todayBudat) {
+    $budat = $todayBudat;
+}
+
 $po_number  = val($input, 'PO_NUMBER');
 $qty        = val($input, 'QTY');
 $sono       = val($input, 'SONO');
