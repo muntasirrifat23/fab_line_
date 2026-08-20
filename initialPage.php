@@ -289,7 +289,7 @@ mysqli_close($db);
             padding: 14px 10px;
             border-radius: 20px;
             font-weight: 700;
-            font-size: 1.2rem;
+            font-size: clamp(0.72rem, 1.15vw, 1.05rem);
             font-family: 'Poppins', 'Segoe UI', system-ui, -apple-system, 'Roboto', Arial, sans-serif;
             letter-spacing: 0.2px;
             border: none;
@@ -302,11 +302,13 @@ mysqli_close($db);
             align-items: center;
             justify-content: center;
             gap: 8px;
-            flex-wrap: nowrap;
+            flex-wrap: wrap;
             min-height: 64px;
             line-height: 1.3;
             text-align: center;
             overflow: hidden;
+            min-width: 0;
+            overflow-wrap: anywhere;
         }
 
         .btn-grid .w3-button .fa-solid,
@@ -314,6 +316,7 @@ mysqli_close($db);
         .btn-grid .w3-button i {
             flex-shrink: 0;
             line-height: 1;
+            font-size: clamp(0.68rem, 1vw, 0.95rem);
         }
 
         .btn-grid .w3-button {
