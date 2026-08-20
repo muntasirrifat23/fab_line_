@@ -252,6 +252,19 @@ session_start();
           </div>
         </div>
 
+        <div class="col-12 col-md-4 d-flex">
+          <div class="report-card-item w-100" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
+            <form method="POST" action="users_operator.php" class="h-100 w-100">
+              <button type="submit" class="btn-report-style">
+                <i class="fa-solid fa-user-lock"></i>
+                <span class="floor-text">
+                  <span>All Operators</span>
+                </span>
+              </button>
+            </form>
+          </div>
+        </div>
+
       </div>
 
       <div class="text-center mt-4">

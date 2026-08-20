@@ -2,7 +2,7 @@
 include 'config.php';
 
 $users = [];
-$res = mysqli_query($db, "SELECT id, USER_NAME, USER_ID, email, password, created FROM users ORDER BY id ASC");
+$res = mysqli_query($db, "SELECT KOTID, OPERATOR_NAME, OPERATOR_ID, OPERATOR_EMAIL, OPERATOR_PASSWORD, CREATED FROM knitting_operator ORDER BY KOTID ASC");
 if ($res) {
     while ($row = mysqli_fetch_assoc($res)) {
         $users[] = $row;
@@ -15,7 +15,7 @@ if ($res) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>All Users | User List</title>
+    <title>All Operators | User List</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <link rel="stylesheet" href="css/bootstrap.min.css">
@@ -229,7 +229,7 @@ if ($res) {
         <a href="user_management.php" class="back-btn">
             <i class="fa-solid fa-arrow-left"></i> Back
         </a>
-        <h1><i class="fa-solid fa-users"></i> All Users</h1>
+        <h1><i class="fa-solid fa-user-tie"></i> All Operators</h1>
     </div>
 
     <div class="search-panel">
@@ -247,8 +247,8 @@ if ($res) {
                     <tr>
                         <th>PRINT</th>
                         <th>ID</th>
-                        <th>USER NAME</th>
-                        <th>USER ID</th>
+                        <th>OPERATOR NAME</th>
+                        <th>OPERATOR ID</th>
                         <th>EMAIL</th>
                         <th>PASSWORD</th>
                         <th>CREATED</th>
@@ -275,16 +275,16 @@ if ($res) {
             rows.forEach(function(u, i) {
                 html += '<tr>' +
                     '<td><button class="print-btn" data-idx="' + i + '"><i class="fa-solid fa-print"></i> Print ID</button></td>' +
-                    '<td>' + esc(u.id) + '</td>' +
-                    '<td>' + esc(u.USER_NAME) + '</td>' +
-                    '<td>' + esc(u.USER_ID) + '</td>' +
-                    '<td>' + esc(u.email) + '</td>' +
+                    '<td>' + esc(u.KOTID) + '</td>' +
+                    '<td>' + esc(u.OPERATOR_NAME) + '</td>' +
+                    '<td>' + esc(u.OPERATOR_ID) + '</td>' +
+                    '<td>' + esc(u.OPERATOR_EMAIL) + '</td>' +
                     '<td>' + '********' + '</td>' +
-                    '<td>' + esc(u.created) + '</td>' +
+                    '<td>' + esc(u.CREATED) + '</td>' +
                     '</tr>';
             });
             body.innerHTML = html;
-            document.getElementById('rowCount').textContent = 'Total Users: ' + rows.length;
+            document.getElementById('rowCount').textContent = 'Total Operators: ' + rows.length;
         }
 
         function applyFilter() {
@@ -294,10 +294,10 @@ if ($res) {
                 return;
             }
             var filtered = allUsers.filter(function(u) {
-                return String(u.USER_NAME || '').toLowerCase().indexOf(q) !== -1 ||
-                    String(u.USER_ID || '').toLowerCase().indexOf(q) !== -1 ||
-                    String(u.email || '').toLowerCase().indexOf(q) !== -1 ||
-                    String(u.id || '').toLowerCase().indexOf(q) !== -1;
+                return String(u.OPERATOR_NAME || '').toLowerCase().indexOf(q) !== -1 ||
+                    String(u.OPERATOR_ID || '').toLowerCase().indexOf(q) !== -1 ||
+                    String(u.OPERATOR_EMAIL || '').toLowerCase().indexOf(q) !== -1 ||
+                    String(u.KOTID || '').toLowerCase().indexOf(q) !== -1;
             });
             renderTable(filtered);
         }
@@ -318,7 +318,7 @@ if ($res) {
             if (!btn) return;
             var u = allUsers[parseInt(btn.getAttribute('data-idx'), 10)];
             if (!u) return;
-            printUserIdQr(u.USER_ID);
+            printUserIdQr(u.OPERATOR_ID);
         });
 
         function printUserIdQr(userId) {
