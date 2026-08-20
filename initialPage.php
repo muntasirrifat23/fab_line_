@@ -280,7 +280,7 @@ mysqli_close($db);
 
         .btn-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             gap: 12px;
             margin: 24px 0;
         }
@@ -441,6 +441,10 @@ mysqli_close($db);
             }
         }
 
+        .btn-grid #uploadCSV {
+            display: flex !important;
+        }
+
         .btn-grid .w3-button {
             text-transform: none !important;
         }
@@ -484,11 +488,11 @@ mysqli_close($db);
 
                     <!-- Dyeing Buttons -->
                     <button class="w3-button w3-teal" name="dyeing_batch_card" id="dyeing_batch_card">
-                        <i class="fas fa-id-card"></i> Batch Card 
+                        <i class="fas fa-id-card"></i> Batch Card
                     </button>
 
                     <button class="w3-button w3-teal" name="dyeing_batch_split" id="dyeing_batch_split">
-                        <i class="fas fa-scissors"></i> Batch Split 
+                        <i class="fas fa-scissors"></i> Batch Split
                     </button>
                     <button class="w3-button w3-teal" name="user_management" id="user_management">
                         <i class="fas fa-users-cog"></i> User Management
@@ -502,7 +506,7 @@ mysqli_close($db);
                 <div class="btn-grid">
                     <button class="w3-button w3-black" name="uploadCSV" id="uploadCSV"><i class="fas fa-upload"></i> Upload CSV</button>
                 </div>
-                
+
             </form>
         </div>
     </div>
