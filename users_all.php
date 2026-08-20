@@ -200,6 +200,11 @@ if ($res) {
             display: none;
         }
 
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
         @media print {
             body > *:not(.qr-print-area) {
                 display: none !important;
@@ -207,17 +212,13 @@ if ($res) {
 
             .qr-print-area {
                 display: flex !important;
-                align-items: center;
-                justify-content: center;
-                min-height: 100vh;
+                align-items: flex-start;
+                justify-content: flex-start;
+                padding: 20px;
             }
 
             .qr-print-area .qr-box {
                 text-align: center;
-            }
-
-            .qr-print-area table {
-                margin: 0 auto;
             }
         }
     </style>

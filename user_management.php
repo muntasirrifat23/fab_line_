@@ -229,17 +229,6 @@ session_start();
       <div class="row d-flex align-items-stretch justify-content-center g-4">
 
         <div class="col-12 col-md-4 d-flex">
-          <div class="report-card-item w-100" style="background: linear-gradient(135deg, #1e3c72, #2a5298);">
-            <button type="button" class="btn-report-style" data-bs-toggle="modal" data-bs-target="#passwordModalReset">
-              <i class="fa-solid fa-user-plus"></i>
-              <span class="floor-text">
-                <span>Reset/ Add Users</span>
-              </span>
-            </button>
-          </div>
-        </div>
-
-        <div class="col-12 col-md-4 d-flex">
           <div class="report-card-item w-100" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
             <form method="POST" action="users_all.php" class="h-100 w-100">
               <button type="submit" class="btn-report-style">
@@ -265,6 +254,16 @@ session_start();
           </div>
         </div>
 
+        <div class="col-12 col-md-4 d-flex">
+          <div class="report-card-item w-100" style="background: linear-gradient(135deg, #1e3c72, #2a5298);">
+            <button type="button" class="btn-report-style" data-bs-toggle="modal" data-bs-target="#passwordModalReset">
+              <i class="fa-solid fa-user-plus"></i>
+              <span class="floor-text">
+                <span>Reset/ Add Users</span>
+              </span>
+            </button>
+          </div>
+        </div>
       </div>
 
       <div class="text-center mt-4">
