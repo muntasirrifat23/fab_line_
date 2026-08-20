@@ -60,7 +60,7 @@ $booking = $prog['PO_NUMBER'] ?? '';
 $input = null;
 
 if (!empty($sub_tid) || !empty($booking)) {
-    $stmt_in = $db->prepare("SELECT * FROM knitting_input WHERE KITID = ? OR BOOKING = CONVERT(? USING utf8mb4) LIMIT 1");
+    $stmt_in = $db->prepare("SELECT * FROM knitting_input WHERE KITID = ? OR PO_NUMBER = ? LIMIT 1");
     if ($stmt_in) {
         $stmt_in->bind_param("ss", $sub_tid, $booking);
         $stmt_in->execute();
@@ -78,7 +78,7 @@ $p_kptid            = intval($prog['KPTID']);
 $p_sub_tid          = $sub_tid;
 $p_buyer            = !empty($prog['BUYER']) ? $prog['BUYER'] : ($input['BUYER'] ?? '');
 $p_supplier         = !empty($prog['SUPPLIER']) ? $prog['SUPPLIER'] : ($input['SUPPLIER'] ?? '');
-$p_booking          = !empty($prog['PO_NUMBER']) ? $prog['PO_NUMBER'] : ($input['BOOKING'] ?? '');
+$p_booking          = !empty($prog['PO_NUMBER']) ? $prog['PO_NUMBER'] : ($input['PO_NUMBER'] ?? '');
 $p_sono             = !empty($prog['SONO']) ? $prog['SONO'] : ($input['SONO'] ?? '');
 $p_style            = !empty($prog['STYLE']) ? $prog['STYLE'] : ($input['STYLE'] ?? '');
 $p_mcno             = !empty($prog['MCNO']) ? $prog['MCNO'] : '';
