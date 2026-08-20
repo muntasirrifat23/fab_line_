@@ -229,10 +229,10 @@ session_start();
       <div class="row d-flex align-items-stretch justify-content-center g-4">
 
         <div class="col-12 col-md-4 d-flex">
-          <div class="report-card-item w-100" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
+          <div class="report-card-item w-100" style="background: linear-gradient(135deg, #16a34a, #4ade80);">
             <form method="POST" action="users_all.php" class="h-100 w-100">
               <button type="submit" class="btn-report-style">
-                <i class="fa-solid fa-user-lock"></i>
+                <i class="fa-solid fa-users"></i>
                 <span class="floor-text">
                   <span>All Users</span>
                 </span>
@@ -242,10 +242,10 @@ session_start();
         </div>
 
         <div class="col-12 col-md-4 d-flex">
-          <div class="report-card-item w-100" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
+          <div class="report-card-item w-100" style="background: linear-gradient(135deg, #2563eb, #7c3aed);">
             <form method="POST" action="users_operator.php" class="h-100 w-100">
               <button type="submit" class="btn-report-style">
-                <i class="fa-solid fa-user-lock"></i>
+                <i class="fa-solid fa-user-tie"></i>
                 <span class="floor-text">
                   <span>All Operators</span>
                 </span>
@@ -255,9 +255,9 @@ session_start();
         </div>
 
         <div class="col-12 col-md-4 d-flex">
-          <div class="report-card-item w-100" style="background: linear-gradient(135deg, #1e3c72, #2a5298);">
+          <div class="report-card-item w-100" style="background: linear-gradient(135deg, #ea580c, #f59e0b);">
             <button type="button" class="btn-report-style" data-bs-toggle="modal" data-bs-target="#passwordModalReset">
-              <i class="fa-solid fa-user-plus"></i>
+              <i class="fa-solid fa-key"></i>
               <span class="floor-text">
                 <span>Reset/ Add Users</span>
               </span>
