@@ -49,9 +49,10 @@ try {
 
         // Count existing rolls for this KCID to determine next roll sequence
         $roll_count = 1;
-        $c_stmt = $db->prepare("SELECT COUNT(*) AS total_rolls FROM knitting_inspection WHERE KNIT_CARD_ID = ?");
+        $roll_pattern = "R-" . $kcid . "-%";
+        $c_stmt = $db->prepare("SELECT COUNT(*) AS total_rolls FROM knitting_inspection WHERE ROLL LIKE ?");
         if ($c_stmt) {
-            $c_stmt->bind_param("i", $kcid);
+            $c_stmt->bind_param("s", $roll_pattern);
             $c_stmt->execute();
             $c_res = $c_stmt->get_result();
             if ($c_res && $c_row = $c_res->fetch_assoc()) {

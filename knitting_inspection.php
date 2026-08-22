@@ -40,10 +40,12 @@ if (isset($_GET['action']) && $_GET['action'] === 'search_card') {
         $kcid = intval($row['KCTID']);
         
         // Count existing rolls for this card to suggest sequence
+        // Count existing rolls for this card to suggest sequence
         $roll_count = 1;
-        $c_stmt = $db->prepare("SELECT COUNT(*) AS total_rolls FROM knitting_inspection WHERE KNIT_CARD_ID = ?");
+        $roll_pattern = "R-" . $kcid . "-%";
+        $c_stmt = $db->prepare("SELECT COUNT(*) AS total_rolls FROM knitting_inspection WHERE ROLL LIKE ?");
         if ($c_stmt) {
-            $c_stmt->bind_param("i", $kcid);
+            $c_stmt->bind_param("s", $roll_pattern);
             $c_stmt->execute();
             $c_res = $c_stmt->get_result();
             if ($c_res && $c_row = $c_res->fetch_assoc()) {
@@ -87,6 +89,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_inspection'])) {
     $roll_no             = trim($_POST['ROLL_NO'] ?? '');
     $roll_weight         = floatval($_POST['ROLL_WEIGHT'] ?? 0);
     
+    // Fetch card metadata
+    $card_meta = [];
+    if ($knit_card_id > 0) {
+        $c_q = $db->prepare("
+            SELECT kc.*, kp.MAIN_TID, kp.SUB_TID 
+            FROM knit_card kc 
+            LEFT JOIN knitting_program kp ON kc.KPTID = kp.KPTID 
+            WHERE kc.KCTID = ?
+        ");
+        if ($c_q) {
+            $c_q->bind_param("i", $knit_card_id);
+            $c_q->execute();
+            $c_res = $c_q->get_result();
+            if ($c_res && $row = $c_res->fetch_assoc()) {
+                $card_meta = $row;
+            }
+            $c_q->close();
+        }
+    }
+
     // 16 Fabric Faults (Checkboxes: 1 if checked, 0 if unchecked)
     // 1-Point Faults
     $defect_tt          = isset($_POST['DEFECT_TT']) ? 1 : 0;
@@ -121,7 +143,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_inspection'])) {
 
     $qc_grade     = trim($_POST['QC_GRADE'] ?? '');
     $qc_status    = trim($_POST['QC_STATUS'] ?? '');
-    $inspected_by = trim($_POST['INSPECTED_BY'] ?? '');
     $remarks      = trim($_POST['REMARKS'] ?? '');
 
     // Server-side fallback computation for QC Grade & Status
@@ -139,8 +160,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_inspection'])) {
     }
 
     // Validation
-    if ($knit_card_id <= 0) {
-        $error = "Please select a valid Knit Card.";
+    if ($knit_card_id <= 0 && empty($roll_no)) {
+        $error = "Please select a valid Knit Card or enter Roll Number.";
     } elseif (empty($roll_no)) {
         $error = "Roll Number is required.";
     } elseif ($roll_weight <= 0) {
@@ -149,30 +170,85 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_inspection'])) {
         try {
             $stmt = $db->prepare("
                 INSERT INTO knitting_inspection (
-                    KNIT_CARD_ID, ROLL_NO, ROLL_WEIGHT,
-                    DEFECT_TT, DEFECT_PATTA, DEFECT_SLUB, DEFECT_YC,
-                    DEFECT_OIL_SPOT, DEFECT_FF, DEFECT_SEEDS, DEFECT_M_STITCH,
-                    DEFECT_SINKER_MARK, DEFECT_NEEDLE_MARK, DEFECT_LYCRA_OUT, DEFECT_OIL_LINE,
-                    DEFECT_HOLE, DEFECT_LOOP, DEFECT_SETUP, DEFECT_CREASE_MARK,
-                    TOTAL_POINTS, QC_GRADE, QC_STATUS, INSPECTED_BY, REMARKS
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    `BUDAT`, `ROLL`, `OQTY`, `RQTY`, `UQTY`, `PO_NUMBER`, `QTY`, `SONO`, `BUYER`, `STYLE`, `COLOR`,
+                    `MCNO`, `MC_DIA`, `SUPPLIER`, `SHIFT`, `YTYPE`, `YCOUNT`, `FTYPE`, `FGSM`, `FDIA`, `O_T`,
+                    `SL`, `GGSM`, `FPLAN`, `LOTNO`, `MATERIAL_CODE`, `M_DES`,
+                    `TT`, `PATTA`, `SLUB`, `YC_SPOT`, `OILSPOT`, `FF`, `SEEDS`, `MSTITCH`, `SINKERMARK`, `NEEDLEMARK`,
+                    `LYCOUT`, `OILLINE`, `HOLE`, `LOOP`, `SETUP`, `CMARK`, `TPOINT`,
+                    `QC_GRADE`, `QC_STATUS`, `UNAME`, `UID`
+                ) VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?
+                )
             ");
             if (!$stmt) {
                 throw new Exception("Prepare statement failed: " . $db->error);
             }
             
-            // 24 parameters: 'isd' (3) + 17 'i's (16 defects + total_points) + 'ssss' (4) = 24
-            $types = "isd" . str_repeat("i", 17) . "ssss";
+            $budat       = date('Y-m-d');
+            $oqty        = strval($card_meta['QTY'] ?? $roll_weight);
+            $rqty        = strval($card_meta['QTY'] ?? $roll_weight);
+            $uqty        = strval($roll_weight);
+            $po_number   = strval($card_meta['PO_NUMBER'] ?? '');
+            $qty         = strval($roll_weight);
+            $sono        = strval($card_meta['SONO'] ?? '');
+            $buyer       = strval($card_meta['BUYER'] ?? '');
+            $style       = strval($card_meta['STYLE'] ?? '');
+            $color       = strval($card_meta['COLOR'] ?? '');
+            $mcno        = strval($card_meta['MCNO'] ?? '');
+            $mc_dia      = strval($card_meta['MCDIA'] ?? '');
+            $supplier    = strval($card_meta['CUSTOMER'] ?? '');
+            $shift       = strval($card_meta['SHIFT'] ?? '');
+            $ytype       = strval($card_meta['YTYPE'] ?? '');
+            $ycount      = strval($card_meta['YCOUNT'] ?? '');
+            $ftype       = strval($card_meta['FTYPE'] ?? '');
+            $fgsm        = strval($card_meta['FGSM'] ?? '');
+            $fdia        = strval($card_meta['FDIA'] ?? '');
+            $o_t         = strval($card_meta['O_T'] ?? '');
+            $sl          = floatval($card_meta['SL'] ?? 0.00);
+            $ggsm        = strval($card_meta['GGSM'] ?? '');
+            $fplan       = strval($card_meta['FEEDER_PLAN'] ?? '');
+            $lotno       = strval($card_meta['LOT'] ?? '');
+            $mat_code    = strval($card_meta['KNIT_MATERIAL_CODE'] ?? '');
+            $m_des       = strval($card_meta['KNIT_M_DESCRIPTION'] ?? '');
+
+            $v_tt         = strval($defect_tt);
+            $v_patta      = strval($defect_patta);
+            $v_slub       = strval($defect_slub);
+            $v_yc_spot    = strval($defect_yc);
+            $v_oilspot    = strval($defect_oil_spot);
+            $v_ff         = strval($defect_ff);
+            $v_seeds      = strval($defect_seeds);
+            $v_mstitch    = strval($defect_m_stitch);
+            $v_sinkermark = strval($defect_sinker_mark);
+            $v_needlemark = strval($defect_needle_mark);
+            $v_lycout     = strval($defect_lycra_out);
+            $v_oilline    = strval($defect_oil_line);
+            $v_hole       = strval($defect_hole);
+            $v_loop       = strval($defect_loop);
+            $v_setup      = strval($defect_setup);
+            $v_cmark      = strval($defect_crease_mark);
+            $v_tpoint     = strval($total_points);
+
+            $uname        = strval($_SESSION['username'] ?? 'admin');
+            $uid          = strval($_SESSION['user_id'] ?? $_SESSION['username'] ?? 'admin');
+
+            $types = str_repeat('s', 21) . 'd' . str_repeat('s', 26);
 
             $stmt->bind_param(
                 $types,
-                $knit_card_id, $roll_no, $roll_weight,
-                $defect_tt, $defect_patta, $defect_slub, $defect_yc,
-                $defect_oil_spot, $defect_ff, $defect_seeds, $defect_m_stitch,
-                $defect_sinker_mark, $defect_needle_mark, $defect_lycra_out, $defect_oil_line,
-                $defect_hole, $defect_loop, $defect_setup, $defect_crease_mark,
-                $total_points, $qc_grade, $qc_status, $inspected_by, $remarks
+                $budat, $roll_no, $oqty, $rqty, $uqty, $po_number, $qty, $sono, $buyer, $style, $color,
+                $mcno, $mc_dia, $supplier, $shift, $ytype, $ycount, $ftype, $fgsm, $fdia, $o_t,
+                $sl, $ggsm, $fplan, $lotno, $mat_code, $m_des,
+                $v_tt, $v_patta, $v_slub, $v_yc_spot, $v_oilspot, $v_ff, $v_seeds, $v_mstitch, $v_sinkermark, $v_needlemark,
+                $v_lycout, $v_oilline, $v_hole, $v_loop, $v_setup, $v_cmark, $v_tpoint,
+                $qc_grade, $qc_status, $uname, $uid
             );
+
             if (!$stmt->execute()) {
                 throw new Exception("Execute failed: " . $stmt->error);
             }
@@ -200,10 +276,9 @@ if ($c_res) {
 // Fetch recent inspection records
 $inspections = [];
 $i_res = $db->query("
-    SELECT ki.*, kc.BUYER, kc.STYLE, kc.MCNO 
+    SELECT ki.* 
     FROM knitting_inspection ki
-    LEFT JOIN knit_card kc ON ki.KNIT_CARD_ID = kc.KCTID
-    ORDER BY ki.ID DESC LIMIT 15
+    ORDER BY ki.KITID DESC LIMIT 15
 ");
 if ($i_res) {
     while ($r = $i_res->fetch_assoc()) {
@@ -1062,12 +1137,12 @@ if ($i_res) {
                         <?php else: ?>
                             <?php foreach ($inspections as $ins): ?>
                                 <tr>
-                                    <td><strong>#<?php echo $ins['ID']; ?></strong></td>
-                                    <td>Knit Card #<?php echo $ins['KNIT_CARD_ID']; ?></td>
+                                    <td><strong>#<?php echo $ins['KITID']; ?></strong></td>
+                                    <td>PO #<?php echo htmlspecialchars($ins['PO_NUMBER'] ?: 'N/A'); ?></td>
                                     <td><?php echo htmlspecialchars($ins['BUYER'] ?: 'N/A'); ?> <br><small class="text-muted"><?php echo htmlspecialchars($ins['STYLE'] ?: ''); ?></small></td>
-                                    <td><span class="badge bg-secondary"><?php echo htmlspecialchars($ins['ROLL_NO']); ?></span></td>
-                                    <td><?php echo number_format($ins['ROLL_WEIGHT'], 2); ?> KG</td>
-                                    <td><strong class="text-primary"><?php echo $ins['TOTAL_POINTS']; ?> pts</strong></td>
+                                    <td><span class="badge bg-secondary"><?php echo htmlspecialchars($ins['ROLL']); ?></span></td>
+                                    <td><?php echo number_format(floatval($ins['QTY']), 2); ?> KG</td>
+                                    <td><strong class="text-primary"><?php echo intval($ins['TPOINT']); ?> pts</strong></td>
                                     <td>
                                         <?php 
                                             $g_cls = 'badge-grade-a';
@@ -1082,8 +1157,8 @@ if ($i_res) {
                                         ?>
                                         <span class="badge <?php echo $s_cls; ?> px-2 py-1"><?php echo htmlspecialchars($ins['QC_STATUS']); ?></span>
                                     </td>
-                                    <td><?php echo htmlspecialchars($ins['INSPECTED_BY'] ?: 'N/A'); ?></td>
-                                    <td><small class="text-muted"><?php echo date('d-M-Y H:i', strtotime($ins['INSPECTION_DATE'])); ?></small></td>
+                                    <td><?php echo htmlspecialchars($ins['UNAME'] ?: 'N/A'); ?></td>
+                                    <td><small class="text-muted"><?php echo !empty($ins['P_CREATED']) ? date('d-M-Y H:i', strtotime($ins['P_CREATED'])) : 'N/A'; ?></small></td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>
