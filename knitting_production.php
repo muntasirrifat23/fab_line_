@@ -551,6 +551,46 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
       color: #1e3a8a;
     }
 
+    .manual-entry {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .manual-entry input {
+      flex: 1;
+      min-width: 0;
+      padding: 9px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      outline: none;
+      background: #ffffff;
+      color: #0f172a;
+    }
+
+    .manual-entry input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .manual-entry button {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #ffffff;
+      border: none;
+      padding: 9px 20px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: 0.2s;
+    }
+
+    .manual-entry button:hover {
+      filter: brightness(1.1);
+    }
+
     @media (max-width: 480px) {
       .card {
         padding: 16px;
@@ -762,7 +802,32 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
         DEFAULT_DATA.forEach(f => {
           html += `<div class="data-row default-row"><span class="label">${f.label}</span><span class="value">${f.value}</span></div>`;
         });
+        html += `
+          <div class="manual-entry">
+            <input type="text" id="manualOperatorInput" placeholder="Operator ID (e.g. OP01)" autocomplete="off">
+            <button type="button" id="manualOperatorBtn">Load</button>
+          </div>
+        `;
         resultContainer.innerHTML = html;
+
+        const opInput = document.getElementById('manualOperatorInput');
+        const opBtn = document.getElementById('manualOperatorBtn');
+        if (opBtn) opBtn.addEventListener('click', submitManualOperator);
+        if (opInput) opInput.addEventListener('keydown', e => {
+          if (e.key === 'Enter') { e.preventDefault(); submitManualOperator(); }
+        });
+      }
+
+      function submitManualOperator() {
+        if (verifying || operatorScanned) return;
+        const inp = document.getElementById('manualOperatorInput');
+        const val = inp ? String(inp.value).trim() : '';
+        if (!val) {
+          alert('Please enter Operator ID!');
+          return;
+        }
+        verifying = true;
+        verifyOperatorScan(val);
       }
 
       function parseQrText(qrText) {
@@ -1045,11 +1110,35 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           <div class="data-row" style="border-left-color:#f59e0b; background:#fffbeb; margin-top:8px;">
             <span class="value" style="color:#92400e; font-weight:600;">📷 Now scan the Production Roll QR...</span>
           </div>
+          <div class="manual-entry">
+            <input type="text" id="manualRollInput" placeholder="Roll No (e.g. 1234)" autocomplete="off">
+            <button type="button" id="manualRollBtn">Load Data</button>
+          </div>
         `;
         hideActionContent();
         if (typeof cameraStatus !== 'undefined' && cameraStatus) {
           cameraStatus.innerText = 'Operator verified - scan production roll';
         }
+
+        const rollInput = document.getElementById('manualRollInput');
+        const rollBtn = document.getElementById('manualRollBtn');
+        if (rollBtn) rollBtn.addEventListener('click', submitManualRoll);
+        if (rollInput) rollInput.addEventListener('keydown', e => {
+          if (e.key === 'Enter') { e.preventDefault(); submitManualRoll(); }
+        });
+        if (rollInput) rollInput.focus();
+      }
+
+      function submitManualRoll() {
+        if (processingRoll || !operatorScanned) return;
+        const inp = document.getElementById('manualRollInput');
+        const val = inp ? String(inp.value).trim() : '';
+        if (!val) {
+          alert('Please enter Roll No!');
+          return;
+        }
+        processingRoll = true;
+        stopCameraAndProcess(val);
       }
 
       function renderUnstructuredData(text, msg) {
