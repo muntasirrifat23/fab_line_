@@ -30,7 +30,7 @@ try {
             kp.MAIN_TID, kp.SUB_TID
         FROM knit_card kc
         LEFT JOIN knitting_program kp ON kc.KPTID = kp.KPTID
-        WHERE kc.KCTID = ? OR kc.BUYER LIKE ? OR kc.STYLE LIKE ? OR kc.SONO LIKE ? OR kc.PO_NUMBER LIKE ?
+        WHERE kc.KCTID = ? OR kc.ROLL = ? OR kc.BUYER LIKE ? OR kc.STYLE LIKE ? OR kc.SONO LIKE ? OR kc.PO_NUMBER LIKE ?
         ORDER BY kc.KCTID DESC LIMIT 1
     ";
 
@@ -40,7 +40,7 @@ try {
     }
 
     $search_param = '%' . $query . '%';
-    $stmt->bind_param("issss", $clean_id, $search_param, $search_param, $search_param, $search_param);
+    $stmt->bind_param("isssss", $clean_id, $query, $search_param, $search_param, $search_param, $search_param);
     $stmt->execute();
     $res = $stmt->get_result();
 
