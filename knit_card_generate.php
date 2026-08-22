@@ -60,7 +60,7 @@ $booking = $prog['PO_NUMBER'] ?? '';
 $input = null;
 
 if (!empty($sub_tid) || !empty($booking)) {
-    $stmt_in = $db->prepare("SELECT * FROM knitting_input WHERE KITID = ? OR BOOKING = CONVERT(? USING utf8mb4) LIMIT 1");
+    $stmt_in = $db->prepare("SELECT * FROM knitting_input WHERE KITID = ? OR PO_NUMBER = ? LIMIT 1");
     if ($stmt_in) {
         $stmt_in->bind_param("ss", $sub_tid, $booking);
         $stmt_in->execute();
