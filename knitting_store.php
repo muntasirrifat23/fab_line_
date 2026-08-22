@@ -373,6 +373,17 @@
       margin-bottom: 12px;
     }
 
+    .rack-levels {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .rack-levels .sub-rack-group {
+      min-width: 0;
+      margin-top: 0;
+    }
+
     .rack-group .btn {
       flex: 1 1 auto;
       min-width: 72px;
@@ -441,6 +452,11 @@
 
     .rack-number-option:hover {
       background: #c3dcd7;
+    }
+
+    .rack-number-option.keyboard-active {
+      background: #0f7a6f;
+      color: white;
     }
 
     .rack-group .btn.active-rack {
@@ -653,7 +669,7 @@
       <div id="rack-section" class="rack-section" style="display:none;">
         <div class="rack-section-title">
           <i class="fas fa-warehouse"></i>
-          <span>Select Rack Location</span>
+          <span>Select Rack Number</span>
         </div>
         <div class="rack-group" id="rackGroup">
           <input class="rack-number-input" type="text" id="rackNumberInput"
@@ -661,8 +677,18 @@
             placeholder="Enter rack number (01-50)" autocomplete="off">
           <div class="rack-number-options" id="rackNumberOptions"></div>
         </div>
-        <div class="sub-rack-group" id="subRackGroup">
-          <span class="sub-placeholder">Select a rack above to see sub-racks</span>
+
+        <div class="rack-section-title">
+          <i class="fas fa-warehouse"></i>
+          <span>Select Rack Location</span>
+        </div>
+        <div class="rack-levels">
+          <div class="sub-rack-group" id="subRackGroup">
+            <span class="sub-placeholder">Select a rack location</span>
+          </div>
+          <div class="sub-rack-group" id="subRackOptionsGroup">
+            <span class="sub-placeholder">Select A, B or C</span>
+          </div>
         </div>
         <div class="rack-actions">
           <button class="btn-action save" type="button" id="saveRackBtn" disabled>
@@ -709,6 +735,7 @@
       const rackNumberInput = document.getElementById('rackNumberInput');
       const rackNumberOptions = document.getElementById('rackNumberOptions');
       const subRackGroup = document.getElementById('subRackGroup');
+      const subRackOptionsGroup = document.getElementById('subRackOptionsGroup');
       const resetRackBtn = document.getElementById('resetRackBtn');
       const saveRackBtn = document.getElementById('saveRackBtn');
 
@@ -743,6 +770,7 @@
 
       let scannedInfo = null;
       let selectedRack = null;
+      let selectedRackSection = null;
       let selectedSubRack = null;
       let html5QrCode = null;
       let isScanning = false;
@@ -836,9 +864,11 @@
 
       function resetRackSelection() {
         selectedRack = null;
+        selectedRackSection = null;
         selectedSubRack = null;
         rackNumberInput.value = '';
-        subRackGroup.innerHTML = '<span class="sub-placeholder">Select a rack above to see sub-racks</span>';
+        subRackGroup.innerHTML = '<span class="sub-placeholder">Select a rack location</span>';
+        subRackOptionsGroup.innerHTML = '<span class="sub-placeholder">Select A, B or C</span>';
         saveRackBtn.disabled = true;
       }
 
@@ -847,33 +877,50 @@
 
         const existingRack = scannedInfo.RACK;
         if (existingRack) {
-          const match = existingRack.match(/^(\d+)([A-Z])?$/i);
+          const match = existingRack.match(/^(\d+)([A-Z])?(\d+)?$/i);
           if (match) {
             rackNumberInput.value = match[1];
             setActiveRack(match[1]);
-            if (match[2]) setActiveSubRack(existingRack.toUpperCase());
+            if (match[2]) {
+              setActiveRackSection(match[2].toUpperCase());
+              if (match[3]) setActiveSubRack(match[2].toUpperCase() + match[3]);
+            }
           }
         }
       }
 
       function setActiveRack(rack) {
         selectedRack = rack;
+        selectedRackSection = null;
+        selectedSubRack = null;
         updateSubRacks(rack);
+      }
+
+      function setActiveRackSection(section) {
+        selectedRackSection = section;
+        selectedSubRack = null;
+        subRackGroup.querySelectorAll('.btn').forEach(function(btn) {
+          btn.classList.toggle('active-sub', btn.textContent.trim().toUpperCase() === section);
+        });
+        updateSubRackOptions(section);
       }
 
       function setActiveSubRack(sub) {
         selectedSubRack = sub;
-        subRackGroup.querySelectorAll('.btn').forEach(function(b) {
-          b.classList.remove('active-sub');
-          if (b.textContent.trim().toUpperCase() === sub) b.classList.add('active-sub');
+        subRackOptionsGroup.querySelectorAll('.btn').forEach(function(btn) {
+          btn.classList.toggle('active-sub', btn.textContent.trim().toUpperCase() === sub);
         });
         saveRackBtn.disabled = false;
       }
 
+      function showSelectedRackMessage() {
+        if (selectedRack && selectedSubRack) {
+          showMessage('Selected: ' + selectedRack + '-' + selectedSubRack, '');
+        }
+      }
+
       function updateSubRacks(rack) {
-        const options = ['A', 'B', 'C'].map(function(suffix) {
-          return rack + suffix;
-        });
+        const options = ['A', 'B', 'C'];
         subRackGroup.innerHTML = '';
 
         options.forEach(function(opt) {
@@ -882,14 +929,29 @@
           btn.className = 'btn';
           btn.textContent = opt;
           btn.onclick = function() {
-            setActiveSubRack(opt);
-            showMessage('Selected: ' + selectedRack + ' - ' + opt, '');
+            setActiveRackSection(opt);
+            showMessage('Selected: ' + selectedRack + '-' + opt, '');
           };
           subRackGroup.appendChild(btn);
         });
 
-        selectedSubRack = null;
+        subRackOptionsGroup.innerHTML = '<span class="sub-placeholder">Select A, B or C</span>';
         saveRackBtn.disabled = true;
+      }
+
+      function updateSubRackOptions(section) {
+        subRackOptionsGroup.innerHTML = '';
+        ['1', '2', '3'].forEach(function(number) {
+          const option = document.createElement('button');
+          option.type = 'button';
+          option.className = 'btn';
+          option.textContent = section + number;
+          option.onclick = function() {
+            setActiveSubRack(option.textContent);
+            showSelectedRackMessage();
+          };
+          subRackOptionsGroup.appendChild(option);
+        });
       }
 
       function updateRackNumberOptions(value) {
@@ -903,11 +965,11 @@
         const numbers = [];
         for (let number = 1; number <= 50; number += 1) {
           const rackNumber = String(number).padStart(2, '0');
-          const matchesPreviousRange = prefix === '0'
-            ? number >= 1 && number <= 9
-            : prefix >= '1' && prefix <= '4'
-              ? Math.floor(number / 10) === Number(prefix)
-              : rackNumber.endsWith(prefix);
+          const matchesPreviousRange = prefix === '0' ?
+            number >= 1 && number <= 9 :
+            prefix >= '1' && prefix <= '4' ?
+            Math.floor(number / 10) === Number(prefix) :
+            rackNumber.endsWith(prefix);
 
           if (matchesPreviousRange) numbers.push(rackNumber);
         }
@@ -919,8 +981,11 @@
           option.textContent = rackNumber;
           option.addEventListener('click', function() {
             rackNumberInput.value = option.textContent;
-            rackNumberInput.dispatchEvent(new Event('input', { bubbles: true }));
+            rackNumberInput.dispatchEvent(new Event('input', {
+              bubbles: true
+            }));
             rackNumberOptions.classList.remove('visible');
+            rackNumberInput.focus();
           });
           rackNumberOptions.appendChild(option);
         });
@@ -941,8 +1006,43 @@
           showMessage('Selected Rack: ' + selectedRack, '');
         } else {
           selectedRack = null;
-          subRackGroup.innerHTML = '<span class="sub-placeholder">Select a rack number to see locations</span>';
+          selectedRackSection = null;
+          selectedSubRack = null;
+          subRackGroup.innerHTML = '<span class="sub-placeholder">Select a rack number</span>';
+          subRackOptionsGroup.innerHTML = '<span class="sub-placeholder">Select A, B or C</span>';
         }
+      });
+
+      rackNumberInput.addEventListener('keydown', function(event) {
+        const options = Array.from(rackNumberOptions.querySelectorAll('.rack-number-option'));
+        if (!options.length) return;
+
+        const currentIndex = options.findIndex(function(option) {
+          return option.classList.contains('keyboard-active');
+        });
+        let nextIndex = currentIndex;
+
+        if (event.key === 'ArrowDown') {
+          event.preventDefault();
+          nextIndex = currentIndex < options.length - 1 ? currentIndex + 1 : 0;
+        } else if (event.key === 'ArrowUp') {
+          event.preventDefault();
+          nextIndex = currentIndex > 0 ? currentIndex - 1 : options.length - 1;
+        } else if (event.key === 'Enter' && currentIndex >= 0) {
+          event.preventDefault();
+          options[currentIndex].click();
+          return;
+        } else if (event.key === 'Escape') {
+          rackNumberOptions.classList.remove('visible');
+          return;
+        } else {
+          return;
+        }
+
+        options.forEach(function(option, index) {
+          option.classList.toggle('keyboard-active', index === nextIndex);
+        });
+        options[nextIndex].scrollIntoView({ block: 'nearest' });
       });
 
       rackNumberInput.addEventListener('focus', function() {
@@ -993,7 +1093,9 @@
               if (resp && resp.success) {
                 resolve(resp);
               } else {
-                reject(resp || { error: 'Save failed' });
+                reject(resp || {
+                  error: 'Save failed'
+                });
               }
             })
             .catch(function(err) {
@@ -1062,7 +1164,7 @@
         }
 
         const roll = scannedInfo.ROLL || '';
-        const rack = selectedSubRack.toUpperCase();
+        const rack = (selectedRack + selectedSubRack).toUpperCase();
 
         saveRackBtn.disabled = true;
         saveRackBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
