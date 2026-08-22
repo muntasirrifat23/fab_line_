@@ -765,6 +765,8 @@
         MATERIAL_CODE: 'MATERIAL CODE',
         M_DES: 'MATERIAL DESC',
         RACK: 'RACK',
+        RACKNO: 'RACK NO',
+        RACKLOCATION: 'RACK LOCATION',
         TPOINT: 'T.POINT'
       };
 
@@ -1074,10 +1076,11 @@
         });
       }
 
-      function saveRackData(roll, rack) {
+      function saveRackData(roll, rackno, racklocation) {
         var payload = Object.assign({}, scannedInfo || {});
         payload.ROLL = roll;
-        payload.RACK = rack;
+        payload.RACKNO = rackno;
+        payload.RACKLOCATION = racklocation;
         return new Promise(function(resolve, reject) {
           fetch('ajaxKnittingStore_Insert.php', {
               method: 'POST',
@@ -1158,28 +1161,43 @@
           showMessage('No data scanned. Please scan a QR code first.', 'error');
           return;
         }
-        if (!selectedRack || !selectedSubRack) {
-          showMessage('Please select a rack and sub-rack location.', 'error');
+
+        const rackno = selectedRack ? String(selectedRack).trim() : '';
+        const racklocation = selectedSubRack ? String(selectedSubRack).trim().toUpperCase() : '';
+
+        if (!rackno || Number(rackno) < 1 || Number(rackno) > 50) {
+          showMessage('Please select a Rack Number (01-50) first.', 'error');
+          return;
+        }
+        if (!racklocation) {
+          showMessage('Please select a Rack Location (A1, A2, B3...) first.', 'error');
+          return;
+        }
+        if (!/^[A-C][1-9]$/.test(racklocation)) {
+          showMessage('Invalid Rack Location. Use format like A1, A2, A3, B1...', 'error');
           return;
         }
 
         const roll = scannedInfo.ROLL || '';
-        const rack = (selectedRack + selectedSubRack).toUpperCase();
 
         saveRackBtn.disabled = true;
         saveRackBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
-        saveRackData(roll, rack)
+        saveRackData(roll, rackno.padStart(2, '0'), racklocation)
           .then(function(resp) {
-            scannedInfo.RACK = rack;
-            showMessage('✅ ' + (resp.message || ('Saved to Rack: ' + rack)) + '<br><small>Page will reload in 2 seconds...</small>', 'success');
+            scannedInfo.RACKNO = rackno.padStart(2, '0');
+            scannedInfo.RACKLOCATION = racklocation;
+            showMessage('✅ ' + (resp.message || ('Saved - Rack No: ' + rackno + ', Location: ' + racklocation)) + '<br><small>Page will reload in 2 seconds...</small>', 'success');
             saveRackBtn.innerHTML = '<i class="fas fa-save"></i> Save Rack';
             setTimeout(function() {
               window.location.reload();
             }, 2000);
           })
           .catch(function(err) {
-            var msg = (err && err.message) || String(err);
+            var msg = (err && (err.error || err.message)) || String(err);
+            if (msg === '[object Object]' || msg === 'undefined') {
+              msg = 'Save failed. Please try again.';
+            }
             if (!(err && err.messager_exist)) {
               msg = '❌ ' + msg;
             }

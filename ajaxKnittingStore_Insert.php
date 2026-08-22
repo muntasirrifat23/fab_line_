@@ -20,20 +20,40 @@ if (isset($input['action']) && $input['action'] !== 'insert_store') {
     exit;
 }
 
+$rackNo = isset($input['RACKNO']) ? trim($input['RACKNO']) : '';
+$rackLocation = isset($input['RACKLOCATION']) ? strtoupper(trim($input['RACKLOCATION'])) : '';
 $rack = isset($input['RACK']) ? trim($input['RACK']) : '';
 $roll = isset($input['ROLL']) ? trim($input['ROLL']) : '';
 
-if ($roll === '' || $rack === '') {
-    echo json_encode(['success' => false, 'error' => 'Roll number and Rack are required']);
+if ($roll === '') {
+    echo json_encode(['success' => false, 'error' => 'Roll number is required']);
     exit;
 }
 
-if (!preg_match('/^[a-zA-Z]\d+$/', $rack)) {
-    echo json_encode(['success' => false, 'error' => 'Invalid rack format. Use format like A3 or B2.']);
+if ($rackNo !== '' || $rackLocation !== '') {
+    if (!preg_match('/^(?:0?[1-9]|[1-4][0-9]|50)$/', $rackNo)) {
+        echo json_encode(['success' => false, 'error' => 'Invalid Rack Number. Use 01 to 50.']);
+        exit;
+    }
+    if (!preg_match('/^[A-C][1-3]$/', $rackLocation)) {
+        echo json_encode(['success' => false, 'error' => 'Invalid Rack Location. Use A1, A2, A3, B1, B2, B3, C1, C2 or C3.']);
+        exit;
+    }
+    $rackNo = str_pad((string) ((int) $rackNo), 2, '0', STR_PAD_LEFT);
+    $rack = $rackNo . $rackLocation;
+} elseif ($rack !== '') {
+    $rack = strtoupper($rack);
+    if (!preg_match('/^(?:0?[1-9]|[1-4][0-9]|50)[A-C][1-3]$/', $rack)) {
+        echo json_encode(['success' => false, 'error' => 'Invalid rack format. Use 01A1 to 50C3.']);
+        exit;
+    }
+    preg_match('/^(\d+)([A-C][1-3])$/', $rack, $rackParts);
+    $rackNo = str_pad((string) ((int) $rackParts[1]), 2, '0', STR_PAD_LEFT);
+    $rackLocation = $rackParts[2];
+} else {
+    echo json_encode(['success' => false, 'error' => 'Rack Number and Rack Location are required']);
     exit;
 }
-
-$rack = strtoupper($rack);
 
 $chk = mysqli_query($db, "SELECT KSTID FROM knitting_store WHERE ROLL = '" . mysqli_real_escape_string($db, $roll) . "' LIMIT 1");
 if ($chk && mysqli_num_rows($chk) > 0) {
@@ -77,6 +97,20 @@ $tpoint     = val($input, 'TPOINT');
 $mcode      = val($input, 'MATERIAL_CODE');
 $mdesc      = val($input, 'M_DES');
 
+$columns = mysqli_query($db, "SHOW COLUMNS FROM knitting_store");
+$existingColumns = [];
+if ($columns) {
+    while ($column = mysqli_fetch_assoc($columns)) {
+        $existingColumns[] = strtoupper($column['Field']);
+    }
+}
+if (!in_array('RACKNO', $existingColumns, true)) {
+    mysqli_query($db, "ALTER TABLE knitting_store ADD COLUMN RACKNO VARCHAR(50) DEFAULT NULL");
+}
+if (!in_array('RACKLOCATION', $existingColumns, true)) {
+    mysqli_query($db, "ALTER TABLE knitting_store ADD COLUMN RACKLOCATION VARCHAR(100) DEFAULT NULL");
+}
+
 $curUser = isset($_SESSION['username']) ? trim($_SESSION['username']) : '';
 $uname   = $curUser;
 $uid     = $curUser;
@@ -97,31 +131,34 @@ if ($curUser !== '') {
 }
 
 $sql = "INSERT INTO knitting_store
-        (BUDAT, RACK, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR, MCNO, MCDIA,
+        (BUDAT, RACKNO, RACKLOCATION, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR, MCNO, MCDIA,
          CUSTOMER, YTYPE, YCOUNT, O_T, SL, FTYPE, FGSM, FDIA, GGSM, FEEDER_PLAN, LOT_NO,
          TPOINT, MCODE, MDESCRIPTION, UNAME, UID)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
-$stmt = mysqli_prepare($db, $sql);
+try {
+    $stmt = mysqli_prepare($db, $sql);
+    if (!$stmt) {
+        throw new Exception(mysqli_error($db));
+    }
 
-if (!$stmt) {
-    echo json_encode(['success' => false, 'error' => 'Prepare failed: ' . mysqli_error($db)]);
-    exit;
+    mysqli_stmt_bind_param(
+        $stmt,
+        "sssssssssssssssssssssssssssss",
+        $budat, $rackNo, $rackLocation, $roll, $po_number, $qty, $sono, $shift, $buyer, $style, $color,
+        $mcno, $mcdia, $customer, $ytype, $ycount, $o_t, $sl, $ftype, $fgsm, $fdia,
+        $ggsm, $fplan, $lotno, $tpoint, $mcode, $mdesc, $uname, $uid
+    );
+
+    if (!mysqli_stmt_execute($stmt)) {
+        throw new Exception(mysqli_stmt_error($stmt));
+    }
+
+    echo json_encode(['success' => true, 'message' => "Stored successfully - Rack No: $rackNo, Location: $rackLocation"]);
+    mysqli_stmt_close($stmt);
+} catch (Exception $e) {
+    echo json_encode(['success' => false, 'error' => 'Insert failed: ' . $e->getMessage()]);
 }
 
-mysqli_stmt_bind_param(
-    $stmt,
-    "ssssssssssssssssssssssssssss",
-    $budat, $rack, $roll, $po_number, $qty, $sono, $shift, $buyer, $style, $color,
-    $mcno, $mcdia, $customer, $ytype, $ycount, $o_t, $sl, $ftype, $fgsm, $fdia,
-    $ggsm, $fplan, $lotno, $tpoint, $mcode, $mdesc, $uname, $uid
-);
-
-if (mysqli_stmt_execute($stmt)) {
-    echo json_encode(['success' => true, 'message' => "Stored successfully in Rack: $rack"]);
-} else {
-    echo json_encode(['success' => false, 'error' => 'Insert failed: ' . mysqli_stmt_error($stmt)]);
-}
-
-mysqli_stmt_close($stmt);
+exit;
 ?>
