@@ -15,7 +15,7 @@ $booking_filter  = isset($_GET['booking_no']) ? trim($_GET['booking_no']) : '';
 $shift_filter    = isset($_GET['shift'])      ? trim($_GET['shift'])      : '';
 
 // Build query using real KPTID column; LEFT JOIN knit_card on KPTID
-$query = "SELECT kp.*, kc.KCID AS card_id, kc.REQ_QTY AS card_req_qty
+    $query = "SELECT kp.*, kc.KCTID AS card_id, kc.QTY AS card_req_qty
           FROM knitting_program kp
           LEFT JOIN knit_card kc ON kp.KPTID = kc.KPTID
           WHERE 1=1";
@@ -28,7 +28,7 @@ if ($buyer_filter !== '') {
     $types   .= 's';
 }
 if ($booking_filter !== '') {
-    $query   .= " AND kp.BOOKING LIKE ?";
+    $query   .= " AND kp.PO_NUMBER LIKE ?";
     $params[] = "%{$booking_filter}%";
     $types   .= 's';
 }
@@ -559,13 +559,13 @@ if ($result && $result->num_rows > 0) {
                         <?php if (count($rows_array) > 0): ?>
                             <?php foreach ($rows_array as $row):
                                 $p_id       = intval($row['KPTID']);
-                                $p_date     = !empty($row['CREATED_AT']) ? date('Y-m-d', strtotime($row['CREATED_AT'])) : '';
-                                $p_po       = $row['BOOKING']   ?? '';
+                                $p_date     = !empty($row['CREATED_DATE']) ? date('Y-m-d', strtotime($row['CREATED_DATE'])) : '';
+                                $p_po       = $row['PO_NUMBER']   ?? '';
                                 $p_shift    = $row['SHIFT']       ?? '';
                                 $p_buyer    = $row['BUYER']       ?? '';
                                 $p_style    = $row['STYLE']       ?? '';
-                                $p_fabrics  = $row['FABRICS_TYPE'] ?? '';
-                                $p_yarn     = $row['YARN_TYPE']    ?? '';
+                                $p_fabrics  = $row['FTYPE'] ?? '';
+                                $p_yarn     = $row['YTYPE']    ?? '';
                                 $p_req_qty  = (!empty($row['card_id']) && isset($row['card_req_qty'])) ? floatval($row['card_req_qty']) : floatval($row['QTY'] ?? 0);
                                 $p_card_gen = !empty($row['card_id']) ? 1 : 0;
                                 $p_card_id  = $row['card_id'] ?? '';

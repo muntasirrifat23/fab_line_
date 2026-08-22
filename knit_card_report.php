@@ -31,17 +31,17 @@ if ($mc_no_filter !== '') {
     $types   .= 's';
 }
 if ($start_date !== '') {
-    $query   .= " AND kc.CARD_DATE >= ?";
+    $query   .= " AND kc.CREATED_DATE >= ?";
     $params[] = $start_date;
     $types   .= 's';
 }
 if ($end_date !== '') {
-    $query   .= " AND kc.CARD_DATE <= ?";
+    $query   .= " AND kc.CREATED_DATE <= ?";
     $params[] = $end_date;
     $types   .= 's';
 }
 
-$query .= " ORDER BY kc.KCID DESC";
+$query .= " ORDER BY kc.KCTID DESC";
 
 $stmt = $db->prepare($query);
 if ($stmt) {
@@ -64,7 +64,7 @@ if ($result && $result->num_rows > 0) {
     while ($r = $result->fetch_assoc()) {
         $rows_array[]   = $r;
         $total_cards++;
-        $total_qty     += floatval($r['REQ_QTY'] ?? 0);
+        $total_qty     += floatval($r['QTY'] ?? 0);
         if (!empty($r['BUYER'])) $buyers_set[$r['BUYER']] = true;
         if (!empty($r['MCNO']))  $mc_set[$r['MCNO']]      = true;
     }
@@ -453,25 +453,25 @@ if ($result && $result->num_rows > 0) {
                         <?php if (count($rows_array) > 0): ?>
                             <?php foreach ($rows_array as $row): ?>
                                 <tr>
-                                    <td><span class="badge-kc">#KC-<?php echo intval($row['KCID']); ?></span></td>
-                                    <td><i class="fa-regular fa-calendar me-1 text-muted"></i><?php echo htmlspecialchars($row['CARD_DATE'] ?? ''); ?></td>
+                                    <td><span class="badge-kc">#KC-<?php echo intval($row['KCTID']); ?></span></td>
+                                    <td><i class="fa-regular fa-calendar me-1 text-muted"></i><?php echo htmlspecialchars($row['CREATED_DATE'] ?? ''); ?></td>
                                     <td><span class="badge-mc">M/C <?php echo htmlspecialchars($row['MCNO'] ?? ''); ?></span></td>
                                     <td><span class="badge-buyer"><?php echo htmlspecialchars($row['BUYER'] ?? ''); ?></span></td>
-                                    <td><?php echo htmlspecialchars($row['BOOKING'] ?? ''); ?></td>
+                                    <td><?php echo htmlspecialchars($row['PO_NUMBER'] ?? ''); ?></td>
                                     <td><?php echo htmlspecialchars($row['STYLE'] ?? ''); ?></td>
-                                    <td><?php echo htmlspecialchars($row['FABRICS_TYPE'] ?? ''); ?></td>
-                                    <td><small class="text-muted"><?php echo htmlspecialchars($row['YARN_TYPE'] ?? ''); ?></small></td>
-                                    <td><strong class="text-success"><?php echo number_format((float)($row['REQ_QTY'] ?? 0), 2); ?> KG</strong></td>
-                                    <td><small class="text-secondary"><i class="fa-solid fa-user-circle me-1"></i><?php echo htmlspecialchars($row['PREPARED_BY'] ?? ''); ?></small></td>
+                    <td><?php echo htmlspecialchars($row['FTYPE'] ?? ''); ?></td>
+                    <td><small class="text-muted"><?php echo htmlspecialchars($row['YTYPE'] ?? ''); ?></small></td>
+                    <td><strong class="text-success"><?php echo number_format((float)($row['QTY'] ?? 0), 2); ?> KG</strong></td>
+                    <td><small class="text-secondary"><i class="fa-solid fa-user-circle me-1"></i><?php echo htmlspecialchars($row['UNAME'] ?? ''); ?></small></td>
                                     <td class="text-center">
                                         <div class="d-inline-flex gap-1">
-                                            <a href="knit_card_view.php?id=<?php echo intval($row['KCID']); ?>"
+                                            <a href="knit_card_view.php?id=<?php echo intval($row['KCTID']); ?>"
                                                class="btn btn-sm btn-primary px-3 py-1"
                                                style="border-radius:8px; font-size:12.5px; background-color:#2563eb; border-color:#2563eb;"
                                                title="View & Manage Production Log">
                                                 <i class="fa-solid fa-eye me-1"></i> View Log
                                             </a>
-                                            <a href="knit_card_print.php?id=<?php echo intval($row['KCID']); ?>"
+                                            <a href="knit_card_print.php?id=<?php echo intval($row['KCTID']); ?>"
                                                target="_blank"
                                                class="btn btn-sm btn-success px-3 py-1"
                                                style="border-radius:8px; font-size:12.5px; background-color:var(--accent-green); border-color:var(--accent-green);"

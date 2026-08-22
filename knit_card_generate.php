@@ -40,7 +40,7 @@ $stmt->close();
 
 // 2. Fetch already carded quantity for this program from knit_card
 $already_carded = 0.00;
-$sum_stmt = $db->prepare("SELECT SUM(REQ_QTY) AS total_carded FROM knit_card WHERE KPTID = ?");
+$sum_stmt = $db->prepare("SELECT SUM(QTY) AS total_carded FROM knit_card WHERE KPTID = ?");
 if ($sum_stmt) {
     $sum_stmt->bind_param("i", $program_id);
     $sum_stmt->execute();
@@ -144,8 +144,8 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
 
             $program_qty_locked = floatval($lock_row['QTY'] ?? 0);
 
-            // Fetch current sum of REQ_QTY for this program from knit_card (using lock since it's in transaction)
-            $stmt_sum = $db->prepare("SELECT SUM(REQ_QTY) AS total_carded FROM knit_card WHERE KPTID = ?");
+            // Fetch current sum of QTY for this program from knit_card (using lock since it's in transaction)
+            $stmt_sum = $db->prepare("SELECT SUM(QTY) AS total_carded FROM knit_card WHERE KPTID = ?");
             if (!$stmt_sum) {
                 throw new Exception("Database query error: " . $db->error);
             }
@@ -170,43 +170,80 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                 throw new Exception("Required quantity cannot exceed the remaining program quantity.");
             }
 
+                        // Generate next MCARD and ROLL numbers (same-to-same with knit_card_test structure)
+            $next_mcard = 200000001;
+            $res_mc = $db->query("SELECT MAX(MCARD) AS mx FROM knit_card");
+            if ($res_mc && ($r_mc = $res_mc->fetch_assoc()) && !empty($r_mc['mx'])) {
+                $next_mcard = intval($r_mc['mx']) + 1;
+            }
+            $res_mc->free();
+
+            $prog_mcard_res = $db->prepare("SELECT MAX(MCARD) AS mx FROM knit_card WHERE KPTID = ?");
+            if ($prog_mcard_res) {
+                $prog_mcard_res->bind_param("i", $p_kptid);
+                $prog_mcard_res->execute();
+                $res_pm = $prog_mcard_res->get_result();
+                if ($res_pm && ($r_pm = $res_pm->fetch_assoc()) && !empty($r_pm['mx'])) {
+                    $next_mcard = intval($r_pm['mx']);
+                }
+                $prog_mcard_res->close();
+            }
+
+            $next_roll = 300000001;
+            $res_roll = $db->query("SELECT MAX(ROLL) AS mx FROM knit_card");
+            if ($res_roll && ($r_roll = $res_roll->fetch_assoc()) && !empty($r_roll['mx'])) {
+                $next_roll = intval($r_roll['mx']) + 1;
+            }
+            $res_roll->free();
+
             // Insert into knit_card
             $ins = $db->prepare("
                 INSERT INTO knit_card (
-                    KPTID, CARD_DATE, MCNO, FINISH_DIA, FINISH_GSM, GREY_GSM, SL_VDQ,
-                    OPEN_TUBE, BUYER, CUSTOMER, BOOKING, SONO, STYLE,
-                    FABRICS_TYPE, YARN_TYPE, YARN_COUNT, LOT_NO, KNIT_M_DESCRIPTION,
-                    REQ_QTY, PREPARED_BY, AUTHORISED_BY
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    KPTID, MCARD, ROLL, MCNO, QTY, PO_NUMBER, SONO, BUYER, STYLE, COLOR,
+                    FGSM, FDIA, O_T, FTYPE, YTYPE, CUSTOMER, YCOUNT, SL, MCDIA, GGSM,
+                    FEEDER_PLAN, LOT, SHIFT, KNIT_MATERIAL_CODE, KNIT_M_DESCRIPTION, UNAME
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
 
             if (!$ins) {
                 throw new Exception("Failed to prepare insert query: " . $db->error);
             }
 
+            $p_mcdia   = !empty($prog['MCDIA']) ? $prog['MCDIA'] : ($input['MCDIA'] ?? '');
+            $p_ggsm    = !empty($prog['GGSM']) ? $prog['GGSM'] : (!empty($input['GGSM']) ? $input['GGSM'] : $p_finish_gsm);
+            $p_fplan   = !empty($prog['FEEDER_PLAN']) ? $prog['FEEDER_PLAN'] : ($input['FEEDER_PLAN'] ?? '');
+            $p_shift   = $shift;
+            $p_uname   = $prepared_by;
+            $user_req_qty = round($user_req_qty);
+
             $ins->bind_param(
-                "isssssdsssssssssssdss",
+                "iiiidsssssssssssssssssssss",
                 $p_kptid,
-                $card_date,
+                $next_mcard,
+                $next_roll,
                 $p_mcno,
-                $p_finish_dia,
-                $p_finish_gsm,
-                $p_grey_gsm,
-                $p_sl_vdq,
-                $p_open_tube,
-                $p_buyer,
-                $p_customer,
+                $user_req_qty,
                 $p_booking,
                 $p_sono,
+                $p_buyer,
                 $p_style,
+                $p_color,
+                $p_finish_gsm,
+                $p_finish_dia,
+                $p_open_tube,
                 $p_fabrics,
                 $p_yarn_type,
+                $p_customer,
                 $p_yarn_count,
+                $p_sl_vdq,
+                $p_mcdia,
+                $p_ggsm,
+                $p_fplan,
                 $p_lot_no,
+                $p_shift,
+                $p_knit_mat_code,
                 $p_knit_m_desc,
-                $user_req_qty,
-                $prepared_by,
-                $authorised_by
+                $p_uname
             );
 
             if (!$ins->execute()) {

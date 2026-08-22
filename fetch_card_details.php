@@ -23,15 +23,15 @@ $clean_id = intval(preg_replace('/[^0-9]/', '', $query));
 try {
     $sql = "
         SELECT 
-            kc.KCID, kc.KPTID, kc.CARD_DATE, kc.MCNO, kc.FINISH_DIA, kc.FINISH_GSM, 
-            kc.GREY_GSM, kc.SL_VDQ, kc.OPEN_TUBE, kc.BUYER, kc.SUPPLIER, kc.BOOKING, 
-            kc.SONO, kc.STYLE, kc.FABRICS_TYPE, kc.YARN_TYPE, kc.YARN_COUNT, kc.LOT_NO, 
-            kc.KNIT_M_DESCRIPTION, kc.REQ_QTY, kc.PREPARED_BY,
+            kc.KCTID, kc.KPTID, kc.MCNO, kc.FDIA, kc.FGSM, 
+            kc.GGSM, kc.SL, kc.O_T, kc.BUYER, kc.CUSTOMER, kc.PO_NUMBER, 
+            kc.SONO, kc.STYLE, kc.FTYPE, kc.YTYPE, kc.YCOUNT, kc.LOT, 
+            kc.KNIT_M_DESCRIPTION, kc.QTY, kc.UNAME,
             kp.MAIN_TID, kp.SUB_TID
         FROM knit_card kc
         LEFT JOIN knitting_program kp ON kc.KPTID = kp.KPTID
-        WHERE kc.KCID = ? OR kc.BUYER LIKE ? OR kc.STYLE LIKE ? OR kc.SONO LIKE ? OR kc.BOOKING LIKE ?
-        ORDER BY kc.KCID DESC LIMIT 1
+        WHERE kc.KCTID = ? OR kc.BUYER LIKE ? OR kc.STYLE LIKE ? OR kc.SONO LIKE ? OR kc.PO_NUMBER LIKE ?
+        ORDER BY kc.KCTID DESC LIMIT 1
     ";
 
     $stmt = $db->prepare($sql);
@@ -45,7 +45,7 @@ try {
     $res = $stmt->get_result();
 
     if ($res && $row = $res->fetch_assoc()) {
-        $kcid = intval($row['KCID']);
+        $kcid = intval($row['KCTID']);
 
         // Count existing rolls for this KCID to determine next roll sequence
         $roll_count = 1;
@@ -61,7 +61,7 @@ try {
         }
 
         $suggested_roll_no = "R-" . $kcid . "-" . sprintf("%02d", $roll_count);
-        $suggested_weight  = floatval($row['REQ_QTY']) > 0 ? floatval($row['REQ_QTY']) : 25.00;
+        $suggested_weight  = floatval($row['QTY']) > 0 ? floatval($row['QTY']) : 25.00;
 
         echo json_encode([
             'success'            => true,
@@ -70,15 +70,15 @@ try {
             'buyer'              => $row['BUYER'] ?: 'N/A',
             'style'              => $row['STYLE'] ?: 'N/A',
             'sono'               => $row['SONO'] ?: 'N/A',
-            'booking'            => $row['BOOKING'] ?: 'N/A',
+            'booking'            => $row['PO_NUMBER'] ?: 'N/A',
             'mcno'               => $row['MCNO'] ?: 'N/A',
-            'finish_dia'         => $row['FINISH_DIA'] ?: 'N/A',
-            'finish_gsm'         => $row['FINISH_GSM'] ?: 'N/A',
-            'fabrics_type'       => $row['FABRICS_TYPE'] ?: 'N/A',
-            'yarn_type'          => $row['YARN_TYPE'] ?: 'N/A',
-            'yarn_count'         => $row['YARN_COUNT'] ?: 'N/A',
-            'lot_no'             => $row['LOT_NO'] ?: 'N/A',
-            'req_qty'            => floatval($row['REQ_QTY']),
+            'finish_dia'         => $row['FDIA'] ?: 'N/A',
+            'finish_gsm'         => $row['FGSM'] ?: 'N/A',
+            'fabrics_type'       => $row['FTYPE'] ?: 'N/A',
+            'yarn_type'          => $row['YTYPE'] ?: 'N/A',
+            'yarn_count'         => $row['YCOUNT'] ?: 'N/A',
+            'lot_no'             => $row['LOT'] ?: 'N/A',
+            'req_qty'            => floatval($row['QTY']),
             'suggested_roll'     => $suggested_roll_no,
             'suggested_weight'   => $suggested_weight
         ]);

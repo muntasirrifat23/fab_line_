@@ -7,6 +7,8 @@ if (!isset($_SESSION['username'])) {
     exit();
 }
 
+$uname = $_SESSION['username'];
+
 $errors = [];
 $edit_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $is_edit = ($edit_id > 0);
@@ -63,32 +65,31 @@ if ($hour_now >= 6 && $hour_now < 14) {
 
 // Load existing record for editing
 if ($is_edit) {
-    $stmt = $db->prepare("SELECT * FROM knitting_program WHERE KPTID = ? OR id = ?");
+    $stmt = $db->prepare("SELECT * FROM knitting_program WHERE KPTID = ?");
     if ($stmt) {
-        $stmt->bind_param("ii", $edit_id, $edit_id);
+        $stmt->bind_param("i", $edit_id);
         $stmt->execute();
         $res = $stmt->get_result();
         if ($res && $res->num_rows == 1) {
             $row = $res->fetch_assoc();
             $main_tid = $row['MAIN_TID'] ?? '';
             $sub_tid = $row['SUB_TID'] ?? '';
-            $po_number = $row['PO_NUMBER'] ?? $row['booking_no'] ?? '';
-            $sono = $row['SONO'] ?? $row['so_no'] ?? '';
-            $style = $row['STYLE'] ?? $row['style_no'] ?? '';
-            $buyer = $row['BUYER'] ?? $row['buyer'] ?? '';
-            $customer = $row['CUSTOMER'] ?? $row['customer'] ?? '';
+            $po_number = $row['PO_NUMBER'] ?? '';
+            $sono = $row['SONO'] ?? '';
+            $style = $row['STYLE'] ?? '';
+            $buyer = $row['BUYER'] ?? '';
+            $customer = $row['CUSTOMER'] ?? '';
             $knit_m_description = $row['KNIT_M_DESCRIPTION'] ?? '';
-            $qty = $row['QTY'] ?? $row['req_qty'] ?? '0.00';
+            $qty = $row['QTY'] ?? '0.00';
             $shift = $row['SHIFT'] ?? $auto_shift;
-            $yarn_type = $row['YTYPE'] ?? $row['yarn_type'] ?? '';
-            $yarn_count = $row['YCOUNT'] ?? $row['yarn_count'] ?? '';
-            $fabrics_type = $row['FTYPE'] ?? $row['fabrics_type'] ?? '';
-            $finish_gsm = $row['FGSM'] ?? $row['finish_gsm'] ?? '';
-            $finish_dia = $row['FDIA'] ?? $row['finish_dia'] ?? '';
-            $open_tube = $row['O_T'] ?? $row['open_tube'] ?? 'O';
-            $lot_no = $row['LOT'] ?? $row['lot_no'] ?? '';
+            $yarn_type = $row['YTYPE'] ?? '';
+            $yarn_count = $row['YCOUNT'] ?? '';
+            $fabrics_type = $row['FTYPE'] ?? '';
+            $finish_gsm = $row['FGSM'] ?? '';
+            $finish_dia = $row['FDIA'] ?? '';
+            $open_tube = $row['O_T'] ?? 'O';
+            $lot_no = $row['LOT'] ?? '';
             $knit_material_code = $row['KNIT_MATERIAL_CODE'] ?? '';
-            $mcno_id = $row['MCNO_ID'] ?? '';
         } else {
             header("Location: knitting_program_list.php?error=Program+not+found");
             exit();
@@ -119,12 +120,20 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
     $main_tid = trim($_POST['MAIN_TID'] ?? '');
     $sub_tid = trim($_POST['SUB_TID'] ?? '');
 
-    // Auto-generate MAIN_TID & SUB_TID if empty
+    // Auto-generate MAIN_TID & SUB_TID if empty (follow save_knitting_program.php ranges)
     if (empty($main_tid)) {
-        $main_tid = time();
+        $maxRow = mysqli_fetch_assoc(mysqli_query($db, "SELECT COALESCE(MAX(MAIN_TID), 1000000000) AS mx FROM knitting_program"));
+        $main_tid = intval($maxRow['mx']) + 1;
+        if ($main_tid < 1000000001) {
+            $main_tid = 1000000001;
+        }
     }
     if (empty($sub_tid)) {
-        $sub_tid = time() . rand(10, 99);
+        $maxRow = mysqli_fetch_assoc(mysqli_query($db, "SELECT COALESCE(MAX(SUB_TID), 2000000000) AS mx FROM knitting_program"));
+        $sub_tid = intval($maxRow['mx']) + 1;
+        if ($sub_tid < 2000000001) {
+            $sub_tid = 2000000001;
+        }
     }
 
     // Validation
@@ -138,17 +147,17 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
     if (empty($errors)) {
         if ($is_edit) {
             $sql = "UPDATE knitting_program SET 
-                MAIN_TID=?, SUB_TID=?, BOOKING=?, SONO=?, STYLE=?, BUYER=?, CUSTOMER=?,
+                MAIN_TID=?, SUB_TID=?, PO_NUMBER=?, SONO=?, STYLE=?, BUYER=?, CUSTOMER=?,
                 KNIT_M_DESCRIPTION=?, QTY=?, SHIFT=?, YTYPE=?, YCOUNT=?,
-                FTYPE=?, FGSM=?, FDIA=?, O_T=?, LOT=?, KNIT_MATERIAL_CODE=?, MCNO_ID=?
-                WHERE KPTID=? OR id=?";
+                FTYPE=?, FGSM=?, FDIA=?, O_T=?, LOT=?, KNIT_MATERIAL_CODE=?, UNAME=?
+                WHERE KPTID=?";
             $stmt = $db->prepare($sql);
             if ($stmt) {
                 $stmt->bind_param(
-                    "sssssssssdssssssssiiii",
+                    "iisssssssssssssssssi",
                     $main_tid, $sub_tid, $po_number, $sono, $style, $buyer, $customer,
                     $knit_m_description, $qty, $shift, $yarn_type, $yarn_count,
-                    $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code, $mcno_id, $edit_id, $edit_id
+                    $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code, $uname, $edit_id
                 );
                 if ($stmt->execute()) {
                     header("Location: knitting_program_list.php?msg=Program+updated+successfully");
@@ -161,17 +170,17 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
             }
         } else {
             $sql = "INSERT INTO knitting_program (
-                MAIN_TID, SUB_TID, BOOKING, SONO, STYLE, BUYER, CUSTOMER,
+                MAIN_TID, SUB_TID, PO_NUMBER, SONO, STYLE, BUYER, CUSTOMER,
                 KNIT_M_DESCRIPTION, QTY, SHIFT, YTYPE, YCOUNT,
-                FTYPE, FGSM, FDIA, O_T, LOT, KNIT_MATERIAL_CODE, MCNO_ID
+                FTYPE, FGSM, FDIA, O_T, LOT, KNIT_MATERIAL_CODE, UNAME
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $db->prepare($sql);
             if ($stmt) {
                 $stmt->bind_param(
-                    "sssssssssdssssssssi",
+                    "iisssssssssssssssss",
                     $main_tid, $sub_tid, $po_number, $sono, $style, $buyer, $customer,
                     $knit_m_description, $qty, $shift, $yarn_type, $yarn_count,
-                    $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code, $mcno_id
+                    $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code, $uname
                 );
                 if ($stmt->execute()) {
                     header("Location: knitting_program_list.php?msg=New+program+added+successfully");

@@ -30,7 +30,7 @@ if ($mcno_res) {
 $sql = "
     SELECT 
         kc.*, 
-        kp.MAIN_TID AS MCARD, kp.PO_NUMBER AS KP_PO, kp.SONO AS KP_SONO, kp.BUYER AS KP_BUYER,
+        kp.MAIN_TID AS KP_MCARD, kp.PO_NUMBER AS KP_PO, kp.SONO AS KP_SONO, kp.BUYER AS KP_BUYER,
         kp.STYLE AS KP_STYLE, kp.COLOR AS KP_COLOR, kp.QTY AS KP_QTY, kp.FGSM AS KP_FGSM,
         kp.FDIA AS KP_FDIA, kp.O_T AS KP_OT, kp.FTYPE AS KP_FTYPE, kp.YTYPE AS KP_YTYPE,
         kp.CUSTOMER AS KP_CUSTOMER, kp.YCOUNT AS KP_YCOUNT, kp.SL AS KP_SL, kp.MCDIA AS KP_MCDIA,
@@ -38,7 +38,7 @@ $sql = "
         kp.KNIT_MATERIAL_CODE AS KP_KMC, kp.KNIT_M_DESCRIPTION AS KP_KMD
     FROM knit_card kc 
     LEFT JOIN knitting_program kp ON kc.KPTID = kp.KPTID 
-    WHERE kc.KCID = ?
+            WHERE kc.KCTID = ?
 ";
 
 $stmt = $db->prepare($sql);
@@ -79,14 +79,14 @@ $qr_data_assoc = [
     'buyer'        => $card['BUYER'] ?? 'N/A',
     'style'        => $card['STYLE'] ?? 'N/A',
     'sono'         => $card['SONO'] ?? 'N/A',
-    'booking'      => $card['BOOKING'] ?? 'N/A',
+    'booking'      => $card['PO_NUMBER'] ?? 'N/A',
     'mcno'         => $card['MCNO'] ?? 'N/A',
-    'finish_dia'   => $card['FINISH_DIA'] ?? 'N/A',
-    'finish_gsm'   => $card['FINISH_GSM'] ?? 'N/A',
-    'fabrics_type' => $card['FABRICS_TYPE'] ?? 'N/A',
-    'yarn_type'    => $card['YARN_TYPE'] ?? 'N/A',
-    'lot_no'       => $card['LOT_NO'] ?? 'N/A',
-    'req_qty'      => floatval($card['REQ_QTY'] ?? 0)
+    'finish_dia'   => $card['FDIA'] ?? 'N/A',
+    'finish_gsm'   => $card['FGSM'] ?? 'N/A',
+    'fabrics_type' => $card['FTYPE'] ?? 'N/A',
+    'yarn_type'    => $card['YTYPE'] ?? 'N/A',
+    'lot_no'       => $card['LOT'] ?? 'N/A',
+    'req_qty'      => floatval($card['QTY'] ?? 0)
 ];
 $qr_payload = json_encode($qr_data_assoc, JSON_UNESCAPED_SLASHES);
 
@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_header'])) {
         $db->begin_transaction();
 
         try {
-            $stmt_kptid = $db->prepare("SELECT KPTID FROM knit_card WHERE KCID = ?");
+            $stmt_kptid = $db->prepare("SELECT KPTID FROM knit_card WHERE KCTID = ?");
             if (!$stmt_kptid) throw new Exception("Database error: " . $db->error);
             $stmt_kptid->bind_param("i", $card_id);
             $stmt_kptid->execute();
@@ -129,7 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_header'])) {
 
             $program_qty_locked = floatval($lock_row['QTY'] ?? 0);
 
-            $stmt_other = $db->prepare("SELECT SUM(REQ_QTY) AS other_carded FROM knit_card WHERE KPTID = ? AND KCID != ?");
+            $stmt_other = $db->prepare("SELECT SUM(QTY) AS other_carded FROM knit_card WHERE KPTID = ? AND KCTID != ?");
             if (!$stmt_other) throw new Exception("Database query error: " . $db->error);
             $stmt_other->bind_param("ii", $card_kptid, $card_id);
             $stmt_other->execute();
@@ -146,9 +146,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_header'])) {
                 throw new Exception("Required quantity cannot exceed remaining program quantity (" . number_format($max_allowed_qty, 2) . " KG).");
             }
 
-            $upd = $db->prepare("UPDATE knit_card SET REQ_QTY = ?, MCNO = ? WHERE KCID = ?");
+            $upd = $db->prepare("UPDATE knit_card SET QTY = ?, MCNO = ? WHERE KCTID = ?");
             if (!$upd) throw new Exception("Failed to prepare update query: " . $db->error);
-            $upd->bind_param("dsi", $f_req_qty, $f_mcno, $card_id);
+            $i_req_qty = (int) round($f_req_qty);
+            $upd->bind_param("isi", $i_req_qty, $f_mcno, $card_id);
             if (!$upd->execute()) {
                 $upd_err = $upd->error;
                 $upd->close();
@@ -158,8 +159,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_header'])) {
 
             $db->commit();
             $msg = "Card updated successfully! (M/C No & Quantity saved)";
-            $card['REQ_QTY'] = $f_req_qty;
-            $card['MCNO']    = $f_mcno;
+            $card['QTY']  = $i_req_qty;
+            $card['MCNO'] = $f_mcno;
 
         } catch (Exception $e) {
             $db->rollback();
@@ -187,7 +188,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_production_log'])
         $db->begin_transaction();
 
         try {
-            $qs = $db->prepare("SELECT REQ_QTY FROM knit_card WHERE KCID = ? FOR UPDATE");
+            $qs = $db->prepare("SELECT QTY FROM knit_card WHERE KCTID = ? FOR UPDATE");
             if (!$qs) throw new Exception("Prepare failed: " . $db->error);
             $qs->bind_param("i", $card_id);
             $qs->execute();
@@ -196,7 +197,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_production_log'])
                 $qs->close();
                 throw new Exception("Knit Card not found.");
             }
-            $target_qty = floatval($qr['REQ_QTY']);
+            $target_qty = floatval($qr['QTY']);
             $qs->close();
 
             $ps = $db->prepare("SELECT CUM_TOTAL FROM knit_card_production WHERE KCID = ? ORDER BY LOG_DATE DESC, KCPID DESC LIMIT 1 FOR UPDATE");
@@ -252,7 +253,7 @@ if ($prod_stmt) {
 }
 
 $total_cum_produced = 0.00;
-$latest_balance     = floatval($card['REQ_QTY'] ?? 0);
+$latest_balance     = floatval($card['QTY'] ?? 0);
 $logs_array = [];
 if ($prod_result && $prod_result->num_rows > 0) {
     while ($pr = $prod_result->fetch_assoc()) {
@@ -271,7 +272,7 @@ if ($op_res) {
     }
 }
 
-$target_qty     = floatval($card['REQ_QTY'] ?? 0);
+$target_qty     = floatval($card['QTY'] ?? 0);
 $completion_pct = ($target_qty > 0) ? min(100, round(($total_cum_produced / $target_qty) * 100, 1)) : 0;
 
 // Program Qty & Max Allowed Calculation
@@ -288,7 +289,7 @@ if ($stmt_pqty) {
     $stmt_pqty->close();
 }
 
-$stmt_sum_other = $db->prepare("SELECT SUM(REQ_QTY) AS other_carded FROM knit_card WHERE KPTID = ? AND KCID != ?");
+$stmt_sum_other = $db->prepare("SELECT SUM(QTY) AS other_carded FROM knit_card WHERE KPTID = ? AND KCTID != ?");
 $other_carded = 0.00;
 if ($stmt_sum_other) {
     $stmt_sum_other->bind_param("ii", $program_kptid, $card_id);
@@ -551,11 +552,11 @@ $max_allowed_qty = max(0.00, $program_qty - $other_carded);
                                         <th>M/C NO</th>
                                         <td class="text-primary fs-6"><?php echo htmlspecialchars($card['MCNO']); ?></td>
                                         <th>QTY (KG)</th>
-                                        <td class="text-danger fs-6"><?php echo number_format(floatval($card['REQ_QTY']), 2); ?> KG</td>
+                                        <td class="text-danger fs-6"><?php echo number_format(floatval($card['QTY']), 2); ?> KG</td>
                                     </tr>
                                     <tr>
                                         <th>PO NUMBER</th>
-                                        <td><?php echo htmlspecialchars($card['BOOKING'] ?: $card['KP_PO'] ?: 'N/A'); ?></td>
+                                        <td><?php echo htmlspecialchars($card['PO_NUMBER'] ?: $card['KP_PO'] ?: 'N/A'); ?></td>
                                         <th>SONO</th>
                                         <td><?php echo htmlspecialchars($card['SONO'] ?: $card['KP_SONO'] ?: 'N/A'); ?></td>
                                         <th>SHIFT</th>
@@ -571,37 +572,37 @@ $max_allowed_qty = max(0.00, $program_qty - $other_carded);
                                     </tr>
                                     <tr>
                                         <th>FINISH GSM</th>
-                                        <td><?php echo htmlspecialchars($card['FINISH_GSM'] ?: 'N/A'); ?></td>
+                                        <td><?php echo htmlspecialchars($card['FGSM'] ?: 'N/A'); ?></td>
                                         <th>FINISH DIA</th>
-                                        <td><?php echo htmlspecialchars($card['FINISH_DIA'] ?: 'N/A'); ?></td>
+                                        <td><?php echo htmlspecialchars($card['FDIA'] ?: 'N/A'); ?></td>
                                         <th>O / T</th>
-                                        <td><?php echo ($card['OPEN_TUBE'] === 'T') ? 'Tube (T)' : 'Open (O)'; ?></td>
+                                        <td><?php echo ($card['O_T'] === 'T') ? 'Tube (T)' : 'Open (O)'; ?></td>
                                     </tr>
                                     <tr>
                                         <th>FABRICS</th>
-                                        <td colspan="3"><?php echo htmlspecialchars($card['FABRICS_TYPE'] ?: 'N/A'); ?></td>
+                                        <td colspan="3"><?php echo htmlspecialchars($card['FTYPE'] ?: 'N/A'); ?></td>
                                         <th>YARN TYPE</th>
-                                        <td><?php echo htmlspecialchars($card['YARN_TYPE'] ?: 'N/A'); ?></td>
+                                        <td><?php echo htmlspecialchars($card['YTYPE'] ?: 'N/A'); ?></td>
                                     </tr>
                                     <tr>
                                         <th>CUSTOMER</th>
                                         <td><?php echo htmlspecialchars($card['CUSTOMER'] ?: 'N/A'); ?></td>
                                         <th>YARN COUNT</th>
-                                        <td><?php echo htmlspecialchars($card['YARN_COUNT'] ?: 'N/A'); ?></td>
+                                        <td><?php echo htmlspecialchars($card['YCOUNT'] ?: 'N/A'); ?></td>
                                         <th>SL / VDQ</th>
-                                        <td><?php echo htmlspecialchars($card['SL_VDQ'] ?: '0.00'); ?></td>
+                                        <td><?php echo htmlspecialchars($card['SL'] ?: '0.00'); ?></td>
                                     </tr>
                                     <tr>
                                         <th>MC DIA</th>
                                         <td><?php echo htmlspecialchars($card['KP_MCDIA'] ?: 'N/A'); ?></td>
                                         <th>GRAY GSM</th>
-                                        <td><?php echo htmlspecialchars($card['GREY_GSM'] ?: 'N/A'); ?></td>
+                                        <td><?php echo htmlspecialchars($card['GGSM'] ?: 'N/A'); ?></td>
                                         <th>FEEDER PLAN</th>
                                         <td><?php echo htmlspecialchars($card['KP_FEEDER_PLAN'] ?: 'N/A'); ?></td>
                                     </tr>
                                     <tr>
                                         <th>LOT NO</th>
-                                        <td><?php echo htmlspecialchars($card['LOT_NO'] ?: 'N/A'); ?></td>
+                                        <td><?php echo htmlspecialchars($card['LOT'] ?: 'N/A'); ?></td>
                                         <th>KNIT MAT CODE</th>
                                         <td colspan="3"><?php echo htmlspecialchars($card['KP_KMC'] ?: 'N/A'); ?></td>
                                     </tr>
@@ -639,32 +640,32 @@ $max_allowed_qty = max(0.00, $program_qty - $other_carded);
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-md-2"><label class="form-label">Finish Dia</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['FINISH_DIA'] ?? ''); ?>" readonly></div>
-                    <div class="col-md-2"><label class="form-label">Grey GSM</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['GREY_GSM'] ?? ''); ?>" readonly></div>
-                    <div class="col-md-2"><label class="form-label">Finish GSM</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['FINISH_GSM'] ?? ''); ?>" readonly></div>
-                    <div class="col-md-2"><label class="form-label">SL / VDQ</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['SL_VDQ'] ?? ''); ?>" readonly></div>
-                    <div class="col-md-2"><label class="form-label">Open/Tube</label><input type="text" class="form-control" value="<?php echo ($card['OPEN_TUBE'] ?? '') === 'T' ? 'Tube (T)' : 'Open (O)'; ?>" readonly></div>
+                    <div class="col-md-2"><label class="form-label">Finish Dia</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['FDIA'] ?? ''); ?>" readonly></div>
+                    <div class="col-md-2"><label class="form-label">Grey GSM</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['GGSM'] ?? ''); ?>" readonly></div>
+                    <div class="col-md-2"><label class="form-label">Finish GSM</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['FGSM'] ?? ''); ?>" readonly></div>
+                    <div class="col-md-2"><label class="form-label">SL / VDQ</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['SL'] ?? ''); ?>" readonly></div>
+                    <div class="col-md-2"><label class="form-label">Open/Tube</label><input type="text" class="form-control" value="<?php echo ($card['O_T'] ?? '') === 'T' ? 'Tube (T)' : 'Open (O)'; ?>" readonly></div>
                 </div>
 
                 <div class="row gx-3">
                     <div class="col-md-2"><label class="form-label">Buyer</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['BUYER'] ?? ''); ?>" readonly></div>
                     <div class="col-md-2"><label class="form-label">Customer</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['CUSTOMER'] ?? ''); ?>" readonly></div>
-                    <div class="col-md-2"><label class="form-label">PO Number</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['BOOKING'] ?? ''); ?>" readonly></div>
+                    <div class="col-md-2"><label class="form-label">PO Number</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['PO_NUMBER'] ?? ''); ?>" readonly></div>
                     <div class="col-md-2"><label class="form-label">SONO</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['SONO'] ?? ''); ?>" readonly></div>
                     <div class="col-md-2"><label class="form-label">Style</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['STYLE'] ?? ''); ?>" readonly></div>
-                    <div class="col-md-2"><label class="form-label">Fabric Type</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['FABRICS_TYPE'] ?? ''); ?>" readonly></div>
+                    <div class="col-md-2"><label class="form-label">Fabric Type</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['FTYPE'] ?? ''); ?>" readonly></div>
                 </div>
 
                 <div class="row gx-3">
-                    <div class="col-md-2"><label class="form-label">Yarn Type</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['YARN_TYPE'] ?? ''); ?>" readonly></div>
-                    <div class="col-md-2"><label class="form-label">Yarn Count</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['YARN_COUNT'] ?? ''); ?>" readonly></div>
-                    <div class="col-md-3"><label class="form-label">Lot No</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['LOT_NO'] ?? ''); ?>" readonly></div>
+                    <div class="col-md-2"><label class="form-label">Yarn Type</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['YTYPE'] ?? ''); ?>" readonly></div>
+                    <div class="col-md-2"><label class="form-label">Yarn Count</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['YCOUNT'] ?? ''); ?>" readonly></div>
+                    <div class="col-md-3"><label class="form-label">Lot No</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['LOT'] ?? ''); ?>" readonly></div>
                     <div class="col-md-3">
                         <label class="form-label text-primary fw-bold"><i class="fa-solid fa-pen-to-square me-1"></i> Req Qty (KG) - Editable</label>
-                        <input type="number" step="0.01" min="0.01" max="<?php echo htmlspecialchars($max_allowed_qty); ?>" name="REQ_QTY" class="form-control fw-bold text-primary" style="border: 2px solid #2563eb; background:#eff6ff;" value="<?php echo htmlspecialchars($card['REQ_QTY'] ?? ''); ?>" required>
+                        <input type="number" step="0.01" min="0.01" max="<?php echo htmlspecialchars($max_allowed_qty); ?>" name="REQ_QTY" class="form-control fw-bold text-primary" style="border: 2px solid #2563eb; background:#eff6ff;" value="<?php echo htmlspecialchars($card['QTY'] ?? ''); ?>" required>
                         <small class="text-muted" style="font-size: 11px;">Max allowed: <strong><?php echo number_format($max_allowed_qty, 2); ?> KG</strong> (Prog: <?php echo number_format($program_qty, 2); ?>, Other: <?php echo number_format($other_carded, 2); ?>)</small>
                     </div>
-                    <div class="col-md-2"><label class="form-label">Prepared By</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['PREPARED_BY'] ?? ''); ?>" readonly></div>
+                    <div class="col-md-2"><label class="form-label">Prepared By</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['UNAME'] ?? ''); ?>" readonly></div>
                 </div>
 
                 <div class="row gx-3">

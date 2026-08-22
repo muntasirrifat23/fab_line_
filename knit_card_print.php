@@ -18,7 +18,7 @@ if ($card_id <= 0) {
 $qr_payload = "KC-" . $card_id;
 
 // Fetch Card Header using real KCID column
-$stmt = $db->prepare("SELECT * FROM knit_card WHERE KCID = ?");
+$stmt = $db->prepare("SELECT * FROM knit_card WHERE KCTID = ?");
 if ($stmt) {
     $stmt->bind_param("i", $card_id);
     $stmt->execute();
@@ -50,7 +50,7 @@ if ($prod_stmt) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Print Knit Card #<?php echo $card['KCID']; ?></title>
+    <title>Print Knit Card #<?php echo $card['KCTID']; ?></title>
 
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
@@ -219,7 +219,7 @@ if ($prod_stmt) {
 
     <!-- Non-printable top action bar -->
     <div class="no-print-bar">
-        <a href="knit_card_view.php?id=<?php echo $card['KCID']; ?>" class="btn btn-secondary btn-sm">
+        <a href="knit_card_view.php?id=<?php echo $card['KCTID']; ?>" class="btn btn-secondary btn-sm">
             <i class="fa-solid fa-arrow-left me-1"></i> Back to Card View
         </a>
         <div>
@@ -251,49 +251,49 @@ if ($prod_stmt) {
         <table class="spec-table">
             <tr>
                 <th>Date</th>
-                <td><strong><?php echo htmlspecialchars($card['CARD_DATE'] ?? ''); ?></strong></td>
+                <td><strong><?php echo htmlspecialchars($card['CREATED_DATE'] ?? ''); ?></strong></td>
                 <th>Card ID</th>
-                <td><strong>#KC-<?php echo $card['KCID']; ?></strong></td>
+                <td><strong>#KC-<?php echo $card['KCTID']; ?></strong></td>
             </tr>
             <tr>
                 <th>Buyer</th>
                 <td><strong><?php echo htmlspecialchars($card['BUYER'] ?? ''); ?></strong></td>
                 <th>PO Number</th>
-                <td><?php echo htmlspecialchars($card['BOOKING'] ?? ''); ?></td>
+                <td><?php echo htmlspecialchars($card['PO_NUMBER'] ?? ''); ?></td>
             </tr>
             <tr>
                 <th>M/C No</th>
                 <td><strong><?php echo htmlspecialchars($card['MCNO'] ?? ''); ?></strong></td>
                 <th>Open / Tube</th>
-                <td><?php echo htmlspecialchars($card['OPEN_TUBE'] ?? ''); ?></td>
+                <td><?php echo htmlspecialchars($card['O_T'] ?? ''); ?></td>
             </tr>
             <tr>
                 <th>Style No</th>
                 <td><?php echo htmlspecialchars($card['STYLE'] ?? ''); ?></td>
                 <th>Fabric Type</th>
-                <td><?php echo htmlspecialchars($card['FABRICS_TYPE'] ?? ''); ?></td>
+                <td><?php echo htmlspecialchars($card['FTYPE'] ?? ''); ?></td>
             </tr>
             <tr>
                 <th>Yarn Type</th>
-                <td><?php echo htmlspecialchars($card['YARN_TYPE'] ?? ''); ?></td>
+                <td><?php echo htmlspecialchars($card['YTYPE'] ?? ''); ?></td>
                 <th>Lot No</th>
-                <td><?php echo htmlspecialchars($card['LOT_NO'] ?? ''); ?></td>
+                <td><?php echo htmlspecialchars($card['LOT'] ?? ''); ?></td>
             </tr>
             <tr>
                 <th>Finish Dia</th>
-                <td><?php echo htmlspecialchars($card['FINISH_DIA'] ?? ''); ?></td>
+                <td><?php echo htmlspecialchars($card['FDIA'] ?? ''); ?></td>
                 <th>Grey GSM / Finish GSM</th>
-                <td><?php echo htmlspecialchars(($card['GREY_GSM'] ?? '') . ' / ' . ($card['FINISH_GSM'] ?? '')); ?></td>
+                <td><?php echo htmlspecialchars(($card['GGSM'] ?? '') . ' / ' . ($card['FGSM'] ?? '')); ?></td>
             </tr>
             <tr>
                 <th>S.L / VDQ</th>
-                <td><?php echo htmlspecialchars($card['SL_VDQ'] ?? ''); ?></td>
+                <td><?php echo htmlspecialchars($card['SL'] ?? ''); ?></td>
                 <th>SONO</th>
                 <td><?php echo htmlspecialchars($card['SONO'] ?? ''); ?></td>
             </tr>
             <tr>
                 <th>Req Quantity (KG)</th>
-                <td colspan="3"><strong style="font-size: 15px;"><?php echo number_format((float)($card['REQ_QTY'] ?? 0), 2); ?> KG</strong></td>
+                <td colspan="3"><strong style="font-size: 15px;"><?php echo number_format((float)($card['QTY'] ?? 0), 2); ?> KG</strong></td>
             </tr>
         </table>
 
@@ -354,7 +354,7 @@ if ($prod_stmt) {
         <!-- Signatures -->
         <div class="signature-section">
             <div class="signature-box">
-                <div><?php echo htmlspecialchars($card['PREPARED_BY'] ?? ''); ?></div>
+                <div><?php echo htmlspecialchars($card['UNAME'] ?? ''); ?></div>
                 <div class="signature-line">Prepared By</div>
             </div>
             <div class="signature-box">

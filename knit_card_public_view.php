@@ -11,7 +11,7 @@ if ($card_id <= 0) {
 }
 
 // Fetch Knit Card Header using real column names
-$stmt = $db->prepare("SELECT * FROM knit_card WHERE KCID = ?");
+$stmt = $db->prepare("SELECT * FROM knit_card WHERE KCTID = ?");
 if ($stmt) {
     $stmt->bind_param("i", $card_id);
     $stmt->execute();
@@ -141,23 +141,23 @@ if ($prod_result && $prod_result->num_rows > 0) {
         <div class="specs-wrapper">
             <!-- Left -->
             <table class="spec-table">
-                <tr><td class="lbl">Date</td><td class="val">: <?php echo htmlspecialchars($card['CARD_DATE'] ?? ''); ?></td></tr>
+                <tr><td class="lbl">Date</td><td class="val">: <?php echo htmlspecialchars($card['CREATED_DATE'] ?? ''); ?></td></tr>
                 <tr><td class="lbl">M/c. No.</td><td class="val">: <?php echo htmlspecialchars($card['MCNO'] ?? ''); ?></td></tr>
-                <tr><td class="lbl">Finished Dia</td><td class="val">: <?php echo htmlspecialchars($card['FINISH_DIA'] ?? ''); ?></td></tr>
-                <tr><td class="lbl">Grey GSM</td><td class="val">: <?php echo htmlspecialchars($card['GREY_GSM'] ?? ''); ?></td></tr>
-                <tr><td class="lbl">Finish GSM</td><td class="val">: <?php echo htmlspecialchars($card['FINISH_GSM'] ?? ''); ?></td></tr>
-                <tr><td class="lbl">Open / Tube</td><td class="val">: <?php echo htmlspecialchars($card['OPEN_TUBE'] ?? ''); ?></td></tr>
-                <tr><td class="lbl">SI / VDQ</td><td class="val">: <?php echo htmlspecialchars($card['SL_VDQ'] ?? ''); ?></td></tr>
+                <tr><td class="lbl">Finished Dia</td><td class="val">: <?php echo htmlspecialchars($card['FDIA'] ?? ''); ?></td></tr>
+                <tr><td class="lbl">Grey GSM</td><td class="val">: <?php echo htmlspecialchars($card['GGSM'] ?? ''); ?></td></tr>
+                <tr><td class="lbl">Finish GSM</td><td class="val">: <?php echo htmlspecialchars($card['FGSM'] ?? ''); ?></td></tr>
+                <tr><td class="lbl">Open / Tube</td><td class="val">: <?php echo htmlspecialchars($card['O_T'] ?? ''); ?></td></tr>
+                <tr><td class="lbl">SI / VDQ</td><td class="val">: <?php echo htmlspecialchars($card['SL'] ?? ''); ?></td></tr>
             </table>
             <!-- Right -->
             <table class="spec-table">
                 <tr><td class="lbl">Buyer</td><td class="val">: <?php echo htmlspecialchars($card['BUYER'] ?? ''); ?></td></tr>
-                <tr><td class="lbl">PO Number</td><td class="val">: <?php echo htmlspecialchars($card['BOOKING'] ?? ''); ?></td></tr>
+                <tr><td class="lbl">PO Number</td><td class="val">: <?php echo htmlspecialchars($card['PO_NUMBER'] ?? ''); ?></td></tr>
                 <tr><td class="lbl">Style No</td><td class="val">: <?php echo htmlspecialchars($card['STYLE'] ?? ''); ?></td></tr>
-                <tr><td class="lbl">Fabric Type</td><td class="val">: <?php echo htmlspecialchars($card['FABRICS_TYPE'] ?? ''); ?></td></tr>
-                <tr><td class="lbl">Yarn Type</td><td class="val">: <?php echo htmlspecialchars($card['YARN_TYPE'] ?? ''); ?></td></tr>
-                <tr><td class="lbl">Lot No.</td><td class="val">: <?php echo htmlspecialchars($card['LOT_NO'] ?? ''); ?></td></tr>
-                <tr><td class="lbl">Req. Qty</td><td class="val">: <?php echo number_format((float)($card['REQ_QTY'] ?? 0), 2); ?> kg</td></tr>
+                <tr><td class="lbl">Fabric Type</td><td class="val">: <?php echo htmlspecialchars($card['FTYPE'] ?? ''); ?></td></tr>
+                <tr><td class="lbl">Yarn Type</td><td class="val">: <?php echo htmlspecialchars($card['YTYPE'] ?? ''); ?></td></tr>
+                <tr><td class="lbl">Lot No.</td><td class="val">: <?php echo htmlspecialchars($card['LOT'] ?? ''); ?></td></tr>
+                <tr><td class="lbl">Req. Qty</td><td class="val">: <?php echo number_format((float)($card['QTY'] ?? 0), 2); ?> kg</td></tr>
             </table>
         </div>
 
@@ -208,7 +208,7 @@ if ($prod_result && $prod_result->num_rows > 0) {
 
         <div class="signature-section">
             <div class="signature-box">
-                <div><?php echo htmlspecialchars($card['PREPARED_BY'] ?? ''); ?></div>
+                <div><?php echo htmlspecialchars($card['UNAME'] ?? ''); ?></div>
                 <div class="signature-line">Prepared by</div>
             </div>
             <div class="signature-box">
