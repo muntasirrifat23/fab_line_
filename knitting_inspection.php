@@ -702,9 +702,14 @@ $active_operator = $_SESSION['active_operator'] ?? null;
         <i class="fas fa-video"></i>
         <span id="camera-status">Ready</span>
       </div>
-      <button class="btn-icon" id="toggle-camera-btn" title="Restart / switch camera">
-        <i class="fas fa-sync-alt"></i>
-      </button>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn-icon" id="rotate-camera-btn" title="Rotate camera 90°">
+          <i class="fa-solid fa-rotate-right"></i>
+        </button>
+        <button class="btn-icon" id="toggle-camera-btn" title="Switch Front/Back camera">
+          <i class="fas fa-sync-alt"></i>
+        </button>
+      </div>
     </div>
 
     <!-- RESULT & WORKFLOW PANEL -->
@@ -1018,25 +1023,51 @@ $active_operator = $_SESSION['active_operator'] ?? null;
           .then(() => window.location.reload());
       };
 
-      // QR CAMERA SCANNER INITIALIZATION
+      // QR CAMERA SCANNER INITIALIZATION WITH ROTATION & FLIP
+      const rotateCameraBtn = document.getElementById('rotate-camera-btn');
+      let currentRotation   = 0;
+      let currentFacingMode = "environment";
+
+      function applyVideoRotation() {
+        setTimeout(() => {
+          const videoElem = document.querySelector('#qr-reader video');
+          if (videoElem) {
+            videoElem.style.transform = `rotate(${currentRotation}deg)`;
+            videoElem.style.transition = 'transform 0.3s ease';
+          }
+        }, 150);
+      }
+
       function startCameraScanner() {
         try {
-          html5QrCode = new Html5Qrcode("qr-reader");
-          html5QrCode.start(
-            { facingMode: "environment" },
-            { fps: 15, qrbox: { width: 250, height: 250 } },
-            onScanSuccess,
-            onScanFailure
-          ).then(() => {
-            isScanning = true;
-            if (cameraStatus) cameraStatus.textContent = 'Scanning...';
-          }).catch(err => {
-            console.warn("Camera start failed:", err);
-            if (cameraStatus) cameraStatus.textContent = 'Camera Unavailable';
-          });
+          if (html5QrCode && isScanning) {
+            html5QrCode.stop().then(() => {
+              isScanning = false;
+              initScannerObject();
+            }).catch(() => initScannerObject());
+          } else {
+            initScannerObject();
+          }
         } catch (e) {
           console.warn(e);
         }
+      }
+
+      function initScannerObject() {
+        html5QrCode = new Html5Qrcode("qr-reader");
+        html5QrCode.start(
+          { facingMode: currentFacingMode },
+          { fps: 15, qrbox: { width: 250, height: 250 } },
+          onScanSuccess,
+          onScanFailure
+        ).then(() => {
+          isScanning = true;
+          if (cameraStatus) cameraStatus.textContent = 'Scanning (' + (currentFacingMode === 'environment' ? 'Rear' : 'Front') + ')';
+          applyVideoRotation();
+        }).catch(err => {
+          console.warn("Camera start failed:", err);
+          if (cameraStatus) cameraStatus.textContent = 'Camera Unavailable';
+        });
       }
 
       function onScanSuccess(decodedText) {
@@ -1052,16 +1083,20 @@ $active_operator = $_SESSION['active_operator'] ?? null;
 
       function onScanFailure(err) {}
 
+      if (rotateCameraBtn) {
+        rotateCameraBtn.addEventListener('click', () => {
+          currentRotation = (currentRotation + 90) % 360;
+          applyVideoRotation();
+          if (cameraStatus) {
+            cameraStatus.textContent = 'Rotated ' + currentRotation + '°';
+          }
+        });
+      }
+
       if (toggleCameraBtn) {
         toggleCameraBtn.addEventListener('click', () => {
-          if (html5QrCode && isScanning) {
-            html5QrCode.stop().then(() => {
-              isScanning = false;
-              startCameraScanner();
-            });
-          } else {
-            startCameraScanner();
-          }
+          currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
+          startCameraScanner();
         });
       }
 
