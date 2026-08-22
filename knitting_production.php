@@ -788,26 +788,26 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
 
       const DEFAULT_DATA = [{
         label: 'Step 1',
-        value: 'Scan Knitting Operator ID'
+        value: 'Scan/ Enter Knitting Operator ID'
       }, {
         label: 'Step 2',
-        value: 'Scan Production Roll QR'
+        value: 'Scan/ Enter Production Roll QR'
       }];
 
       function renderDefaultData() {
         scannedInfo = null;
         hideActionContent();
 
-        let html = `<div class="data-row header-row"><span class="label">Default Information</span><span class="value"></span></div>`;
-        DEFAULT_DATA.forEach(f => {
-          html += `<div class="data-row default-row"><span class="label">${f.label}</span><span class="value">${f.value}</span></div>`;
-        });
-        html += `
+        let html = `
           <div class="manual-entry">
             <input type="text" id="manualOperatorInput" placeholder="Operator ID (e.g. OP01)" autocomplete="off">
             <button type="button" id="manualOperatorBtn">Load</button>
           </div>
         `;
+        html += `<div class="data-row header-row"><span class="label">Default Information</span><span class="value"></span></div>`;
+        DEFAULT_DATA.forEach(f => {
+          html += `<div class="data-row default-row"><span class="label">${f.label}</span><span class="value">${f.value}</span></div>`;
+        });
         resultContainer.innerHTML = html;
 
         const opInput = document.getElementById('manualOperatorInput');
@@ -1099,6 +1099,10 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
 
       function renderOperatorVerified() {
         resultContainer.innerHTML = `
+          <div class="manual-entry">
+            <input type="text" id="manualRollInput" placeholder="Roll No (e.g. 1234)" autocomplete="off">
+            <button type="button" id="manualRollBtn">Load Data</button>
+          </div>
           <div class="data-row header-row" style="border-left-color:#10b981;">
             <span class="label">Scanned Data (Knitting Operator) <span class="scanned-badge" style="background:#10b981;">OPERATOR</span></span>
             <span class="value">${new Date().toLocaleTimeString()}</span>
@@ -1108,11 +1112,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
             <div class="field-block"><span class="field-label">Operator Name</span><span class="field-value">${operatorInfo.OPERATOR_NAME || '-'}</span></div>
           </div>
           <div class="data-row" style="border-left-color:#f59e0b; background:#fffbeb; margin-top:8px;">
-            <span class="value" style="color:#92400e; font-weight:600;">📷 Now scan the Production Roll QR...</span>
-          </div>
-          <div class="manual-entry">
-            <input type="text" id="manualRollInput" placeholder="Roll No (e.g. 1234)" autocomplete="off">
-            <button type="button" id="manualRollBtn">Load Data</button>
+            <span class="value" style="color:#92400e; font-weight:600;">Now Scan/ Enter the Production Roll QR</span>
           </div>
         `;
         hideActionContent();
