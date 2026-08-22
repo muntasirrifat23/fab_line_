@@ -800,27 +800,21 @@ $active_operator = $_SESSION['active_operator'] ?? null;
         }
       }
 
-      // STEP 1: OPERATOR SCAN / ENTRY
+      // STEP 1: OPERATOR QR SCAN ONLY (NO TYPING INPUT)
       function renderStep1Operator() {
         actionContainer.innerHTML = '';
         let html = `
-          <div class="manual-entry">
-            <input type="text" id="opInput" placeholder="Operator ID (e.g. OP01)" autocomplete="off" autofocus>
-            <button type="button" id="opBtn">Load</button>
+          <div style="background:#eff6ff; border:1.5px solid #bfdbfe; border-radius:18px; padding:16px; margin-bottom:14px; text-align:center; color:#1e3a8a;">
+            <div style="font-size:2.2rem; margin-bottom:6px; color:#2563eb;"><i class="fa-solid fa-qrcode"></i></div>
+            <div style="font-weight:800; font-size:1.05rem; margin-bottom:4px;">Scan Operator Badge QR Code</div>
+            <div style="font-size:0.85rem; opacity:0.85;">Align your Operator QR Code within the live camera feed above to authenticate.</div>
           </div>
-          <div class="data-row header-row"><span class="label">Step 1: Operator Authentication</span><span class="value"></span></div>
-          <div class="data-row"><span class="label">Step 1:</span><span class="value">Scan/ Enter Knitting Operator ID</span></div>
-          <div class="data-row"><span class="label">Step 2:</span><span class="value">Scan/ Enter Production Roll QR</span></div>
+          <div class="data-row header-row"><span class="label">Step 1: Operator Authentication</span><span class="value">Scan QR Only</span></div>
+          <div class="data-row"><span class="label">Step 1:</span><span class="value" style="color:#2563eb; font-weight:700;">Scan Operator QR Code</span></div>
+          <div class="data-row"><span class="label">Step 2:</span><span class="value">Scan Production Roll QR</span></div>
           <div id="opStatusMsg" style="margin-top:8px;"></div>
         `;
         resultContainer.innerHTML = html;
-
-        const inp = document.getElementById('opInput');
-        const btn = document.getElementById('opBtn');
-        if (btn) btn.addEventListener('click', () => submitOperator(inp.value));
-        if (inp) inp.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') { e.preventDefault(); submitOperator(inp.value); }
-        });
       }
 
       function submitOperator(val) {
