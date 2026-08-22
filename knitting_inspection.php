@@ -716,7 +716,7 @@ $active_operator = $_SESSION['active_operator'] ?? null;
     <div class="result-panel">
       <div class="result-header">
         <i class="fas fa-qrcode"></i>
-        <span id="step-title-text"><?php echo $active_operator ? 'Step 2: Scan Production Roll QR' : 'Step 1: Scan Operator ID QR'; ?></span>
+        <span id="step-title-text"><?php echo $active_operator ? 'Step 2: Scan Roll QR' : 'Step 1: Scan Operator ID QR'; ?></span>
         <?php if ($active_operator): ?>
           <span style="margin-left: auto; font-size: 0.75rem; background: #10b981; padding: 2px 12px; border-radius: 40px; color: #ffffff; font-weight:700;">
             <i class="fa-solid fa-user-check me-1"></i> <?php echo htmlspecialchars($active_operator['name']); ?> (<?php echo htmlspecialchars($active_operator['id']); ?>)
@@ -811,7 +811,7 @@ $active_operator = $_SESSION['active_operator'] ?? null;
           </div>
           <div class="data-row header-row"><span class="label">Workflow Progress</span><span class="value">Step 1 of 2</span></div>
           <div class="data-row"><span class="label">Current Action:</span><span class="value" style="color:#2563eb; font-weight:700;">Scan Operator QR Code</span></div>
-          <div class="data-row"><span class="label">Next Action:</span><span class="value">Scan Production Roll QR</span></div>
+          <div class="data-row"><span class="label">Next Action:</span><span class="value">Scan Roll QR</span></div>
           <div id="opStatusMsg" style="margin-top:8px;"></div>
         `;
         resultContainer.innerHTML = html;
@@ -847,7 +847,7 @@ $active_operator = $_SESSION['active_operator'] ?? null;
           </div>
           <div class="data-row header-row"><span class="label">Step 2: Roll Selection</span><span class="value"></span></div>
           <div class="data-row"><span class="label">Operator:</span><span class="value" style="color:#10b981; font-weight:700;">${activeOperatorInfo.name} (${activeOperatorInfo.id})</span></div>
-          <div class="data-row"><span class="label">Action:</span><span class="value">Scan Production Roll QR Code</span></div>
+          <div class="data-row"><span class="label">Action:</span><span class="value">Scan Roll QR Code</span></div>
           <div id="rollStatusMsg" style="margin-top:8px;"></div>
         `;
         resultContainer.innerHTML = html;
