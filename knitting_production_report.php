@@ -102,9 +102,7 @@
                             <th>DATE</th>
                             <th>ROLL NO</th>
                             <th>PO NUMBER</th>
-                            <th>OQTY</th>
-                            <th>REJ QTY</th>
-                            <th>UQTY</th>
+                            <th>PQTY</th>
                             <th>SONO</th>
                             <th>BUYER</th>
                             <th>STYLE</th>
@@ -129,7 +127,7 @@
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="26" class="text-center small-muted">Loading data...</td>
+                            <td colspan="24" class="text-center small-muted">Loading data...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -145,7 +143,7 @@
             var tbody = $('#tableBody');
             tbody.empty();
             if (!data || data.length === 0) {
-                tbody.append('<tr><td colspan="26" class="text-center small-muted">No Roll Or Booking No found</td></tr>');
+                tbody.append('<tr><td colspan="24" class="text-center small-muted">No Roll Or Booking No found</td></tr>');
                 return;
             }
 
@@ -154,9 +152,7 @@
                 tr.append($('<td>').text(row.BUDAT || ''));
                 tr.append($('<td>').text(row.ROLL || ''));
                 tr.append($('<td>').text(row.PO_NUMBER || ''));
-                tr.append($('<td>').text(row.OQTY || ''));
-                tr.append($('<td>').text(row.RQTY || ''));
-                tr.append($('<td>').text(row.UQTY || ''));
+                tr.append($('<td>').text(row.PQTY || ''));
                 tr.append($('<td>').text(row.SONO || ''));
                 tr.append($('<td>').text(row.BUYER || ''));
                 tr.append($('<td>').text(row.STYLE || ''));
@@ -204,13 +200,13 @@
                         renderTableRows(resp.data);
                     } else {
                         $('#tableBody').html(
-                            '<tr><td colspan="26" class="text-center small-muted">No data found</td></tr>'
+                            '<tr><td colspan="24" class="text-center small-muted">No data found</td></tr>'
                         );
                     }
                 })
                 .fail(function() {
                     $('#tableBody').html(
-                        '<tr><td colspan="26" class="text-center text-danger">Error searching</td></tr>'
+                        '<tr><td colspan="24" class="text-center text-danger">Error searching</td></tr>'
                     );
                 })
                 .always(function() {
@@ -221,7 +217,7 @@
         }
 
         function loadAll() {
-            $('#tableBody').html('<tr><td colspan="26" class="text-center small-muted">Loading data...</td></tr>');
+            $('#tableBody').html('<tr><td colspan="24" class="text-center small-muted">Loading data...</td></tr>');
             $.ajax({
                     url: 'ajaxKnittingProduction_Report.php',
                     dataType: 'json',
@@ -229,10 +225,10 @@
                 })
                 .done(function(resp) {
                     if (resp && resp.success) renderTableRows(resp.data);
-                    else $('#tableBody').html('<tr><td colspan="26" class="text-center small-muted">No data returned</td></tr>');
+                    else $('#tableBody').html('<tr><td colspan="24" class="text-center small-muted">No data returned</td></tr>');
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr><td colspan="26" class="text-center text-danger">Error loading data</td></tr>');
+                    $('#tableBody').html('<tr><td colspan="24" class="text-center text-danger">Error loading data</td></tr>');
                 });
         }
 

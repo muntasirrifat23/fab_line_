@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // ------- In-file AJAX endpoint: fetch knit_card_test row by ROLL -------
 if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
   require_once 'config.php';
@@ -438,10 +438,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
       background: linear-gradient(135deg, #10b981, #0f766e);
     }
 
-    .btn-action.edit {
-      background: linear-gradient(135deg, #3b82f6, #2563eb);
-    }
-
     .btn-action.cancel {
       background: linear-gradient(135deg, #ef4444, #b91c1c);
     }
@@ -503,24 +499,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
       background: #3f1d1d;
       border-color: #b91c1c;
       color: #fee2e2;
-    }
-
-    .edit-form-row {
-      background: #eef2f7;
-      padding: 10px 14px;
-      border-radius: 12px;
-      margin-top: 4px;
-    }
-
-    .edit-form-row .field-label {
-      font-size: 0.75rem;
-      color: #475569;
-      margin-bottom: 2px;
-    }
-
-    .edit-form-row .field-input {
-      font-size: 0.85rem;
-      padding: 6px 10px;
     }
 
     .rescan-btn {
@@ -732,7 +710,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
       };
 
       let scannedInfo = null;
-      let isEditMode = false;
       let html5QrCode = null;
       let isScanning = false;
       let scanCount = 0;
@@ -744,7 +721,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
 
       function renderDefaultData() {
         scannedInfo = null;
-        isEditMode = false;
         hideActionContent();
 
         let html = `<div class="data-row header-row"><span class="label">Default Information</span><span class="value"></span></div>`;
@@ -765,7 +741,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
           parts.pop();
         }
 
-        console.log('✓ Parsed parts count:', parts.length, 'Parts:', parts);
+        console.log('âœ“ Parsed parts count:', parts.length, 'Parts:', parts);
 
         const format16WithCustomer = [
           'SUB_TID', 'MCNO', 'BUYER', 'CUSTOMER', 'BOOKING', 'SONO', 'STYLE',
@@ -793,7 +769,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
           data.raw = raw;
           data.parsed = true;
           data.originalQTY = data.QTY || '';
-          data.edited = false;
           return data;
         };
 
@@ -820,12 +795,12 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
             (looksLikeMachineNo(mcno) ? 1 : 0);
 
           if (keyFieldsValid >= 2 || (booking && sono)) {
-            console.log('✓ Detected format17 (17 fields from QR Report), valid fields:', keyFieldsValid);
+            console.log('âœ“ Detected format17 (17 fields from QR Report), valid fields:', keyFieldsValid);
             return buildData(format17);
           }
 
           // Even if validation is weak, if length matches exactly, parse as format17
-          console.log('⚠ Format17 length match, accepting as fallback (valid fields:', keyFieldsValid, ')');
+          console.log('âš  Format17 length match, accepting as fallback (valid fields:', keyFieldsValid, ')');
           return buildData(format17);
         }
 
@@ -836,12 +811,12 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
           const sono = parts[5];
 
           if ((looksLikeMachineNo(mcno) || mcno) && looksLikeBooking(booking) && looksLikeSono(sono)) {
-            console.log('✓ Detected format16WithCustomer');
+            console.log('âœ“ Detected format16WithCustomer');
             return buildData(format16WithCustomer);
           }
           // If customer is blank, still try to parse
           if (parts[3] === '' && booking && sono) {
-            console.log('✓ Detected format16WithCustomer (empty customer)');
+            console.log('âœ“ Detected format16WithCustomer (empty customer)');
             return buildData(format16WithCustomer);
           }
         }
@@ -853,14 +828,14 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
           const sono = parts[4];
 
           if ((looksLikeMachineNo(mcno) || mcno) && booking && sono) {
-            console.log('✓ Detected format16WithoutCustomer');
+            console.log('âœ“ Detected format16WithoutCustomer');
             return buildData(format16WithoutCustomer);
           }
         }
 
         // Priority 4: Check if length matches QR_FIELDS exactly
         if (parts.length === QR_FIELDS.length) {
-          console.log('✓ Detected QR_FIELDS format (length match)');
+          console.log('âœ“ Detected QR_FIELDS format (length match)');
           return buildData(QR_FIELDS);
         }
 
@@ -869,7 +844,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
           // If we have at least 10 parts that look semi-reasonable, try format17
           const hasGoodData = parts.filter(p => p && p.length > 0).length >= 8;
           if (hasGoodData) {
-            console.log('⚠ Partial data detected, attempting format17 interpretation');
+            console.log('âš  Partial data detected, attempting format17 interpretation');
             if (parts.length <= 17) {
               return buildData(format17.slice(0, parts.length).concat(format17.slice(parts.length)));
             }
@@ -877,7 +852,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
         }
 
         // If nothing matches, return raw data
-        console.log('❌ No format detected - returning raw data. Parts count:', parts.length);
+        console.log('âŒ No format detected - returning raw data. Parts count:', parts.length);
         return {
           raw,
           parsed: false,
@@ -919,11 +894,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
           UNAME: m(row.UNAME),
           raw: qrText,
           parsed: true,
-          originalQTY: m(row.QTY),
-          edited: false
+          originalQTY: m(row.QTY)
         };
 
-        isEditMode = false;
         hideActionContent();
 
         const buildFieldRow = (fields, extraClass) => `
@@ -939,7 +912,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
 
         let html = `
           <div class="data-row header-row" style="border-left-color:#4fc3f7;">
-            <span class="label">✅ QR Scanned <span class="scanned-badge">ROLL NO</span></span>
+            <span class="label">QR Scanned <span class="scanned-badge">ROLL NO</span></span>
             <span class="value">${new Date().toLocaleTimeString()}</span>
           </div>
         `;
@@ -980,11 +953,10 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
       function renderUnstructuredData(text, msg) {
         resultContainer.innerHTML = `
           <div class="data-row header-row" style="border-left-color:#4fc3f7;">
-            <span class="label">✅ QR Scanned <span class="scanned-badge">raw</span></span>
+            <span class="label">QR Scanned <span class="scanned-badge">raw</span></span>
             <span class="value">${new Date().toLocaleTimeString()}</span>
           </div>
           <div class="data-row" style="border-left-color:#f59e0b; background:#e8eef6;">
-            <span class="label" style="color:#92400e;">📌 Type:</span>
             <span class="value">${msg || 'Unstructured scan data'}</span>
           </div>
           <div class="data-row" style="background:#eef2f7; border-left-color:#6b7280; flex-wrap:wrap;">
@@ -1028,17 +1000,16 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
         if (!scannedInfo || scannedInfo.raw !== text) {
           scannedInfo = parseQrText(text);
         }
-        isEditMode = false;
         hideActionContent();
 
         if (!scannedInfo.parsed) {
           resultContainer.innerHTML = `
             <div class="data-row header-row" style="border-left-color:#4fc3f7;">
-              <span class="label">✅ QR Scanned <span class="scanned-badge">raw</span></span>
+              <span class="label">QR Scanned <span class="scanned-badge">raw</span></span>
               <span class="value">${new Date().toLocaleTimeString()}</span>
             </div>
             <div class="data-row" style="border-left-color:#f59e0b; background:#e8eef6;">
-              <span class="label" style="color:#92400e;">📌 Type:</span>
+              <span class="label" style="color:#92400e;">ðŸ“Œ Type:</span>
               <span class="value">Unstructured scan data</span>
             </div>
             <div class="data-row" style="background:#eef2f7; border-left-color:#6b7280; flex-wrap:wrap;">
@@ -1065,7 +1036,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
 
         let html = `
           <div class="data-row header-row" style="border-left-color:#4fc3f7;">
-            <span class="label">✅ QR Scanned <span class="scanned-badge">ROLL NO</span></span>
+            <span class="label">QR Scanned <span class="scanned-badge">ROLL NO</span></span>
             <span class="value">${new Date().toLocaleTimeString()}</span>
           </div>
         `;
@@ -1095,9 +1066,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
             <button class="btn-action production" type="button" id="productionBtn">
               <i class="fas fa-save"></i> Production
             </button>
-            <button class="btn-action edit" type="button" id="editProductionBtn">
-              <i class="fas fa-edit"></i> Edit
-            </button>
             <button class="btn-action cancel" type="button" id="cancelProductionBtn">
               <i class="fas fa-times"></i> Cancel
             </button>
@@ -1105,7 +1073,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
         `;
 
         document.getElementById('productionBtn').addEventListener('click', handleProductionSave);
-        document.getElementById('editProductionBtn').addEventListener('click', toggleEditMode);
         document.getElementById('cancelProductionBtn').addEventListener('click', function() {
           window.location.reload();
         });
@@ -1115,171 +1082,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
         actionContainer.innerHTML = '';
       }
 
-      function toggleEditMode() {
-        if (!scannedInfo || !scannedInfo.parsed) {
-          return;
-        }
-        isEditMode = !isEditMode;
-        renderEditForm();
-      }
-
-      function renderEditForm() {
-        if (!scannedInfo || !scannedInfo.parsed) {
-          return;
-        }
-
-        const qtyValue = scannedInfo.QTY || '';
-
-        const originalQty = scannedInfo.originalQTY || scannedInfo.QTY || '';
-
-        const buildFieldRow = (fields, extraClass) => `
-          <div class="data-row default-row ${extraClass || ''}">
-            ${fields.map(field => `
-              <div class="field-block">
-                <span class="field-label">${FIELD_LABELS[field] || field}</span>
-                <span class="field-value">${scannedInfo[field] || '-'}</span>
-              </div>
-            `).join('')}
-          </div>
-        `;
-
-        let html = `
-          <div class="data-row header-row" style="border-left-color:#3b82f6;">
-            <span class="label">✏️ Edit Mode <span class="scanned-badge" style="background:#3b82f6;">editing</span></span>
-            <span class="value">${new Date().toLocaleTimeString()}</span>
-          </div>
-          <div class="message-row" style="margin-bottom:8px;">Only <strong>REJ QTY</strong> is editable. Maximum available qty: <strong>${originalQty || 'N/A'}</strong>.</div>
-        `;
-
-        html += `
-          <div class="data-row default-row knit-flow">
-            ${['ROLL', 'BOOKING', 'SONO', 'BUYER', 'STYLE', 'COLOR', 'MCNO',
-              'MC_DIA', 'CUSTOMER', 'SHIFT', 'YARN_TYPE', 'YARN_COUNT', 'FABRICS_TYPE', 'FINISH_GSM',
-              'FINISH_DIA', 'OPEN_TUBE', 'SL_VDQ', 'GGSM', 'FEEDER_PLAN', 'LOT_NO'].map(field => `
-              <div class="field-block">
-                <span class="field-label">${FIELD_LABELS[field] || field}</span>
-                <span class="field-value">${scannedInfo[field] || '-'}</span>
-              </div>
-            `).join('')}
-            <div class="field-block">
-              <span class="field-label">REJ QTY</span>
-              <input type="text" class="field-input" id="edit-QTY" value="${qtyValue}">
-            </div>
-            <div class="knit-pair">
-              <div class="field-block">
-                <span class="field-label">${FIELD_LABELS.KNIT_MATERIAL_CODE}</span>
-                <span class="field-value">${scannedInfo.KNIT_MATERIAL_CODE || '-'}</span>
-              </div>
-              <div class="field-block">
-                <span class="field-label">${FIELD_LABELS.KNIT_M_DESCRIPTION}</span>
-                <span class="field-value">${scannedInfo.KNIT_M_DESCRIPTION || '-'}</span>
-              </div>
-            </div>
-          </div>
-        `;
-
-        html += `
-          <button class="rescan-btn" onclick="window.location.reload();">
-            <i class="fas fa-redo"></i> Scan Another QR
-          </button>
-        `;
-
-        resultContainer.innerHTML = html;
-
-        actionContainer.innerHTML = `
-        <div class="action-card">
-        
-            <button class="btn-action production" type="button" id="editedProductionBtn">
-                <i class="fas fa-save"></i> Edited Production
-            </button>
-        
-            <button class="btn-action cancel" type="button" id="cancelProductionBtn">
-                <i class="fas fa-times"></i> Cancel
-            </button>
-        
-        </div>
-        `;
-
-        document.getElementById("editedProductionBtn").addEventListener("click", editedProductionSave);
-        document.getElementById('cancelProductionBtn').addEventListener('click', function() {
-          isEditMode = false;
-          renderScannedData(scannedInfo.raw);
-          hideActionContent();
-        });
-      }
-
-      function saveEditedData() {
-        if (!scannedInfo || !scannedInfo.parsed) {
-          return;
-        }
-
-        const input = document.getElementById('edit-QTY');
-        if (!input) {
-          return;
-        }
-
-        const newQtyRaw = input.value.trim();
-        const maxQty = parseFloat((scannedInfo.originalQTY || scannedInfo.QTY || '').replace(/,/g, '.')) || 0;
-        const newQty = parseFloat(newQtyRaw.replace(/,/g, '.'));
-
-        if (!newQtyRaw) {
-          alert('Qty cannot be empty.');
-          return;
-        }
-        if (isNaN(newQty) || newQty <= 0) {
-          alert('Qty must be a valid number.');
-          return;
-        }
-        if (maxQty > 0 && newQty > maxQty + 0.000001) {
-          alert('Qty exceeds available amount. Maximum available qty: ' + (scannedInfo.originalQTY || scannedInfo.QTY));
-          return;
-        }
-
-        const previousOriginalQty = scannedInfo.originalQTY;
-        scannedInfo.QTY = newQtyRaw;
-        scannedInfo.raw = QR_FIELDS.map(field => scannedInfo[field] || '').join(" | ");
-        isEditMode = false;
-        renderScannedData(scannedInfo.raw);
-
-        if (scannedInfo && scannedInfo.parsed) {
-          scannedInfo.originalQTY = previousOriginalQty;
-        }
-
-        const productionBtn = document.getElementById("productionBtn");
-        if (productionBtn) {
-          productionBtn.disabled = false;
-        }
-      }
-
-      function editedProductionSave() {
-
-        const input = document.getElementById("edit-QTY");
-        if (!input) return;
-
-        const newQtyRaw = input.value.trim();
-        const maxQty = parseFloat(scannedInfo.originalQTY || 0);
-        const newQty = parseFloat(newQtyRaw);
-
-        if (newQtyRaw === "") {
-          alert("Qty cannot be empty");
-          return;
-        }
-
-        if (isNaN(newQty) || newQty <= 0) {
-          alert("Invalid Qty");
-          return;
-        }
-
-        if (newQty > maxQty) {
-          alert("Qty exceeds available Qty");
-          return;
-        }
-
-        scannedInfo.QTY = newQtyRaw;
-        handleProductionSave();
-
-      }
-
       function handleProductionSave() {
 
         if (!scannedInfo || !scannedInfo.parsed) {
@@ -1287,12 +1089,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
           return;
         }
 
-        let oqty = parseFloat(scannedInfo.originalQTY || scannedInfo.QTY || 0);
-        let rqty = 0;
-        if (String(scannedInfo.QTY) !== String(scannedInfo.originalQTY)) {
-          rqty = parseFloat(scannedInfo.QTY || 0);
-        }
-        let uqty = (oqty - rqty).toFixed(2);
+        let pqty = parseFloat(scannedInfo.originalQTY || scannedInfo.QTY || 0);
 
         const payload = {
           sub_tid: scannedInfo.SUB_TID || "",
@@ -1317,9 +1114,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
           knit_material_code: scannedInfo.KNIT_MATERIAL_CODE || "",
           knit_m_desc: scannedInfo.KNIT_M_DESCRIPTION || "",
 
-          oqty: oqty,
-          rqty: rqty,
-          uqty: uqty
+          pqty: pqty
 
         };
 
@@ -1354,14 +1149,14 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
             if (data.success) {
 
               renderResultMessage(
-                "✅ " + data.message,
+                 data.message,
                 "success"
               );
 
             } else {
 
               renderResultMessage(
-                "❌ " + data.message,
+                "âŒ " + data.message,
                 "error"
               );
 
@@ -1468,7 +1263,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
               <span class="value" style="font-size:0.8rem;">${err.message || 'Please allow camera access'}</span>
             </div>
             <div class="data-row default-row" style="border-left-color:#7a8bb0;">
-              <span class="label">💡 Tip:</span>
+              <span class="label">ðŸ’¡ Tip:</span>
               <span class="value">Tap restart or grant permissions</span>
             </div>
             <button class="rescan-btn" onclick="window.location.reload();">

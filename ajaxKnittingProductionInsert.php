@@ -75,30 +75,12 @@ $feeder_plan  = val("feeder_plan");
 $knit_material_code = val("knit_material_code");
 $knit_m_des   = val("knit_m_desc") ? val("knit_m_desc") : val("knit_m_description");
 
-$oqty         = val("oqty");
-$rqty         = val("rqty");
-$uqty         = val("uqty");
+$pqty         = val("pqty");
 
-if ($oqty <= 0) {
+if ($pqty <= 0) {
     echo json_encode([
         "success" => false,
-        "message" => "Original Qty missing."
-    ]);
-    exit;
-}
-
-if ($rqty < 0) {
-    echo json_encode([
-        "success" => false,
-        "message" => "Invalid Reject Qty."
-    ]);
-    exit;
-}
-
-if ($rqty > $oqty) {
-    echo json_encode([
-        "success" => false,
-        "message" => "Reject Qty cannot be greater than Original Qty."
+        "message" => "Production Qty missing."
     ]);
     exit;
 }
@@ -157,9 +139,7 @@ mysqli_stmt_close($stmt);
 BUDAT,
 ROLL,
 PO_NUMBER,
-OQTY,
-RQTY,
-UQTY,
+PQTY,
 SONO,
 BUYER,
 STYLE,
@@ -210,8 +190,6 @@ VALUES
 ?,
 ?,
 ?,
-?,
-?,
 ?
 )";
 
@@ -229,14 +207,12 @@ if(!$stmt){
 
 mysqli_stmt_bind_param(
     $stmt,
-    "ssssssssssssssssssssssssssss",
+    "ssssssssssssssssssssssssss",
 
     $budat,
     $roll,
     $booking,
-    $oqty,
-    $rqty,
-    $uqty,
+    $pqty,
     $sono,
     $buyer,
     $style,
@@ -287,9 +263,7 @@ echo json_encode([
     "pid" => $newPID,
     "roll" => $roll,
     "booking" => $booking,
-    "oqty" => $oqty,
-    "rqty" => $rqty,
-    "uqty" => $uqty
+    "pqty" => $pqty
 ]);
 
 exit;
