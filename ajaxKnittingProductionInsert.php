@@ -90,8 +90,16 @@ if ($pqty <= 0) {
 //========================
 date_default_timezone_set('Asia/Dhaka');
 
-$uid   = isset($_SESSION['operator_id']) ? trim($_SESSION['operator_id']) : (isset($_SESSION['username']) ? trim($_SESSION['username']) : '');
-$uname = isset($_SESSION['operator_name']) ? trim($_SESSION['operator_name']) : (isset($_SESSION['username']) ? trim($_SESSION['username']) : '');
+$uid   = val("uid");
+$uname = val("uname");
+
+if ($uid === '') {
+    $uid = isset($_SESSION['operator_id']) ? trim($_SESSION['operator_id']) : (isset($_SESSION['username']) ? trim($_SESSION['username']) : '');
+}
+
+if ($uname === '') {
+    $uname = isset($_SESSION['operator_name']) ? trim($_SESSION['operator_name']) : (isset($_SESSION['username']) ? trim($_SESSION['username']) : '');
+}
 
 $bdHour = (int)date('G');
 if ($bdHour >= 6 && $bdHour < 14) {

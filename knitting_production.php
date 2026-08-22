@@ -383,6 +383,11 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
       color: #0f172a;
     }
 
+    .data-row.default-row.operator-info-row {
+      grid-template-columns: 1fr 1fr !important;
+      gap: 14px;
+    }
+
     .data-row.header-row {
       border-left-color: #f59e0b;
       background: #e8eef6;
@@ -882,12 +887,30 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
         }
 
         // If nothing matches, return raw data
-        console.log('âŒ No format detected - returning raw data. Parts count:', parts.length);
+        console.log('No format detected - returning raw data. Parts count:', parts.length);
         return {
           raw,
           parsed: false,
           parts
         };
+      }
+
+      function buildOperatorInfoHtml() {
+        const operatorId = operatorInfo && operatorInfo.OPERATOR_ID ? operatorInfo.OPERATOR_ID : '-';
+        const operatorName = operatorInfo && operatorInfo.OPERATOR_NAME ? operatorInfo.OPERATOR_NAME : '-';
+
+        return `
+          <div class="data-row default-row operator-info-row">
+            <div class="field-block">
+              <span class="field-label">Operator ID</span>
+              <span class="field-value">${operatorId}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">Operator Name</span>
+              <span class="field-value">${operatorName}</span>
+            </div>
+          </div>
+        `;
       }
 
       // Render full data fetched from knit_card_test by ROLL
@@ -970,6 +993,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           </div>
         `;
 
+        html += buildOperatorInfoHtml();
+
         html += `
           <button class="rescan-btn" onclick="window.location.reload();">
             <i class="fas fa-redo"></i> Scan Another QR
@@ -1013,7 +1038,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
             <span class="label">Scanned Data (Knitting Operator) <span class="scanned-badge" style="background:#10b981;">OPERATOR</span></span>
             <span class="value">${new Date().toLocaleTimeString()}</span>
           </div>
-          <div class="data-row default-row" style="display:flex; flex-wrap:wrap; gap:10px;">
+          <div class="data-row default-row operator-info-row">
             <div class="field-block"><span class="field-label">Operator ID</span><span class="field-value">${operatorInfo.OPERATOR_ID || '-'}</span></div>
             <div class="field-block"><span class="field-label">Operator Name</span><span class="field-value">${operatorInfo.OPERATOR_NAME || '-'}</span></div>
           </div>
@@ -1121,6 +1146,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
         html += buildFieldRow(['SUB_TID', 'BOOKING', 'SONO', 'MCNO', 'MC_DIA', 'BUYER', 'STYLE']);
         html += buildFieldRow(['YARN_TYPE', 'YARN_COUNT', 'FABRICS_TYPE', 'FINISH_GSM', 'FINISH_DIA', 'OPEN_TUBE', 'COLOR']);
         html += buildFieldRow(['SL_VDQ', 'LOT_NO', 'QTY']);
+        html += buildOperatorInfoHtml();
 
         html += `
           <button class="rescan-btn" onclick="window.location.reload();">
@@ -1190,6 +1216,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           lot_no: scannedInfo.LOT_NO || "",
           knit_material_code: scannedInfo.KNIT_MATERIAL_CODE || "",
           knit_m_desc: scannedInfo.KNIT_M_DESCRIPTION || "",
+          uid: operatorInfo && operatorInfo.OPERATOR_ID ? operatorInfo.OPERATOR_ID : "",
+          uname: operatorInfo && operatorInfo.OPERATOR_NAME ? operatorInfo.OPERATOR_NAME : "",
 
           pqty: pqty
 
@@ -1233,7 +1261,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
             } else {
 
               renderResultMessage(
-                "âŒ " + data.message,
+                data.message,
                 "error"
               );
 
