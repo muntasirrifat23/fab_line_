@@ -115,163 +115,197 @@ if ($mcno_res) {
 }
 
 if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_knit_card'])) {
-    $user_req_qty = floatval($_POST['REQ_QTY'] ?? 0);
-    $p_mcno       = trim($_POST['MCNO'] ?? '');
+    $raw_machines = isset($_POST['machine_no']) ? (array)$_POST['machine_no'] : (isset($_POST['MCNO']) ? (array)$_POST['MCNO'] : []);
+    $raw_shifts   = isset($_POST['shift']) ? (array)$_POST['shift'] : (isset($_POST['SHIFT']) ? (array)$_POST['SHIFT'] : []);
+    $raw_qtys     = isset($_POST['required_qty']) ? (array)$_POST['required_qty'] : (isset($_POST['REQ_QTY']) ? (array)$_POST['REQ_QTY'] : []);
 
-    if ($user_req_qty <= 0) {
-        $error = "Required Quantity must be a positive number.";
-    } elseif (empty($p_mcno)) {
-        $error = "Machine Number (M/C No) is required.";
-    } else {
-        // Start Transaction
-        $db->begin_transaction();
+    $rows_data = [];
+    $total_user_req_qty = 0.00;
+    $row_count = max(count($raw_machines), count($raw_qtys));
 
-        try {
-            // Lock the knitting_program row to prevent concurrent modifications on this program
-            $stmt_lock = $db->prepare("SELECT QTY FROM knitting_program WHERE KPTID = ? FOR UPDATE");
-            if (!$stmt_lock) {
-                throw new Exception("Database lock error: " . $db->error);
-            }
-            $stmt_lock->bind_param("i", $p_kptid);
-            $stmt_lock->execute();
-            $res_lock = $stmt_lock->get_result();
-            if (!$res_lock || $res_lock->num_rows === 0) {
-                $stmt_lock->close();
-                throw new Exception("Knitting program not found.");
-            }
-            $lock_row = $res_lock->fetch_assoc();
-            $stmt_lock->close();
+    for ($i = 0; $i < $row_count; $i++) {
+        $mc  = isset($raw_machines[$i]) ? trim($raw_machines[$i]) : '';
+        $sh  = isset($raw_shifts[$i]) && trim($raw_shifts[$i]) !== '' ? trim($raw_shifts[$i]) : $shift;
+        $qty = isset($raw_qtys[$i]) ? floatval($raw_qtys[$i]) : 0.0;
 
-            $program_qty_locked = floatval($lock_row['QTY'] ?? 0);
+        if (empty($mc)) {
+            $error = "Row #" . ($i + 1) . ": Machine Number (M/C No) is required.";
+            break;
+        }
+        if ($qty <= 0) {
+            $error = "Row #" . ($i + 1) . ": Required Quantity must be a positive number greater than 0.";
+            break;
+        }
 
-            // Fetch current sum of QTY for this program from knit_card (using lock since it's in transaction)
-            $stmt_sum = $db->prepare("SELECT SUM(QTY) AS total_carded FROM knit_card WHERE KPTID = ?");
-            if (!$stmt_sum) {
-                throw new Exception("Database query error: " . $db->error);
-            }
-            $stmt_sum->bind_param("i", $p_kptid);
-            $stmt_sum->execute();
-            $res_sum = $stmt_sum->get_result();
-            $already_carded_locked = 0.00;
-            if ($res_sum && $row_sum = $res_sum->fetch_assoc()) {
-                $already_carded_locked = floatval($row_sum['total_carded'] ?? 0);
-            }
-            $stmt_sum->close();
+        $rows_data[] = [
+            'mcno'  => $mc,
+            'shift' => $sh,
+            'qty'   => $qty
+        ];
+        $total_user_req_qty += $qty;
+    }
 
-            $remaining_qty_locked = $program_qty_locked - $already_carded_locked;
+    if (empty($error)) {
+        if (empty($rows_data)) {
+            $error = "Please add at least one production row.";
+        } elseif ($total_user_req_qty <= 0) {
+            $error = "Total required quantity must be greater than 0.";
+        } else {
+            // Start Transaction
+            $db->begin_transaction();
 
-            // Check if remaining quantity is zero
-            if ($remaining_qty_locked <= 0) {
-                throw new Exception("No remaining quantity is available for this program.");
-            }
-
-            // Check if user required quantity exceeds remaining quantity
-            if ($user_req_qty > $remaining_qty_locked) {
-                throw new Exception("Required quantity cannot exceed the remaining program quantity.");
-            }
-
-                        // Generate next MCARD and ROLL numbers (same-to-same with knit_card_test structure)
-            $next_mcard = 200000001;
-            $res_mc = $db->query("SELECT MAX(MCARD) AS mx FROM knit_card");
-            if ($res_mc && ($r_mc = $res_mc->fetch_assoc()) && !empty($r_mc['mx'])) {
-                $next_mcard = intval($r_mc['mx']) + 1;
-            }
-            $res_mc->free();
-
-            $prog_mcard_res = $db->prepare("SELECT MAX(MCARD) AS mx FROM knit_card WHERE KPTID = ?");
-            if ($prog_mcard_res) {
-                $prog_mcard_res->bind_param("i", $p_kptid);
-                $prog_mcard_res->execute();
-                $res_pm = $prog_mcard_res->get_result();
-                if ($res_pm && ($r_pm = $res_pm->fetch_assoc()) && !empty($r_pm['mx'])) {
-                    $next_mcard = intval($r_pm['mx']);
+            try {
+                // Lock the knitting_program row to prevent concurrent modifications on this program
+                $stmt_lock = $db->prepare("SELECT QTY FROM knitting_program WHERE KPTID = ? FOR UPDATE");
+                if (!$stmt_lock) {
+                    throw new Exception("Database lock error: " . $db->error);
                 }
-                $prog_mcard_res->close();
-            }
+                $stmt_lock->bind_param("i", $p_kptid);
+                $stmt_lock->execute();
+                $res_lock = $stmt_lock->get_result();
+                if (!$res_lock || $res_lock->num_rows === 0) {
+                    $stmt_lock->close();
+                    throw new Exception("Knitting program not found.");
+                }
+                $lock_row = $res_lock->fetch_assoc();
+                $stmt_lock->close();
 
-            $next_roll = 300000001;
-            $res_roll = $db->query("SELECT MAX(ROLL) AS mx FROM knit_card");
-            if ($res_roll && ($r_roll = $res_roll->fetch_assoc()) && !empty($r_roll['mx'])) {
-                $next_roll = intval($r_roll['mx']) + 1;
-            }
-            $res_roll->free();
+                $program_qty_locked = floatval($lock_row['QTY'] ?? 0);
 
-            // Insert into knit_card
-            $ins = $db->prepare("
-                INSERT INTO knit_card (
-                    KPTID, MCARD, ROLL, MCNO, QTY, PO_NUMBER, SONO, BUYER, STYLE, COLOR,
-                    FGSM, FDIA, O_T, FTYPE, YTYPE, CUSTOMER, YCOUNT, SL, MCDIA, GGSM,
-                    FEEDER_PLAN, LOT, SHIFT, KNIT_MATERIAL_CODE, KNIT_M_DESCRIPTION, UNAME
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ");
+                // Fetch current sum of QTY for this program from knit_card (using lock since it's in transaction)
+                $stmt_sum = $db->prepare("SELECT SUM(QTY) AS total_carded FROM knit_card WHERE KPTID = ?");
+                if (!$stmt_sum) {
+                    throw new Exception("Database query error: " . $db->error);
+                }
+                $stmt_sum->bind_param("i", $p_kptid);
+                $stmt_sum->execute();
+                $res_sum = $stmt_sum->get_result();
+                $already_carded_locked = 0.00;
+                if ($res_sum && $row_sum = $res_sum->fetch_assoc()) {
+                    $already_carded_locked = floatval($row_sum['total_carded'] ?? 0);
+                }
+                $stmt_sum->close();
 
-            if (!$ins) {
-                throw new Exception("Failed to prepare insert query: " . $db->error);
-            }
+                $remaining_qty_locked = max(0.00, $program_qty_locked - $already_carded_locked);
 
-            $p_mcdia   = !empty($prog['MCDIA']) ? $prog['MCDIA'] : ($input['MCDIA'] ?? '');
-            $p_ggsm    = !empty($prog['GGSM']) ? $prog['GGSM'] : (!empty($input['GGSM']) ? $input['GGSM'] : $p_finish_gsm);
-            $p_fplan   = !empty($prog['FEEDER_PLAN']) ? $prog['FEEDER_PLAN'] : ($input['FEEDER_PLAN'] ?? '');
-            $p_shift   = $shift;
-            $p_uname   = $prepared_by;
-            $user_req_qty = round($user_req_qty);
+                // Check if remaining quantity is zero
+                if ($remaining_qty_locked <= 0) {
+                    throw new Exception("No remaining quantity is available for this program.");
+                }
 
-            $ins->bind_param(
-                "iiiidsssssssssssssssssssss",
-                $p_kptid,
-                $next_mcard,
-                $next_roll,
-                $p_mcno,
-                $user_req_qty,
-                $p_booking,
-                $p_sono,
-                $p_buyer,
-                $p_style,
-                $p_color,
-                $p_finish_gsm,
-                $p_finish_dia,
-                $p_open_tube,
-                $p_fabrics,
-                $p_yarn_type,
-                $p_customer,
-                $p_yarn_count,
-                $p_sl_vdq,
-                $p_mcdia,
-                $p_ggsm,
-                $p_fplan,
-                $p_lot_no,
-                $p_shift,
-                $p_knit_mat_code,
-                $p_knit_m_desc,
-                $p_uname
-            );
+                // Check if user required quantity exceeds remaining quantity
+                if ($total_user_req_qty > ($remaining_qty_locked + 0.0001)) {
+                    throw new Exception("Total required quantity (" . number_format($total_user_req_qty, 2) . " KG) exceeds the remaining program quantity (" . number_format($remaining_qty_locked, 2) . " KG).");
+                }
 
-            if (!$ins->execute()) {
-                $ins_err = $ins->error;
+                // Generate next MCARD and ROLL numbers (same-to-same with knit_card structure)
+                $next_mcard = 200000001;
+                $res_mc = $db->query("SELECT MAX(MCARD) AS mx FROM knit_card");
+                if ($res_mc && ($r_mc = $res_mc->fetch_assoc()) && !empty($r_mc['mx'])) {
+                    $next_mcard = intval($r_mc['mx']) + 1;
+                }
+                $res_mc->free();
+
+                $prog_mcard_res = $db->prepare("SELECT MAX(MCARD) AS mx FROM knit_card WHERE KPTID = ?");
+                if ($prog_mcard_res) {
+                    $prog_mcard_res->bind_param("i", $p_kptid);
+                    $prog_mcard_res->execute();
+                    $res_pm = $prog_mcard_res->get_result();
+                    if ($res_pm && ($r_pm = $res_pm->fetch_assoc()) && !empty($r_pm['mx'])) {
+                        $next_mcard = intval($r_pm['mx']);
+                    }
+                    $prog_mcard_res->close();
+                }
+
+                $next_roll = 300000001;
+                $res_roll = $db->query("SELECT MAX(ROLL) AS mx FROM knit_card");
+                if ($res_roll && ($r_roll = $res_roll->fetch_assoc()) && !empty($r_roll['mx'])) {
+                    $next_roll = intval($r_roll['mx']) + 1;
+                }
+                $res_roll->free();
+
+                // Insert into knit_card
+                $ins = $db->prepare("
+                    INSERT INTO knit_card (
+                        KPTID, MCARD, ROLL, MCNO, QTY, PO_NUMBER, SONO, BUYER, STYLE, COLOR,
+                        FGSM, FDIA, O_T, FTYPE, YTYPE, CUSTOMER, YCOUNT, SL, MCDIA, GGSM,
+                        FEEDER_PLAN, LOT, SHIFT, KNIT_MATERIAL_CODE, KNIT_M_DESCRIPTION, UNAME
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ");
+
+                if (!$ins) {
+                    throw new Exception("Failed to prepare insert query: " . $db->error);
+                }
+
+                $p_mcdia   = !empty($prog['MCDIA']) ? $prog['MCDIA'] : ($input['MCDIA'] ?? '');
+                $p_ggsm    = !empty($prog['GGSM']) ? $prog['GGSM'] : (!empty($input['GGSM']) ? $input['GGSM'] : $p_finish_gsm);
+                $p_fplan   = !empty($prog['FEEDER_PLAN']) ? $prog['FEEDER_PLAN'] : ($input['FEEDER_PLAN'] ?? '');
+                $p_uname   = $prepared_by;
+
+                $inserted_ids = [];
+                $current_roll = $next_roll;
+
+                foreach ($rows_data as $row_item) {
+                    $r_mcno  = $row_item['mcno'];
+                    $r_shift = $row_item['shift'];
+                    $r_qty   = round($row_item['qty']);
+
+                    $ins->bind_param(
+                        "iiiidsssssssssssssssssssss",
+                        $p_kptid,
+                        $next_mcard,
+                        $current_roll,
+                        $r_mcno,
+                        $r_qty,
+                        $p_booking,
+                        $p_sono,
+                        $p_buyer,
+                        $p_style,
+                        $p_color,
+                        $p_finish_gsm,
+                        $p_finish_dia,
+                        $p_open_tube,
+                        $p_fabrics,
+                        $p_yarn_type,
+                        $p_customer,
+                        $p_yarn_count,
+                        $p_sl_vdq,
+                        $p_mcdia,
+                        $p_ggsm,
+                        $p_fplan,
+                        $p_lot_no,
+                        $r_shift,
+                        $p_knit_mat_code,
+                        $p_knit_m_desc,
+                        $p_uname
+                    );
+
+                    if (!$ins->execute()) {
+                        $ins_err = $ins->error;
+                        throw new Exception("Failed to generate Knit Card: " . $ins_err);
+                    }
+
+                    $inserted_ids[] = $ins->insert_id;
+                    $current_roll++;
+                }
+
                 $ins->close();
-                throw new Exception("Failed to generate Knit Card: " . $ins_err);
+
+                // Commit Transaction
+                $db->commit();
+
+                $redirect_id = $inserted_ids[0];
+                $success_msg = count($inserted_ids) > 1 
+                    ? count($inserted_ids) . " Knit Cards (Sub-TIDs) generated successfully!" 
+                    : "Knit Card generated successfully!";
+
+                header("Location: knit_card_view.php?id=" . $redirect_id . "&msg=" . urlencode($success_msg));
+                exit();
+
+            } catch (Exception $e) {
+                $db->rollback();
+                $error = $e->getMessage();
             }
-
-            $new_kcid = $ins->insert_id;
-            $ins->close();
-
-            // Mark the knitting_program as card generated
-            $upd = $db->prepare("UPDATE knitting_program SET CARD_GENERATED = 1 WHERE KPTID = ?");
-            if ($upd) {
-                $upd->bind_param("i", $p_kptid);
-                $upd->execute();
-                $upd->close();
-            }
-
-            // Commit Transaction
-            $db->commit();
-
-            header("Location: knit_card_view.php?id=" . $new_kcid . "&msg=" . urlencode("Knit Card generated successfully!"));
-            exit();
-
-        } catch (Exception $e) {
-            $db->rollback();
-            $error = $e->getMessage();
         }
     }
 }
@@ -813,6 +847,90 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             box-shadow: none !important;
             opacity: 0.7;
         }
+
+        /* ── DYNAMIC ALLOCATION ROWS ── */
+        .allocation-card {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-box);
+            padding: 16px;
+            margin-bottom: 14px;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        .allocation-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+        }
+        .allocation-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed #e2e8f0;
+        }
+        .allocation-title {
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-remove-row {
+            background: #ffffff;
+            border: 1px solid #fecaca;
+            color: #ef4444;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-remove-row:hover {
+            background: #fef2f2;
+            color: #dc2626;
+            border-color: #fca5a5;
+        }
+        .btn-add-row {
+            background: #ffffff;
+            border: 1.5px dashed var(--color-blue);
+            color: var(--color-blue);
+            font-size: 13px;
+            font-weight: 700;
+            padding: 10px 16px;
+            border-radius: var(--radius-box);
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 16px;
+        }
+        .btn-add-row:hover:not([disabled]) {
+            background: var(--color-blue-light);
+            border-color: #1d4ed8;
+            color: #1d4ed8;
+        }
+        .allocation-summary-box {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-input);
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 12px;
+        }
     </style>
 </head>
 
@@ -830,8 +948,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                 </div>
             </div>
             <div class="top-bar-right">
-                <span class="pill-badge">Program #<?php echo $p_kptid; ?></span>
-                <span class="pill-badge">Sub TID: <?php echo htmlspecialchars($p_sub_tid ?: 'N/A'); ?></span>
+                <span class="pill-badge">Knitting Program: <?php echo htmlspecialchars($p_sub_tid ?: 'N/A'); ?></span>
                 <a href="knitting_program_list.php" class="btn-back">
                     <i class="fa-solid fa-arrow-left"></i> Back to Programs
                 </a>
@@ -876,7 +993,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                             <span class="metric-lbl">Already Carded (KG)</span>
                         </div>
                         <div class="metric-col">
-                            <span class="metric-val-green"><?php echo number_format($remaining_qty, 2); ?></span>
+                            <span class="metric-val-green" id="metricRemainingQty"><?php echo number_format($remaining_qty, 2); ?></span>
                             <span class="metric-lbl">Remaining (KG)</span>
                         </div>
                     </div>
@@ -888,40 +1005,79 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                     ?>
                     <div class="d-flex justify-content-between mb-1">
                         <span class="metric-lbl" style="font-size: 10px;">Completion Status</span>
-                        <span class="metric-lbl" style="font-size: 10px; font-weight: 800; color: var(--color-blue);"><?php echo number_format($completion_pct, 0); ?>% Completion</span>
+                        <span class="metric-lbl" style="font-size: 10px; font-weight: 800; color: var(--color-blue);" id="progressPercentText"><?php echo number_format($completion_pct, 0); ?>% Completion</span>
                     </div>
                     <div class="progress-bar-container">
                         <div id="progressBarFill" class="progress-bar-fill"></div>
                     </div>
 
-                    <!-- Allocation Fields -->
-                    <!-- Machine Number & Shift Row -->
-                    <div class="row g-3 mb-4">
-                        <div class="col-6">
-                            <label class="form-label-custom required-label">Machine Number (M/C No)</label>
-                            <select name="MCNO" class="form-select-custom" required>
-                                <option value="">-- Select Knitting Machine --</option>
-                                <?php foreach ($mcno_list as $mc): ?>
-                                    <option value="<?php echo htmlspecialchars($mc); ?>" <?php echo ($p_mcno === $mc) ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($mc); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label-custom">SHIFT (AUTO)</label>
-                            <input type="text" name="SHIFT" class="form-input-custom" value="<?php echo $shift; ?>" readonly style="background-color: #f8fafc !important; cursor: not-allowed;">
+                    <!-- Dynamic Multi-Row Allocations Section -->
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <label class="form-label-custom mb-0" style="color: var(--text-primary); font-size: 11px;">
+                            <i class="fa-solid fa-layer-group text-primary me-1"></i> Sub-TID Allocations
+                        </label>
+                        <span class="badge bg-light text-secondary border px-2 py-1" style="font-size: 10px; font-weight:700;" id="rowCountBadge">1 Row</span>
+                    </div>
+
+                    <!-- Container for rows -->
+                    <div id="allocationRowsContainer">
+                        <!-- Initial Row -->
+                        <div class="allocation-card" data-row-idx="1">
+                            <div class="allocation-header">
+                                <span class="allocation-title">
+                                    <i class="fa-solid fa-tag text-primary"></i> <span class="row-title-text">Sub-TID #1</span>
+                                </span>
+                                <button type="button" class="btn-remove-row" style="display: none;" title="Remove this row">
+                                    <i class="fa-solid fa-trash-can"></i> Remove
+                                </button>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <label class="form-label-custom required-label">Machine (M/C NO)</label>
+                                    <select name="machine_no[]" class="form-select-custom row-mcno" required>
+                                        <option value="">-- Select M/C --</option>
+                                        <?php foreach ($mcno_list as $mc): ?>
+                                            <option value="<?php echo htmlspecialchars($mc); ?>" <?php echo ($p_mcno === $mc) ? 'selected' : ''; ?>>
+                                                <?php echo htmlspecialchars($mc); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label-custom">Shift</label>
+                                    <select name="shift[]" class="form-select-custom row-shift">
+                                        <option value="A" <?php echo ($shift === 'A') ? 'selected' : ''; ?>>Shift A</option>
+                                        <option value="B" <?php echo ($shift === 'B') ? 'selected' : ''; ?>>Shift B</option>
+                                        <option value="C" <?php echo ($shift === 'C') ? 'selected' : ''; ?>>Shift C</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="form-label-custom required-label">Required Quantity (KG)</label>
+                                <div class="quantity-input-wrapper">
+                                    <input type="number" step="0.01" min="0.01" max="<?php echo htmlspecialchars($remaining_qty); ?>" name="required_qty[]" class="form-input-custom row-qty" value="<?php echo htmlspecialchars($default_qty > 0 ? $default_qty : ''); ?>" required placeholder="Enter quantity">
+                                    <span class="input-group-addon-custom">KG</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Required Quantity (KG) -->
-                    <div class="mb-2">
-                        <label class="form-label-custom required-label">Required Quantity (KG)</label>
-                        <div class="quantity-input-wrapper">
-                            <input type="number" step="0.01" min="0.01" max="<?php echo htmlspecialchars($remaining_qty); ?>" name="REQ_QTY" class="form-input-custom" value="<?php echo htmlspecialchars($default_qty); ?>" required placeholder="Enter quantity">
-                            <span class="input-group-addon-custom">KG</span>
+                    <!-- + Add New Row Button -->
+                    <button type="button" id="btnAddRow" class="btn-add-row" <?php echo ($remaining_qty <= 0) ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''; ?>>
+                        <i class="fa-solid fa-circle-plus"></i> + Add New Row
+                    </button>
+
+                    <!-- Real-time Summary Box -->
+                    <div class="allocation-summary-box">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span style="color: var(--text-secondary); font-weight:600;">Total Allocated:</span>
+                            <span class="fw-bold" id="liveTotalAllocated" style="font-size: 13px; color: var(--color-blue);"><?php echo number_format($default_qty, 2); ?> KG</span>
                         </div>
-                        <div class="validation-msg mt-2 d-flex align-items-center gap-1">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span style="color: var(--text-secondary); font-weight:600;">Net Remaining:</span>
+                            <span class="fw-bold" id="liveNetRemaining" style="font-size: 13px; color: var(--color-success);"><?php echo number_format(max(0, $remaining_qty - $default_qty), 2); ?> KG</span>
+                        </div>
+                        <div id="liveValidationMessage" class="validation-msg mt-1 d-flex align-items-center gap-1">
                             <i class="fa-solid fa-circle-check"></i> Within remaining capacity
                         </div>
                     </div>
@@ -1075,15 +1231,195 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
         </form>
     </div>
 
-    <!-- ═══ METRICS ANIMATION SCRIPT ═══ -->
+    <!-- ═══ METRICS & DYNAMIC MULTI-ROW SCRIPT ═══ -->
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            setTimeout(function() {
-                var fill = document.getElementById("progressBarFill");
-                if (fill) {
-                    fill.style.width = "<?php echo number_format($completion_pct, 2); ?>%";
+            const programQty       = <?php echo floatval($program_qty); ?>;
+            const alreadyCarded    = <?php echo floatval($already_carded); ?>;
+            const initialRemaining = <?php echo floatval($remaining_qty); ?>;
+            const defaultShift     = "<?php echo htmlspecialchars($shift); ?>";
+
+            const container             = document.getElementById("allocationRowsContainer");
+            const btnAddRow             = document.getElementById("btnAddRow");
+            const liveTotalAllocated    = document.getElementById("liveTotalAllocated");
+            const liveNetRemaining      = document.getElementById("liveNetRemaining");
+            const liveValidationMessage = document.getElementById("liveValidationMessage");
+            const progressBarFill       = document.getElementById("progressBarFill");
+            const progressPercentText   = document.getElementById("progressPercentText");
+            const rowCountBadge         = document.getElementById("rowCountBadge");
+            const submitBtn             = document.querySelector(".btn-submit");
+
+            // Pre-built machine options HTML for newly added rows
+            const mcOptionsHtml = `
+                <option value="">-- Select M/C --</option>
+                <?php foreach ($mcno_list as $mc): ?>
+                    <option value="<?php echo htmlspecialchars($mc); ?>"><?php echo htmlspecialchars($mc); ?></option>
+                <?php endforeach; ?>
+            `;
+
+            function updateCalculations() {
+                const rows = container.querySelectorAll(".allocation-card");
+                let totalAllocated = 0;
+
+                rows.forEach(row => {
+                    const qtyInput = row.querySelector(".row-qty");
+                    const val = parseFloat(qtyInput.value) || 0;
+                    totalAllocated += val;
+                });
+
+                const netRemaining  = Math.max(0, initialRemaining - totalAllocated);
+                const isExceeded    = totalAllocated > (initialRemaining + 0.0001);
+                const isEmptyOrZero = totalAllocated <= 0;
+
+                // Update text summary
+                if (liveTotalAllocated) {
+                    liveTotalAllocated.textContent = totalAllocated.toFixed(2) + " KG";
                 }
-            }, 150);
+                if (liveNetRemaining) {
+                    liveNetRemaining.textContent = netRemaining.toFixed(2) + " KG";
+                    liveNetRemaining.style.color = isExceeded ? "#ef4444" : "#16a34a";
+                }
+
+                // Progress Bar calculation
+                const totalProgressQty = alreadyCarded + totalAllocated;
+                let progressPct = programQty > 0 ? (totalProgressQty / programQty) * 100 : 0;
+                progressPct = Math.min(100, Math.max(0, progressPct));
+
+                if (progressBarFill) {
+                    progressBarFill.style.width = progressPct.toFixed(2) + "%";
+                    if (isExceeded) {
+                        progressBarFill.style.background = "linear-gradient(90deg, #ef4444 0%, #dc2626 100%)";
+                    } else {
+                        progressBarFill.style.background = "linear-gradient(90deg, #3b82f6 0%, #06b6d4 100%)";
+                    }
+                }
+                if (progressPercentText) {
+                    progressPercentText.textContent = Math.round(progressPct) + "% Completion";
+                }
+
+                // Validation messaging & Submit button enabling
+                if (isExceeded) {
+                    const exceedDiff = (totalAllocated - initialRemaining).toFixed(2);
+                    liveValidationMessage.className = "validation-msg mt-1 d-flex align-items-center gap-1 text-danger";
+                    liveValidationMessage.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Exceeds remaining capacity by ' + exceedDiff + ' KG';
+                    if (submitBtn) submitBtn.disabled = true;
+                } else if (isEmptyOrZero) {
+                    liveValidationMessage.className = "validation-msg mt-1 d-flex align-items-center gap-1 text-warning";
+                    liveValidationMessage.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Please enter positive required quantity';
+                    if (submitBtn && initialRemaining > 0) submitBtn.disabled = false;
+                } else {
+                    liveValidationMessage.className = "validation-msg mt-1 d-flex align-items-center gap-1 text-success";
+                    liveValidationMessage.innerHTML = '<i class="fa-solid fa-circle-check"></i> Within remaining capacity';
+                    if (submitBtn && initialRemaining > 0) submitBtn.disabled = false;
+                }
+
+                // Update row count badge
+                if (rowCountBadge) {
+                    rowCountBadge.textContent = rows.length + (rows.length === 1 ? " Row" : " Rows");
+                }
+
+                // Toggle visibility of Remove button on rows
+                rows.forEach(row => {
+                    const removeBtn = row.querySelector(".btn-remove-row");
+                    if (removeBtn) {
+                        removeBtn.style.display = rows.length > 1 ? "inline-flex" : "none";
+                    }
+                });
+            }
+
+            function renumberRows() {
+                const rows = container.querySelectorAll(".allocation-card");
+                rows.forEach((row, idx) => {
+                    const rowNumber = idx + 1;
+                    row.setAttribute("data-row-idx", rowNumber);
+                    const title = row.querySelector(".row-title-text");
+                    if (title) {
+                        title.textContent = "Sub-TID #" + rowNumber;
+                    }
+                });
+            }
+
+            // Add Row Click Event
+            if (btnAddRow) {
+                btnAddRow.addEventListener("click", function() {
+                    const rows = container.querySelectorAll(".allocation-card");
+                    let currentTotal = 0;
+                    rows.forEach(r => {
+                        const q = parseFloat(r.querySelector(".row-qty").value) || 0;
+                        currentTotal += q;
+                    });
+                    const unallocated = Math.max(0, initialRemaining - currentTotal);
+                    const defaultNewQty = unallocated > 0 ? unallocated.toFixed(2) : "";
+
+                    const newCard = document.createElement("div");
+                    newCard.className = "allocation-card";
+                    newCard.innerHTML = `
+                        <div class="allocation-header">
+                            <span class="allocation-title">
+                                <i class="fa-solid fa-tag text-primary"></i> <span class="row-title-text">Sub-TID</span>
+                            </span>
+                            <button type="button" class="btn-remove-row" title="Remove this row">
+                                <i class="fa-solid fa-trash-can"></i> Remove
+                            </button>
+                        </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <label class="form-label-custom required-label">Machine (M/C NO)</label>
+                                <select name="machine_no[]" class="form-select-custom row-mcno" required>
+                                    ${mcOptionsHtml}
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label-custom">Shift</label>
+                                <select name="shift[]" class="form-select-custom row-shift">
+                                    <option value="A" ${defaultShift === 'A' ? 'selected' : ''}>Shift A</option>
+                                    <option value="B" ${defaultShift === 'B' ? 'selected' : ''}>Shift B</option>
+                                    <option value="C" ${defaultShift === 'C' ? 'selected' : ''}>Shift C</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="form-label-custom required-label">Required Quantity (KG)</label>
+                            <div class="quantity-input-wrapper">
+                                <input type="number" step="0.01" min="0.01" max="${initialRemaining}" name="required_qty[]" class="form-input-custom row-qty" value="${defaultNewQty}" required placeholder="Enter quantity">
+                                <span class="input-group-addon-custom">KG</span>
+                            </div>
+                        </div>
+                    `;
+
+                    container.appendChild(newCard);
+                    renumberRows();
+                    updateCalculations();
+
+                    const newSelect = newCard.querySelector(".row-mcno");
+                    if (newSelect) newSelect.focus();
+                });
+            }
+
+            // Remove Row Event Delegation
+            container.addEventListener("click", function(e) {
+                const removeBtn = e.target.closest(".btn-remove-row");
+                if (removeBtn) {
+                    const card = removeBtn.closest(".allocation-card");
+                    if (card) {
+                        card.remove();
+                        renumberRows();
+                        updateCalculations();
+                    }
+                }
+            });
+
+            // Input change delegation
+            container.addEventListener("input", function(e) {
+                if (e.target.classList.contains("row-qty")) {
+                    updateCalculations();
+                }
+            });
+
+            // Initial calculation run
+            setTimeout(function() {
+                updateCalculations();
+            }, 100);
         });
     </script>
 
