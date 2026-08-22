@@ -393,6 +393,56 @@
       color: #042f2c;
     }
 
+    .rack-number-input {
+      width: 100%;
+      border-radius: 14px;
+      font-weight: 700;
+      background: #dcebe8;
+      border: 1px solid #9fc8c1;
+      color: #083a36;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .rack-number-input:focus {
+      border-color: #0f7a6f;
+      box-shadow: 0 0 0 3px rgba(15, 122, 111, 0.15);
+    }
+
+    .rack-number-options {
+      display: none;
+      width: 100%;
+      max-height: 180px;
+      overflow-y: auto;
+      margin-top: 4px;
+      padding: 4px;
+      background: #eef8f5;
+      border: 1px solid #9fc8c1;
+      border-radius: 12px;
+      box-shadow: 0 8px 18px rgba(10, 60, 55, 0.18);
+    }
+
+    .rack-number-options.visible {
+      display: block;
+    }
+
+    .rack-number-option {
+      width: 100%;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: #083a36;
+      padding: 8px 12px;
+      text-align: left;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .rack-number-option:hover {
+      background: #c3dcd7;
+    }
+
     .rack-group .btn.active-rack {
       background: linear-gradient(135deg, #0f7a6f, #0b4f47);
       border-color: #0f7a6f;
@@ -606,9 +656,10 @@
           <span>Select Rack Location</span>
         </div>
         <div class="rack-group" id="rackGroup">
-          <button type="button" class="btn" data-rack="A">A</button>
-          <button type="button" class="btn" data-rack="B">B</button>
-          <button type="button" class="btn" data-rack="C">C</button>
+          <input class="rack-number-input" type="text" id="rackNumberInput"
+            inputmode="numeric" maxlength="2"
+            placeholder="Enter rack number (01-50)" autocomplete="off">
+          <div class="rack-number-options" id="rackNumberOptions"></div>
         </div>
         <div class="sub-rack-group" id="subRackGroup">
           <span class="sub-placeholder">Select a rack above to see sub-racks</span>
@@ -655,6 +706,8 @@
       const cameraControls = document.getElementById('cameraControls');
       const rackSection = document.getElementById('rack-section');
       const rackGroup = document.getElementById('rackGroup');
+      const rackNumberInput = document.getElementById('rackNumberInput');
+      const rackNumberOptions = document.getElementById('rackNumberOptions');
       const subRackGroup = document.getElementById('subRackGroup');
       const resetRackBtn = document.getElementById('resetRackBtn');
       const saveRackBtn = document.getElementById('saveRackBtn');
@@ -686,12 +739,6 @@
         M_DES: 'MATERIAL DESC',
         RACK: 'RACK',
         TPOINT: 'T.POINT'
-      };
-
-      const subRackOptions = {
-        'A': ['A1', 'A2', 'A3'],
-        'B': ['B1', 'B2', 'B3'],
-        'C': ['C1', 'C2', 'C3']
       };
 
       let scannedInfo = null;
@@ -790,9 +837,7 @@
       function resetRackSelection() {
         selectedRack = null;
         selectedSubRack = null;
-        rackGroup.querySelectorAll('.btn').forEach(function(b) {
-          b.classList.remove('active-rack');
-        });
+        rackNumberInput.value = '';
         subRackGroup.innerHTML = '<span class="sub-placeholder">Select a rack above to see sub-racks</span>';
         saveRackBtn.disabled = true;
       }
@@ -802,21 +847,16 @@
 
         const existingRack = scannedInfo.RACK;
         if (existingRack) {
-          const match = existingRack.match(/^([A-Z])(.*)$/i);
+          const match = existingRack.match(/^(\d+)([A-Z])?$/i);
           if (match) {
-            setActiveRack(match[1].toUpperCase());
-            if (match[2]) {
-              setActiveSubRack(existingRack.toUpperCase());
-            }
+            rackNumberInput.value = match[1];
+            setActiveRack(match[1]);
+            if (match[2]) setActiveSubRack(existingRack.toUpperCase());
           }
         }
       }
 
       function setActiveRack(rack) {
-        rackGroup.querySelectorAll('.btn').forEach(function(b) {
-          b.classList.remove('active-rack');
-          if (b.dataset.rack === rack) b.classList.add('active-rack');
-        });
         selectedRack = rack;
         updateSubRacks(rack);
       }
@@ -831,15 +871,10 @@
       }
 
       function updateSubRacks(rack) {
-        const options = subRackOptions[rack] || [];
+        const options = ['A', 'B', 'C'].map(function(suffix) {
+          return rack + suffix;
+        });
         subRackGroup.innerHTML = '';
-
-        if (options.length === 0) {
-          subRackGroup.innerHTML = '<span class="sub-placeholder">No sub-racks available</span>';
-          selectedSubRack = null;
-          saveRackBtn.disabled = true;
-          return;
-        }
 
         options.forEach(function(opt) {
           const btn = document.createElement('button');
@@ -857,11 +892,67 @@
         saveRackBtn.disabled = true;
       }
 
-      rackGroup.addEventListener('click', function(e) {
-        const btn = e.target.closest('.btn');
-        if (!btn) return;
-        setActiveRack(btn.dataset.rack);
-        showMessage('Selected Rack: ' + selectedRack, '');
+      function updateRackNumberOptions(value) {
+        const prefix = String(value || '').replace(/\D/g, '').slice(0, 1);
+        rackNumberOptions.innerHTML = '';
+        if (!prefix) {
+          rackNumberOptions.classList.remove('visible');
+          return;
+        }
+
+        const numbers = [];
+        for (let number = 1; number <= 50; number += 1) {
+          const rackNumber = String(number).padStart(2, '0');
+          const matchesPreviousRange = prefix === '0'
+            ? number >= 1 && number <= 9
+            : prefix >= '1' && prefix <= '4'
+              ? Math.floor(number / 10) === Number(prefix)
+              : rackNumber.endsWith(prefix);
+
+          if (matchesPreviousRange) numbers.push(rackNumber);
+        }
+
+        numbers.forEach(function(rackNumber) {
+          const option = document.createElement('button');
+          option.type = 'button';
+          option.className = 'rack-number-option';
+          option.textContent = rackNumber;
+          option.addEventListener('click', function() {
+            rackNumberInput.value = option.textContent;
+            rackNumberInput.dispatchEvent(new Event('input', { bubbles: true }));
+            rackNumberOptions.classList.remove('visible');
+          });
+          rackNumberOptions.appendChild(option);
+        });
+        rackNumberOptions.classList.add('visible');
+      }
+
+      rackNumberInput.addEventListener('input', function() {
+        let value = rackNumberInput.value.replace(/\D/g, '').slice(0, 2);
+        if (Number(value) > 50) value = '50';
+        rackNumberInput.value = value;
+        updateRackNumberOptions(value);
+        selectedSubRack = null;
+        saveRackBtn.disabled = true;
+
+        const rack = Number(value);
+        if (value.length === 2 && rack >= 1 && rack <= 50) {
+          setActiveRack(String(rack).padStart(2, '0'));
+          showMessage('Selected Rack: ' + selectedRack, '');
+        } else {
+          selectedRack = null;
+          subRackGroup.innerHTML = '<span class="sub-placeholder">Select a rack number to see locations</span>';
+        }
+      });
+
+      rackNumberInput.addEventListener('focus', function() {
+        updateRackNumberOptions(rackNumberInput.value);
+      });
+
+      rackNumberInput.addEventListener('blur', function() {
+        setTimeout(function() {
+          rackNumberOptions.classList.remove('visible');
+        }, 150);
       });
 
       function fetchDataByRoll(roll) {
