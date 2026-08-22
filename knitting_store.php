@@ -670,7 +670,7 @@
         COLOR: 'COLOR',
         MCNO: 'MACHINE NO',
         MC_DIA: 'MC DIA',
-        SUPPLIER: 'SUPPLIER',
+        CUSTOMER: 'CUSTOMER',
         SHIFT: 'SHIFT',
         YTYPE: 'YARN TYPE',
         YCOUNT: 'YARN COUNT',
@@ -763,7 +763,7 @@
 
         html += buildFieldRow(['ROLL', 'PO_NUMBER', 'QTY', 'SONO']);
         html += buildFieldRow(['SHIFT', 'BUYER', 'STYLE', 'COLOR']);
-        html += buildFieldRow(['MCNO', 'MC_DIA', 'SUPPLIER', 'YTYPE']);
+        html += buildFieldRow(['MCNO', 'MC_DIA', 'CUSTOMER', 'YTYPE']);
         html += buildFieldRow(['YCOUNT', 'O_T', 'SL', 'FTYPE']);
         html += buildFieldRow(['FGSM', 'FDIA', 'GGSM', 'FPLAN']);
         html += buildFieldRow(['LOTNO', 'TPOINT', 'MATERIAL_CODE', 'M_DES']);

@@ -21,7 +21,7 @@ function insertSplitRow($db, $budat, $bcmtid, $rollNo, $row) {
     $vCOLOR = isset($row['COLOR']) ? $row['COLOR'] : null;
     $vMCNO = isset($row['MCNO']) ? $row['MCNO'] : null;
     $vMCDIA = isset($row['MCDIA']) ? $row['MCDIA'] : null;
-    $vSUPPLIER = isset($row['SUPPLIER']) ? $row['SUPPLIER'] : null;
+    $vCUSTOMER = isset($row['CUSTOMER']) ? $row['CUSTOMER'] : null;
     $vYTYPE = isset($row['YTYPE']) ? $row['YTYPE'] : null;
     $vYCOUNT = isset($row['YCOUNT']) ? $row['YCOUNT'] : null;
     $vO_T = isset($row['O_T']) ? $row['O_T'] : null;
@@ -40,7 +40,7 @@ function insertSplitRow($db, $budat, $bcmtid, $rollNo, $row) {
     $stmt = $db->prepare(
         "INSERT INTO dyeing_batch_card
          (BUDAT, BCMTID, ROLL, PO_NUMBER, RACK, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
-          MCNO, MCDIA, SUPPLIER, YTYPE, YCOUNT, O_T, SL, FTYPE, FGSM, FDIA, GGSM,
+          MCNO, MCDIA, CUSTOMER, YTYPE, YCOUNT, O_T, SL, FTYPE, FGSM, FDIA, GGSM,
           FEEDER_PLAN, LOT_NO, TPOINT, MCODE, MDESCRIPTION, UNAME)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
@@ -64,7 +64,7 @@ function insertSplitRow($db, $budat, $bcmtid, $rollNo, $row) {
         $vCOLOR,
         $vMCNO,
         $vMCDIA,
-        $vSUPPLIER,
+        $vCUSTOMER,
         $vYTYPE,
         $vYCOUNT,
         $vO_T,

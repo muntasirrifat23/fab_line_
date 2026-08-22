@@ -721,7 +721,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
         'LOT_NO': 'Lot No',
         'MCARD': 'MCARD',
         'ROLL': 'ROLL',
-        'SUPPLIER': 'Supplier',
+        'CUSTOMER': 'Customer',
         'GGSM': 'Gray GSM',
         'FEEDER_PLAN': 'Feeder Plan',
         'SHIFT': 'Shift',
@@ -767,13 +767,13 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
 
         console.log('✓ Parsed parts count:', parts.length, 'Parts:', parts);
 
-        const format16WithSupplier = [
-          'SUB_TID', 'MCNO', 'BUYER', 'SUPPLIER', 'BOOKING', 'SONO', 'STYLE',
+        const format16WithCustomer = [
+          'SUB_TID', 'MCNO', 'BUYER', 'CUSTOMER', 'BOOKING', 'SONO', 'STYLE',
           'FABRICS_TYPE', 'YARN_COUNT', 'YARN_TYPE', 'FINISH_GSM', 'FINISH_DIA',
           'OPEN_TUBE', 'LOT_NO', 'QTY', 'COLOR'
         ];
 
-        const format16WithoutSupplier = [
+        const format16WithoutCustomer = [
           'SUB_TID', 'MCNO', 'BUYER', 'BOOKING', 'SONO', 'STYLE',
           'FABRICS_TYPE', 'YARN_COUNT', 'YARN_TYPE', 'FINISH_GSM', 'FINISH_DIA',
           'OPEN_TUBE', 'LOT_NO', 'QTY', 'COLOR'
@@ -829,32 +829,32 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
           return buildData(format17);
         }
 
-        // Priority 2: Check for 16-field format with supplier
-        if (parts.length === format16WithSupplier.length) {
+        // Priority 2: Check for 16-field format with customer
+        if (parts.length === format16WithCustomer.length) {
           const mcno = parts[1];
           const booking = parts[4];
           const sono = parts[5];
 
           if ((looksLikeMachineNo(mcno) || mcno) && looksLikeBooking(booking) && looksLikeSono(sono)) {
-            console.log('✓ Detected format16WithSupplier');
-            return buildData(format16WithSupplier);
+            console.log('✓ Detected format16WithCustomer');
+            return buildData(format16WithCustomer);
           }
-          // If supplier is blank, still try to parse
+          // If customer is blank, still try to parse
           if (parts[3] === '' && booking && sono) {
-            console.log('✓ Detected format16WithSupplier (empty supplier)');
-            return buildData(format16WithSupplier);
+            console.log('✓ Detected format16WithCustomer (empty customer)');
+            return buildData(format16WithCustomer);
           }
         }
 
-        // Priority 3: Check for 16-field format without supplier
-        if (parts.length === format16WithoutSupplier.length) {
+        // Priority 3: Check for 16-field format without customer
+        if (parts.length === format16WithoutCustomer.length) {
           const mcno = parts[1];
           const booking = parts[3];
           const sono = parts[4];
 
           if ((looksLikeMachineNo(mcno) || mcno) && booking && sono) {
-            console.log('✓ Detected format16WithoutSupplier');
-            return buildData(format16WithoutSupplier);
+            console.log('✓ Detected format16WithoutCustomer');
+            return buildData(format16WithoutCustomer);
           }
         }
 
@@ -909,7 +909,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
           LOT_NO: m(row.LOT),
           MCARD: m(row.MCARD),
           ROLL: m(row.ROLL),
-          SUPPLIER: m(row.SUPPLIER),
+          CUSTOMER: m(row.CUSTOMER),
           GGSM: m(row.GGSM),
           FEEDER_PLAN: m(row.FEEDER_PLAN),
           SHIFT: m(row.SHIFT),
@@ -947,7 +947,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
         html += `
           <div class="data-row default-row knit-flow">
             ${['ROLL', 'BOOKING', 'SONO', 'BUYER', 'STYLE', 'COLOR', 'MCNO',
-              'MC_DIA', 'SUPPLIER', 'SHIFT', 'YARN_TYPE', 'YARN_COUNT', 'FABRICS_TYPE', 'FINISH_GSM',
+              'MC_DIA', 'CUSTOMER', 'SHIFT', 'YARN_TYPE', 'YARN_COUNT', 'FABRICS_TYPE', 'FINISH_GSM',
               'FINISH_DIA', 'OPEN_TUBE', 'SL_VDQ', 'GGSM', 'FEEDER_PLAN', 'LOT_NO', 'QTY'].map(field => `
               <div class="field-block">
                 <span class="field-label">${FIELD_LABELS[field] || field}</span>
@@ -1154,7 +1154,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
         html += `
           <div class="data-row default-row knit-flow">
             ${['ROLL', 'BOOKING', 'SONO', 'BUYER', 'STYLE', 'COLOR', 'MCNO',
-              'MC_DIA', 'SUPPLIER', 'SHIFT', 'YARN_TYPE', 'YARN_COUNT', 'FABRICS_TYPE', 'FINISH_GSM',
+              'MC_DIA', 'CUSTOMER', 'SHIFT', 'YARN_TYPE', 'YARN_COUNT', 'FABRICS_TYPE', 'FINISH_GSM',
               'FINISH_DIA', 'OPEN_TUBE', 'SL_VDQ', 'GGSM', 'FEEDER_PLAN', 'LOT_NO'].map(field => `
               <div class="field-block">
                 <span class="field-label">${FIELD_LABELS[field] || field}</span>
@@ -1310,7 +1310,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
           open_tube: scannedInfo.OPEN_TUBE || "",
           color: scannedInfo.COLOR || "",
           sl_vdq: scannedInfo.SL_VDQ || "",
-          supplier: scannedInfo.SUPPLIER || "",
+          customer: scannedInfo.CUSTOMER || "",
           gray_gsm: scannedInfo.GGSM || "",
           feeder_plan: scannedInfo.FEEDER_PLAN || "",
           lot_no: scannedInfo.LOT_NO || "",

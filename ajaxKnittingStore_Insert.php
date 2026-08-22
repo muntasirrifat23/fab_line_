@@ -62,7 +62,7 @@ $style      = val($input, 'STYLE');
 $color      = val($input, 'COLOR');
 $mcno       = val($input, 'MCNO');
 $mcdia      = val($input, 'MC_DIA');
-$supplier   = val($input, 'SUPPLIER');
+$customer   = val($input, 'CUSTOMER');
 $ytype      = val($input, 'YTYPE');
 $ycount     = val($input, 'YCOUNT');
 $o_t        = val($input, 'O_T');
@@ -98,7 +98,7 @@ if ($curUser !== '') {
 
 $sql = "INSERT INTO knitting_store
         (BUDAT, RACK, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR, MCNO, MCDIA,
-         SUPPLIER, YTYPE, YCOUNT, O_T, SL, FTYPE, FGSM, FDIA, GGSM, FEEDER_PLAN, LOT_NO,
+         CUSTOMER, YTYPE, YCOUNT, O_T, SL, FTYPE, FGSM, FDIA, GGSM, FEEDER_PLAN, LOT_NO,
          TPOINT, MCODE, MDESCRIPTION, UNAME, UID)
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
@@ -113,7 +113,7 @@ mysqli_stmt_bind_param(
     $stmt,
     "ssssssssssssssssssssssssssss",
     $budat, $rack, $roll, $po_number, $qty, $sono, $shift, $buyer, $style, $color,
-    $mcno, $mcdia, $supplier, $ytype, $ycount, $o_t, $sl, $ftype, $fgsm, $fdia,
+    $mcno, $mcdia, $customer, $ytype, $ycount, $o_t, $sl, $ftype, $fgsm, $fdia,
     $ggsm, $fplan, $lotno, $tpoint, $mcode, $mdesc, $uname, $uid
 );
 

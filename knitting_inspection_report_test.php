@@ -200,7 +200,7 @@
                             <th>COLOR</th>
                             <th>MC NO</th>
                             <th>MC DIA</th>
-                            <th>SUPPLIER</th>
+                            <th>CUSTOMER</th>
                             <th>SHIFT</th>
                             <th>YARN TYPE</th>
                             <th>YARN COUNT</th>
@@ -272,7 +272,7 @@
 
                 var fields = [
                     'BUDAT', 'ROLL', 'PO_NUMBER', 'QTY', 'SONO', 'BUYER', 'STYLE',
-                    'COLOR', 'MCNO', 'MC_DIA', 'SUPPLIER', 'SHIFT', 'YTYPE', 'YCOUNT', 'FTYPE',
+                    'COLOR', 'MCNO', 'MC_DIA', 'CUSTOMER', 'SHIFT', 'YTYPE', 'YCOUNT', 'FTYPE',
                     'FGSM', 'FDIA', 'O_T', 'SL', 'GGSM', 'FPLAN', 'LOTNO', 'MATERIAL_CODE',
                     'M_DES', 'TPOINT', 'TT', 'PATTA', 'SLUB', 'YC_SPOT', 'OILSPOT',
                     'FF', 'SEEDS', 'MSTITCH', 'SINKERMARK', 'NEEDLEMARK', 'LYCOUT', 'OILLINE',
@@ -314,7 +314,7 @@
                 'COLOR': row.COLOR,
                 'MC NO': row.MCNO,
                 'MC DIA': row.MC_DIA,
-                'SUPPLIER': row.SUPPLIER,
+                'CUSTOMER': row.CUSTOMER,
                 'SHIFT': row.SHIFT,
                 'YARN TYPE': row.YTYPE,
                 'YARN COUNT': row.YCOUNT,

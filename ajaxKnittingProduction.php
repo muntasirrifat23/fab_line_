@@ -190,8 +190,8 @@ if (isset($schemaColumns['KNIT_M_DESCRIPTION']) && !in_array('KNIT_M_DESCRIPTION
     $insertFields[] = 'KNIT_M_DESCRIPTION';
     $insertValues[] = '';
 }
-if (isset($schemaColumns['SUPPLIER']) && !in_array('SUPPLIER', $insertFields, true)) {
-    $insertFields[] = 'SUPPLIER';
+if (isset($schemaColumns['CUSTOMER']) && !in_array('CUSTOMER', $insertFields, true)) {
+    $insertFields[] = 'CUSTOMER';
     $insertValues[] = '';
 }
 if (isset($schemaColumns['KNIT_MATERIAL_CODE']) && !in_array('KNIT_MATERIAL_CODE', $insertFields, true)) {

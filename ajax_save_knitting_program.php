@@ -56,7 +56,7 @@ $booking = isset($_POST['booking']) ? trim($_POST['booking']) : '';
 $sono = isset($_POST['sono']) ? trim($_POST['sono']) : null;
 $style = isset($_POST['style']) ? trim($_POST['style']) : null;
 $buyer = isset($_POST['buyer']) ? trim($_POST['buyer']) : null;
-$supplier = isset($_POST['supplier']) ? trim($_POST['supplier']) : null;
+$customer = isset($_POST['customer']) ? trim($_POST['customer']) : null;
 $knitDescription = isset($_POST['knit_m_description']) ? trim($_POST['knit_m_description']) : null;
 $yarnType = isset($_POST['yarn_type']) ? trim($_POST['yarn_type']) : null;
 $yarnCount = isset($_POST['yarn_count']) ? trim($_POST['yarn_count']) : null;
@@ -182,7 +182,7 @@ $insertSql = "INSERT INTO knitting_program (
     O_T,
     FTYPE,
     YTYPE,
-    SUPPLIER,
+    CUSTOMER,
     YCOUNT,
     SL,
     MCDIA,
@@ -238,7 +238,7 @@ foreach ($mcnoQtyData as $row) {
         $openTube,
         $fabricsType,
         $yarnType,
-        $supplier,
+        $customer,
         $yarnCount,
         $slVdq,
         $mcDia,

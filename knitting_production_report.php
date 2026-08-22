@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -111,7 +111,7 @@
                             <th>COLOR</th>
                             <th>MCNO</th>
                             <th>MC DIA</th>
-                            <th>SUPPLIER</th>
+                            <th>CUSTOMER</th>
                             <th>SHIFT</th>
                             <th>YARN TYPE</th>
                             <th>YARN COUNT</th>
@@ -163,7 +163,7 @@
                 tr.append($('<td>').text(row.COLOR || ''));
                 tr.append($('<td>').text(row.MCNO || ''));
                 tr.append($('<td>').text(row.MC_DIA || ''));
-                tr.append($('<td>').text(row.SUPPLIER || ''));
+                tr.append($('<td>').text(row.CUSTOMER || ''));
                 tr.append($('<td>').text(row.SHIFT || ''));
                 tr.append($('<td>').text(row.YARN_TYPE || ''));
                 tr.append($('<td>').text(row.YARN_COUNT || ''));

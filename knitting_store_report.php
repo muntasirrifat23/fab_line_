@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -239,7 +239,7 @@
                             <th>COLOR</th>
                             <th>MACHINE NO</th>
                             <th>MC DIA</th>
-                            <th>SUPPLIER</th>
+                            <th>CUSTOMER</th>
                             <th>YARN TYPE</th>
                             <th>YARN COUNT</th>
                             <th>OPEN / TUBE</th>
@@ -282,7 +282,7 @@
             { key: 'COLOR', label: 'Color' },
             { key: 'MCNO', label: 'Machine No' },
             { key: 'MCDIA', label: 'MC Dia' },
-            { key: 'SUPPLIER', label: 'Supplier' },
+            { key: 'CUSTOMER', label: 'Customer' },
             { key: 'YTYPE', label: 'Yarn Type' },
             { key: 'YCOUNT', label: 'Yarn Count' },
             { key: 'O_T', label: 'Open / Tube' },

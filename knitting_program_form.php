@@ -36,7 +36,7 @@ $po_number = '';
 $sono = '';
 $style = '';
 $buyer = '';
-$supplier = '';
+$customer = '';
 $knit_m_description = '';
 $qty = '0.00';
 $shift = '';
@@ -76,7 +76,7 @@ if ($is_edit) {
             $sono = $row['SONO'] ?? $row['so_no'] ?? '';
             $style = $row['STYLE'] ?? $row['style_no'] ?? '';
             $buyer = $row['BUYER'] ?? $row['buyer'] ?? '';
-            $supplier = $row['SUPPLIER'] ?? $row['supplier'] ?? '';
+            $customer = $row['CUSTOMER'] ?? $row['customer'] ?? '';
             $knit_m_description = $row['KNIT_M_DESCRIPTION'] ?? '';
             $qty = $row['QTY'] ?? $row['req_qty'] ?? '0.00';
             $shift = $row['SHIFT'] ?? $auto_shift;
@@ -102,7 +102,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
     $sono = trim($_POST['SONO'] ?? '');
     $style = trim($_POST['STYLE'] ?? '');
     $buyer = trim($_POST['BUYER'] ?? '');
-    $supplier = trim($_POST['SUPPLIER'] ?? '');
+    $customer = trim($_POST['CUSTOMER'] ?? '');
     $knit_m_description = trim($_POST['KNIT_M_DESCRIPTION'] ?? '');
     $qty = floatval($_POST['QTY'] ?? 0);
     $shift = trim($_POST['SHIFT'] ?? $auto_shift);
@@ -138,7 +138,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
     if (empty($errors)) {
         if ($is_edit) {
             $sql = "UPDATE knitting_program SET 
-                MAIN_TID=?, SUB_TID=?, BOOKING=?, SONO=?, STYLE=?, BUYER=?, SUPPLIER=?,
+                MAIN_TID=?, SUB_TID=?, BOOKING=?, SONO=?, STYLE=?, BUYER=?, CUSTOMER=?,
                 KNIT_M_DESCRIPTION=?, QTY=?, SHIFT=?, YTYPE=?, YCOUNT=?,
                 FTYPE=?, FGSM=?, FDIA=?, O_T=?, LOT=?, KNIT_MATERIAL_CODE=?, MCNO_ID=?
                 WHERE KPTID=? OR id=?";
@@ -146,7 +146,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
             if ($stmt) {
                 $stmt->bind_param(
                     "sssssssssdssssssssiiii",
-                    $main_tid, $sub_tid, $po_number, $sono, $style, $buyer, $supplier,
+                    $main_tid, $sub_tid, $po_number, $sono, $style, $buyer, $customer,
                     $knit_m_description, $qty, $shift, $yarn_type, $yarn_count,
                     $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code, $mcno_id, $edit_id, $edit_id
                 );
@@ -161,7 +161,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
             }
         } else {
             $sql = "INSERT INTO knitting_program (
-                MAIN_TID, SUB_TID, BOOKING, SONO, STYLE, BUYER, SUPPLIER,
+                MAIN_TID, SUB_TID, BOOKING, SONO, STYLE, BUYER, CUSTOMER,
                 KNIT_M_DESCRIPTION, QTY, SHIFT, YTYPE, YCOUNT,
                 FTYPE, FGSM, FDIA, O_T, LOT, KNIT_MATERIAL_CODE, MCNO_ID
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -169,7 +169,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
             if ($stmt) {
                 $stmt->bind_param(
                     "sssssssssdssssssssi",
-                    $main_tid, $sub_tid, $po_number, $sono, $style, $buyer, $supplier,
+                    $main_tid, $sub_tid, $po_number, $sono, $style, $buyer, $customer,
                     $knit_m_description, $qty, $shift, $yarn_type, $yarn_count,
                     $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code, $mcno_id
                 );
@@ -593,7 +593,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                     </div>
                     <div>
                         <h2 class="section-title">2. Order Information & Description</h2>
-                        <p class="section-subtitle">Sales order item details, buyer, supplier and fabric description</p>
+                        <p class="section-subtitle">Sales order item details, buyer, customer and fabric description</p>
                     </div>
                 </div>
 
@@ -611,8 +611,8 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                         <input type="text" name="BUYER" id="buyerInput" class="form-control" placeholder="BUYER..." value="<?php echo htmlspecialchars($buyer); ?>" readonly>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">SUPPLIER</label>
-                        <input type="text" name="SUPPLIER" id="supplierInput" class="form-control" placeholder="SUPPLIER..." value="<?php echo htmlspecialchars($supplier); ?>" readonly>
+                        <label class="form-label">CUSTOMER</label>
+                        <input type="text" name="CUSTOMER" id="customerInput" class="form-control" placeholder="CUSTOMER..." value="<?php echo htmlspecialchars($customer); ?>" readonly>
                     </div>
                     <div class="col-md-12">
                         <label class="form-label">KNIT_M_DESCRIPTION</label>
@@ -751,7 +751,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                             $('#sonoInput').val(d.SONO || '');
                             $('#styleInput').val(d.STYLE || '');
                             $('#buyerInput').val(d.BUYER || '');
-                            $('#supplierInput').val(d.SUPPLIER || '');
+                            $('#customerInput').val(d.CUSTOMER || '');
                             $('#yarnTypeInput').val(d.YARN_TYPE || '');
                             $('#yarnCountInput').val(d.YARN_COUNT || '');
                             $('#fabricsTypeInput').val(d.FABRICS_TYPE || '');

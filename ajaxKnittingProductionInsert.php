@@ -69,7 +69,7 @@ $finish_dia   = val("finish_dia");
 $open_tube    = val("open_tube");
 $color        = val("color");
 $sl_vdq       = val("sl_vdq");
-$supplier     = val("supplier");
+$customer     = val("customer");
 $gray_gsm     = val("gray_gsm");
 $feeder_plan  = val("feeder_plan");
 $knit_material_code = val("knit_material_code");
@@ -166,7 +166,7 @@ STYLE,
 COLOR,
 MCNO,
 MC_DIA,
-SUPPLIER,
+CUSTOMER,
 SHIFT,
 YARN_TYPE,
 YARN_COUNT,
@@ -243,7 +243,7 @@ mysqli_stmt_bind_param(
     $color,
     $mcno,
     $mc_dia,
-    $supplier,
+    $customer,
     $shift,
     $yarn_type,
     $yarn_count,

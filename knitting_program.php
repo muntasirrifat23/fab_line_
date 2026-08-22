@@ -636,7 +636,7 @@
             <div id="detailsContainer">
                 <div class="card-title" style="margin-top:1.8rem; border-top:2px solid #eef2f6; padding-top:1.2rem;"><i class="fa-solid fa-scissors"></i> Enter Fabric Details</div>
                 <div class="yarn-grid">
-                    <div class="form-group"><label>Supplier</label><input type="text" id="supplier" placeholder="Enter Supplier"></div>
+                    <div class="form-group"><label>Customer</label><input type="text" id="customer" placeholder="Enter Customer"></div>
                     <div class="form-group"><label>Yarn Count</label><input type="text" id="yarn_count" placeholder="Enter Yarn Count"></div>
                     <div class="form-group"><label>SL/VQ</label><input type="text" id="sl_vdq" placeholder="Enter SL/VQ"></div>
                     <div class="form-group"><label>MC DIA</label><input type="text" id="mc_dia" placeholder="Enter MC DIA"></div>
@@ -759,7 +759,7 @@
             $('#feeder_plan').val(data.FEEDER_PLAN || '');
             $('#knit_material_code').val(data.KNIT_MATERIAL_CODE || '');
             $('#knit_m_description').val(data.KNIT_M_DESCRIPTION || '');
-            $('#supplier').val(data.SUPPLIER || '');
+            $('#customer').val(data.CUSTOMER || '');
             $('#yarn_count').val(data.YARN_COUNT || '');
             $('#sl_vdq').val(data.SL_VDQ || '');
             $('#mc_dia').val(data.MC_DIA || '');
@@ -800,7 +800,7 @@
             $('#knit_material_code').val(rowData.KNIT_MATERIAL_CODE || '');
             $('#display_knit_m_description').text(rowData.KNIT_M_DESCRIPTION || '-');
             $('#knit_m_description').val(rowData.KNIT_M_DESCRIPTION || '');
-            $('#supplier').val(rowData.SUPPLIER || '');
+            $('#customer').val(rowData.CUSTOMER || '');
             $('#yarn_count').val(rowData.YARN_COUNT || '');
             $('#sl_vdq').val(rowData.SL_VDQ || '');
             $('#mc_dia').val(rowData.MC_DIA || '');
@@ -892,7 +892,7 @@
                 '#finish_dia',
                 '#open_tube',
                 '#fabrics_type',
-                '#supplier',
+                '#customer',
                 '#yarn_count',
                 '#sl_vdq',
                 '#mc_dia',
@@ -1048,7 +1048,7 @@
                 '#finish_dia',
                 '#open_tube',
                 '#fabrics_type',
-                '#supplier',
+                '#customer',
                 '#yarn_count',
                 '#sl_vdq',
                 '#mc_dia',
@@ -1096,7 +1096,7 @@
                     sono: $('#sono').val(),
                     style: $('#style').val(),
                     buyer: $('#buyer').val(),
-                    supplier: $('#supplier').val(),
+                    customer: $('#customer').val(),
                     knit_m_description: desc,
                     yarn_type: $('#yarn_type').val(),
                     yarn_count: $('#yarn_count').val(),

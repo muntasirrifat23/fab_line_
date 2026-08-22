@@ -113,7 +113,7 @@ $firstRow = null;
 while ($row = mysqli_fetch_assoc($result)) {
     // Add default values for fields that don't exist in your table
     $row['BOOKING'] = isset($row['PO_NUMBER']) ? $row['PO_NUMBER'] : '';
-    $row['SUPPLIER'] = isset($row['SUPPLIER']) ? $row['SUPPLIER'] : '';
+    $row['CUSTOMER'] = isset($row['CUSTOMER']) ? $row['CUSTOMER'] : '';
     $row['SONO'] = isset($row['SONO']) ? $row['SONO'] : '';
     $row['SL_VDQ'] = isset($row['SL_VDQ']) ? $row['SL_VDQ'] : '';
     $row['MC_DIA'] = isset($row['MC_DIA']) ? $row['MC_DIA'] : '';

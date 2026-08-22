@@ -108,7 +108,7 @@
                             <th>BUYER</th>
                             <th>STYLE</th>
                             <th>COLOR</th>
-                            <th>SUPPLIER</th>
+                            <th>CUSTOMER</th>
                             <th>QTY</th>
                             <th>O / T</th>
                             <th>FINISH GSM</th>
@@ -169,7 +169,7 @@
                 tr.append($('<td>').text(row.BUYER || ''));
                 tr.append($('<td>').text(row.STYLE || ''));
                 tr.append($('<td>').text(row.COLOR || ''));
-                tr.append($('<td>').text(row.SUPPLIER || ''));
+                tr.append($('<td>').text(row.CUSTOMER || ''));
                 tr.append($('<td>').text(row.QTY || ''));
                 tr.append($('<td>').text(row.O_T || ''));
                 tr.append($('<td>').text(row.FGSM || ''));
@@ -244,7 +244,7 @@
                 ['Buyer', row.BUYER],
                 ['Style', row.STYLE],
                 ['Color', row.COLOR],
-                ['Supplier', row.SUPPLIER],
+                ['Customer', row.CUSTOMER],
                 ['QTY', row.QTY],
                 ['Open / Tube', row.O_T],
                 ['Finish GSM', row.FGSM],

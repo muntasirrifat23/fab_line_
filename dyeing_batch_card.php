@@ -382,7 +382,7 @@ unset($_SESSION['dyeing_batch']['saved']);
                             <th>COLOR</th>
                             <th>MCNO</th>
                             <th>MCDIA</th>
-                            <th>SUPPLIER</th>
+                            <th>CUSTOMER</th>
                             <th>YTYPE</th>
                             <th>YCOUNT</th>
                             <th>O_T</th>
@@ -432,7 +432,7 @@ unset($_SESSION['dyeing_batch']['saved']);
                             <th>COLOR</th>
                             <th>MCNO</th>
                             <th>MCDIA</th>
-                            <th>SUPPLIER</th>
+                            <th>CUSTOMER</th>
                             <th>YTYPE</th>
                             <th>YCOUNT</th>
                             <th>O_T</th>
@@ -567,7 +567,7 @@ unset($_SESSION['dyeing_batch']['saved']);
                     '<td>' + esc(row.COLOR) + '</td>' +
                     '<td>' + esc(row.MCNO) + '</td>' +
                     '<td>' + esc(row.MCDIA) + '</td>' +
-                    '<td>' + esc(row.SUPPLIER) + '</td>' +
+                    '<td>' + esc(row.CUSTOMER) + '</td>' +
                     '<td>' + esc(row.YTYPE) + '</td>' +
                     '<td>' + esc(row.YCOUNT) + '</td>' +
                     '<td>' + esc(row.O_T) + '</td>' +
@@ -600,7 +600,7 @@ unset($_SESSION['dyeing_batch']['saved']);
                 '<td>' + esc(row.COLOR) + '</td>' +
                 '<td>' + esc(row.MCNO) + '</td>' +
                 '<td>' + esc(row.MCDIA) + '</td>' +
-                '<td>' + esc(row.SUPPLIER) + '</td>' +
+                '<td>' + esc(row.CUSTOMER) + '</td>' +
                 '<td>' + esc(row.YTYPE) + '</td>' +
                 '<td>' + esc(row.YCOUNT) + '</td>' +
                 '<td>' + esc(row.O_T) + '</td>' +

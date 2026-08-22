@@ -27,7 +27,7 @@ $booking            = trim($data['PO_NUMBER'] ?? $data['BOOKING'] ?? '');
 $sono               = trim($data['SONO'] ?? '');
 $style              = trim($data['STYLE'] ?? '');
 $buyer              = trim($data['BUYER'] ?? '');
-$supplier           = trim($data['SUPPLIER'] ?? '');
+$customer           = trim($data['CUSTOMER'] ?? '');
 $knit_m_description = trim($data['KNIT_M_DESCRIPTION'] ?? '');
 $qty                = floatval($data['QTY'] ?? 0);
 $yarn_type          = trim($data['YARN_TYPE'] ?? '');
@@ -94,7 +94,7 @@ try {
             SONO = ?, 
             STYLE = ?, 
             BUYER = ?, 
-            SUPPLIER = ?, 
+            CUSTOMER = ?, 
             KNIT_M_DESCRIPTION = ?, 
             QTY = ?, 
             SHIFT = ?, 
@@ -111,7 +111,7 @@ try {
         $stmt = $db->prepare($sql);
         $stmt->bind_param(
             "sssssssssdssssssssi",
-            $main_tid, $sub_tid, $booking, $sono, $style, $buyer, $supplier,
+            $main_tid, $sub_tid, $booking, $sono, $style, $buyer, $customer,
             $knit_m_description, $qty, $shift, $yarn_type, $yarn_count,
             $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code, $kptid
         );
@@ -131,7 +131,7 @@ try {
         $stmt->close();
     } else {
         $sql = "INSERT INTO knitting_program (
-            MAIN_TID, SUB_TID, PO_NUMBER, SONO, STYLE, BUYER, SUPPLIER, 
+            MAIN_TID, SUB_TID, PO_NUMBER, SONO, STYLE, BUYER, CUSTOMER, 
             KNIT_M_DESCRIPTION, QTY, SHIFT, YTYPE, YCOUNT, 
             FTYPE, FGSM, FDIA, O_T, LOT, KNIT_MATERIAL_CODE
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -139,7 +139,7 @@ try {
         $stmt = $db->prepare($sql);
         $stmt->bind_param(
             "sssssssssdssssssss",
-            $main_tid, $sub_tid, $booking, $sono, $style, $buyer, $supplier,
+            $main_tid, $sub_tid, $booking, $sono, $style, $buyer, $customer,
             $knit_m_description, $qty, $shift, $yarn_type, $yarn_count,
             $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code
         );

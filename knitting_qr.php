@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // ------- In-file AJAX endpoint for knit_card_test data -------
 $dataAction = isset($_GET['action']) ? $_GET['action'] : (isset($_POST['action']) ? $_POST['action'] : '');
 
@@ -128,7 +128,7 @@ if ($dataAction === 'load' || $dataAction === 'search') {
                             <th>O_T</th>
                             <th>FTYPE</th>
                             <th>YTYPE</th>
-                            <th>SUPPLIER</th>
+                            <th>CUSTOMER</th>
                             <th>YCOUNT</th>
                             <th>SL</th>
                             <th>MCDIA</th>
@@ -188,7 +188,7 @@ if ($dataAction === 'load' || $dataAction === 'search') {
                 tr.append($('<td>').text(row.O_T || ''));
                 tr.append($('<td>').text(row.FTYPE || ''));
                 tr.append($('<td>').text(row.YTYPE || ''));
-                tr.append($('<td>').text(row.SUPPLIER || ''));
+                tr.append($('<td>').text(row.CUSTOMER || ''));
                 tr.append($('<td>').text(row.YCOUNT || ''));
                 tr.append($('<td>').text(row.SL || ''));
                 tr.append($('<td>').text(row.MCDIA || ''));
@@ -235,7 +235,7 @@ if ($dataAction === 'load' || $dataAction === 'search') {
             <div><b>O_T :</b> ${row.O_T||''}</div>
             <div><b>Fabrics :</b> ${row.FTYPE||''}</div>
             <div><b>Yarn Type :</b> ${row.YTYPE||''}</div>
-            <div><b>Supplier :</b> ${row.SUPPLIER||''}</div>
+            <div><b>Customer :</b> ${row.CUSTOMER||''}</div>
             <div><b>Yarn Count :</b> ${row.YCOUNT||''}</div>
             <div><b>SL/VDQ :</b> ${row.SL||''}</div>
             <div><b>MC Dia :</b> ${row.MCDIA||''}</div>

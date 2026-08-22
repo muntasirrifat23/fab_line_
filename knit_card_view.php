@@ -759,7 +759,7 @@ $max_allowed_qty = max(0.00, $program_qty - $other_carded);
 
                 <div class="row gx-3">
                     <div class="col-md-2"><label class="form-label">Buyer</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['BUYER'] ?? ''); ?>" readonly></div>
-                    <div class="col-md-2"><label class="form-label">Supplier</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['SUPPLIER'] ?? ''); ?>" readonly></div>
+                    <div class="col-md-2"><label class="form-label">Customer</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['CUSTOMER'] ?? ''); ?>" readonly></div>
                     <div class="col-md-2"><label class="form-label">PO Number</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['BOOKING'] ?? ''); ?>" readonly></div>
                     <div class="col-md-2"><label class="form-label">SONO</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['SONO'] ?? ''); ?>" readonly></div>
                     <div class="col-md-2"><label class="form-label">Style</label><input type="text" class="form-control" value="<?php echo htmlspecialchars($card['STYLE'] ?? ''); ?>" readonly></div>

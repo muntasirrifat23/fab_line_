@@ -77,7 +77,7 @@ $card_date          = date('Y-m-d');
 $p_kptid            = intval($prog['KPTID']);
 $p_sub_tid          = $sub_tid;
 $p_buyer            = !empty($prog['BUYER']) ? $prog['BUYER'] : ($input['BUYER'] ?? '');
-$p_supplier         = !empty($prog['SUPPLIER']) ? $prog['SUPPLIER'] : ($input['SUPPLIER'] ?? '');
+$p_customer         = !empty($prog['CUSTOMER']) ? $prog['CUSTOMER'] : ($input['CUSTOMER'] ?? '');
 $p_booking          = !empty($prog['PO_NUMBER']) ? $prog['PO_NUMBER'] : ($input['BOOKING'] ?? '');
 $p_sono             = !empty($prog['SONO']) ? $prog['SONO'] : ($input['SONO'] ?? '');
 $p_style            = !empty($prog['STYLE']) ? $prog['STYLE'] : ($input['STYLE'] ?? '');
@@ -174,7 +174,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             $ins = $db->prepare("
                 INSERT INTO knit_card (
                     KPTID, CARD_DATE, MCNO, FINISH_DIA, FINISH_GSM, GREY_GSM, SL_VDQ,
-                    OPEN_TUBE, BUYER, SUPPLIER, BOOKING, SONO, STYLE,
+                    OPEN_TUBE, BUYER, CUSTOMER, BOOKING, SONO, STYLE,
                     FABRICS_TYPE, YARN_TYPE, YARN_COUNT, LOT_NO, KNIT_M_DESCRIPTION,
                     REQ_QTY, PREPARED_BY, AUTHORISED_BY
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -195,7 +195,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                 $p_sl_vdq,
                 $p_open_tube,
                 $p_buyer,
-                $p_supplier,
+                $p_customer,
                 $p_booking,
                 $p_sono,
                 $p_style,
