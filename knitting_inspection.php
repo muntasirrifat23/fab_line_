@@ -809,9 +809,9 @@ $active_operator = $_SESSION['active_operator'] ?? null;
             <div style="font-weight:800; font-size:1.05rem; margin-bottom:4px;">Scan Operator Badge QR Code</div>
             <div style="font-size:0.85rem; opacity:0.85;">Align your Operator QR Code within the live camera feed above to authenticate.</div>
           </div>
-          <div class="data-row header-row"><span class="label">Step 1: Operator Authentication</span><span class="value">Scan QR Only</span></div>
-          <div class="data-row"><span class="label">Step 1:</span><span class="value" style="color:#2563eb; font-weight:700;">Scan Operator QR Code</span></div>
-          <div class="data-row"><span class="label">Step 2:</span><span class="value">Scan Production Roll QR</span></div>
+          <div class="data-row header-row"><span class="label">Workflow Progress</span><span class="value">Step 1 of 2</span></div>
+          <div class="data-row"><span class="label">Current Action:</span><span class="value" style="color:#2563eb; font-weight:700;">Scan Operator QR Code</span></div>
+          <div class="data-row"><span class="label">Next Action:</span><span class="value">Scan Production Roll QR</span></div>
           <div id="opStatusMsg" style="margin-top:8px;"></div>
         `;
         resultContainer.innerHTML = html;
