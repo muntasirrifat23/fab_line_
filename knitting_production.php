@@ -22,6 +22,30 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
   }
   exit();
 }
+
+// ------- In-file AJAX endpoint: verify knitting_operator by OPERATOR_ID -------
+if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
+  require_once 'config.php';
+  header('Content-Type: application/json');
+  header('X-Content-Type-Options: nosniff');
+
+  $op = isset($_GET['operator_id']) ? trim($_GET['operator_id']) : '';
+  if ($op === '') {
+    echo json_encode(['success' => false, 'error' => 'Operator ID is required']);
+    exit();
+  }
+
+  $s = mysqli_real_escape_string($db, $op);
+  $q = "SELECT OPERATOR_ID, OPERATOR_NAME FROM knitting_operator WHERE OPERATOR_ID = '$s' LIMIT 1";
+  $res = mysqli_query($db, $q);
+
+  if ($res && mysqli_num_rows($res) > 0) {
+    echo json_encode(['success' => true, 'data' => mysqli_fetch_assoc($res)]);
+  } else {
+    echo json_encode(['success' => false, 'error' => 'Invalid Operator ID: ' . $op]);
+  }
+  exit();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -61,7 +85,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
     }
 
     .card.expanded {
-      max-width: 900px;
+      max-width: 650px;
     }
 
     .scanner-container {
@@ -71,11 +95,12 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
       overflow: hidden;
       box-shadow: inset 0 0 0 1px #d7e0ea, 0 8px 20px rgba(30, 60, 120, 0.12);
       margin-bottom: 24px;
-      min-height: 300px;
+      aspect-ratio: 1 / 1;
     }
 
     #qr-reader {
       width: 100%;
+      height: 100%;
       padding: 0 !important;
       background: #f4f7fb;
     }
@@ -83,7 +108,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
     #qr-reader video {
       border-radius: 28px;
       width: 100%;
-      height: auto;
+      height: 100%;
+      object-fit: cover;
       display: block;
     }
 
@@ -544,9 +570,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
         flex-direction: column;
       }
 
-      .scanner-container {
-        min-height: 200px;
-      }
     }
 
     @media(max-width:768px) {
@@ -713,10 +736,17 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
       let html5QrCode = null;
       let isScanning = false;
       let scanCount = 0;
+      let operatorScanned = false;
+      let verifying = false;
+      let processingRoll = false;
+      let operatorInfo = null;
 
       const DEFAULT_DATA = [{
-        label: 'Status',
-        value: 'Awaiting QR scan'
+        label: 'Step 1',
+        value: 'Scan Knitting Operator ID'
+      }, {
+        label: 'Step 2',
+        value: 'Scan Production Roll QR'
       }];
 
       function renderDefaultData() {
@@ -912,7 +942,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
 
         let html = `
           <div class="data-row header-row" style="border-left-color:#4fc3f7;">
-            <span class="label">QR Scanned <span class="scanned-badge">ROLL NO</span></span>
+            <span class="label">Scanned Data (Roll Scanned) <span class="scanned-badge">ROLL NO</span></span>
             <span class="value">${new Date().toLocaleTimeString()}</span>
           </div>
         `;
@@ -948,6 +978,53 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
 
         resultContainer.innerHTML = html;
         renderProductionActions();
+      }
+
+      function verifyOperatorScan(qrText) {
+        const val = String(qrText).trim();
+
+        fetch('knitting_production.php?action=get_operator&operator_id=' + encodeURIComponent(val))
+          .then(r => r.text())
+          .then(txt => {
+            verifying = false;
+            let res = null;
+            try {
+              res = JSON.parse(String(txt).replace(/^\uFEFF/, '').trim());
+            } catch (e) {
+              throw new Error('Bad server response');
+            }
+            if (res && res.success && res.data) {
+              operatorScanned = true;
+              operatorInfo = res.data;
+              renderOperatorVerified();
+            } else {
+              alert('Please scan Knitting Operator ID first!\n' + ((res && res.error) || 'Invalid Operator ID'));
+            }
+          })
+          .catch(err => {
+            verifying = false;
+            alert('Operator verification failed: ' + (err && err.message ? err.message : err));
+          });
+      }
+
+      function renderOperatorVerified() {
+        resultContainer.innerHTML = `
+          <div class="data-row header-row" style="border-left-color:#10b981;">
+            <span class="label">Scanned Data (Knitting Operator) <span class="scanned-badge" style="background:#10b981;">OPERATOR</span></span>
+            <span class="value">${new Date().toLocaleTimeString()}</span>
+          </div>
+          <div class="data-row default-row" style="display:flex; flex-wrap:wrap; gap:10px;">
+            <div class="field-block"><span class="field-label">Operator ID</span><span class="field-value">${operatorInfo.OPERATOR_ID || '-'}</span></div>
+            <div class="field-block"><span class="field-label">Operator Name</span><span class="field-value">${operatorInfo.OPERATOR_NAME || '-'}</span></div>
+          </div>
+          <div class="data-row" style="border-left-color:#f59e0b; background:#fffbeb; margin-top:8px;">
+            <span class="value" style="color:#92400e; font-weight:600;">📷 Now scan the Production Roll QR...</span>
+          </div>
+        `;
+        hideActionContent();
+        if (typeof cameraStatus !== 'undefined' && cameraStatus) {
+          cameraStatus.innerText = 'Operator verified - scan production roll';
+        }
       }
 
       function renderUnstructuredData(text, msg) {
@@ -1009,7 +1086,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
               <span class="value">${new Date().toLocaleTimeString()}</span>
             </div>
             <div class="data-row" style="border-left-color:#f59e0b; background:#e8eef6;">
-              <span class="label" style="color:#92400e;">ðŸ“Œ Type:</span>
+              <span class="label" style="color:#92400e;">Type:</span>
               <span class="value">Unstructured scan data</span>
             </div>
             <div class="data-row" style="background:#eef2f7; border-left-color:#6b7280; flex-wrap:wrap;">
@@ -1036,7 +1113,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
 
         let html = `
           <div class="data-row header-row" style="border-left-color:#4fc3f7;">
-            <span class="label">QR Scanned <span class="scanned-badge">ROLL NO</span></span>
+            <span class="label">Scanned Data (Roll Scanned) <span class="scanned-badge">ROLL NO</span></span>
             <span class="value">${new Date().toLocaleTimeString()}</span>
           </div>
         `;
@@ -1199,26 +1276,18 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
       }
 
       function startScanner() {
-        if (html5QrCode) {
-          html5QrCode.stop().then(() => {
-            html5QrCode.clear();
-            startNewScanner();
-          }).catch(err => {
-            console.warn("Stop error, force restart", err);
-            startNewScanner();
-          });
-        } else {
-          startNewScanner();
-        }
+        startNewScanner();
       }
 
-      function startNewScanner() {
-        if (html5QrCode) {
+      async function startNewScanner() {
+        const previousScanner = html5QrCode;
+        html5QrCode = null;
+
+        if (previousScanner) {
           try {
-            html5QrCode.stop();
-            html5QrCode.clear();
+            await previousScanner.stop();
+            previousScanner.clear();
           } catch (e) {}
-          html5QrCode = null;
         }
 
         const qrReaderElement = document.getElementById('qr-reader');
@@ -1228,9 +1297,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
 
         const config = {
           fps: 30,
-          qrbox: {
-            width: 240,
-            height: 240
+          qrbox: function (vw, vh) {
+            const edge = Math.min(240, Math.floor(vw * 0.7));
+            return { width: edge, height: edge };
           },
           aspectRatio: 1.0
         };
@@ -1273,14 +1342,13 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
         });
       }
 
-      function onScanSuccess(decodedText, decodedResult) {
-        console.log('QR Scanned:', decodedText);
-        scanCount++;
-        if (navigator.vibrate) navigator.vibrate(20);
+      function isRollCode(text) {
+        const val = String(text).trim();
+        return /^\d+$/.test(val) || /^ROLL:\s*\d+$/i.test(val) ||
+               (val.startsWith('{') && val.endsWith('}'));
+      }
 
-        const cardEl = document.getElementById('mainCard');
-        if (cardEl) cardEl.classList.add('expanded');
-
+      function stopCameraAndProcess(text) {
         if (html5QrCode) {
           html5QrCode.stop().then(() => {
             isScanning = false;
@@ -1288,14 +1356,45 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
             cameraStatus.style.color = '#7dd3fc';
             scannerContainer.style.display = 'none';
             cameraControls.style.display = 'none';
-            renderScannedData(decodedText);
+            renderScannedData(text);
           }).catch(err => {
-            console.warn('Failed to stop scanner after scan:', err);
-            renderScannedData(decodedText);
+            console.warn('Failed to stop scanner:', err);
+            renderScannedData(text);
           });
         } else {
-          renderScannedData(decodedText);
+          renderScannedData(text);
         }
+      }
+
+      function onScanSuccess(decodedText, decodedResult) {
+        const val = String(decodedText).trim();
+        if (!val || verifying || processingRoll) return;
+
+        console.log('QR Scanned:', val);
+        scanCount++;
+        if (navigator.vibrate) navigator.vibrate(20);
+
+        if (isRollCode(val)) {
+          if (!operatorScanned) {
+            alert('Please scan Knitting Operator ID first!\nProduction roll cannot be scanned before operator.');
+            return;
+          }
+          processingRoll = true;
+          stopCameraAndProcess(val);
+          return;
+        }
+
+        if (operatorScanned) {
+          if (val === (operatorInfo && operatorInfo.OPERATOR_ID)) {
+            return;
+          }
+          processingRoll = true;
+          stopCameraAndProcess(val);
+          return;
+        }
+
+        verifying = true;
+        verifyOperatorScan(val);
       }
 
       function onScanError(err) {
@@ -1308,22 +1407,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
       function restartScanner() {
         scannerContainer.style.display = 'block';
         cameraControls.style.display = 'flex';
-        if (html5QrCode) {
-          html5QrCode.stop().then(() => {
-            html5QrCode.clear();
-            startNewScanner();
-          }).catch(err => {
-            startNewScanner();
-          });
-        } else {
-          startNewScanner();
-        }
         cameraStatus.innerText = 'Restarting...';
-        setTimeout(() => {
-          if (isScanning) {
-            cameraStatus.innerText = 'Scanning';
-          }
-        }, 400);
+        startNewScanner();
       }
 
       // Expose restart function globally
