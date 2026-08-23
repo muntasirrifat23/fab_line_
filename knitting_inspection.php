@@ -103,6 +103,26 @@ if (isset($_GET['action']) && $_GET['action'] === 'search_card') {
     $res = $stmt->get_result();
     
     if ($res && $row = $res->fetch_assoc()) {
+        // ── DUPLICATE ROLL GUARD: one roll can be inspected only once ──
+        $roll_val = trim($row['ROLL']);
+        $dup_stmt = $db->prepare("SELECT KITID, BUDAT, UNAME FROM knitting_inspection WHERE TRIM(ROLL) = ? LIMIT 1");
+        if ($dup_stmt) {
+            $dup_stmt->bind_param("s", $roll_val);
+            $dup_stmt->execute();
+            $dup_res = $dup_stmt->get_result();
+            if ($dup_res && $dup_row = $dup_res->fetch_assoc()) {
+                echo json_encode([
+                    'success' => false,
+                    'error'   => 'Roll "' . htmlspecialchars($roll_val) . '" is already inspected! One roll cannot be inspected twice. (Inspected on: ' . htmlspecialchars($dup_row['BUDAT']) . ' by ' . htmlspecialchars($dup_row['UNAME']) . ')',
+                    'duplicate' => true
+                ]);
+                $dup_stmt->close();
+                $stmt->close();
+                exit();
+            }
+            $dup_stmt->close();
+        }
+
         echo json_encode([
             'success'          => true,
             'data'             => [
@@ -216,8 +236,22 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
         } elseif ($roll_weight <= 0) {
             $error = "Roll Weight must be greater than 0.";
         } else {
-            try {
-                $stmt = $db->prepare("
+            // ── DUPLICATE ROLL GUARD (server-side safety net) ──
+            $dup2_stmt = $db->prepare("SELECT KITID FROM knitting_inspection WHERE TRIM(ROLL) = ? LIMIT 1");
+            if ($dup2_stmt) {
+                $dup2_stmt->bind_param("s", $roll_no);
+                $dup2_stmt->execute();
+                $dup2_res = $dup2_stmt->get_result();
+                if ($dup2_res && $dup2_res->num_rows > 0) {
+                    $error = "Roll #$roll_no is already inspected! One roll cannot be inspected twice.";
+                }
+                $dup2_stmt->close();
+            }
+        }
+
+        if (empty($error)) {
+          try {
+            $stmt = $db->prepare("
                     INSERT INTO knitting_inspection (
                         `BUDAT`, `ROLL`, `OQTY`, `RQTY`, `UQTY`, `PO_NUMBER`, `QTY`, `SONO`, `BUYER`, `STYLE`, `COLOR`,
                         `MCNO`, `MC_DIA`, `CUSTOMER`, `SHIFT`, `YTYPE`, `YCOUNT`, `FTYPE`, `FGSM`, `FDIA`, `O_T`,
@@ -252,8 +286,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                 $mc_dia      = strval($card_meta['MC_DIA'] ?? '');
                 $supplier    = strval($card_meta['CUSTOMER'] ?? '');
                 $shift       = strval($card_meta['SHIFT'] ?? '');
-                $ytype       = strval($card_meta['YTYPE'] ?? '');
-                $ycount      = strval($card_meta['YCOUNT'] ?? '');
+                $ytype       = strval($card_meta['YARN_TYPE'] ?? '');
+                $ycount      = strval($card_meta['YARN_COUNT'] ?? '');
                 $ftype       = strval($card_meta['FABRICS_TYPE'] ?? '');
                 $fgsm        = strval($card_meta['FINISH_GSM'] ?? '');
                 $fdia        = strval($card_meta['FINISH_DIA'] ?? '');
@@ -304,7 +338,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                 $stmt->close();
                 $msg = "Inspection record for Roll #$roll_no saved successfully!";
             } catch (Exception $e) {
-                $error = "Database Error: " . $e->getMessage();
+                if (strpos($e->getMessage(), 'Duplicate entry') !== false || strpos($e->getMessage(), 'uniq_roll') !== false) {
+                    $error = "Roll #$roll_no is already inspected! One roll cannot be inspected twice.";
+                } else {
+                    $error = "Database Error: " . $e->getMessage();
+                }
             }
         }
     }
