@@ -651,6 +651,7 @@ function kc_page_url($p) {
                             <th class="text-nowrap">Date</th>
                             <th class="text-nowrap">Program ID</th>
                             <th class="text-nowrap">PO Number</th>
+                            <th class="text-nowrap">QTY</th>
                             <th class="text-nowrap">Shift</th>
                             <th class="text-nowrap">Buyer</th>
                             <th class="text-nowrap">Style No</th>
@@ -672,10 +673,11 @@ function kc_page_url($p) {
                     <tbody>
                         <?php if (count($rows_array) > 0): ?>
                             <?php foreach ($rows_array as $row):
-                                $p_id          = intval($row['KPTID']);
+                                $p_id          = intval($row['KPTID'] ?? 0);
                                 $p_date        = !empty($row['CREATED_DATE']) ? date('Y-m-d', strtotime($row['CREATED_DATE'])) : '';
                                 $p_sub_tid     = $row['SUB_TID']     ?? '';
                                 $p_po          = $row['PO_NUMBER']   ?? '';
+                                $p_qty       = $row['QTY']       ?? '';
                                 $p_shift       = $row['SHIFT']       ?? '';
                                 $p_buyer       = $row['BUYER']       ?? '';
                                 $p_style       = $row['STYLE']       ?? '';
@@ -700,6 +702,7 @@ function kc_page_url($p) {
                                     </td>
                                     <td class="text-nowrap"><strong><?php echo htmlspecialchars($p_sub_tid); ?></strong></td>
                                     <td class="text-nowrap"><strong><?php echo htmlspecialchars($p_po); ?></strong></td>
+                                    <td class="text-nowrap"><strong><?php echo htmlspecialchars($p_qty); ?></strong></td>
                                     <td class="text-nowrap"><strong><?php echo htmlspecialchars($p_shift); ?></strong></td>
                                     <td class="text-nowrap"><strong><?php echo htmlspecialchars($p_buyer); ?></strong></td>
                                     <td class="text-nowrap"><?php echo htmlspecialchars($p_style ?: 'N/A'); ?></td>
