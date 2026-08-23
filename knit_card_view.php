@@ -89,8 +89,9 @@ $val_uname        = !empty($card['UNAME']) ? $card['UNAME'] : 'System';
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 
-    <!-- QR CODE GENERATOR LIBRARY -->
+    <!-- QR CODE GENERATOR & PDF LIBRARIES -->
     <script src="js/qrcode.min.js"></script>
+    <script src="js/html2pdf.bundle.min.js"></script>
 
     <style>
         :root {
@@ -295,9 +296,9 @@ $val_uname        = !empty($card['UNAME']) ? $card['UNAME'] : 'System';
             <i class="fa-solid fa-arrow-left"></i> Directory
         </a>
         <div class="d-flex gap-1">
-            <a href="knit_card_print.php?id=<?php echo $card_id; ?>" target="_blank" class="btn btn-tag btn-primary">
-                <i class="fa-solid fa-print"></i> Full Card
-            </a>
+            <button type="button" onclick="downloadCard()" class="btn btn-tag btn-primary">
+                <i class="fa-solid fa-download"></i> Download
+            </button>
             <button type="button" onclick="window.print()" class="btn btn-tag btn-success">
                 <i class="fa-solid fa-print"></i> Print
             </button>
@@ -430,6 +431,26 @@ $val_uname        = !empty($card['UNAME']) ? $card['UNAME'] : 'System';
                 });
             }
         });
+
+        function downloadCard() {
+            var element = document.querySelector('.a4-sixth-card');
+            var cardId = <?php echo json_encode($val_card_id); ?>;
+            var rollNum = <?php echo json_encode($roll_number); ?>;
+            var filename = 'Knit_Card_' + cardId.replace('#', '') + '_Roll_' + rollNum + '.pdf';
+
+            if (typeof html2pdf !== 'undefined') {
+                var opt = {
+                    margin:       [5, 5, 5, 5],
+                    filename:     filename,
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 3, useCORS: true },
+                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+                html2pdf().set(opt).from(element).save();
+            } else {
+                alert('Downloading PDF...');
+            }
+        }
     </script>
 </body>
 
