@@ -15,7 +15,12 @@ $booking_filter  = isset($_GET['booking_no']) ? trim($_GET['booking_no']) : '';
 $shift_filter    = isset($_GET['shift'])      ? trim($_GET['shift'])      : '';
 
 // Build query using real KPTID column; LEFT JOIN knit_card on KPTID
-    $query = "SELECT kp.*, kc.KCTID AS card_id, kc.QTY AS card_req_qty
+    $query = "SELECT kp.KPTID, kp.SUB_TID, kp.PO_NUMBER, kp.CREATED_DATE,
+                     kp.SHIFT, kp.BUYER, kp.STYLE, kp.COLOR,
+                     kp.CUSTOMER, kp.SL, kp.FGSM, kp.FDIA, kp.O_T,
+                     kp.FTYPE, kp.YTYPE, kp.YCOUNT,
+                     kp.MCDIA, kp.GGSM, kp.FEEDER_PLAN, kp.QTY,
+                     kc.KCTID AS card_id, kc.QTY AS card_req_qty
           FROM knitting_program kp
           LEFT JOIN knit_card kc ON kp.KPTID = kc.KPTID
           WHERE 1=1";
@@ -51,16 +56,16 @@ if ($stmt) {
     $result = false;
 }
 
-// Summary stats
-$total_programs = 0;
-$total_req_qty  = 0.00;
+// Summary stats & collect all matching rows
+$total_programs  = 0;
+$total_req_qty   = 0.00;
 $generated_count = 0;
 $pending_count   = 0;
-$rows_array = [];
+$all_rows        = [];
 
 if ($result && $result->num_rows > 0) {
     while ($r = $result->fetch_assoc()) {
-        $rows_array[]    = $r;
+        $all_rows[]      = $r;
         $total_programs++;
         $total_req_qty  += (!empty($r['card_id']) && isset($r['card_req_qty'])) ? floatval($r['card_req_qty']) : floatval($r['QTY'] ?? 0);
         if (!empty($r['card_id'])) {
@@ -69,6 +74,26 @@ if ($result && $result->num_rows > 0) {
             $pending_count++;
         }
     }
+}
+
+// Pagination
+$limit        = 10;
+$current_page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$total_records = count($all_rows);
+$total_pages   = max(1, ceil($total_records / $limit));
+if ($current_page > $total_pages) $current_page = $total_pages;
+$offset      = ($current_page - 1) * $limit;
+$rows_array  = array_slice($all_rows, $offset, $limit);
+$start_entry = ($total_records > 0) ? $offset + 1 : 0;
+$end_entry   = min($offset + $limit, $total_records);
+
+// Helper: build page URL preserving existing filters
+function kc_page_url($p) {
+    $args = ['page' => $p];
+    foreach (['buyer', 'booking_no', 'shift'] as $k) {
+        if (!empty($_GET[$k])) $args[$k] = $_GET[$k];
+    }
+    return 'knit_card.php?' . http_build_query($args);
 }
 ?><!DOCTYPE html>
 <html lang="en">
@@ -446,6 +471,87 @@ if ($result && $result->num_rows > 0) {
             transform: translateY(-1px);
             box-shadow: 0 6px 16px rgba(217, 119, 6, 0.35);
         }
+
+        /* ═══════════════════════════════════════════
+           PAGINATION
+        ═══════════════════════════════════════════ */
+        .pagination-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding-top: 20px;
+            margin-top: 10px;
+            border-top: 1px solid #f1f5f9;
+        }
+        .pagination-info {
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 600;
+        }
+        .custom-pagination {
+            display: inline-flex;
+            gap: 6px;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            align-items: center;
+        }
+        .custom-pagination .page-link-custom {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 36px;
+            height: 36px;
+            padding: 0 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #334155;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .custom-pagination .page-link-custom:hover:not(.disabled-link) {
+            background: #f1f5f9;
+            color: #0f172a;
+            border-color: #cbd5e1;
+        }
+        .custom-pagination .page-item-custom.active .page-link-custom {
+            background: #0f172a;
+            color: #ffffff;
+            border-color: #0f172a;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+        }
+        .custom-pagination .page-item-custom.disabled .page-link-custom {
+            color: #94a3b8;
+            background: #f8fafc;
+            border-color: #f1f5f9;
+            cursor: not-allowed;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+        .page-ellipsis {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 36px;
+            color: #94a3b8;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        @media (max-width: 575.98px) {
+            .pagination-container {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                gap: 12px;
+            }
+            .custom-pagination { flex-wrap: wrap; justify-content: center; }
+        }
     </style>
 </head>
 
@@ -542,55 +648,80 @@ if ($result && $result->num_rows > 0) {
                 <table class="table custom-table table-hover mb-0">
                     <thead>
                         <tr>
-                            <th>Program ID</th>
-                            <th>Date</th>
-                            <th>PO Number</th>
-                            <th>Shift</th>
-                            <th>Buyer</th>
-                            <th>Style No</th>
-                            <th>Fabric Type</th>
-                            <th>Yarn Type</th>
-                            <th>Req Qty (KG)</th>
-                            <th>Card Status</th>
-                            <th class="text-center">Actions</th>
+                            <th class="text-nowrap">Date</th>
+                            <th class="text-nowrap">Program ID</th>
+                            <th class="text-nowrap">PO Number</th>
+                            <th class="text-nowrap">Shift</th>
+                            <th class="text-nowrap">Buyer</th>
+                            <th class="text-nowrap">Style No</th>
+                            <th class="text-nowrap">Colour</th>
+                            <th class="text-nowrap">Customer</th>
+                            <th class="text-nowrap">Yarn Type</th>
+                            <th class="text-nowrap">Yarn Count</th>
+                            <th class="text-nowrap">Fabrics Type</th>
+                            <th class="text-nowrap">Finish GSM</th>
+                            <th class="text-nowrap">Finish DIA</th>
+                            <th class="text-nowrap">Open / Tube</th>
+                            <th class="text-nowrap">SL/VDQ</th>
+                            <th class="text-nowrap">Gray GSM</th>
+                            <th class="text-nowrap">Feeder Plan</th>
+                            <th class="text-nowrap">Card Status</th>
+                            <th class="text-center text-nowrap">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (count($rows_array) > 0): ?>
                             <?php foreach ($rows_array as $row):
-                                $p_id       = intval($row['KPTID']);
-                                $p_date     = !empty($row['CREATED_DATE']) ? date('Y-m-d', strtotime($row['CREATED_DATE'])) : '';
-                                $p_po       = $row['PO_NUMBER']   ?? '';
-                                $p_shift    = $row['SHIFT']       ?? '';
-                                $p_buyer    = $row['BUYER']       ?? '';
-                                $p_style    = $row['STYLE']       ?? '';
-                                $p_fabrics  = $row['FTYPE'] ?? '';
-                                $p_yarn     = $row['YTYPE']    ?? '';
-                                $p_req_qty  = (!empty($row['card_id']) && isset($row['card_req_qty'])) ? floatval($row['card_req_qty']) : floatval($row['QTY'] ?? 0);
-                                $p_card_gen = !empty($row['card_id']) ? 1 : 0;
-                                $p_card_id  = $row['card_id'] ?? '';
+                                $p_id          = intval($row['KPTID']);
+                                $p_date        = !empty($row['CREATED_DATE']) ? date('Y-m-d', strtotime($row['CREATED_DATE'])) : '';
+                                $p_sub_tid     = $row['SUB_TID']     ?? '';
+                                $p_po          = $row['PO_NUMBER']   ?? '';
+                                $p_shift       = $row['SHIFT']       ?? '';
+                                $p_buyer       = $row['BUYER']       ?? '';
+                                $p_style       = $row['STYLE']       ?? '';
+                                $p_color       = $row['COLOR']       ?? '';
+                                $p_customer    = $row['CUSTOMER']    ?? '';
+                                $p_yarn_type   = $row['YTYPE']       ?? '';
+                                $p_yarn_count  = $row['YCOUNT']      ?? '';
+                                $p_ftype       = $row['FTYPE']       ?? '';
+                                $p_fgsm        = $row['FGSM']        ?? '';
+                                $p_fdia        = $row['FDIA']        ?? '';
+                                $p_ot          = $row['O_T']         ?? '';
+                                $p_sl          = $row['SL']          ?? '';
+                                $p_ggsm        = $row['GGSM']        ?? '';
+                                $p_feeder_plan = $row['FEEDER_PLAN'] ?? '';
+                                $p_card_gen    = !empty($row['card_id']) ? 1 : 0;
+                                $p_card_id     = $row['card_id'] ?? '';
                             ?>
                                 <tr>
-                                    <td><strong>#<?php echo $p_id; ?></strong></td>
-                                    <td>
+                                    <td class="text-nowrap">
                                         <i class="fa-regular fa-calendar me-1 text-muted"></i>
                                         <?php echo htmlspecialchars($p_date); ?>
                                     </td>
-                                    <td><strong><?php echo htmlspecialchars($p_po); ?></strong></td>
-                                    <td><strong><?php echo htmlspecialchars($p_shift); ?></strong></td>
-                                    <td><strong><?php echo htmlspecialchars($p_buyer); ?></strong></td>
-                                    <td><?php echo htmlspecialchars($p_style); ?></td>
-                                    <td><?php echo htmlspecialchars($p_fabrics); ?></td>
-                                    <td><small class="text-muted"><?php echo htmlspecialchars($p_yarn); ?></small></td>
-                                    <td><strong class="text-success"><?php echo number_format($p_req_qty, 2); ?> KG</strong></td>
-                                    <td>
+                                    <td class="text-nowrap"><strong><?php echo htmlspecialchars($p_sub_tid); ?></strong></td>
+                                    <td class="text-nowrap"><strong><?php echo htmlspecialchars($p_po); ?></strong></td>
+                                    <td class="text-nowrap"><strong><?php echo htmlspecialchars($p_shift); ?></strong></td>
+                                    <td class="text-nowrap"><strong><?php echo htmlspecialchars($p_buyer); ?></strong></td>
+                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_style ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_color ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_customer ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_yarn_type ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_yarn_count ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_ftype ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_fgsm ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_fdia ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_ot ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_sl ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_ggsm ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_feeder_plan ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap">
                                         <?php if ($p_card_gen === 1): ?>
                                             <span class="badge-status badge-generated"><i class="fa-solid fa-circle-check"></i> Generated</span>
                                         <?php else: ?>
                                             <span class="badge-status badge-pending"><i class="fa-solid fa-clock"></i> Pending</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td class="text-center">
+                                    <td class="text-center text-nowrap">
                                         <div class="d-inline-flex gap-2">
                                             <?php if ($p_card_gen === 1): ?>
                                                 <?php if (!empty($p_card_id)): ?>
@@ -625,7 +756,7 @@ if ($result && $result->num_rows > 0) {
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="11" class="text-center py-5 text-muted">
+                                <td colspan="19" class="text-center py-5 text-muted">
                                     <i class="fa-solid fa-folder-open fa-3x mb-3 text-secondary d-block"></i>
                                     <h6 class="fw-bold">No Knitting Programs Found</h6>
                                     <p class="small mb-0">Try adjusting your filters or click "New Program" to add an entry.</p>
@@ -635,6 +766,55 @@ if ($result && $result->num_rows > 0) {
                     </tbody>
                 </table>
             </div>
+
+            <?php if ($total_pages > 1 || $total_records > 0): ?>
+                <div class="pagination-container">
+                    <!-- Entry info -->
+                    <div class="pagination-info">
+                        Showing <span class="fw-bold text-dark"><?php echo $start_entry; ?></span>
+                        to <span class="fw-bold text-dark"><?php echo $end_entry; ?></span>
+                        of <span class="fw-bold text-dark"><?php echo number_format($total_records); ?></span> entries
+                    </div>
+
+                    <?php if ($total_pages > 1): ?>
+                    <ul class="custom-pagination">
+                        <!-- Previous -->
+                        <li class="page-item-custom <?php echo ($current_page <= 1) ? 'disabled' : ''; ?>">
+                            <a class="page-link-custom" href="<?php echo kc_page_url($current_page - 1); ?>" title="Previous">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </a>
+                        </li>
+
+                        <?php
+                        $range      = 2;
+                        $show_start = max(1, $current_page - $range);
+                        $show_end   = min($total_pages, $current_page + $range);
+
+                        if ($show_start > 1) {
+                            echo '<li class="page-item-custom"><a class="page-link-custom" href="' . kc_page_url(1) . '">1</a></li>';
+                            if ($show_start > 2) echo '<li class="page-ellipsis">&hellip;</li>';
+                        }
+                        for ($pg = $show_start; $pg <= $show_end; $pg++) {
+                            $cls = ($pg === $current_page) ? 'active' : '';
+                            echo '<li class="page-item-custom ' . $cls . '"><a class="page-link-custom" href="' . kc_page_url($pg) . '">' . $pg . '</a></li>';
+                        }
+                        if ($show_end < $total_pages) {
+                            if ($show_end < $total_pages - 1) echo '<li class="page-ellipsis">&hellip;</li>';
+                            echo '<li class="page-item-custom"><a class="page-link-custom" href="' . kc_page_url($total_pages) . '">' . $total_pages . '</a></li>';
+                        }
+                        ?>
+
+                        <!-- Next -->
+                        <li class="page-item-custom <?php echo ($current_page >= $total_pages) ? 'disabled' : ''; ?>">
+                            <a class="page-link-custom" href="<?php echo kc_page_url($current_page + 1); ?>" title="Next">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+
         </div>
     </div>
 
