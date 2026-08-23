@@ -262,6 +262,7 @@ if ($res) {
 
     <div class="row-count" id="rowCount"></div>
 
+    <script src="js/bootstrap.bundle.min.js"></script>
     <script>
         var allUsers = <?php echo json_encode($users); ?>;
 
@@ -275,10 +276,10 @@ if ($res) {
             var html = '';
             rows.forEach(function(u, i) {
                 html += '<tr>' +
-                    '<td><button class="print-btn" data-idx="' + i + '"><i class="fa-solid fa-print"></i> Print ID</button></td>' +
+                    '<td><button class="print-btn" onclick="showOperatorBadge(' + i + ')"><i class="fa-solid fa-qrcode"></i> Print / View ID</button></td>' +
                     '<td>' + esc(u.KOTID) + '</td>' +
                     '<td>' + esc(u.OPERATOR_NAME) + '</td>' +
-                    '<td>' + esc(u.OPERATOR_ID) + '</td>' +
+                    '<td><strong class="font-monospace text-primary">' + esc(u.OPERATOR_ID) + '</strong></td>' +
                     '<td>' + esc(u.OPERATOR_EMAIL) + '</td>' +
                     '<td>' + '********' + '</td>' +
                     '<td>' + esc(u.CREATED) + '</td>' +
@@ -314,33 +315,106 @@ if ($res) {
             }
         });
 
-        document.getElementById('userBody').addEventListener('click', function(e) {
-            var btn = e.target.closest('.print-btn');
-            if (!btn) return;
-            var u = allUsers[parseInt(btn.getAttribute('data-idx'), 10)];
+        function showOperatorBadge(idx) {
+            var u = allUsers[idx];
             if (!u) return;
-            printUserIdQr(u.OPERATOR_ID);
-        });
 
-        function printUserIdQr(userId) {
-            var box = document.getElementById('qrPrintBox');
-            box.innerHTML = '';
-            var qr = document.createElement('div');
-            box.appendChild(qr);
-            new QRCode(qr, {
-                text: String(userId || ''),
-                width: 220,
-                height: 220,
-                correctLevel: QRCode.CorrectLevel.M
-            });
+            document.getElementById('modalOpName').textContent = u.OPERATOR_NAME;
+            document.getElementById('modalOpId').textContent = u.OPERATOR_ID;
+
+            var qrBox = document.getElementById('modalQrBox');
+            qrBox.innerHTML = '';
+            if (typeof QRCode !== 'undefined') {
+                new QRCode(qrBox, {
+                    text: String(u.OPERATOR_ID || ''),
+                    width: 180,
+                    height: 180,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            }
+
+            var printBox = document.getElementById('qrPrintBox');
+            printBox.innerHTML = '';
+            var printBadge = document.createElement('div');
+            printBadge.className = 'badge-print-box';
+            printBadge.style.cssText = 'width: 320px; background: #ffffff; padding: 20px; border: 3px solid #000000; border-radius: 12px; text-align: center; color: #000000; font-family: sans-serif;';
+            printBadge.innerHTML = `
+                <div style="font-weight: 800; font-size: 16px; text-transform: uppercase; color: #000000; margin-bottom: 4px;">Purbani Fabrics Ltd.</div>
+                <div style="display: inline-block; background: #000000; color: #ffffff; padding: 3px 14px; font-weight: 700; font-size: 11px; border-radius: 12px; margin-bottom: 14px; text-transform: uppercase;">Knitting Operator Badge</div>
+                <div style="background: #ffffff; padding: 14px; border: 2px solid #000000; border-radius: 8px; display: inline-block; margin-bottom: 12px;" id="printQrInner"></div>
+                <div style="font-weight: 800; font-size: 18px; color: #000000; margin-bottom: 2px;">${esc(u.OPERATOR_NAME)}</div>
+                <div style="font-weight: 800; font-size: 16px; font-family: monospace; color: #1e40af;">ID: ${esc(u.OPERATOR_ID)}</div>
+            `;
+            printBox.appendChild(printBadge);
+
             setTimeout(function() {
-                window.print();
-            }, 200);
+                var printQrInner = document.getElementById('printQrInner');
+                if (printQrInner && typeof QRCode !== 'undefined') {
+                    new QRCode(printQrInner, {
+                        text: String(u.OPERATOR_ID || ''),
+                        width: 200,
+                        height: 200,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                }
+            }, 100);
+
+            var modalElem = document.getElementById('opBadgeModal');
+            if (modalElem && typeof bootstrap !== 'undefined') {
+                var myModal = new bootstrap.Modal(modalElem);
+                myModal.show();
+            }
+        }
+
+        function triggerBadgePrint() {
+            window.print();
         }
 
         renderTable(allUsers);
     </script>
 
+    <!-- OPERATOR BADGE & QR MODAL (SCREEN PREVIEW) -->
+    <div class="modal fade no-print" id="opBadgeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 380px;">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-header bg-dark text-white py-3">
+                    <h5 class="modal-title fs-6 fw-bold mb-0">
+                        <i class="fa-solid fa-id-card me-2 text-primary"></i> Operator Badge QR Code
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center p-4" style="background: #f8fafc;">
+                    <div id="modalBadgeCard" class="badge-print-box p-3 bg-white border border-2 border-dark rounded-3 shadow-sm mx-auto" style="max-width: 300px;">
+                        <div class="text-uppercase fw-extrabold text-dark small mb-1" style="letter-spacing: 0.5px; font-weight: 800;">Purbani Fabrics Ltd.</div>
+                        <div class="badge bg-dark text-white px-3 py-1 mb-3 rounded-pill fw-bold text-uppercase" style="font-size: 10px;">Knitting Operator</div>
+                        
+                        <!-- QR Code Frame with White Quiet Zone -->
+                        <div class="qr-frame-box p-3 bg-white border border-2 border-dark rounded-3 d-inline-block shadow-sm mb-3">
+                            <div id="modalQrBox"></div>
+                        </div>
+
+                        <div class="fw-bold text-dark fs-5 mb-0" id="modalOpName">Md. Rahim</div>
+                        <div class="font-monospace text-primary fw-bold fs-6" id="modalOpId">OP01</div>
+                    </div>
+                    <div class="text-muted small mt-3" style="font-size: 11px;">
+                        <i class="fa-solid fa-circle-info text-primary me-1"></i> Point your camera at this QR code in <strong>Knitting Inspection</strong> page to authenticate.
+                    </div>
+                </div>
+                <div class="modal-footer bg-light justify-content-between">
+                    <button type="button" class="btn btn-secondary px-3 btn-sm fw-bold" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success px-4 btn-sm fw-bold" onclick="triggerBadgePrint()">
+                        <i class="fa-solid fa-print me-1"></i> Print Badge
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRINT AREA -->
     <div class="qr-print-area">
         <div class="qr-box" id="qrPrintBox"></div>
     </div>
