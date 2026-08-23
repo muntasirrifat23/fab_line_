@@ -331,6 +331,10 @@ $val_uname        = !empty($card['UNAME']) ? $card['UNAME'] : 'System';
                 <div class="qr-frame-box">
                     <div id="roll_qrcode"></div>
                 </div>
+
+                <div class="qr-payload-lbl">
+                    User: <strong><?php echo htmlspecialchars($val_uname); ?></strong>
+                </div>
             </div>
 
             <!-- RIGHT COLUMN: SPECIFICATIONS TABLE -->
