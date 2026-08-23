@@ -372,12 +372,17 @@ function kc_page_url($p) {
             background: #ffffff;
             border-radius: 24px;
             padding: 24px;
+            width: 100%;
             box-shadow: var(--card-shadow);
             border: 1px solid #e2e8f0;
             overflow: hidden;
         }
 
-        .custom-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .table-responsive {
+            width: 100%;
+        }
+
+        .custom-table { width: 100%; min-width: 1500px; border-collapse: separate; border-spacing: 0; }
         .custom-table thead th {
             background: #0f172a;
             color: #f8fafc;
@@ -557,7 +562,7 @@ function kc_page_url($p) {
 
 <body>
 
-    <div class="container-fluid" style="max-width: 1400px;">
+    <div class="container-fluid" style="max-width: none; width: 100%;">
 
         <!-- ═══ HEADER BANNER ═══ -->
         <div class="top-banner">
