@@ -374,7 +374,10 @@
                 return [c.label, row[c.key]];
             });
 
-            var rowsHTML = fieldHTML.map(function(f) {
+            var rowsHTML = fieldHTML.filter(function(f) {
+                var val = (f[1] === null || f[1] === undefined) ? '' : String(f[1]).trim();
+                return val !== '' && parseFloat(val) !== 0;
+            }).map(function(f) {
                 var val = (f[1] === null || f[1] === undefined) ? '' : f[1];
                 return '<div class="pdf-item"><span class="pdf-label">' + f[0] + ' :</span><span class="pdf-value">' + val + '</span></div>';
             }).join('');
