@@ -8,6 +8,11 @@ if (!isset($_SESSION['username'])) {
     exit();
 }
 
+// Start every new page visit with operator authentication.
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' && !isset($_GET['action'])) {
+  unset($_SESSION['active_operator']);
+}
+
 // ── ACTION: VERIFY OPERATOR QR CODE ──
 if (isset($_GET['action']) && $_GET['action'] === 'verify_operator') {
     header('Content-Type: application/json');
@@ -18,25 +23,20 @@ if (isset($_GET['action']) && $_GET['action'] === 'verify_operator') {
         exit();
     }
 
-    $clean_val = preg_replace('/[^a-zA-Z0-9]/', '', $op_id);
-    $int_val   = intval(preg_replace('/[^0-9]/', '', $op_id));
-    $like_val  = '%' . $op_id . '%';
-
     $stmt = $db->prepare("
-        SELECT KOTID, OPERATOR_ID, OPERATOR_NAME, OPERATOR_EMAIL 
+      SELECT KOTID, OPERATOR_ID, OPERATOR_NAME
         FROM knitting_operator 
-        WHERE LOWER(OPERATOR_ID) = LOWER(?) 
-           OR LOWER(OPERATOR_NAME) = LOWER(?) 
-           OR LOWER(OPERATOR_EMAIL) = LOWER(?) 
-           OR ( ? > 0 AND KOTID = ? )
-           OR REPLACE(LOWER(OPERATOR_ID), '-', '') = LOWER(?) 
-           OR LOWER(OPERATOR_ID) LIKE LOWER(?) 
-           OR LOWER(OPERATOR_NAME) LIKE LOWER(?) 
+      WHERE LOWER(TRIM(OPERATOR_ID)) = LOWER(TRIM(?))
         LIMIT 1
     ");
     if ($stmt) {
-        $stmt->bind_param("sssiisss", $op_id, $op_id, $op_id, $int_val, $int_val, $clean_val, $like_val, $like_val);
-        $stmt->execute();
+      $stmt->bind_param("s", $op_id);
+      if (!$stmt->execute()) {
+        error_log('Operator verification failed: ' . $stmt->error);
+        $stmt->close();
+        echo json_encode(['success' => false, 'error' => 'Operator verification database error']);
+        exit();
+      }
         $res = $stmt->get_result();
         if ($res && $row = $res->fetch_assoc()) {
             $_SESSION['active_operator'] = [
@@ -69,7 +69,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'logout_operator') {
     exit();
 }
 
-// ── ACTION: FETCH ROLL / KNIT CARD DETAILS ──
+// ── ACTION: FETCH PRODUCTION ROLL DETAILS ──
 if (isset($_GET['action']) && $_GET['action'] === 'search_card') {
     header('Content-Type: application/json');
 
@@ -84,68 +84,58 @@ if (isset($_GET['action']) && $_GET['action'] === 'search_card') {
         exit();
     }
 
-    $clean_id = intval(preg_replace('/[^0-9]/', '', $query));
+    $sql = "SELECT PID, BUDAT, ROLL, PO_NUMBER, PQTY, SONO, BUYER, STYLE, COLOR,
+             MCNO, MC_DIA, CUSTOMER, SHIFT, YARN_TYPE, YARN_COUNT,
+             FABRICS_TYPE, FINISH_GSM, FINISH_DIA, OPEN_TUBE, SL_VDQ,
+             GRAY_GSM, FEEDER_PLAN, LOT_NO, KNIT_MATERIAL_CODE,
+             KNIT_M_DES, UNAME, UID
+        FROM knitting_production
+        WHERE TRIM(ROLL) = ?
+        ORDER BY PID DESC LIMIT 1";
 
-    $sql = "SELECT 
-                kc.KCTID, kc.KPTID, kc.MCNO, kc.FDIA, kc.FGSM, 
-                kc.GGSM, kc.SL, kc.O_T, kc.BUYER, kc.CUSTOMER, kc.PO_NUMBER, 
-                kc.SONO, kc.STYLE, kc.FTYPE, kc.YTYPE, kc.YCOUNT, kc.LOT, 
-                kc.KNIT_M_DESCRIPTION, kc.QTY, kc.UNAME, kc.ROLL
-            FROM knit_card kc
-            WHERE kc.ROLL = ? 
-               OR kc.KCTID = ? 
-               OR kc.PO_NUMBER = ? 
-               OR kc.SONO = ? 
-               OR kc.STYLE LIKE ?
-            ORDER BY kc.KCTID DESC LIMIT 1";
-    
     $stmt = $db->prepare($sql);
-    $search_param = '%' . $query . '%';
-    $stmt->bind_param("sisss", $query, $clean_id, $query, $query, $search_param);
+    if (!$stmt) {
+      echo json_encode(['success' => false, 'error' => 'Unable to search production rolls']);
+      exit();
+    }
+    $stmt->bind_param("s", $query);
     $stmt->execute();
     $res = $stmt->get_result();
     
     if ($res && $row = $res->fetch_assoc()) {
-        $kcid = intval($row['KCTID']);
-        
-        $roll_count = 1;
-        $roll_pattern = "R-" . $kcid . "-%";
-        $c_stmt = $db->prepare("SELECT COUNT(*) AS total_rolls FROM knitting_inspection WHERE ROLL LIKE ?");
-        if ($c_stmt) {
-            $c_stmt->bind_param("s", $roll_pattern);
-            $c_stmt->execute();
-            $c_res = $c_stmt->get_result();
-            if ($c_res && $c_row = $c_res->fetch_assoc()) {
-                $roll_count = intval($c_row['total_rolls']) + 1;
-            }
-            $c_stmt->close();
-        }
-
-        $display_roll = !empty($row['ROLL']) ? $row['ROLL'] : ((strlen($query) > 5) ? $query : ('R-' . $kcid . '-' . sprintf("%02d", $roll_count)));
-
         echo json_encode([
             'success'          => true,
             'data'             => [
-                'card_id'          => $kcid,
-                'kptid'            => intval($row['KPTID']),
+            'production_id'   => intval($row['PID']),
+            'production_date' => $row['BUDAT'],
                 'buyer'            => $row['BUYER'] ?: 'N/A',
                 'style'            => $row['STYLE'] ?: 'N/A',
                 'sono'             => $row['SONO'] ?: 'N/A',
                 'booking'          => $row['PO_NUMBER'] ?: 'N/A',
                 'mcno'             => $row['MCNO'] ?: 'N/A',
-                'finish_dia'       => $row['FDIA'] ?: 'N/A',
-                'finish_gsm'       => $row['FGSM'] ?: 'N/A',
-                'fabrics_type'     => $row['FTYPE'] ?: 'N/A',
-                'yarn_type'        => $row['YTYPE'] ?: 'N/A',
-                'yarn_count'       => $row['YCOUNT'] ?: 'N/A',
-                'lot_no'           => $row['LOT'] ?: 'N/A',
-                'req_qty'          => floatval($row['QTY']),
-                'suggested_roll'   => $display_roll,
-                'suggested_weight' => floatval($row['QTY']) > 0 ? floatval($row['QTY']) : 25.00
+            'mc_dia'           => $row['MC_DIA'] ?: 'N/A',
+            'finish_dia'       => $row['FINISH_DIA'] ?: 'N/A',
+            'finish_gsm'       => $row['FINISH_GSM'] ?: 'N/A',
+            'fabrics_type'     => $row['FABRICS_TYPE'] ?: 'N/A',
+            'yarn_type'        => $row['YARN_TYPE'] ?: 'N/A',
+            'yarn_count'       => $row['YARN_COUNT'] ?: 'N/A',
+            'lot_no'           => $row['LOT_NO'] ?: 'N/A',
+            'color'            => $row['COLOR'] ?: 'N/A',
+            'customer'         => $row['CUSTOMER'] ?: 'N/A',
+            'shift'            => $row['SHIFT'] ?: 'N/A',
+            'open_tube'        => $row['OPEN_TUBE'] ?: 'N/A',
+            'sl_vdq'           => $row['SL_VDQ'] ?: 'N/A',
+            'gray_gsm'         => $row['GRAY_GSM'] ?: 'N/A',
+            'feeder_plan'      => $row['FEEDER_PLAN'] ?: 'N/A',
+            'material_code'    => $row['KNIT_MATERIAL_CODE'] ?: 'N/A',
+            'material_desc'    => $row['KNIT_M_DES'] ?: 'N/A',
+            'production_qty'   => floatval($row['PQTY']),
+            'suggested_roll'   => $row['ROLL'],
+            'suggested_weight' => floatval($row['PQTY']) > 0 ? floatval($row['PQTY']) : 25.00
             ]
         ]);
     } else {
-        echo json_encode(['success' => false, 'error' => 'No Knit Card or Roll matching "' . htmlspecialchars($query) . '"']);
+        echo json_encode(['success' => false, 'error' => 'No production data found for Roll "' . htmlspecialchars($query) . '"']);
     }
     $stmt->close();
     exit();
@@ -159,20 +149,15 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
     if (!isset($_SESSION['active_operator']) || empty($_SESSION['active_operator']['id'])) {
         $error = "Unauthorized: You must scan a valid Operator ID QR Code before completing fabric inspection.";
     } else {
-        $knit_card_id        = intval($_POST['KNIT_CARD_ID'] ?? 0);
+        $production_id       = intval($_POST['PRODUCTION_ID'] ?? 0);
         $roll_no             = trim($_POST['ROLL_NO'] ?? '');
         $roll_weight         = floatval($_POST['ROLL_WEIGHT'] ?? 0);
         
         $card_meta = [];
-        if ($knit_card_id > 0) {
-            $c_q = $db->prepare("
-                SELECT kc.*, kp.MAIN_TID, kp.SUB_TID 
-                FROM knit_card kc 
-                LEFT JOIN knitting_program kp ON kc.KPTID = kp.KPTID 
-                WHERE kc.KCTID = ?
-            ");
+        if ($production_id > 0) {
+          $c_q = $db->prepare("SELECT * FROM knitting_production WHERE PID = ?");
             if ($c_q) {
-                $c_q->bind_param("i", $knit_card_id);
+            $c_q->bind_param("i", $production_id);
                 $c_q->execute();
                 $c_res = $c_q->get_result();
                 if ($c_res && $row = $c_res->fetch_assoc()) {
@@ -224,8 +209,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
             $qc_status = ($qc_grade === 'Reject') ? 'Failed' : 'Passed';
         }
 
-        if ($knit_card_id <= 0 && empty($roll_no)) {
-            $error = "Please select a valid Knit Card or enter Roll Number.";
+        if ($production_id <= 0 && empty($roll_no)) {
+          $error = "Please select a valid production roll or enter Roll Number.";
         } elseif (empty($roll_no)) {
             $error = "Roll Number is required.";
         } elseif ($roll_weight <= 0) {
@@ -254,8 +239,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                 }
                 
                 $budat       = date('Y-m-d');
-                $oqty        = strval($card_meta['QTY'] ?? $roll_weight);
-                $rqty        = strval($card_meta['QTY'] ?? $roll_weight);
+                $oqty        = strval($card_meta['PQTY'] ?? $roll_weight);
+                $rqty        = strval($card_meta['PQTY'] ?? $roll_weight);
                 $uqty        = strval($roll_weight);
                 $po_number   = strval($card_meta['PO_NUMBER'] ?? '');
                 $qty         = strval($roll_weight);
@@ -264,21 +249,21 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                 $style       = strval($card_meta['STYLE'] ?? '');
                 $color       = strval($card_meta['COLOR'] ?? '');
                 $mcno        = strval($card_meta['MCNO'] ?? '');
-                $mc_dia      = strval($card_meta['MCDIA'] ?? '');
+                $mc_dia      = strval($card_meta['MC_DIA'] ?? '');
                 $supplier    = strval($card_meta['CUSTOMER'] ?? '');
                 $shift       = strval($card_meta['SHIFT'] ?? '');
                 $ytype       = strval($card_meta['YTYPE'] ?? '');
                 $ycount      = strval($card_meta['YCOUNT'] ?? '');
-                $ftype       = strval($card_meta['FTYPE'] ?? '');
-                $fgsm        = strval($card_meta['FGSM'] ?? '');
-                $fdia        = strval($card_meta['FDIA'] ?? '');
-                $o_t         = strval($card_meta['O_T'] ?? '');
-                $sl          = floatval($card_meta['SL'] ?? 0.00);
-                $ggsm        = strval($card_meta['GGSM'] ?? '');
+                $ftype       = strval($card_meta['FABRICS_TYPE'] ?? '');
+                $fgsm        = strval($card_meta['FINISH_GSM'] ?? '');
+                $fdia        = strval($card_meta['FINISH_DIA'] ?? '');
+                $o_t         = strval($card_meta['OPEN_TUBE'] ?? '');
+                $sl          = floatval($card_meta['SL_VDQ'] ?? 0.00);
+                $ggsm        = strval($card_meta['GRAY_GSM'] ?? '');
                 $fplan       = strval($card_meta['FEEDER_PLAN'] ?? '');
-                $lotno       = strval($card_meta['LOT'] ?? '');
+                $lotno       = strval($card_meta['LOT_NO'] ?? '');
                 $mat_code    = strval($card_meta['KNIT_MATERIAL_CODE'] ?? '');
-                $m_des       = strval($card_meta['KNIT_M_DESCRIPTION'] ?? '');
+                $m_des       = strval($card_meta['KNIT_M_DES'] ?? '');
 
                 $v_tt         = strval($defect_tt);
                 $v_patta      = strval($defect_patta);
@@ -790,11 +775,12 @@ $active_operator = $_SESSION['active_operator'] ?? null;
       const cameraStatus    = document.getElementById('camera-status');
       const toggleCameraBtn = document.getElementById('toggle-camera-btn');
       
-      const isOperatorActive = <?php echo $active_operator ? 'true' : 'false'; ?>;
+      let isOperatorActive = <?php echo $active_operator ? 'true' : 'false'; ?>;
       let activeOperatorInfo = <?php echo json_encode($active_operator); ?>;
       
       let html5QrCode = null;
       let isScanning    = false;
+      let verifying     = false;
       let rollData      = null;
       let selectedFaults = {};
 
@@ -853,6 +839,11 @@ $active_operator = $_SESSION['active_operator'] ?? null;
         });
       }
 
+      function esc(v) {
+        if (v === null || v === undefined) return '';
+        return String(v).replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>').replace(/"/g, '"');
+      }
+
       function updateOperatorHeaderUI() {
         const titleText = document.getElementById('step-title-text');
         const headerContainer = document.getElementById('op-header-badge-container');
@@ -883,10 +874,26 @@ $active_operator = $_SESSION['active_operator'] ?? null;
         const msgDiv = document.getElementById('opStatusMsg');
         if (msgDiv) msgDiv.innerHTML = '<div style="color:#2563eb; font-weight:700; font-size:0.85rem;"><i class="fas fa-spinner fa-spin"></i> Verifying Operator ID...</div>';
 
-        fetch('knitting_inspection.php?action=verify_operator&operator_id=' + encodeURIComponent(val))
-          .then(r => r.json())
+        fetch('knitting_inspection.php?action=verify_operator&operator_id=' + encodeURIComponent(val), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin'
+          })
+          .then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status + ': ' + r.statusText);
+            return r.text();
+          })
+          .then(text => {
+            let res;
+            try {
+              res = JSON.parse(text.replace(/^\uFEFF/, '').trim());
+            } catch (e) {
+              throw new Error('Invalid JSON response: ' + text.substring(0, 100));
+            }
+            return res;
+          })
           .then(res => {
             if (res.success && res.data) {
+              verifying = false;
               isOperatorActive = true;
               activeOperatorInfo = {
                 id: res.data.OPERATOR_ID,
@@ -895,11 +902,14 @@ $active_operator = $_SESSION['active_operator'] ?? null;
               updateOperatorHeaderUI();
               renderStep2RollScan();
             } else {
+              verifying = false;
               if (msgDiv) msgDiv.innerHTML = `<div style="color:#ef4444; font-weight:700; font-size:0.85rem;"><i class="fas fa-times-circle"></i> ${res.error || 'Invalid Operator ID'}</div>`;
             }
           })
           .catch(err => {
-            if (msgDiv) msgDiv.innerHTML = `<div style="color:#ef4444; font-weight:700; font-size:0.85rem;"><i class="fas fa-exclamation-triangle"></i> Verification Error</div>`;
+            verifying = false;
+            if (msgDiv) msgDiv.innerHTML = `<div style="color:#ef4444; font-weight:700; font-size:0.85rem;"><i class="fas fa-exclamation-triangle"></i> Verification Error: ${err.message}</div>`;
+            console.error('Operator verification failed:', err);
           });
       }
 
@@ -952,10 +962,13 @@ $active_operator = $_SESSION['active_operator'] ?? null;
         selectedFaults = {};
         
         let html = `
-          <div class="data-row header-row"><span class="label">Roll Information</span><span class="value">Knit Card #${d.card_id}</span></div>
+          <div class="data-row header-row"><span class="label">Production Roll Information</span><span class="value">Production #${d.production_id}</span></div>
           <div class="data-row"><span class="label">Roll Number:</span><span class="value" style="color:#2563eb; font-weight:800;">${d.suggested_roll}</span></div>
+          <div class="data-row"><span class="label">Production Date / Quantity:</span><span class="value">${d.production_date || 'N/A'} / ${d.production_qty || 0} KG</span></div>
           <div class="data-row"><span class="label">PO Number:</span><span class="value">${d.booking}</span></div>
           <div class="data-row"><span class="label">Buyer / Style:</span><span class="value">${d.buyer} (${d.style})</span></div>
+          <div class="data-row"><span class="label">Color / Customer:</span><span class="value">${d.color} / ${d.customer}</span></div>
+          <div class="data-row"><span class="label">Machine / Shift:</span><span class="value">${d.mcno} / ${d.shift}</span></div>
           <div class="data-row"><span class="label">Fabric / GSM:</span><span class="value">${d.fabrics_type} (${d.finish_gsm} GSM)</span></div>
           
           <div style="margin-top:14px; font-weight:800; font-size:0.85rem; color:#334155;">
@@ -1062,7 +1075,7 @@ $active_operator = $_SESSION['active_operator'] ?? null;
         };
 
         addField('save_inspection', '1');
-        addField('KNIT_CARD_ID', rollData.card_id);
+        addField('PRODUCTION_ID', rollData.production_id || 0);
         addField('ROLL_NO', rollData.suggested_roll);
         addField('ROLL_WEIGHT', weightVal);
 
@@ -1122,7 +1135,7 @@ $active_operator = $_SESSION['active_operator'] ?? null;
         html5QrCode = new Html5Qrcode("qr-reader");
         html5QrCode.start(
           { facingMode: currentFacingMode },
-          { fps: 15, qrbox: { width: 250, height: 250 } },
+          { fps: 10, qrbox: { width: 180, height: 180 } },
           onScanSuccess,
           onScanFailure
         ).then(() => {
@@ -1135,15 +1148,39 @@ $active_operator = $_SESSION['active_operator'] ?? null;
         });
       }
 
+      function isRollCode(text) {
+        const val = String(text).trim();
+        return /^\d+$/.test(val) ||
+               /^ROLL:\s*\d+$/i.test(val) ||
+               val.indexOf('|') !== -1 ||
+               (val.startsWith('{') && val.endsWith('}'));
+      }
+
+      let lastScannedText = '';
+      let lastScanTime = 0;
+
       function onScanSuccess(decodedText) {
-        const text = String(decodedText || '').trim();
-        if (!text) return;
+        const now = Date.now();
+        const text = String(decodedText || '').trim().replace(/[\r\n]+/g, '');
+
+        if (!text || text === lastScannedText && now - lastScanTime < 1500) {
+          return;
+        }
+        lastScannedText = text;
+        lastScanTime = now;
 
         if (!isOperatorActive) {
+          if (isRollCode(text)) {
+            alert('Please scan Knitting Operator ID first!\nProduction roll cannot be scanned before operator.');
+            return;
+          }
+          if (verifying) return;
+          verifying = true;
           submitOperator(text);
-        } else {
-          submitRollScan(text);
+          return;
         }
+
+        submitRollScan(text);
       }
 
       function onScanFailure(err) {}
