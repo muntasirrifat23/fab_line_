@@ -102,12 +102,12 @@ $val_uname        = !empty($card['UNAME']) ? $card['UNAME'] : 'System';
             background-color: var(--bg-canvas);
             font-family: var(--font-main);
             color: #0f172a;
-            padding: 20px 10px;
+            padding: 20px;
         }
 
         .action-bar-top {
-            max-width: 410px;
-            margin: 0 auto 12px auto;
+            max-width: 395px;
+            margin: 0 0 12px 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -131,7 +131,7 @@ $val_uname        = !empty($card['UNAME']) ? $card['UNAME'] : 'System';
             background: #ffffff;
             border: 2.5px solid #000000;
             border-radius: 10px;
-            margin: 0 auto;
+            margin: 0 0 20px 0;
             padding: 10px;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
             box-sizing: border-box;
@@ -158,16 +158,6 @@ $val_uname        = !empty($card['UNAME']) ? $card['UNAME'] : 'System';
             color: #000000;
             margin: 0;
             line-height: 1.1;
-        }
-
-        .card-id-pill {
-            background: #000000;
-            color: #ffffff;
-            font-size: 10px;
-            font-weight: 800;
-            padding: 2px 8px;
-            border-radius: 4px;
-            letter-spacing: 0.5px;
         }
 
         /* CARD MAIN CONTENT (LEFT QR, RIGHT SPECS) */
@@ -285,7 +275,7 @@ $val_uname        = !empty($card['UNAME']) ? $card['UNAME'] : 'System';
                 width: 98mm !important;
                 height: 92mm !important;
                 min-height: 92mm !important;
-                margin: 0 auto !important;
+                margin: 0 !important;
                 border: 2px solid #000000 !important;
                 box-shadow: none !important;
                 page-break-inside: avoid;
@@ -309,26 +299,25 @@ $val_uname        = !empty($card['UNAME']) ? $card['UNAME'] : 'System';
                 <i class="fa-solid fa-print"></i> Full Card
             </a>
             <button type="button" onclick="window.print()" class="btn btn-tag btn-success">
-                <i class="fa-solid fa-qrcode"></i> Print 1/6 A4 Tag
+                <i class="fa-solid fa-print"></i> Print
             </button>
         </div>
     </div>
 
     <!-- ALERTS (NO-PRINT) -->
     <?php if (!empty($msg)): ?>
-        <div class="alert alert-success alert-dismissible fade show rounded-3 p-2 mb-2 small no-print" style="max-width: 395px; margin: 0 auto 10px auto;">
+        <div class="alert alert-success alert-dismissible fade show rounded-3 p-2 mb-2 small no-print" style="max-width: 395px; margin: 0 0 10px 0;">
             <i class="fa-solid fa-circle-check me-1"></i> <?php echo htmlspecialchars($msg); ?>
             <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
         </div>
     <?php endif; ?>
 
-    <!-- ═══ EXACT 1/6th A4 TAG CARD CONTAINER (395px x 350px / 98mm x 92mm) ═══ -->
+    <!-- ═══ EXACT 1/6th A4 TAG CARD CONTAINER (LEFT ALIGNED) ═══ -->
     <div class="a4-sixth-card">
 
         <!-- CARD TOP HEADER -->
         <div class="card-top-header">
             <div class="company-title">Purbani Fabrics Ltd.</div>
-            <div class="card-id-pill"><?php echo htmlspecialchars($val_card_id); ?></div>
         </div>
 
         <!-- MAIN ROW: LEFT QR CODE, RIGHT SPECS -->
@@ -344,7 +333,7 @@ $val_uname        = !empty($card['UNAME']) ? $card['UNAME'] : 'System';
                 </div>
 
                 <div class="qr-payload-lbl">
-                    QR: <strong><?php echo htmlspecialchars($roll_number); ?></strong>
+                    User: <strong><?php echo htmlspecialchars($val_uname); ?></strong>
                 </div>
             </div>
 
