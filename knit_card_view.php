@@ -408,7 +408,6 @@ $val_uname        = !empty($card['UNAME']) ? $card['UNAME'] : 'System';
         <!-- FOOTER STRIP -->
         <div class="card-footer-strip">
             <div>Date: <strong><?php echo htmlspecialchars($val_date); ?></strong></div>
-            <div>User: <strong><?php echo htmlspecialchars($val_uname); ?></strong></div>
         </div>
 
     </div>
