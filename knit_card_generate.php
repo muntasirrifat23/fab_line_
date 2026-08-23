@@ -1,9 +1,19 @@
 <?php
 date_default_timezone_set('Asia/Dhaka');
-$bdHour = (int)date('G');
-if ($bdHour >= 6 && $bdHour < 14) {$shift = 'A'; } 
-elseif ($bdHour >= 14 && $bdHour < 22) {$shift = 'B'; } 
-else { $shift = 'C'; }
+$bdHour  = (int)date('G');
+$bdMin   = (int)date('i');
+$totMins = ($bdHour * 60) + $bdMin;
+
+// 6:00 AM (360 mins) to 2:00 PM (840 mins) => Shift A
+// 2:01 PM (841 mins) to 10:00 PM (1320 mins) => Shift B
+// 10:01 PM (1321 mins) to 5:59 AM (359 mins) => Shift C
+if ($totMins >= 360 && $totMins <= 840) {
+    $shift = 'A';
+} elseif ($totMins >= 841 && $totMins <= 1320) {
+    $shift = 'B';
+} else {
+    $shift = 'C';
+}
 
 session_start();
 include 'config.php';
@@ -125,7 +135,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
 
     for ($i = 0; $i < $row_count; $i++) {
         $mc  = isset($raw_machines[$i]) ? trim($raw_machines[$i]) : '';
-        $sh  = isset($raw_shifts[$i]) && trim($raw_shifts[$i]) !== '' ? trim($raw_shifts[$i]) : $shift;
+        $sh  = $shift; // Always strictly auto real-time shift
         $qty = isset($raw_qtys[$i]) ? floatval($raw_qtys[$i]) : 0.0;
 
         if (empty($mc)) {
@@ -1044,12 +1054,12 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                                     </select>
                                 </div>
                                 <div class="col-6">
-                                    <label class="form-label-custom">Shift</label>
-                                    <select name="shift[]" class="form-select-custom row-shift">
-                                        <option value="A" <?php echo ($shift === 'A') ? 'selected' : ''; ?>>Shift A</option>
-                                        <option value="B" <?php echo ($shift === 'B') ? 'selected' : ''; ?>>Shift B</option>
-                                        <option value="C" <?php echo ($shift === 'C') ? 'selected' : ''; ?>>Shift C</option>
-                                    </select>
+                                    <label class="form-label-custom">Shift (Auto Real-time)</label>
+                                    <input type="hidden" name="shift[]" value="<?php echo $shift; ?>">
+                                    <div class="form-input-custom bg-light fw-bold text-primary d-flex align-items-center justify-content-between" style="padding: 10px 14px !important;">
+                                        <span>Shift <?php echo $shift; ?></span>
+                                        <span class="badge bg-primary text-white" style="font-size: 10px; font-weight:700;">Auto Real-time</span>
+                                    </div>
                                 </div>
                             </div>
                             <div>
@@ -1370,12 +1380,12 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                                 </select>
                             </div>
                             <div class="col-6">
-                                <label class="form-label-custom">Shift</label>
-                                <select name="shift[]" class="form-select-custom row-shift">
-                                    <option value="A" ${defaultShift === 'A' ? 'selected' : ''}>Shift A</option>
-                                    <option value="B" ${defaultShift === 'B' ? 'selected' : ''}>Shift B</option>
-                                    <option value="C" ${defaultShift === 'C' ? 'selected' : ''}>Shift C</option>
-                                </select>
+                                <label class="form-label-custom">Shift (Auto Real-time)</label>
+                                <input type="hidden" name="shift[]" value="${defaultShift}">
+                                <div class="form-input-custom bg-light fw-bold text-primary d-flex align-items-center justify-content-between" style="padding: 10px 14px !important;">
+                                    <span>Shift ${defaultShift}</span>
+                                    <span class="badge bg-primary text-white" style="font-size: 10px; font-weight:700;">Auto Real-time</span>
+                                </div>
                             </div>
                         </div>
                         <div>
