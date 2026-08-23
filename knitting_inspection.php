@@ -18,32 +18,38 @@ if (isset($_GET['action']) && $_GET['action'] === 'verify_operator') {
         exit();
     }
 
-    $clean_id = preg_replace('/[^a-zA-Z0-9]/', '', $op_id);
-    $int_id   = intval($clean_id);
+    $clean_val = preg_replace('/[^a-zA-Z0-9]/', '', $op_id);
+    $int_val   = intval(preg_replace('/[^0-9]/', '', $op_id));
+    $like_val  = '%' . $op_id . '%';
 
     $stmt = $db->prepare("
-        SELECT OPERATOR_ID, OPERATOR_NAME 
+        SELECT KOTID, OPERATOR_ID, OPERATOR_NAME, OPERATOR_EMAIL 
         FROM knitting_operator 
-        WHERE OPERATOR_ID = ? 
-           OR OPERATOR_NAME = ? 
-           OR KOTID = ? 
-           OR REPLACE(OPERATOR_ID, '-', '') = ? 
+        WHERE LOWER(OPERATOR_ID) = LOWER(?) 
+           OR LOWER(OPERATOR_NAME) = LOWER(?) 
+           OR LOWER(OPERATOR_EMAIL) = LOWER(?) 
+           OR ( ? > 0 AND KOTID = ? )
+           OR REPLACE(LOWER(OPERATOR_ID), '-', '') = LOWER(?) 
+           OR LOWER(OPERATOR_ID) LIKE LOWER(?) 
+           OR LOWER(OPERATOR_NAME) LIKE LOWER(?) 
         LIMIT 1
     ");
     if ($stmt) {
-        $stmt->bind_param("ssis", $op_id, $op_id, $int_id, $clean_id);
+        $stmt->bind_param("sssiisss", $op_id, $op_id, $op_id, $int_val, $int_val, $clean_val, $like_val, $like_val);
         $stmt->execute();
         $res = $stmt->get_result();
         if ($res && $row = $res->fetch_assoc()) {
             $_SESSION['active_operator'] = [
                 'id'   => $row['OPERATOR_ID'],
-                'name' => $row['OPERATOR_NAME']
+                'name' => $row['OPERATOR_NAME'],
+                'kotid'=> $row['KOTID']
             ];
             echo json_encode([
                 'success' => true,
                 'data'    => [
                     'OPERATOR_ID'   => $row['OPERATOR_ID'],
-                    'OPERATOR_NAME' => $row['OPERATOR_NAME']
+                    'OPERATOR_NAME' => $row['OPERATOR_NAME'],
+                    'KOTID'         => $row['KOTID']
                 ]
             ]);
             $stmt->close();
@@ -51,7 +57,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'verify_operator') {
         }
         $stmt->close();
     }
-    echo json_encode(['success' => false, 'error' => 'Invalid Operator ID: ' . $op_id]);
+    echo json_encode(['success' => false, 'error' => 'Invalid Operator ID: "' . $op_id . '"']);
     exit();
 }
 
@@ -734,14 +740,16 @@ $active_operator = $_SESSION['active_operator'] ?? null;
       <div class="result-header">
         <i class="fas fa-qrcode"></i>
         <span id="step-title-text"><?php echo $active_operator ? 'Step 2: Scan Roll QR' : 'Step 1: Scan Operator ID QR'; ?></span>
-        <?php if ($active_operator): ?>
-          <span style="margin-left: auto; font-size: 0.75rem; background: #10b981; padding: 2px 12px; border-radius: 40px; color: #ffffff; font-weight:700;">
-            <i class="fa-solid fa-user-check me-1"></i> <?php echo htmlspecialchars($active_operator['name']); ?> (<?php echo htmlspecialchars($active_operator['id']); ?>)
-          </span>
-          <button type="button" onclick="logoutOperator()" style="margin-left: 8px; background:#ef4444; border:none; color:white; font-size:0.7rem; padding:3px 10px; border-radius:20px; cursor:pointer; font-weight:700;">Switch</button>
-        <?php else: ?>
-          <span style="margin-left: auto; font-size: 0.75rem; background: #f59e0b; padding: 2px 12px; border-radius: 40px; color: #ffffff; font-weight:700;">Operator Auth Required</span>
-        <?php endif; ?>
+        <div id="op-header-badge-container" style="margin-left: auto; display: flex; align-items: center;">
+          <?php if ($active_operator): ?>
+            <span style="font-size: 0.75rem; background: #10b981; padding: 2px 12px; border-radius: 40px; color: #ffffff; font-weight:700;">
+              <i class="fa-solid fa-user-check me-1"></i> <?php echo htmlspecialchars($active_operator['name']); ?> (<?php echo htmlspecialchars($active_operator['id']); ?>)
+            </span>
+            <button type="button" onclick="logoutOperator()" style="margin-left: 8px; background:#ef4444; border:none; color:white; font-size:0.7rem; padding:3px 10px; border-radius:20px; cursor:pointer; font-weight:700;">Switch</button>
+          <?php else: ?>
+            <span style="font-size: 0.75rem; background: #f59e0b; padding: 2px 12px; border-radius: 40px; color: #ffffff; font-weight:700;">Operator Auth Required</span>
+          <?php endif; ?>
+        </div>
       </div>
 
       <?php if (!empty($msg)): ?>
@@ -845,6 +853,29 @@ $active_operator = $_SESSION['active_operator'] ?? null;
         });
       }
 
+      function updateOperatorHeaderUI() {
+        const titleText = document.getElementById('step-title-text');
+        const headerContainer = document.getElementById('op-header-badge-container');
+        if (isOperatorActive && activeOperatorInfo) {
+          if (titleText) titleText.textContent = 'Step 2: Scan Roll QR';
+          if (headerContainer) {
+            headerContainer.innerHTML = `
+              <span style="font-size: 0.75rem; background: #10b981; padding: 2px 12px; border-radius: 40px; color: #ffffff; font-weight:700;">
+                <i class="fa-solid fa-user-check me-1"></i> ${esc(activeOperatorInfo.name)} (${esc(activeOperatorInfo.id)})
+              </span>
+              <button type="button" onclick="logoutOperator()" style="margin-left: 8px; background:#ef4444; border:none; color:white; font-size:0.7rem; padding:3px 10px; border-radius:20px; cursor:pointer; font-weight:700;">Switch</button>
+            `;
+          }
+        } else {
+          if (titleText) titleText.textContent = 'Step 1: Scan Operator ID QR';
+          if (headerContainer) {
+            headerContainer.innerHTML = `
+              <span style="font-size: 0.75rem; background: #f59e0b; padding: 2px 12px; border-radius: 40px; color: #ffffff; font-weight:700;">Operator Auth Required</span>
+            `;
+          }
+        }
+      }
+
       function submitOperator(val) {
         val = String(val || '').trim();
         if (!val) { alert('Please enter or scan Operator ID!'); return; }
@@ -855,8 +886,14 @@ $active_operator = $_SESSION['active_operator'] ?? null;
         fetch('knitting_inspection.php?action=verify_operator&operator_id=' + encodeURIComponent(val))
           .then(r => r.json())
           .then(res => {
-            if (res.success) {
-              window.location.reload();
+            if (res.success && res.data) {
+              isOperatorActive = true;
+              activeOperatorInfo = {
+                id: res.data.OPERATOR_ID,
+                name: res.data.OPERATOR_NAME
+              };
+              updateOperatorHeaderUI();
+              renderStep2RollScan();
             } else {
               if (msgDiv) msgDiv.innerHTML = `<div style="color:#ef4444; font-weight:700; font-size:0.85rem;"><i class="fas fa-times-circle"></i> ${res.error || 'Invalid Operator ID'}</div>`;
             }
@@ -1042,7 +1079,13 @@ $active_operator = $_SESSION['active_operator'] ?? null;
       window.logoutOperator = function() {
         fetch('knitting_inspection.php?action=logout_operator')
           .then(r => r.json())
-          .then(() => window.location.reload());
+          .then(() => {
+            isOperatorActive = false;
+            activeOperatorInfo = null;
+            rollData = null;
+            updateOperatorHeaderUI();
+            renderStep1Operator();
+          });
       };
 
       // QR CAMERA SCANNER INITIALIZATION WITH ROTATION & FLIP
