@@ -69,7 +69,10 @@ $lotNo = isset($_POST['lot_no']) ? trim($_POST['lot_no']) : null;
 $knitMaterialCode = isset($_POST['knit_material_code']) ? trim($_POST['knit_material_code']) : null;
 $color = isset($_POST['color']) ? trim($_POST['color']) : null;
 $slVdq = isset($_POST['sl_vdq']) ? trim($_POST['sl_vdq']) : null;
-$grayGsm = isset($_POST['gray_gsm']) ? trim($_POST['gray_gsm']) : null;
+$grayGsm = isset($_POST['gray_gsm']) ? trim($_POST['gray_gsm']) : '';
+if ($grayGsm === '') {
+    $grayGsm = '0';
+}
 $feederPlan = isset($_POST['feeder_plan']) ? trim($_POST['feeder_plan']) : null;
 $mcnoQtyData = isset($_POST['mcno_qty']) ? $_POST['mcno_qty'] : [];
 

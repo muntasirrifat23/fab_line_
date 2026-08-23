@@ -896,7 +896,6 @@
                 '#yarn_count',
                 '#sl_vdq',
                 '#mc_dia',
-                '#gray_gsm',
                 '#feeder_plan',
                 '#lot_no',
                 '#knit_m_description'
@@ -1052,7 +1051,6 @@
                 '#yarn_count',
                 '#sl_vdq',
                 '#mc_dia',
-                '#gray_gsm',
                 '#feeder_plan',
                 '#lot_no',
                 '#knit_m_description'
