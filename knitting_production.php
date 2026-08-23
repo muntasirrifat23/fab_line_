@@ -1,5 +1,4 @@
 ﻿<?php
-// ------- In-file AJAX endpoint: fetch knit_card_test row by ROLL -------
 if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
   require_once 'config.php';
   header('Content-Type: application/json');
@@ -12,7 +11,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
   }
 
   $s = mysqli_real_escape_string($db, $roll);
-  $q = "SELECT * FROM knit_card_test WHERE ROLL = '$s' LIMIT 1";
+  $q = "SELECT * FROM knit_card WHERE ROLL = '$s' LIMIT 1";
   $res = mysqli_query($db, $q);
 
   if ($res && mysqli_num_rows($res) > 0) {
@@ -978,7 +977,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
         `;
       }
 
-      // Render full data fetched from knit_card_test by ROLL
       function renderRollData(row, qrText) {
         const m = (v) => (v === null || v === undefined) ? '' : String(v);
 

@@ -14,7 +14,7 @@ if (!isset($db) || !$db) {
 }
 
 $action = isset($_GET['action']) ? $_GET['action'] : '';
-$TABLE = 'knitting_inspection_test';
+$TABLE = 'knitting_inspection';
 
 if ($action === 'search') {
     // Search by ROLL or PO_NUMBER

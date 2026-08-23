@@ -743,7 +743,7 @@
         BUDAT: 'DATE',
         ROLL: 'ROLL',
         PO_NUMBER: 'PO NUMBER',
-        QTY: 'QTY',
+        UQTY: 'QTY',
         SONO: 'SONO',
         BUYER: 'BUYER',
         STYLE: 'STYLE',
@@ -838,7 +838,7 @@
           </div>
         `;
 
-        html += buildFieldRow(['ROLL', 'PO_NUMBER', 'QTY', 'SONO']);
+        html += buildFieldRow(['ROLL', 'PO_NUMBER', 'UQTY', 'SONO']);
         html += buildFieldRow(['SHIFT', 'BUYER', 'STYLE', 'COLOR']);
         html += buildFieldRow(['MCNO', 'MC_DIA', 'CUSTOMER', 'YTYPE']);
         html += buildFieldRow(['YCOUNT', 'O_T', 'SL', 'FTYPE']);

@@ -302,8 +302,10 @@ $user = strtolower($_SESSION['username'] ?? '');
           </div>
         </div>
 
+
+        <!-- TESTING -->
         <!-- 001. Knitting Test Inspection Report -->
-        <div class="col-md-4 mb-3 d-flex">
+        <!-- <div class="col-md-4 mb-3 d-flex">
           <div class="report-card w-100 card-bg">
             <form method="POST" action="knitting_inspection_report_test.php" class="h-100 w-100">
               <button type="submit" class="btn btn-report">
@@ -314,12 +316,11 @@ $user = strtolower($_SESSION['username'] ?? '');
               </button>
             </form>
           </div>
-        </div>
-
+        </div> -->
 
 
         <!-- 00. Knitting QR Report -->
-        <div class="col-md-4 mb-3 d-flex">
+        <!-- <div class="col-md-4 mb-3 d-flex">
           <div class="report-card w-100 card-bg">
             <form method="POST" action="knitting_qr.php" class="h-100 w-100">
               <button type="submit" class="btn btn-report">
@@ -330,36 +331,7 @@ $user = strtolower($_SESSION['username'] ?? '');
               </button>
             </form>
           </div>
-        </div>
-
-
-        <!-- 1. DHU Report (Teal) -->
-        <!-- <i class="fa-solid fa-chart-line card-btn"></i> -->
-
-        <!-- 2. Manpower Report (Orange) -->
-        <!-- <i class="fa-solid fa-users card-btn"></i> -->
-
-        <!-- 3. Production Report (Blue) -->
-        <!-- <i class="fa-solid fa-industry card-btn"></i> -->
-
-        <!-- 4. Production Summary (Purple) -->
-        <!-- <i class="fa-solid fa-file-lines card-btn"></i> -->
-
-        <!-- 5. All Wip (Cyan) -->
-        <!-- <i class="fa-solid fa-boxes card-btn"></i> -->
-
-
-        <!-- 6. Rejection Report (Red) -->
-        <!-- <i class="fa-solid fa-ban card-btn"></i> -->
-
-        <!-- 7. Adjustment Report (Amber) -->
-        <!-- <i class="fa-solid fa-sliders-h card-btn"></i> -->
-
-        <!-- 8. Transfer Report (Amber) -->
-        <!-- <i class="fa-solid fa-exchange-alt card-btn"></i> -->
-
-        <!-- 9. Production Hourly Report (Amber) -->
-        <!-- <i class="fa-solid fa-clock card-btn"></i> -->
+        </div> -->
 
       </div>
 
