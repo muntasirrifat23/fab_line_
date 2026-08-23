@@ -117,7 +117,7 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 1.12rem;
-            min-width: 1400px;
+            min-width: 2400px;
         }
 
         thead th {
@@ -227,11 +227,13 @@
                     <thead>
                         <tr>
                             <th>ACTION</th>
+                            <th>KSTID</th>
                             <th>DATE</th>
+                            <th>RACK NO</th>
+                            <th>LOCATION</th>
                             <th>ROLL NO</th>
                             <th>PO NUMBER</th>
                             <th>QTY</th>
-                            <th>RACK</th>
                             <th>SONO</th>
                             <th>SHIFT</th>
                             <th>BUYER</th>
@@ -251,11 +253,16 @@
                             <th>FEEDER PLAN</th>
                             <th>LOT NO</th>
                             <th>T POINT</th>
+                            <th>M CODE</th>
+                            <th>M DESCRIPTION</th>
+                            <th>CREATED DATE</th>
+                            <th>UNAME</th>
+                            <th>UID</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="25" class="loading-cell">Loading data...</td>
+                            <td colspan="32" class="loading-cell">Loading data...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -270,11 +277,13 @@
 
     <script>
         var COLS = [
+            { key: 'KSTID', label: 'KSTID' },
             { key: 'BUDAT', label: 'Date' },
+            { key: 'RACKNO', label: 'Rack No' },
+            { key: 'RACKLOCATION', label: 'Location' },
             { key: 'ROLL', label: 'Roll No' },
             { key: 'PO_NUMBER', label: 'PO Number' },
             { key: 'QTY', label: 'QTY' },
-            { key: 'RACK', label: 'Rack' },
             { key: 'SONO', label: 'SONO' },
             { key: 'SHIFT', label: 'Shift' },
             { key: 'BUYER', label: 'Buyer' },
@@ -293,8 +302,19 @@
             { key: 'GGSM', label: 'Gray GSM' },
             { key: 'FEEDER_PLAN', label: 'Feeder Plan' },
             { key: 'LOT_NO', label: 'Lot No' },
-            { key: 'TPOINT', label: 'T Point' }
+            { key: 'TPOINT', label: 'T Point' },
+            { key: 'MCODE', label: 'M Code' },
+            { key: 'MDESCRIPTION', label: 'M Description' },
+            { key: 'CREATED_DATE', label: 'Created Date' },
+            { key: 'UNAME', label: 'Uname' },
+            { key: 'UID', label: 'UID' }
         ];
+
+        // PDF/print excludes these fields (per requirement)
+        var PDF_EXCLUDE = ['KSTID', 'UNAME', 'UID', 'CREATED_DATE'];
+        var PDF_COLS = COLS.filter(function(c) {
+            return PDF_EXCLUDE.indexOf(c.key) === -1;
+        });
 
         var currentData = [];
 
@@ -310,7 +330,7 @@
             }
             if (!row) { alert('Data not found for this roll.'); return; }
 
-            var fieldHTML = COLS.map(function(c) {
+            var fieldHTML = PDF_COLS.map(function(c) {
                 return [c.label, row[c.key]];
             });
 
@@ -326,7 +346,6 @@
                 '</div>' +
                 '<div style="display:flex;justify-content:space-between;align-items:center;width:100%;font-size:14px;font-weight:bold;margin-bottom:10px; margin-left:10px;">' +
                 '<span>Roll : ' + (row.ROLL || '') + '</span>' +
-                '<span style="margin-right:20px;">User : ' + (row.UID || row.UNAME || '') + '</span>' +
                 '</div>' +
                 '<div class="pdf-grid">' + rowsHTML + '</div>' +
                 '<div style="text-align:center;font-size:11px;color: black; margin-top:16px;border-top:1px solid #e5e7eb;padding-top:8px;">' +
@@ -428,7 +447,7 @@
             tbody.empty();
             currentData = data || [];
             if (!currentData.length) {
-                tbody.append('<tr class="empty-row"><td colspan="25">No data found</td></tr>');
+                tbody.append('<tr class="empty-row"><td colspan="32">No data found</td></tr>');
                 return;
             }
             currentData.forEach(function(row) {
@@ -456,11 +475,11 @@
                     if (resp && resp.success) {
                         renderTableRows(resp.data);
                     } else {
-                        $('#tableBody').html('<tr class="empty-row"><td colspan="25">No data found</td></tr>');
+                        $('#tableBody').html('<tr class="empty-row"><td colspan="32">No data found</td></tr>');
                     }
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr class="empty-row"><td colspan="25" style="color:#dc2626;">Error searching</td></tr>');
+                    $('#tableBody').html('<tr class="empty-row"><td colspan="32" style="color:#dc2626;">Error searching</td></tr>');
                 })
                 .always(function() {
                     $('#searchBtn').prop('disabled', false).html('<i class="fa-solid fa-magnifying-glass"></i> Search');
@@ -468,7 +487,7 @@
         }
 
         function loadAll() {
-            $('#tableBody').html('<tr><td colspan="25" class="loading-cell">Loading data...</td></tr>');
+            $('#tableBody').html('<tr><td colspan="32" class="loading-cell">Loading data...</td></tr>');
             $.ajax({
                     url: 'ajaxKnittingStore_Report.php',
                     dataType: 'json',
@@ -478,11 +497,11 @@
                     if (resp && resp.success) {
                         renderTableRows(resp.data);
                     } else {
-                        $('#tableBody').html('<tr class="empty-row"><td colspan="25">No data returned</td></tr>');
+                        $('#tableBody').html('<tr class="empty-row"><td colspan="32">No data returned</td></tr>');
                     }
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr class="empty-row"><td colspan="25" style="color:#dc2626;">Error loading data</td></tr>');
+                    $('#tableBody').html('<tr class="empty-row"><td colspan="32" style="color:#dc2626;">Error loading data</td></tr>');
                 });
         }
 

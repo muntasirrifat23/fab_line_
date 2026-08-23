@@ -236,10 +236,9 @@
         function downloadRowPdf(row) {
             var fieldHTML = [
                 ['Date', row.CREATED_DATE],
-                ['Po Number', row.PO_NUMBER],
                 ['Main Program', row.MAIN_TID],
                 ['Program', row.SUB_TID],
-                ['Booking No', row.BOOKING],
+                ['PO No', row.PO_NUMBER || row.BOOKING || ''],
                 ['SONO', row.SONO],
                 ['Buyer', row.BUYER],
                 ['Style', row.STYLE],
@@ -250,13 +249,14 @@
                 ['Finish GSM', row.FGSM],
                 ['Finish Dia', row.FDIA],
                 ['Fabrics Type', row.FTYPE],
-                ['SL/VDQ', row.SL],
                 ['Yarn Type', row.YTYPE],
                 ['Yarn Count', row.YCOUNT],
+                ['SL/VDQ', row.SL],
                 ['MC Dia', row.MCDIA],
                 ['Gray GSM', row.GGSM],
-                ['Feeder Plan', row.FEEDER_PLAN, true],
-                ['Lot No', row.LOT, true],
+                ['Feeder Plan', row.FEEDER_PLAN],
+                ['Shift', row.SHIFT],
+                ['Lot No', row.LOT],
                 ['KNIT M DESCRIPTION', row.KNIT_M_DESCRIPTION, true],
                 ['KNIT MATERIAL CODE', row.KNIT_MATERIAL_CODE, true]
             ];
@@ -273,7 +273,6 @@
                 '</div>' +
                 '<div style="display:flex;justify-content:space-between;align-items:center;width:100%;font-size:14px;font-weight:bold;margin-bottom:10px; margin-left:10px;">' +
                 '<span>Program : ' + (row.SUB_TID || '') + '</span>' +
-                '<span style="margin-right:20px;">User : ' + (row.UNAME || '') + '</span>' +
                 '</div>' +
                 '<div class="pdf-grid">' + rowsHTML + '</div>' +
                 '<div style="text-align:center;font-size:11px;color: black; margin-top:16px;border-top:1px solid #e5e7eb;padding-top:8px;">' +

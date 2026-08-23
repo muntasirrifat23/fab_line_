@@ -27,9 +27,9 @@ if (count($conditions) > 0) {
     $where = 'WHERE ' . implode(' AND ', $conditions);
 }
 
-$query = "SELECT BUDAT, RACKNO, RACKLOCATION, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
+$query = "SELECT KSTID, BUDAT, RACKNO, RACKLOCATION, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
                   MCNO, MCDIA, CUSTOMER, YTYPE, YCOUNT, O_T, SL, FTYPE, FGSM, FDIA, GGSM,
-                  FEEDER_PLAN, LOT_NO, TPOINT, UNAME, UID
+                  FEEDER_PLAN, LOT_NO, TPOINT, MCODE, MDESCRIPTION, CREATED_DATE, UNAME, UID
           FROM knitting_store
           $where
           ORDER BY KSTID DESC
