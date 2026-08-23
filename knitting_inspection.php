@@ -965,11 +965,18 @@ $active_operator = $_SESSION['active_operator'] ?? null;
           <div class="data-row header-row"><span class="label">Production Roll Information</span><span class="value">Production #${d.production_id}</span></div>
           <div class="data-row"><span class="label">Roll Number:</span><span class="value" style="color:#2563eb; font-weight:800;">${d.suggested_roll}</span></div>
           <div class="data-row"><span class="label">Production Date / Quantity:</span><span class="value">${d.production_date || 'N/A'} / ${d.production_qty || 0} KG</span></div>
-          <div class="data-row"><span class="label">PO Number:</span><span class="value">${d.booking}</span></div>
+          <div class="data-row"><span class="label">PO Number:</span><span class="value">${d.booking || 'N/A'}</span></div>
+          <div class="data-row"><span class="label">SO Number:</span><span class="value">${d.sono || 'N/A'}</span></div>
           <div class="data-row"><span class="label">Buyer / Style:</span><span class="value">${d.buyer} (${d.style})</span></div>
           <div class="data-row"><span class="label">Color / Customer:</span><span class="value">${d.color} / ${d.customer}</span></div>
-          <div class="data-row"><span class="label">Machine / Shift:</span><span class="value">${d.mcno} / ${d.shift}</span></div>
+          <div class="data-row"><span class="label">Machine / Dia / Shift:</span><span class="value">${d.mcno} / ${d.mc_dia || 'N/A'} / ${d.shift}</span></div>
           <div class="data-row"><span class="label">Fabric / GSM:</span><span class="value">${d.fabrics_type} (${d.finish_gsm} GSM)</span></div>
+          <div class="data-row"><span class="label">Finish Diameter:</span><span class="value">${d.finish_dia || 'N/A'}</span></div>
+          <div class="data-row"><span class="label">Gray GSM:</span><span class="value">${d.gray_gsm || 'N/A'}</span></div>
+          <div class="data-row"><span class="label">Yarn Type / Count:</span><span class="value">${d.yarn_type || 'N/A'} / ${d.yarn_count || 'N/A'}</span></div>
+          <div class="data-row"><span class="label">Open Tube / SL-VDQ:</span><span class="value">${d.open_tube || 'N/A'} / ${d.sl_vdq || 'N/A'}</span></div>
+          <div class="data-row"><span class="label">Lot No / Feeder Plan:</span><span class="value">${d.lot_no || 'N/A'} / ${d.feeder_plan || 'N/A'}</span></div>
+          <div class="data-row"><span class="label">Material Code / Desc:</span><span class="value">${d.material_code || 'N/A'} / ${d.material_desc || 'N/A'}</span></div>
           
           <div style="margin-top:14px; font-weight:800; font-size:0.85rem; color:#334155;">
             <i class="fa-solid fa-weight-hanging me-1 text-primary"></i> ROLL WEIGHT (KG):
