@@ -16,7 +16,8 @@ if ($search !== '') {
         OR BUYER LIKE '%$s%'
         OR STYLE LIKE '%$s%'
         OR COLOR LIKE '%$s%'
-        OR RACK LIKE '%$s%'
+        OR RACKNO LIKE '%$s%'
+        OR RACKLOCATION LIKE '%$s%'
         OR MCNO LIKE '%$s%'
     )";
 }
@@ -26,15 +27,22 @@ if (count($conditions) > 0) {
     $where = 'WHERE ' . implode(' AND ', $conditions);
 }
 
-$query = "SELECT BUDAT, RACK, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
-                 MCNO, MCDIA, CUSTOMER, YTYPE, YCOUNT, O_T, SL, FTYPE, FGSM, FDIA, GGSM,
-                 FEEDER_PLAN, LOT_NO, TPOINT, UNAME, UID
+$query = "SELECT BUDAT, RACKNO, RACKLOCATION, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
+                  MCNO, MCDIA, CUSTOMER, YTYPE, YCOUNT, O_T, SL, FTYPE, FGSM, FDIA, GGSM,
+                  FEEDER_PLAN, LOT_NO, TPOINT, UNAME, UID
           FROM knitting_store
           $where
           ORDER BY KSTID DESC
           LIMIT 500";
 
-$result = mysqli_query($db, $query);
+try {
+    $result = mysqli_query($db, $query);
+} catch (mysqli_sql_exception $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    mysqli_close($db);
+    exit;
+}
 
 if (!$result) {
     http_response_code(500);

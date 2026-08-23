@@ -10,7 +10,7 @@ if (!isset($db) || !$db) {
 }
 
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
-$TABLE = 'knitting_inspection_test';
+$TABLE = 'knitting_inspection';
 
 if ($search !== '') {
     $s = mysqli_real_escape_string($db, $search);
