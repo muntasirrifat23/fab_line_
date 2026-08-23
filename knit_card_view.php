@@ -411,6 +411,141 @@ $val_uname        = !empty($card['UNAME']) ? $card['UNAME'] : 'System';
             <div>Date: <strong><?php echo htmlspecialchars($val_date); ?></strong></div>
         </div>
 
+    <!-- HIDDEN CONTAINER FOR EXPORTING FULL PRODUCTION CARD PDF (EXACT FULL CARD FORMAT FROM knit_card_print.php) -->
+    <div id="export_full_card_wrapper" style="position: absolute; left: -9999px; top: -9999px; width: 800px; background: #ffffff; padding: 25px 30px; border: 2px solid #000000; font-family: Arial, Helvetica, sans-serif; color: #000000; box-sizing: border-box;">
+        <!-- Header with Prominent Scannable QR Code -->
+        <div style="border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="width: 130px;"></div>
+            
+            <div style="text-align: center; flex-grow: 1;">
+                <h2 style="font-weight: 800; margin: 0; font-size: 24px; letter-spacing: 1px; text-transform: uppercase; color: #000;">Purbani Fabrics Ltd.</h2>
+                <h4 style="font-weight: 700; margin: 2px 0 0 0; font-size: 16px; text-transform: uppercase; color: #000;">Knitting Section</h4>
+                <div style="display: inline-block; background: #000; color: #fff; padding: 4px 18px; font-weight: 700; font-size: 15px; margin-top: 6px; border-radius: 4px; letter-spacing: 1px;">PRODUCTION CARD</div>
+            </div>
+
+            <div style="text-align: center; width: 130px;">
+                <div id="full_export_qrcode" style="width: 120px; height: 120px; margin: 0 auto; padding: 4px; background: #fff; border: 1px solid #000;"></div>
+            </div>
+        </div>
+
+        <!-- Specifications Table -->
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
+            <tr>
+                <th style="border: 1px solid #000; padding: 6px 8px; background: #f1f5f9; width: 15%; text-align: left; color: #000;">Date</th>
+                <td style="border: 1px solid #000; padding: 6px 8px; width: 35%; color: #000;"><strong><?php echo htmlspecialchars($val_date); ?></strong></td>
+                <th style="border: 1px solid #000; padding: 6px 8px; background: #f1f5f9; width: 15%; text-align: left; color: #000;">Card ID</th>
+                <td style="border: 1px solid #000; padding: 6px 8px; width: 35%; color: #000;"><strong><?php echo htmlspecialchars($val_card_id); ?></strong></td>
+            </tr>
+            <tr>
+                <th style="border: 1px solid #000; padding: 6px 8px; background: #f1f5f9; text-align: left; color: #000;">Buyer</th>
+                <td style="border: 1px solid #000; padding: 6px 8px; color: #000;"><strong><?php echo htmlspecialchars($val_buyer); ?></strong></td>
+                <th style="border: 1px solid #000; padding: 6px 8px; background: #f1f5f9; text-align: left; color: #000;">PO Number</th>
+                <td style="border: 1px solid #000; padding: 6px 8px; color: #000;"><?php echo htmlspecialchars($val_po); ?></td>
+            </tr>
+            <tr>
+                <th style="border: 1px solid #000; padding: 6px 8px; background: #f1f5f9; text-align: left; color: #000;">M/C No</th>
+                <td style="border: 1px solid #000; padding: 6px 8px; color: #000;"><strong><?php echo htmlspecialchars($val_mcno); ?></strong></td>
+                <th style="border: 1px solid #000; padding: 6px 8px; background: #f1f5f9; text-align: left; color: #000;">Open / Tube</th>
+                <td style="border: 1px solid #000; padding: 6px 8px; color: #000;"><?php echo htmlspecialchars($val_ot); ?></td>
+            </tr>
+            <tr>
+                <th style="border: 1px solid #000; padding: 6px 8px; background: #f1f5f9; text-align: left; color: #000;">Style No</th>
+                <td style="border: 1px solid #000; padding: 6px 8px; color: #000;"><?php echo htmlspecialchars($val_style); ?></td>
+                <th style="border: 1px solid #000; padding: 6px 8px; background: #f1f5f9; text-align: left; color: #000;">Fabric Type</th>
+                <td style="border: 1px solid #000; padding: 6px 8px; color: #000;"><?php echo htmlspecialchars($val_ftype); ?></td>
+            </tr>
+            <tr>
+                <th style="border: 1px solid #000; padding: 6px 8px; background: #f1f5f9; text-align: left; color: #000;">Yarn Type</th>
+                <td style="border: 1px solid #000; padding: 6px 8px; color: #000;"><?php echo htmlspecialchars($val_ytype); ?></td>
+                <th style="border: 1px solid #000; padding: 6px 8px; background: #f1f5f9; text-align: left; color: #000;">Lot No</th>
+                <td style="border: 1px solid #000; padding: 6px 8px; color: #000;"><?php echo htmlspecialchars($val_lot); ?></td>
+            </tr>
+            <tr>
+                <th style="border: 1px solid #000; padding: 6px 8px; background: #f1f5f9; text-align: left; color: #000;">Finish Dia</th>
+                <td style="border: 1px solid #000; padding: 6px 8px; color: #000;"><?php echo htmlspecialchars($val_fdia); ?></td>
+                <th style="border: 1px solid #000; padding: 6px 8px; background: #f1f5f9; text-align: left; color: #000;">Grey / Finish GSM</th>
+                <td style="border: 1px solid #000; padding: 6px 8px; color: #000;"><?php echo htmlspecialchars($val_ggsm . ' / ' . $val_fgsm); ?></td>
+            </tr>
+            <tr>
+                <th style="border: 1px solid #000; padding: 6px 8px; background: #f1f5f9; text-align: left; color: #000;">S.L / VDQ</th>
+                <td style="border: 1px solid #000; padding: 6px 8px; color: #000;"><?php echo htmlspecialchars($val_sl); ?></td>
+                <th style="border: 1px solid #000; padding: 6px 8px; background: #f1f5f9; text-align: left; color: #000;">SONO</th>
+                <td style="border: 1px solid #000; padding: 6px 8px; color: #000;"><?php echo htmlspecialchars($val_sono); ?></td>
+            </tr>
+            <tr>
+                <th style="border: 1px solid #000; padding: 6px 8px; background: #f1f5f9; text-align: left; color: #000;">Req Quantity (KG)</th>
+                <td colspan="3" style="border: 1px solid #000; padding: 6px 8px; color: #000;"><strong style="font-size: 15px;"><?php echo htmlspecialchars($val_qty); ?></strong></td>
+            </tr>
+        </table>
+
+        <!-- Daily Production Log Table -->
+        <h5 style="font-weight: 700; font-size: 14px; text-transform: uppercase; margin: 15px 0 8px 0; color: #000;">Daily Production Log</h5>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 12px; text-align: center;">
+            <thead>
+                <tr style="background: #e2e8f0;">
+                    <th style="border: 1px solid #000; padding: 6px;">SL#</th>
+                    <th style="border: 1px solid #000; padding: 6px;">Date</th>
+                    <th style="border: 1px solid #000; padding: 6px;">Shift A (KG)</th>
+                    <th style="border: 1px solid #000; padding: 6px;">Shift B (KG)</th>
+                    <th style="border: 1px solid #000; padding: 6px;">Shift C (KG)</th>
+                    <th style="border: 1px solid #000; padding: 6px;">Daily Total (KG)</th>
+                    <th style="border: 1px solid #000; padding: 6px;">Cum. Total (KG)</th>
+                    <th style="border: 1px solid #000; padding: 6px;">Balance (KG)</th>
+                    <th style="border: 1px solid #000; padding: 6px;">Operators (A/B/C)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if ($prod_res && $prod_res->num_rows > 0): ?>
+                    <?php 
+                    $prod_res->data_seek(0);
+                    $sl_full = 1; 
+                    ?>
+                    <?php while ($p = $prod_res->fetch_assoc()): ?>
+                        <?php
+                        $ops = array_filter([$p['OPERATOR_A'] ?? '', $p['OPERATOR_B'] ?? '', $p['OPERATOR_C'] ?? '']);
+                        $op_str = implode(' / ', $ops);
+                        ?>
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 6px;"><?php echo $sl_full++; ?></td>
+                            <td style="border: 1px solid #000; padding: 6px;"><?php echo htmlspecialchars($p['LOG_DATE'] ?? ''); ?></td>
+                            <td style="border: 1px solid #000; padding: 6px;"><?php echo number_format((float)($p['A_SHIFT_QTY'] ?? 0), 2); ?></td>
+                            <td style="border: 1px solid #000; padding: 6px;"><?php echo number_format((float)($p['B_SHIFT_QTY'] ?? 0), 2); ?></td>
+                            <td style="border: 1px solid #000; padding: 6px;"><?php echo number_format((float)($p['C_SHIFT_QTY'] ?? 0), 2); ?></td>
+                            <td style="border: 1px solid #000; padding: 6px;"><strong><?php echo number_format((float)($p['PRODUCTION_QTY'] ?? 0), 2); ?></strong></td>
+                            <td style="border: 1px solid #000; padding: 6px;"><strong><?php echo number_format((float)($p['CUM_TOTAL'] ?? 0), 2); ?></strong></td>
+                            <td style="border: 1px solid #000; padding: 6px;"><strong><?php echo number_format((float)($p['BALANCE'] ?? 0), 2); ?></strong></td>
+                            <td style="border: 1px solid #000; padding: 6px;"><small><?php echo htmlspecialchars($op_str); ?></small></td>
+                        </tr>
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 6px;"><?php echo $i; ?></td>
+                            <td style="border: 1px solid #000; padding: 6px;">&nbsp;</td>
+                            <td style="border: 1px solid #000; padding: 6px;">&nbsp;</td>
+                            <td style="border: 1px solid #000; padding: 6px;">&nbsp;</td>
+                            <td style="border: 1px solid #000; padding: 6px;">&nbsp;</td>
+                            <td style="border: 1px solid #000; padding: 6px;">&nbsp;</td>
+                            <td style="border: 1px solid #000; padding: 6px;">&nbsp;</td>
+                            <td style="border: 1px solid #000; padding: 6px;">&nbsp;</td>
+                            <td style="border: 1px solid #000; padding: 6px;">&nbsp;</td>
+                        </tr>
+                    <?php endfor; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+
+        <!-- Signatures -->
+        <div style="display: flex; justify-content: space-between; margin-top: 40px; padding-top: 10px; font-size: 13px;">
+            <div style="width: 40%; text-align: center;">
+                <div><?php echo htmlspecialchars($val_uname); ?></div>
+                <div style="border-top: 1px solid #000; margin-top: 35px; padding-top: 4px; font-weight: 700;">Prepared By</div>
+            </div>
+            <div style="width: 40%; text-align: center;">
+                <div><?php echo htmlspecialchars($card['AUTHORISED_BY'] ?? ''); ?></div>
+                <div style="border-top: 1px solid #000; margin-top: 35px; padding-top: 4px; font-weight: 700;">Production Officer / Authorised By</div>
+            </div>
+        </div>
     </div>
 
     <script src="jquery.min.js"></script>
@@ -430,25 +565,52 @@ $val_uname        = !empty($card['UNAME']) ? $card['UNAME'] : 'System';
                     correctLevel: QRCode.CorrectLevel.H
                 });
             }
+
+            var fullQrBox = document.getElementById('full_export_qrcode');
+            if (fullQrBox && typeof QRCode !== 'undefined') {
+                new QRCode(fullQrBox, {
+                    text: "KC-<?php echo $card_id; ?>",
+                    width: 110,
+                    height: 110,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            }
         });
 
         function downloadCard() {
-            var element = document.querySelector('.a4-sixth-card');
+            var element = document.getElementById('export_full_card_wrapper');
             var cardId = <?php echo json_encode($val_card_id); ?>;
-            var rollNum = <?php echo json_encode($roll_number); ?>;
-            var filename = 'Knit_Card_' + cardId.replace('#', '') + '_Roll_' + rollNum + '.pdf';
+            var filename = 'Production_Card_' + cardId.replace('#', '') + '.pdf';
+
+            // Make wrapper temporarily visible in layout for rendering
+            element.style.position = 'relative';
+            element.style.left = '0';
+            element.style.top = '0';
 
             if (typeof html2pdf !== 'undefined') {
                 var opt = {
-                    margin:       [5, 5, 5, 5],
+                    margin:       [8, 8, 8, 8],
                     filename:     filename,
                     image:        { type: 'jpeg', quality: 0.98 },
-                    html2canvas:  { scale: 3, useCORS: true },
+                    html2canvas:  { scale: 2, useCORS: true, logging: false },
                     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
-                html2pdf().set(opt).from(element).save();
+                html2pdf().set(opt).from(element).save().then(function() {
+                    element.style.position = 'absolute';
+                    element.style.left = '-9999px';
+                    element.style.top = '-9999px';
+                }).catch(function() {
+                    element.style.position = 'absolute';
+                    element.style.left = '-9999px';
+                    element.style.top = '-9999px';
+                });
             } else {
                 alert('Downloading PDF...');
+                element.style.position = 'absolute';
+                element.style.left = '-9999px';
+                element.style.top = '-9999px';
             }
         }
     </script>
