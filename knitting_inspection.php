@@ -18,9 +18,20 @@ if (isset($_GET['action']) && $_GET['action'] === 'verify_operator') {
         exit();
     }
 
-    $stmt = $db->prepare("SELECT OPERATOR_ID, OPERATOR_NAME FROM knitting_operator WHERE OPERATOR_ID = ? OR OPERATOR_NAME = ? LIMIT 1");
+    $clean_id = preg_replace('/[^a-zA-Z0-9]/', '', $op_id);
+    $int_id   = intval($clean_id);
+
+    $stmt = $db->prepare("
+        SELECT OPERATOR_ID, OPERATOR_NAME 
+        FROM knitting_operator 
+        WHERE OPERATOR_ID = ? 
+           OR OPERATOR_NAME = ? 
+           OR KOTID = ? 
+           OR REPLACE(OPERATOR_ID, '-', '') = ? 
+        LIMIT 1
+    ");
     if ($stmt) {
-        $stmt->bind_param("ss", $op_id, $op_id);
+        $stmt->bind_param("ssis", $op_id, $op_id, $int_id, $clean_id);
         $stmt->execute();
         $res = $stmt->get_result();
         if ($res && $row = $res->fetch_assoc()) {
@@ -73,14 +84,18 @@ if (isset($_GET['action']) && $_GET['action'] === 'search_card') {
                 kc.KCTID, kc.KPTID, kc.MCNO, kc.FDIA, kc.FGSM, 
                 kc.GGSM, kc.SL, kc.O_T, kc.BUYER, kc.CUSTOMER, kc.PO_NUMBER, 
                 kc.SONO, kc.STYLE, kc.FTYPE, kc.YTYPE, kc.YCOUNT, kc.LOT, 
-                kc.KNIT_M_DESCRIPTION, kc.QTY, kc.UNAME
+                kc.KNIT_M_DESCRIPTION, kc.QTY, kc.UNAME, kc.ROLL
             FROM knit_card kc
-            WHERE kc.KCTID = ? OR kc.ROLL = ? OR kc.BUYER LIKE ? OR kc.STYLE LIKE ? OR kc.SONO LIKE ? OR kc.PO_NUMBER LIKE ?
+            WHERE kc.ROLL = ? 
+               OR kc.KCTID = ? 
+               OR kc.PO_NUMBER = ? 
+               OR kc.SONO = ? 
+               OR kc.STYLE LIKE ?
             ORDER BY kc.KCTID DESC LIMIT 1";
     
     $stmt = $db->prepare($sql);
     $search_param = '%' . $query . '%';
-    $stmt->bind_param("isssss", $clean_id, $query, $search_param, $search_param, $search_param, $search_param);
+    $stmt->bind_param("sisss", $query, $clean_id, $query, $query, $search_param);
     $stmt->execute();
     $res = $stmt->get_result();
     
@@ -100,6 +115,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'search_card') {
             $c_stmt->close();
         }
 
+        $display_roll = !empty($row['ROLL']) ? $row['ROLL'] : ((strlen($query) > 5) ? $query : ('R-' . $kcid . '-' . sprintf("%02d", $roll_count)));
+
         echo json_encode([
             'success'          => true,
             'data'             => [
@@ -117,7 +134,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'search_card') {
                 'yarn_count'       => $row['YCOUNT'] ?: 'N/A',
                 'lot_no'           => $row['LOT'] ?: 'N/A',
                 'req_qty'          => floatval($row['QTY']),
-                'suggested_roll'   => (strlen($query) > 5) ? $query : ('R-' . $kcid . '-' . sprintf("%02d", $roll_count)),
+                'suggested_roll'   => $display_roll,
                 'suggested_weight' => floatval($row['QTY']) > 0 ? floatval($row['QTY']) : 25.00
             ]
         ]);
@@ -800,14 +817,18 @@ $active_operator = $_SESSION['active_operator'] ?? null;
         }
       }
 
-      // STEP 1: OPERATOR QR SCAN ONLY (NO TYPING INPUT)
+      // STEP 1: OPERATOR QR SCAN / AUTHENTICATION
       function renderStep1Operator() {
         actionContainer.innerHTML = '';
         let html = `
           <div style="background:#eff6ff; border:1.5px solid #bfdbfe; border-radius:18px; padding:16px; margin-bottom:14px; text-align:center; color:#1e3a8a;">
             <div style="font-size:2.2rem; margin-bottom:6px; color:#2563eb;"><i class="fa-solid fa-qrcode"></i></div>
             <div style="font-weight:800; font-size:1.05rem; margin-bottom:4px;">Scan Operator Badge QR Code</div>
-            <div style="font-size:0.85rem; opacity:0.85;">Align your Operator QR Code within the live camera feed above to authenticate.</div>
+            <div style="font-size:0.85rem; opacity:0.85;">Align your Operator QR Code within the live camera feed above or scan/type below.</div>
+          </div>
+          <div class="manual-entry">
+            <input type="text" id="opInput" placeholder="Scan / Type Operator ID (e.g. OP01, rifat001)" autocomplete="off" autofocus>
+            <button type="button" id="opBtn">Authenticate</button>
           </div>
           <div class="data-row header-row"><span class="label">Workflow Progress</span><span class="value">Step 1 of 2</span></div>
           <div class="data-row"><span class="label">Current Action:</span><span class="value" style="color:#2563eb; font-weight:700;">Scan Operator QR Code</span></div>
@@ -815,6 +836,13 @@ $active_operator = $_SESSION['active_operator'] ?? null;
           <div id="opStatusMsg" style="margin-top:8px;"></div>
         `;
         resultContainer.innerHTML = html;
+
+        const inp = document.getElementById('opInput');
+        const btn = document.getElementById('opBtn');
+        if (btn) btn.addEventListener('click', () => submitOperator(inp.value));
+        if (inp) inp.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') { e.preventDefault(); submitOperator(inp.value); }
+        });
       }
 
       function submitOperator(val) {
