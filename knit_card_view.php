@@ -26,9 +26,9 @@ $sql = "SELECT kc.*,
                kp.FEEDER_PLAN AS prog_feeder_plan, 
                kp.SHIFT AS prog_shift,
                kp.PO_NUMBER AS prog_po
-        FROM knit_card kc
-        LEFT JOIN knitting_program kp ON kc.KPTID = kc.KPTID
-        WHERE kc.KCTID = ?";
+         FROM knit_card kc
+         LEFT JOIN knitting_program kp ON kc.KPTID = kp.KPTID
+         WHERE kc.KCTID = ?";
 $stmt = $db->prepare($sql);
 if ($stmt) {
     $stmt->bind_param("i", $card_id);
@@ -74,6 +74,24 @@ $val_mcdia        = !empty($card['MCDIA']) ? $card['MCDIA'] : 'N/A';
 $val_feeder       = !empty($card['FEEDER_PLAN']) ? $card['FEEDER_PLAN'] : ($card['prog_feeder_plan'] ?? 'N/A');
 $val_qty          = number_format(floatval($card['QTY'] ?? 0), 2) . ' KG';
 $val_uname        = !empty($card['UNAME']) ? $card['UNAME'] : 'System';
+
+// Dynamic User info: UNAME stores the login (USER_ID) at card creation time.
+// Look up users table to get both display name and ID in real time.
+$val_user_name    = $val_uname;
+$val_user_id      = $val_uname;
+if (!empty($card['UNAME'])) {
+    $u_stmt = $db->prepare("SELECT USER_NAME, USER_ID FROM users WHERE USER_ID = ? LIMIT 1");
+    if ($u_stmt) {
+        $u_stmt->bind_param("s", $card['UNAME']);
+        $u_stmt->execute();
+        $u_res = $u_stmt->get_result();
+        if ($u_res && $u_row = $u_res->fetch_assoc()) {
+            $val_user_name = !empty($u_row['USER_NAME']) ? $u_row['USER_NAME'] : $u_row['USER_ID'];
+            $val_user_id   = $u_row['USER_ID'];
+        }
+        $u_stmt->close();
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -334,7 +352,8 @@ $val_uname        = !empty($card['UNAME']) ? $card['UNAME'] : 'System';
                 </div>
 
                 <div class="qr-payload-lbl">
-                    User: <strong><?php echo htmlspecialchars($val_uname); ?></strong>
+                    User: <strong><?php echo htmlspecialchars($val_user_name); ?></strong><br>
+                    User ID: <strong><?php echo htmlspecialchars($val_user_id); ?></strong>
                 </div>
             </div>
 
@@ -372,9 +391,9 @@ $val_uname        = !empty($card['UNAME']) ? $card['UNAME'] : 'System';
                         <td><?php echo htmlspecialchars($val_ot); ?></td>
                     </tr>
                     <tr>
-                        <th>Yarn</th>
+                        <th>Yarn Type</th>
                         <td><?php echo htmlspecialchars($val_ytype); ?></td>
-                        <th>Count</th>
+                        <th>Yarn Count</th>
                         <td><?php echo htmlspecialchars($val_ycount); ?></td>
                     </tr>
                     <tr>
