@@ -116,7 +116,6 @@ $query = "SELECT
     COLOR,
     CUSTOMER,
     YARN_TYPE,
-    LOT_NO,
     FABRICS_TYPE,
     FINISH_GSM, 
     FINISH_DIA, 
@@ -151,7 +150,6 @@ while ($row = mysqli_fetch_assoc($result)) {
     $row['SONO'] = isset($row['SONO']) ? $row['SONO'] : '';
     $row['SL_VDQ'] = isset($row['SL_VDQ']) ? $row['SL_VDQ'] : '';
     $row['MC_DIA'] = isset($row['MC_DIA']) ? $row['MC_DIA'] : '';
-    $row['LOT_NO'] = isset($row['LOT_NO']) ? $row['LOT_NO'] : '';
     $row['YARN_COUNT'] = isset($row['YARN_COUNT']) ? $row['YARN_COUNT'] : '';
     
     $allData[] = $row;
