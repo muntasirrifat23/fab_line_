@@ -143,34 +143,34 @@ if (!empty($card['UNAME'])) {
             gap: 6px;
         }
 
-        /* ═══ HALF A4 CARD (A5 Dimensions: ~210mm x 148mm / ~680px x 480px) ═══ */
+        /* ═══ HALF A4 CARD (A5 Dimensions: ~210mm x 148mm / ~660px x 430px) ═══ */
         .a4-half-card {
-            width: 680px;
-            min-height: 480px;
+            width: 660px;
+            max-width: 100%;
             background: #ffffff;
-            border: 2.5px solid #000000;
-            border-radius: 12px;
-            margin: 0 auto 24px auto;
-            padding: 16px 20px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+            border: 2px solid #000000;
+            border-radius: 8px;
+            margin: 0 auto 20px auto;
+            padding: 12px 16px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: flex-start;
         }
 
         /* CARD TOP HEADER */
         .card-top-header {
             border-bottom: 2px solid #000000;
-            padding-bottom: 8px;
-            margin-bottom: 12px;
+            padding-bottom: 6px;
+            margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
         .company-title {
-            font-size: 18px;
+            font-size: 17px;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.8px;
@@ -182,9 +182,9 @@ if (!empty($card['UNAME'])) {
         .card-badge {
             background: #000000;
             color: #ffffff;
-            padding: 3px 12px;
+            padding: 2px 10px;
             border-radius: 4px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
             letter-spacing: 0.5px;
             text-transform: uppercase;
@@ -194,17 +194,16 @@ if (!empty($card['UNAME'])) {
         .card-main-row {
             display: flex;
             flex-direction: row;
-            gap: 16px;
-            align-items: stretch;
-            flex-grow: 1;
+            gap: 12px;
+            align-items: center;
         }
 
         /* LEFT COLUMN: ROLL NUMBER & QR CODE */
         .col-qr-left {
-            width: 170px;
+            width: 155px;
             flex-shrink: 0;
             border-right: 2px solid #000000;
-            padding-right: 14px;
+            padding-right: 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -213,29 +212,29 @@ if (!empty($card['UNAME'])) {
         }
 
         .lbl-roll-tag {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 800;
             text-transform: uppercase;
             color: #475569;
             letter-spacing: 0.5px;
-            margin-bottom: 2px;
+            margin-bottom: 1px;
         }
 
         .val-roll-num {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 800;
             font-family: 'JetBrains Mono', monospace;
             color: #000000;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
             word-break: break-all;
             line-height: 1.1;
         }
 
         .qr-frame-box {
             background: #ffffff;
-            padding: 6px;
+            padding: 4px;
             border: 1.5px solid #000000;
-            border-radius: 8px;
+            border-radius: 6px;
             display: inline-block;
         }
 
@@ -245,11 +244,11 @@ if (!empty($card['UNAME'])) {
         }
 
         .qr-payload-lbl {
-            font-size: 11px;
+            font-size: 10.5px;
             font-weight: 700;
             color: #334155;
-            margin-top: 8px;
-            line-height: 1.35;
+            margin-top: 6px;
+            line-height: 1.3;
         }
 
         /* RIGHT COLUMN: SPECS GRID TABLE */
@@ -263,64 +262,57 @@ if (!empty($card['UNAME'])) {
         .tag-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 12.5px;
+            font-size: 11.5px;
         }
 
         .tag-table th {
             background-color: #f1f5f9;
             color: #000000;
             font-weight: 700;
-            padding: 5px 8px;
+            padding: 4px 6px;
             border: 1px solid #000000;
             width: 25%;
             text-transform: uppercase;
-            font-size: 11px;
+            font-size: 10.5px;
         }
 
         .tag-table td {
-            padding: 5px 8px;
+            padding: 4px 6px;
             border: 1px solid #000000;
             font-weight: 700;
             color: #000000;
             width: 25%;
             word-break: break-word;
-        }
-
-        /* FOOTER STRIP */
-        .card-footer-strip {
-            border-top: 2px solid #000000;
-            padding-top: 8px;
-            margin-top: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             font-size: 11.5px;
-            font-weight: 700;
-            color: #1e293b;
         }
 
         /* PRINT STYLES FOR EXACT HALF A4 PRINT */
         @media print {
             @page {
                 size: A4 portrait;
-                margin: 8mm;
+                margin: 6mm;
             }
             .no-print { display: none !important; }
             body { background: #ffffff !important; padding: 0 !important; margin: 0 !important; }
             .a4-half-card {
-                width: 194mm !important;
-                height: 136mm !important;
-                min-height: 136mm !important;
-                max-height: 138mm !important;
+                width: 190mm !important;
+                max-width: 190mm !important;
+                height: auto !important;
+                max-height: 130mm !important;
                 margin: 0 auto !important;
                 border: 2px solid #000000 !important;
-                border-radius: 6px !important;
-                padding: 12px 16px !important;
+                border-radius: 4px !important;
+                padding: 8px 12px !important;
                 box-shadow: none !important;
                 page-break-inside: avoid !important;
+                page-break-after: avoid !important;
             }
             .tag-table th, .tag-table td {
                 border: 1px solid #000000 !important;
+                padding: 3.5px 5px !important;
+            }
+            .qr-frame-box {
+                padding: 2px !important;
             }
         }
     </style>
@@ -374,7 +366,8 @@ if (!empty($card['UNAME'])) {
 
                 <div class="qr-payload-lbl">
                     User: <strong><?php echo htmlspecialchars($val_user_name); ?></strong><br>
-                    ID: <strong><?php echo htmlspecialchars($val_user_id); ?></strong>
+                    ID: <strong><?php echo htmlspecialchars($val_user_id); ?></strong><br>
+                    Date: <strong><?php echo htmlspecialchars($val_date); ?></strong>
                 </div>
             </div>
 
@@ -446,12 +439,6 @@ if (!empty($card['UNAME'])) {
 
         </div>
 
-        <!-- FOOTER STRIP -->
-        <div class="card-footer-strip">
-            <div>Card: <strong><?php echo htmlspecialchars($val_card_id); ?></strong></div>
-            <div>Date: <strong><?php echo htmlspecialchars($val_date); ?></strong></div>
-        </div>
-
     </div>
 
     <script src="jquery.min.js"></script>
@@ -471,6 +458,12 @@ if (!empty($card['UNAME'])) {
                     correctLevel: QRCode.CorrectLevel.H
                 });
             }
+
+            <?php if (isset($_GET['download']) && $_GET['download'] == '1'): ?>
+            setTimeout(function() {
+                downloadCard();
+            }, 600);
+            <?php endif; ?>
         });
 
         function downloadCard() {

@@ -350,7 +350,7 @@ if ($result && $result->num_rows > 0) {
                 </div>
                 <!-- Right: nav buttons -->
                 <div class="d-flex gap-2 flex-wrap align-items-center">
-                    <a href="knit_card.php" class="btn nav-btn btn-blue-solid">
+                    <a href="knitting_program_list.php" class="btn nav-btn btn-blue-solid">
                         <i class="fa-solid fa-arrow-left"></i> Back to Knit Card
                     </a>
                     <a href="initialPage.php" class="btn nav-btn btn-glass">
@@ -467,19 +467,18 @@ if ($result && $result->num_rows > 0) {
                     <td><strong class="text-success"><?php echo number_format((float)($row['QTY'] ?? 0), 2); ?> KG</strong></td>
                     <td><small class="text-secondary"><i class="fa-solid fa-user-circle me-1"></i><?php echo htmlspecialchars($row['UNAME'] ?? ''); ?></small></td>
                                     <td class="text-center">
-                                        <div class="d-inline-flex gap-1">
+                                        <div class="d-inline-flex gap-1.5 flex-wrap justify-content-center">
                                             <a href="knit_card_view.php?id=<?php echo intval($row['KCTID']); ?>"
-                                               class="btn btn-sm btn-primary px-3 py-1"
+                                               class="btn btn-sm btn-primary px-2.5 py-1"
                                                style="border-radius:8px; font-size:12.5px; background-color:#2563eb; border-color:#2563eb;"
                                                title="View & Manage Production Log">
                                                 <i class="fa-solid fa-eye me-1"></i> View Log
                                             </a>
-                                            <a href="knit_card_print.php?id=<?php echo intval($row['KCTID']); ?>"
-                                               target="_blank"
-                                               class="btn btn-sm btn-success px-3 py-1"
-                                               style="border-radius:8px; font-size:12.5px; background-color:var(--accent-green); border-color:var(--accent-green);"
-                                               title="Print Production Card">
-                                                <i class="fa-solid fa-print me-1"></i> Print
+                                            <a href="knit_card_view.php?id=<?php echo intval($row['KCTID']); ?>&download=1"
+                                               class="btn btn-sm px-2.5 py-1"
+                                               style="border-radius:8px; font-size:12.5px; background:linear-gradient(135deg, #059669 0%, #10b981 100%); color:#ffffff !important; border:none; box-shadow:0 2px 6px rgba(16,185,129,0.3);"
+                                               title="Download PDF Card">
+                                                <i class="fa-solid fa-download me-1" style="color:#ffffff !important;"></i> <span style="color:#ffffff !important;">Download</span>
                                             </a>
                                         </div>
                                     </td>

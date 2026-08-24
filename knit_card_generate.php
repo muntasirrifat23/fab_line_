@@ -91,7 +91,7 @@ $p_customer         = !empty($prog['CUSTOMER']) ? $prog['CUSTOMER'] : ($input['C
 $p_booking          = !empty($prog['PO_NUMBER']) ? $prog['PO_NUMBER'] : ($input['BOOKING'] ?? '');
 $p_sono             = !empty($prog['SONO']) ? $prog['SONO'] : ($input['SONO'] ?? '');
 $p_style            = !empty($prog['STYLE']) ? $prog['STYLE'] : ($input['STYLE'] ?? '');
-$p_mcno             = '';
+$p_mcno             = !empty($prog['MCDIA']) ? $prog['MCDIA'] : ($input['MCNO'] ?? ($input['MCDIA'] ?? ''));
 $p_finish_dia       = !empty($prog['FDIA']) ? $prog['FDIA'] : ($input['FINISH_DIA'] ?? '');
 $p_finish_gsm       = !empty($prog['FGSM']) ? $prog['FGSM'] : ($input['FINISH_GSM'] ?? '');
 $p_grey_gsm         = $p_finish_gsm;
@@ -254,7 +254,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                     $r_qty   = round($row_item['qty']);
 
                     $ins->bind_param(
-                        "iiiisssssssssssssssssssss",
+                        "iisdsssssssssssssssssssss",
                         $p_kptid,
                         $next_knitcard,
                         $r_mcno,
@@ -1018,7 +1018,6 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                         <label class="form-label-custom mb-0" style="color: var(--text-primary); font-size: 11px;">
                             <i class="fa-solid fa-layer-group text-primary me-1"></i> Sub-TID Allocations
                         </label>
-                        <span class="badge bg-light text-secondary border px-2 py-1" style="font-size: 10px; font-weight:700;" id="rowCountBadge">1 Row</span>
                     </div>
 
                     <!-- Container for rows -->
@@ -1046,41 +1045,35 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                                     </select>
                                 </div>
                                 <div class="col-6">
-                                    <label class="form-label-custom">Shift (Auto Real-time)</label>
+                                    <label class="form-label-custom">Shift</label>
                                     <input type="hidden" name="shift[]" value="<?php echo $shift; ?>">
                                     <div class="form-input-custom bg-light fw-bold text-primary d-flex align-items-center justify-content-between" style="padding: 10px 14px !important;">
                                         <span>Shift <?php echo $shift; ?></span>
-                                        <span class="badge bg-primary text-white" style="font-size: 10px; font-weight:700;">Auto Real-time</span>
                                     </div>
                                 </div>
                             </div>
                             <div>
-                                <label class="form-label-custom required-label">Required Quantity (KG)</label>
+                                <label class="form-label-custom required-label">Card Quantity (KG)</label>
                                 <div class="quantity-input-wrapper">
-                                    <input type="number" step="0.01" min="0.01" max="<?php echo htmlspecialchars($remaining_qty); ?>" name="required_qty[]" class="form-input-custom row-qty" value="<?php echo htmlspecialchars($default_qty > 0 ? $default_qty : ''); ?>" required placeholder="Enter quantity">
+                                    <input type="number" step="0.01" min="0.01" max="<?php echo htmlspecialchars($remaining_qty); ?>" name="required_qty[]" class="form-input-custom row-qty" value="" required placeholder="Enter card quantity (e.g. 100)">
                                     <span class="input-group-addon-custom">KG</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- + Add New Row Button -->
-                    <button type="button" id="btnAddRow" class="btn-add-row" <?php echo ($remaining_qty <= 0) ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''; ?>>
-                        <i class="fa-solid fa-circle-plus"></i> + Add New Row
-                    </button>
-
                     <!-- Real-time Summary Box -->
                     <div class="allocation-summary-box">
                         <div class="d-flex justify-content-between align-items-center">
-                            <span style="color: var(--text-secondary); font-weight:600;">Total Allocated:</span>
-                            <span class="fw-bold" id="liveTotalAllocated" style="font-size: 13px; color: var(--color-blue);"><?php echo number_format($default_qty, 2); ?> KG</span>
+                            <span style="color: var(--text-secondary); font-weight:600;">Card Qty to Generate:</span>
+                            <span class="fw-bold" id="liveTotalAllocated" style="font-size: 13px; color: var(--color-blue);">0.00 KG</span>
                         </div>
                         <div class="d-flex justify-content-between align-items-center">
-                            <span style="color: var(--text-secondary); font-weight:600;">Net Remaining:</span>
-                            <span class="fw-bold" id="liveNetRemaining" style="font-size: 13px; color: var(--color-success);"><?php echo number_format(max(0, $remaining_qty - $default_qty), 2); ?> KG</span>
+                            <span style="color: var(--text-secondary); font-weight:600;">Net Remaining in Program:</span>
+                            <span class="fw-bold" id="liveNetRemaining" style="font-size: 13px; color: var(--color-success);"><?php echo number_format($remaining_qty, 2); ?> KG</span>
                         </div>
                         <div id="liveValidationMessage" class="validation-msg mt-1 d-flex align-items-center gap-1">
-                            <i class="fa-solid fa-circle-check"></i> Within remaining capacity
+                            <i class="fa-solid fa-circle-info"></i> Enter the quantity you want to generate for this card (Max: <?php echo number_format($remaining_qty, 2); ?> KG)
                         </div>
                     </div>
                 </div>
@@ -1205,16 +1198,6 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                                 <span class="spec-label">Generation Date</span>
                                 <span class="spec-value"><?php echo htmlspecialchars($gen_date); ?></span>
                             </div>
-                            
-                            <div class="spec-row">
-                                <span class="spec-label">Material Code</span>
-                                <span class="chip-monospace-blue"><?php echo htmlspecialchars($p_knit_mat_code ?: 'N/A'); ?></span>
-                            </div>
-                            
-                            <div class="spec-row">
-                                <span class="spec-label">Knit Material Description</span>
-                                <span class="block-monospace-gray"><?php echo htmlspecialchars($p_knit_m_desc ?: 'N/A'); ?></span>
-                            </div>
                         </div>
 
                     </div>
@@ -1300,19 +1283,23 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                 }
 
                 // Validation messaging & Submit button enabling
-                if (isExceeded) {
+                if (initialRemaining <= 0) {
+                    liveValidationMessage.className = "validation-msg mt-1 d-flex align-items-center gap-1 text-danger";
+                    liveValidationMessage.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Program quantity is already 100% carded.';
+                    if (submitBtn) submitBtn.disabled = true;
+                } else if (isExceeded) {
                     const exceedDiff = (totalAllocated - initialRemaining).toFixed(2);
                     liveValidationMessage.className = "validation-msg mt-1 d-flex align-items-center gap-1 text-danger";
-                    liveValidationMessage.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Exceeds remaining capacity by ' + exceedDiff + ' KG';
+                    liveValidationMessage.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Exceeds available program capacity by ' + exceedDiff + ' KG';
                     if (submitBtn) submitBtn.disabled = true;
                 } else if (isEmptyOrZero) {
-                    liveValidationMessage.className = "validation-msg mt-1 d-flex align-items-center gap-1 text-warning";
-                    liveValidationMessage.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Please enter positive required quantity';
-                    if (submitBtn && initialRemaining > 0) submitBtn.disabled = false;
+                    liveValidationMessage.className = "validation-msg mt-1 d-flex align-items-center gap-1 text-primary";
+                    liveValidationMessage.innerHTML = '<i class="fa-solid fa-circle-info"></i> Enter any amount up to ' + initialRemaining.toFixed(2) + ' KG to generate this card.';
+                    if (submitBtn) submitBtn.disabled = true;
                 } else {
                     liveValidationMessage.className = "validation-msg mt-1 d-flex align-items-center gap-1 text-success";
-                    liveValidationMessage.innerHTML = '<i class="fa-solid fa-circle-check"></i> Within remaining capacity';
-                    if (submitBtn && initialRemaining > 0) submitBtn.disabled = false;
+                    liveValidationMessage.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + totalAllocated.toFixed(2) + ' KG will be generated in this card (' + netRemaining.toFixed(2) + ' KG will remain in program)';
+                    if (submitBtn) submitBtn.disabled = false;
                 }
 
                 // Update row count badge

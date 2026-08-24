@@ -13,8 +13,11 @@ $uname = $_SESSION['username'];
 $search_program = isset($_GET['program_id']) ? trim($_GET['program_id']) : (isset($_GET['search']) ? trim($_GET['search']) : '');
 $search_term    = ltrim($search_program, '#');
 
-// Build query using real KPTID column; LEFT JOIN knit_card on KPTID
-$query = "SELECT kp.*, kc.KCTID AS card_id, kc.QTY AS card_req_qty, kc.MCNO AS card_mcno
+// Build query calculating total carded quantity per program
+$query = "SELECT kp.*, 
+                 MAX(kc.KCTID) AS card_id, 
+                 COALESCE(SUM(kc.QTY), 0) AS total_carded_qty, 
+                 MAX(kc.MCNO) AS card_mcno
           FROM knitting_program kp
           LEFT JOIN knit_card kc ON kp.KPTID = kc.KPTID
           WHERE 1=1";
@@ -22,7 +25,7 @@ $params = [];
 $types  = '';
 
 if ($search_term !== '') {
-    $query   .= " AND (kp.KPTID LIKE ? OR kp.SUB_TID LIKE ? OR kp.MAIN_TID LIKE ?)";
+    $query   .= " AND (kp.KPTID LIKE ? OR kp.PROGRAM_NO LIKE ? OR kp.PO_NUMBER LIKE ?)";
     $like_val = "%{$search_term}%";
     $params[] = $like_val;
     $params[] = $like_val;
@@ -30,7 +33,7 @@ if ($search_term !== '') {
     $types   .= 'sss';
 }
 
-$query .= " ORDER BY kp.KPTID DESC";
+$query .= " GROUP BY kp.KPTID ORDER BY kp.KPTID DESC";
 
 $stmt = $db->prepare($query);
 if ($stmt) {
@@ -469,6 +472,27 @@ $end_entry   = min($offset + $limit, $total_records);
             box-shadow: 0 6px 16px rgba(217, 119, 6, 0.35);
         }
 
+        .btn-action-download {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white !important;
+            font-weight: 700;
+            border-radius: 10px !important;
+            padding: 8px 16px !important;
+            border: none;
+            font-size: 13px !important;
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-action-download:hover {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white !important;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(5, 150, 105, 0.35);
+        }
+
         /* ═══════════════════════════════════════════
            PAGINATION
         ═══════════════════════════════════════════ */
@@ -836,33 +860,40 @@ $end_entry   = min($offset + $limit, $total_records);
                                     <td class="text-nowrap"><?php echo htmlspecialchars($p_feeder_plan ?: 'N/A'); ?></td>
                                     <td class="text-nowrap"><?php echo htmlspecialchars($p_ggsm ?: 'N/A'); ?></td>
                                     <td class="text-nowrap">
-                                        <?php if ($p_card_gen === 1): ?>
-                                            <span class="badge-status badge-generated"><i class="fa-solid fa-circle-check"></i> Generated</span>
+                                        <?php 
+                                            $prog_total_qty = floatval($row['QTY'] ?? 0);
+                                            $prog_carded    = floatval($row['total_carded_qty'] ?? 0);
+                                            $prog_rem       = max(0.00, $prog_total_qty - $prog_carded);
+                                        ?>
+                                        <?php if ($prog_carded <= 0): ?>
+                                            <span class="badge-status badge-pending"><i class="fa-solid fa-clock"></i> Pending (<?php echo number_format($prog_total_qty, 0); ?> KG)</span>
+                                        <?php elseif ($prog_rem > 0.001): ?>
+                                            <span class="badge-status" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd;"><i class="fa-solid fa-spinner"></i> Partial (Rem: <?php echo number_format($prog_rem, 0); ?> KG)</span>
                                         <?php else: ?>
-                                            <span class="badge-status badge-pending"><i class="fa-solid fa-clock"></i> Pending</span>
+                                            <span class="badge-status badge-generated"><i class="fa-solid fa-circle-check"></i> Completed (<?php echo number_format($prog_carded, 0); ?> KG)</span>
                                         <?php endif; ?>
                                     </td>
                                     <td class="text-center text-nowrap">
                                         <div class="d-inline-flex gap-2">
-                                            <?php if ($p_card_gen === 1): ?>
-                                                <?php if (!empty($p_card_id)): ?>
-                                                    <a href="knit_card_view.php?id=<?php echo intval($p_card_id); ?>"
-                                                       class="btn btn-sm btn-action-view"
-                                                       title="View Generated Card Log">
-                                                        <i class="fa-solid fa-eye me-1"></i> View Card
-                                                    </a>
-                                                <?php else: ?>
-                                                    <a href="knit_card_report.php" class="btn btn-sm btn-action-view">
-                                                        <i class="fa-solid fa-id-card me-1"></i> All Cards
-                                                    </a>
-                                                <?php endif; ?>
-                                            <?php else: ?>
+                                            <?php if ($prog_rem > 0.001): ?>
                                                 <a href="knit_card_generate.php?program_id=<?php echo $p_id; ?>"
                                                    class="btn btn-sm btn-teal"
                                                    style="border-radius:10px; font-size:12.5px;"
-                                                   onclick="return confirm('Generate a new Knit Card for this program?');"
-                                                   title="Generate Knit Card">
+                                                   title="Generate Knit Card (Remaining: <?php echo number_format($prog_rem, 2); ?> KG)">
                                                     <i class="fa-solid fa-file-circle-plus me-1"></i> Generate Card
+                                                </a>
+                                            <?php endif; ?>
+
+                                            <?php if (!empty($p_card_id)): ?>
+                                                <a href="knit_card_view.php?id=<?php echo intval($p_card_id); ?>"
+                                                   class="btn btn-sm btn-action-view"
+                                                   title="View Latest Generated Card">
+                                                    <i class="fa-solid fa-eye me-1"></i> View Card
+                                                </a>
+                                                <a href="knit_card_view.php?id=<?php echo intval($p_card_id); ?>&download=1"
+                                                   class="btn btn-sm btn-action-download"
+                                                   title="Download PDF Card">
+                                                    <i class="fa-solid fa-download me-1"></i> Download
                                                 </a>
                                             <?php endif; ?>
 

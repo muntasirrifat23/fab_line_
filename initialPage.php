@@ -44,7 +44,7 @@ if (isset($_POST['knitting_production'])) {
 }
 if (isset($_POST['knit_card'])) {
     $_SESSION['lineNo'] = $_POST['option'];
-    header('location:knit_card.php');
+    header('location:knitting_program_list.php');
     exit();
 }
 if (isset($_POST['knitting_inspection'])) {
