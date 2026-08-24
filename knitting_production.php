@@ -318,7 +318,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
 
     .data-row.default-row {
       display: grid !important;
-      grid-template-columns: repeat(7, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 14px;
       align-items: flex-start;
       height: auto;
@@ -1047,6 +1047,15 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           </div>
         `;
 
+        html += `
+          <div class="data-row default-row scale-qty-row">
+            <div class="field-block">
+              <span class="field-label">Scale QTY</span>
+              <input type="number" id="scaleQtyInput" class="field-input" min="0.01" step="0.01" placeholder="Enter QTY">
+            </div>
+          </div>
+        `;
+
         html += buildOperatorInfoHtml();
 
         html += `
@@ -1279,7 +1288,14 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           return;
         }
 
-        let pqty = parseFloat(scannedInfo.originalQTY || scannedInfo.QTY || 0);
+        const scaleQtyInput = document.getElementById('scaleQtyInput');
+        const pqty = scaleQtyInput ? parseFloat(scaleQtyInput.value) : 0;
+
+        if (!Number.isFinite(pqty) || pqty <= 0) {
+          alert('Please enter a valid Scale QTY.');
+          if (scaleQtyInput) scaleQtyInput.focus();
+          return;
+        }
 
         const payload = {
           knitcard: scannedInfo.KNITCARD || "",
