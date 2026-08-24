@@ -630,9 +630,9 @@
                         <div class="info-item"><label>SONO</label><span id="display_sono">-</span><input type="hidden" id="sono"></div>
                         <div class="info-item"><label>Buyer</label><span id="display_buyer">-</span><input type="hidden" id="buyer"></div>
                         <div class="info-item"><label>STYLE</label><span id="display_style">-</span><input type="hidden" id="style"></div>
-                        <div class="info-item"><label>COLOR</label><select id="color"></select></div>
                         <div class="info-item"><label>CUSTOMER</label><span id="display_customer">-</span><input type="hidden" id="customer"></div>
-                        <div class="info-item"><label>Finish GSM</label><input type="text" id="finish_gsm" list="finishGsmOptions" placeholder="Finish GSM"><datalist id="finishGsmOptions"></datalist></div>
+                        <div class="info-item"><label>COLOR</label><select id="color"></select></div>
+                        <div class="info-item"><label>Finish GSM</label><select id="finish_gsm"></select></div>
                         <div class="info-item"><label>Finish DIA</label><input type="text" id="finish_dia" placeholder="Finish DIA"></div>
                         <div class="info-item"><label>Open / Tube</label><input type="text" id="open_tube" placeholder="Open / Tube"></div>
                         <div class="info-item"><label>Fabrics Type</label><input type="text" id="fabrics_type" placeholder="Fabrics Type"></div>
@@ -652,7 +652,7 @@
                         <div class="form-group"><label>Yarn Count</label><input type="text" id="yarn_count" placeholder="Enter Yarn Count"></div>
                         <div class="form-group"><label>SL/VQ</label><input type="text" id="sl_vdq" placeholder="Enter SL/VQ"></div>
                         <div class="form-group"><label>MC DIA</label><input type="text" id="mc_dia" placeholder="Enter MC DIA"></div>
-                        <div class="form-group"><label>Gray GSM</label><input type="text" id="gray_gsm" placeholder="Enter Gray GSM"></div>
+                        <div class="form-group"><label>Gray GSM</label><input type="text" id="gray_gsm" list="grayGsmOptions" placeholder="Enter Gray GSM"><datalist id="grayGsmOptions"></datalist></div>
                         <div class="form-group"><label>Feeder Plan</label><input type="text" id="feeder_plan" placeholder="Enter Feeder Plan"></div>
                         <div class="form-group"><label>Lot No</label><input type="text" id="lot_no" placeholder="Enter Lot No"></div>
                     </div>
@@ -713,6 +713,7 @@
             var originalTargetQty = 0;
             var allocatedByDescription = {};
             var pendingColor = '';
+            var pendingFinishGsm = '';
 
             function setAvailableColor(value) {
                 pendingColor = $.trim(value || '');
@@ -724,6 +725,18 @@
                     }
                 });
                 $('#color').val(colorExists ? pendingColor : '');
+            }
+
+            function setAvailableFinishGsm(value) {
+                pendingFinishGsm = $.trim(value || '');
+                var finishGsmExists = false;
+                $('#finish_gsm option').each(function() {
+                    if ($(this).val() === pendingFinishGsm) {
+                        finishGsmExists = true;
+                        return false;
+                    }
+                });
+                $('#finish_gsm').val(finishGsmExists ? pendingFinishGsm : '');
             }
 
             // ---------- load form data ----------
@@ -778,7 +791,7 @@
                 $('#buyer').val(data.BUYER || '');
 
                 $('#color').val('');
-                $('#finish_gsm').val(data.FINISH_GSM || '');
+                $('#finish_gsm').val('');
                 $('#finish_dia').val(data.FINISH_DIA || '');
                 $('#open_tube').val(data.OPEN_TUBE || '');
                 $('#fabrics_type').val(data.FABRICS_TYPE || '');
@@ -815,8 +828,7 @@
                 if (!rowData) rowData = bookingData;
 
                 $('#display_customer').text(rowData.CUSTOMER || '-');
-                $('#display_finish_gsm').text(rowData.FINISH_GSM || '-');
-                $('#finish_gsm').val(rowData.FINISH_GSM || '');
+                setAvailableFinishGsm(rowData.FINISH_GSM);
                 setAvailableColor(rowData.COLOR);
                 $('#finish_dia').val(rowData.FINISH_DIA || '');
                 $('#open_tube').val(rowData.OPEN_TUBE || '');
@@ -1037,23 +1049,37 @@
                 // Load all Finish GSM options from database for dropdown
                 $.ajax({
                     url: 'ajaxKnittingProgram.php',
-                    data: { action: 'finish_gsm_list' },
+                    data: {
+                        action: 'finish_gsm_list'
+                    },
                     dataType: 'json',
                     method: 'GET'
                 }).done(function(resp) {
                     if (resp && resp.success) {
-                        var dl = $('#finishGsmOptions');
-                        dl.empty();
+                        var finishGsmSelect = $('#finish_gsm');
+                        var grayGsmOptions = $('#grayGsmOptions');
+                        finishGsmSelect.empty();
+                        grayGsmOptions.empty();
                         resp.data.forEach(function(v) {
-                            dl.append('<option value="' + String(v).replace(/"/g, '&quot;') + '">');
+                            var value = String(v);
+                            finishGsmSelect.append($('<option>', {
+                                value: value,
+                                text: value
+                            }));
+                            grayGsmOptions.append($('<option>', {
+                                value: value
+                            }));
                         });
+                        setAvailableFinishGsm(pendingFinishGsm || (bookingData && bookingData.FINISH_GSM));
                     }
                 });
 
                 // Load all Color options from database for dropdown
                 $.ajax({
                     url: 'ajaxKnittingProgram.php',
-                    data: { action: 'color_list' },
+                    data: {
+                        action: 'color_list'
+                    },
                     dataType: 'json',
                     method: 'GET'
                 }).done(function(resp) {
@@ -1098,7 +1124,9 @@
                     allRowsData = [];
                     targetQty = 0;
                     pendingColor = '';
+                    pendingFinishGsm = '';
                     $('#color').val('');
+                    $('#finish_gsm').val('');
                     $('#detailsContainer').removeClass('visible');
                     $('#display_target_qty').text('0.00');
                     $('#knitting_target_qty').val('');

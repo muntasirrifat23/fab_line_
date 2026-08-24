@@ -109,6 +109,7 @@ $columnMap = [
     'OPEN_TUBE'            => 'OPEN_TUBE',
     'FABRICS_TYPE'         => 'FABRICS_TYPE',
     'YARN_TYPE'            => 'YARN_TYPE',
+    'LOT_NO'               => 'LOT_NO',
     'KNIT_MATERIAL_CODE'   => 'KNIT_MATERIAL_CODE',
     'KNIT_M_DESCRIPTION'   => 'KNIT_M_DESCRIPTION'
 ];
@@ -127,6 +128,7 @@ $dbColumns = [
     "OPEN_TUBE",
     "FABRICS_TYPE",
     "YARN_TYPE",
+    "LOT_NO",
     "KNIT_MATERIAL_CODE",
     "KNIT_M_DESCRIPTION",
     "BUDAT",

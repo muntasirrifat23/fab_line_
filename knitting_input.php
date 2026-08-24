@@ -123,13 +123,14 @@
                             <th>OPEN TUBE</th>
                             <th>FABRICS TYPE</th>
                             <th>YARN TYPE</th>
+                            <th>LOT NO</th>
                             <th>MATERIAL CODE</th>
                             <th>MATERIAL DESCRIPTION</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="15" class="text-center small-muted">Loading data...</td>
+                            <td colspan="16" class="text-center small-muted">Loading data...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -147,7 +148,7 @@
             tbody.empty();
 
             if (!data || data.length === 0) {
-                tbody.append('<tr><td colspan="15" class="text-center">No Data Found</td></tr>');
+                tbody.append('<tr><td colspan="16" class="text-center">No Data Found</td></tr>');
                 return;
             }
 
@@ -167,6 +168,7 @@
                 <td>${row.OPEN_TUBE ?? ''}</td>
                 <td>${row.FABRICS_TYPE ?? ''}</td>
                 <td>${row.YARN_TYPE ?? ''}</td>
+                <td>${row.LOT_NO ?? ''}</td>
                 <td>${row.KNIT_MATERIAL_CODE ?? ''}</td>
                 <td>${row.KNIT_M_DESCRIPTION ?? ''}</td>
             </tr>
@@ -194,11 +196,11 @@
                     if (resp.success) {
                         renderTableRows(resp.data);
                     } else {
-                        $('#tableBody').html('<tr><td colspan="15" class="text-center">No Data Found</td></tr>');
+                        $('#tableBody').html('<tr><td colspan="16" class="text-center">No Data Found</td></tr>');
                     }
                 },
                 error: function() {
-                    $('#tableBody').html('<tr><td colspan="15" class="text-center text-danger">Error loading data</td></tr>');
+                    $('#tableBody').html('<tr><td colspan="16" class="text-center text-danger">Error loading data</td></tr>');
                 },
                 complete: function() {
                     $('#searchBtn').prop('disabled', false).text('Search');
@@ -208,7 +210,7 @@
         }
 
         function loadAll() {
-            $('#tableBody').html('<tr><td colspan="15" class="text-center small-muted">Loading data...</td></tr>');
+            $('#tableBody').html('<tr><td colspan="16" class="text-center small-muted">Loading data...</td></tr>');
             $.ajax({
                     url: 'ajaxKnittingInput.php',
                     dataType: 'json',
@@ -216,10 +218,10 @@
                 })
                 .done(function(resp) {
                     if (resp && resp.success) renderTableRows(resp.data);
-                    else $('#tableBody').html('<tr><td colspan="15" class="text-center small-muted">No data returned</td></tr>');
+                    else $('#tableBody').html('<tr><td colspan="16" class="text-center small-muted">No data returned</td></tr>');
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr><td colspan="15" class="text-center text-danger">Error loading data</td></tr>');
+                    $('#tableBody').html('<tr><td colspan="16" class="text-center text-danger">Error loading data</td></tr>');
                 });
         }
 
