@@ -317,10 +317,12 @@
         }
 
         .mcno-qty-table {
-            width: 100%;
-            border-collapse: collapse;
+            width: 50%;
+            min-width: 420px;
+            border-collapse: separate;
+            border-spacing: 0;
             background: #fff;
-            border-radius: 20px;
+            border-radius: 16px;
             overflow: hidden;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
             margin-bottom: 1rem;
@@ -398,6 +400,17 @@
         .summary-row td {
             padding: 0.7rem 0.8rem;
             color: #0b2a4a;
+        }
+
+        .summary-row .summary-label {
+            text-align: left;
+        }
+
+        @media (max-width: 576px) {
+            .mcno-qty-table {
+                width: 100%;
+                min-width: 0;
+            }
         }
 
         .summary-label {
@@ -648,9 +661,8 @@
                     <tbody id="mcnoQtyTableBody"></tbody>
                     <tfoot>
                         <tr class="summary-row">
-                            <td class="summary-label">Total</td>
-                            <td class="summary-total" id="totalQtyDisplay">0.00</td>
-                            <td class="summary-remaining" id="totalRemainingDisplay">0.00</td>
+                            <td class="summary-label">Total: <span class="summary-total" id="totalQtyDisplay">0.00</span></td>
+                            <td class="summary-remaining">Remaining: <span id="totalRemainingDisplay">0.00</span></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -666,6 +678,7 @@
     <!-- SCRIPTS -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
         (function($) {
@@ -1167,16 +1180,37 @@
                         success: function(resp) {
                             if (resp.success) {
                                 sessionStorage.removeItem('kp_booking');
-                                showAlert(resp.message || 'Saved!', 'success', 1500);
-                                setTimeout(function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Saved Successfully',
+                                    text: resp.message || 'Program saved successfully.',
+                                    timer: 3000,
+                                    timerProgressBar: true,
+                                    showConfirmButton: false,
+                                    allowOutsideClick: false
+                                }).then(function() {
                                     window.location.reload();
-                                }, 1500);
+                                });
                             } else {
-                                showAlert(resp.message || 'Save failed.', 'error', 2000);
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Save Failed',
+                                    text: resp.message || 'Save failed.',
+                                    timer: 3000,
+                                    timerProgressBar: true,
+                                    showConfirmButton: false
+                                });
                             }
                         },
                         error: function() {
-                            showAlert('Error saving program.', 'error', 2000);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Save Failed',
+                                text: 'Error saving program.',
+                                timer: 3000,
+                                timerProgressBar: true,
+                                showConfirmButton: false
+                            });
                         },
                         complete: function() {
                             $btn.prop('disabled', false).html('<i class="fa-regular fa-floppy-disk me-2"></i>Save Program');

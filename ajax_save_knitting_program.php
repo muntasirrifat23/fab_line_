@@ -238,7 +238,7 @@ if (!mysqli_commit($db)) {
 
 $response = [
     'success' => true,
-    'message' => 'Program saved successfully. ' . $insertedCount . ' record(s) inserted. Program No: ' . $programNo . '. Shift: ' . $shift,
+    'message' => 'Program saved successfully. record(s) inserted. Program No: ' . $programNo ,
     'inserted_count' => $insertedCount,
     'program_no' => $programNo,
     'shift' => $shift
