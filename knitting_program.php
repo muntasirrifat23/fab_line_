@@ -389,20 +389,6 @@
             display: block;
         }
 
-        .btn-delete-row {
-            background: #ef4444;
-            border: none;
-            color: #fff;
-            padding: 0.25rem 0.6rem;
-            border-radius: 40px;
-            font-size: 0.75rem;
-            transition: 0.15s;
-        }
-
-        .btn-delete-row:hover {
-            background: #b91c1c;
-        }
-
         .summary-row {
             background: #eef4fa;
             font-weight: 700;
@@ -655,10 +641,8 @@
                 <table class="mcno-qty-table">
                     <thead>
                         <tr>
-                            <th style="width:10%;">#</th>
-                            <th style="width:35%;">QTY</th>
-                            <th style="width:35%;">Remaining</th>
-                            <th style="width:20%;">Action</th>
+                            <th style="width:20%;">QTY</th>
+                            <th style="width:20%;">Remaining</th>
                         </tr>
                     </thead>
                     <tbody id="mcnoQtyTableBody"></tbody>
@@ -667,14 +651,9 @@
                             <td class="summary-label">Total</td>
                             <td class="summary-total" id="totalQtyDisplay">0.00</td>
                             <td class="summary-remaining" id="totalRemainingDisplay">0.00</td>
-                            <td></td>
                         </tr>
                     </tfoot>
                 </table>
-
-                <div class="action-buttons">
-                    <button type="button" class="btn-add-row" id="addMcnoRowBtn" disabled><i class="fa-solid fa-plus me-1"></i>Add Row</button>
-                </div>
 
                 <div class="action-buttons" style="margin-top:1.8rem;">
                     <button type="button" class="btn-submit" id="submitBtn"><i class="fa-regular fa-floppy-disk me-2"></i>Save Program</button>
@@ -852,40 +831,17 @@
             // ---------- row management ----------
             function addMcnoRow() {
                 var tbody = $('#mcnoQtyTableBody');
-                var rowCount = tbody.find('tr').length + 1;
                 var row = $('<tr>');
-                row.append($('<td>').text(rowCount));
                 row.append($('<td>').html('<input type="number" class="qty-input" placeholder="QTY" step="0.01">'));
                 row.append($('<td>').html('<input type="text" class="remaining-qty" readonly placeholder="Remaining">'));
-                row.append($('<td>').html('<button type="button" class="btn-delete-row" onclick="deleteMcnoRow(this)"><i class="fa-solid fa-trash"></i></button>'));
                 tbody.append(row);
 
                 row.find('.qty-input').on('input', function() {
                     updateRemainingQty();
-                    checkAddRowButton();
+                    checkSubmitButton();
                 });
                 updateRemainingQty();
-                checkAddRowButton();
-            }
-
-
-
-            window.deleteMcnoRow = function(btn) {
-                var tr = $(btn).closest('tr');
-                if ($('#mcnoQtyTableBody tr').length > 1) {
-                    tr.remove();
-                    updateMcnoRowNumbers();
-                    updateRemainingQty();
-                    checkAddRowButton();
-                } else {
-                    showAlert('Cannot delete last row', 'error');
-                }
-            };
-
-            function updateMcnoRowNumbers() {
-                $('#mcnoQtyTableBody tr').each(function(idx) {
-                    $(this).find('td:first').text(idx + 1);
-                });
+                checkSubmitButton();
             }
 
             function updateRemainingQty() {
@@ -934,10 +890,9 @@
                 return true;
             }
 
-            function checkAddRowButton() {
+            function checkSubmitButton() {
                 var rows = $('#mcnoQtyTableBody tr');
                 var allValid = true;
-                var allFilled = true;
                 var hasData = false;
 
                 rows.each(function() {
@@ -947,7 +902,6 @@
                     hasData = true;
                     if (!qty) {
                         allValid = false;
-                        allFilled = false;
                         return false;
                     }
                     var qtyNum = parseFloat(qty);
@@ -964,10 +918,7 @@
                 });
                 if (hasData && totalQty > targetQty) allValid = false;
 
-                var addRowsEnabled = allValid && allFilled;
-                $('#addMcnoRowBtn').prop('disabled', !addRowsEnabled);
-
-                var submitEnabled = addRowsEnabled && hasData && isManualDataValid();
+                var submitEnabled = allValid && hasData && isManualDataValid();
                 $('#submitBtn').prop('disabled', !submitEnabled);
             }
 
@@ -1120,7 +1071,6 @@
                     $('#mcnoQtyTableBody').html('');
                     $('#totalQtyDisplay').text('0.00');
                     $('#totalRemainingDisplay').text('0.00');
-                    $('#addMcnoRowBtn').prop('disabled', true);
                     // reset all display fields
                     $('#infoGrid span').text('-');
                     addMcnoRow();
@@ -1152,12 +1102,7 @@
                 ].join(', ');
 
                 $(manualFieldSelectors).on('input change', function() {
-                    checkAddRowButton();
-                });
-
-                $('#addMcnoRowBtn').on('click', function(e) {
-                    e.preventDefault();
-                    if (!$(this).prop('disabled')) addMcnoRow();
+                    checkSubmitButton();
                 });
 
                 $('#submitBtn').on('click', function(e) {
