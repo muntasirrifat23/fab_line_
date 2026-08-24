@@ -103,64 +103,25 @@ if (!is_array($mcnoQtyData) || empty($mcnoQtyData)) {
     exit();
 }
 
-// Reuse the existing MAIN_TID for this booking if already saved, otherwise create a new MAIN_TID
-$escapedBooking = mysqli_real_escape_string($db, $booking);
-$mainTid = null;
+// Generate the next PROGRAM_NO (1000000000 format)
+$tidResult = mysqli_query($db, "SELECT COALESCE(MAX(PROGRAM_NO), 1000000000) AS max_program FROM knitting_program");
 
-$existingMainResult = mysqli_query($db, "SELECT MAIN_TID FROM knitting_program WHERE PO_NUMBER = '$escapedBooking' ORDER BY KPTID DESC LIMIT 1");
-if ($existingMainResult && mysqli_num_rows($existingMainResult) > 0) {
-    $existingRow = mysqli_fetch_assoc($existingMainResult);
-    $mainTid = intval($existingRow['MAIN_TID']);
-    mysqli_free_result($existingMainResult);
+if (!$tidResult) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Failed to determine PROGRAM_NO: ' . mysqli_error($db)
+    ]);
+    mysqli_close($db);
+    exit();
 }
 
-if ($mainTid > 0) {
-    $tidResult = mysqli_query($db, "SELECT COALESCE(MAX(SUB_TID), 2000000000) AS max_sub FROM knitting_program");
-    if (!$tidResult) {
-        http_response_code(500);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Failed to determine SUB_TID: ' . mysqli_error($db)
-        ]);
-        mysqli_close($db);
-        exit();
-    }
-
-    $tidRow = mysqli_fetch_assoc($tidResult);
-    $nextSubTid = intval($tidRow['max_sub']) + 1;
-    if ($nextSubTid < 2000000001) {
-        $nextSubTid = 2000000001;
-    }
-    mysqli_free_result($tidResult);
-} else {
-    $tidResult = mysqli_query($db, "
-        SELECT
-            COALESCE(MAX(MAIN_TID), 1000000000) AS max_main,
-            COALESCE(MAX(SUB_TID), 2000000000) AS max_sub
-        FROM knitting_program
-    ");
-
-    if (!$tidResult) {
-        http_response_code(500);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Failed to determine IDs: ' . mysqli_error($db)
-        ]);
-        mysqli_close($db);
-        exit();
-    }
-
-    $tidRow = mysqli_fetch_assoc($tidResult);
-    $mainTid = intval($tidRow['max_main']) + 1;
-    if ($mainTid < 1000000001) {
-        $mainTid = 1000000001;
-    }
-    $nextSubTid = intval($tidRow['max_sub']) + 1;
-    if ($nextSubTid < 2000000001) {
-        $nextSubTid = 2000000001;
-    }
-    mysqli_free_result($tidResult);
+$tidRow = mysqli_fetch_assoc($tidResult);
+$programNo = intval($tidRow['max_program']) + 1;
+if ($programNo < 1000000000) {
+    $programNo = 1000000000;
 }
+mysqli_free_result($tidResult);
 
 // Start transaction
 if (!mysqli_begin_transaction($db)) {
@@ -172,8 +133,7 @@ if (!mysqli_begin_transaction($db)) {
 
 // Prepare insert statement
 $insertSql = "INSERT INTO knitting_program (
-    MAIN_TID,
-    SUB_TID,
+    PROGRAM_NO,
     PO_NUMBER,
     SONO,
     STYLE,
@@ -196,7 +156,7 @@ $insertSql = "INSERT INTO knitting_program (
     KNIT_MATERIAL_CODE,
     KNIT_M_DESCRIPTION,
     UNAME
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 $stmt = mysqli_prepare($db, $insertSql);
 
@@ -222,14 +182,10 @@ foreach ($mcnoQtyData as $row) {
         exit();
     }
 
-    // Generate unique SUB_TID
-    $currentSubTid = $nextSubTid++;
-
     mysqli_stmt_bind_param(
         $stmt,
-        "iisssssdssssssssssssssss",
-        $mainTid,
-        $currentSubTid,
+        "isssssdssssssssssssssss",
+        $programNo,
         $booking,
         $sono,
         $style,
@@ -282,9 +238,9 @@ if (!mysqli_commit($db)) {
 
 $response = [
     'success' => true,
-    'message' => 'Program saved successfully. ' . $insertedCount . ' record(s) inserted. Shift: ' . $shift,
+    'message' => 'Program saved successfully. ' . $insertedCount . ' record(s) inserted. Program No: ' . $programNo . '. Shift: ' . $shift,
     'inserted_count' => $insertedCount,
-    'main_tid' => $mainTid,
+    'program_no' => $programNo,
     'shift' => $shift
 ];
 
