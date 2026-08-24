@@ -21,11 +21,43 @@ if (!$db) {
 }
 
 // Get search parameter (SUB_TID or PO/Booking number)
-$search = isset($_GET['sub_tid']) && trim($_GET['sub_tid']) !== '' 
-        ? trim($_GET['sub_tid']) 
-        : (isset($_GET['booking']) && trim($_GET['booking']) !== '' 
-            ? trim($_GET['booking']) 
+$search = isset($_GET['sub_tid']) && trim($_GET['sub_tid']) !== ''
+        ? trim($_GET['sub_tid'])
+        : (isset($_GET['booking']) && trim($_GET['booking']) !== ''
+            ? trim($_GET['booking'])
             : (isset($_POST['sub_tid']) ? trim($_POST['sub_tid']) : ''));
+
+// Distinct Finish GSM list for Knitting Program form dropdown
+if (isset($_GET['action']) && $_GET['action'] === 'finish_gsm_list') {
+    $fgRes = mysqli_query($db, "SELECT DISTINCT TRIM(FINISH_GSM) AS FG
+                                FROM knitting_input
+                                WHERE FINISH_GSM IS NOT NULL AND TRIM(FINISH_GSM) <> ''
+                                ORDER BY CAST(TRIM(FINISH_GSM) AS UNSIGNED), TRIM(FINISH_GSM)");
+    $fgList = [];
+    if ($fgRes) {
+        while ($fgRow = mysqli_fetch_assoc($fgRes)) {
+            $fgList[] = $fgRow['FG'];
+        }
+    }
+    echo json_encode(['success' => true, 'data' => $fgList]);
+    exit();
+}
+
+// Distinct Color list for Knitting Program form dropdown
+if (isset($_GET['action']) && $_GET['action'] === 'color_list') {
+    $colorRes = mysqli_query($db, "SELECT DISTINCT TRIM(COLOR) AS COLOR_VALUE
+                                   FROM knitting_input
+                                   WHERE COLOR IS NOT NULL AND TRIM(COLOR) <> ''
+                                   ORDER BY TRIM(COLOR)");
+    $colorList = [];
+    if ($colorRes) {
+        while ($colorRow = mysqli_fetch_assoc($colorRes)) {
+            $colorList[] = $colorRow['COLOR_VALUE'];
+        }
+    }
+    echo json_encode(['success' => true, 'data' => $colorList]);
+    exit();
+}
 
 if ($search === '') {
     http_response_code(400);

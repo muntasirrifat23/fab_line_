@@ -184,14 +184,16 @@
         }
 
         .info-item span,
-        .info-item input {
+        .info-item input,
+        .info-item select {
             font-weight: 600;
             font-size: 0.95rem;
             color: #0b2a4a;
             word-break: break-word;
         }
 
-        .info-item input {
+        .info-item input,
+        .info-item select {
             padding: 0.75rem 1rem;
             border: 2px solid #e2e8f0;
             border-radius: 16px;
@@ -201,7 +203,8 @@
             margin-top: 0.15rem;
         }
 
-        .info-item input:focus {
+        .info-item input:focus,
+        .info-item select:focus {
             border-color: #2563eb;
             outline: none;
             box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.10);
@@ -627,9 +630,9 @@
                         <div class="info-item"><label>SONO</label><span id="display_sono">-</span><input type="hidden" id="sono"></div>
                         <div class="info-item"><label>Buyer</label><span id="display_buyer">-</span><input type="hidden" id="buyer"></div>
                         <div class="info-item"><label>STYLE</label><span id="display_style">-</span><input type="hidden" id="style"></div>
-                        <div class="info-item"><label>COLOR</label><span id="display_color">-</span><input type="hidden" id="color"></div>
+                        <div class="info-item"><label>COLOR</label><select id="color"></select></div>
                         <div class="info-item"><label>CUSTOMER</label><span id="display_customer">-</span><input type="hidden" id="customer"></div>
-                        <div class="info-item"><label>Finish GSM</label><span id="display_finish_gsm">-</span><input type="hidden" id="finish_gsm"></div>
+                        <div class="info-item"><label>Finish GSM</label><input type="text" id="finish_gsm" list="finishGsmOptions" placeholder="Finish GSM"><datalist id="finishGsmOptions"></datalist></div>
                         <div class="info-item"><label>Finish DIA</label><input type="text" id="finish_dia" placeholder="Finish DIA"></div>
                         <div class="info-item"><label>Open / Tube</label><input type="text" id="open_tube" placeholder="Open / Tube"></div>
                         <div class="info-item"><label>Fabrics Type</label><input type="text" id="fabrics_type" placeholder="Fabrics Type"></div>
@@ -709,6 +712,19 @@
             var targetQty = 0;
             var originalTargetQty = 0;
             var allocatedByDescription = {};
+            var pendingColor = '';
+
+            function setAvailableColor(value) {
+                pendingColor = $.trim(value || '');
+                var colorExists = false;
+                $('#color option').each(function() {
+                    if ($(this).val() === pendingColor) {
+                        colorExists = true;
+                        return false;
+                    }
+                });
+                $('#color').val(colorExists ? pendingColor : '');
+            }
 
             // ---------- load form data ----------
             function loadFormData(booking) {
@@ -761,7 +777,7 @@
                 $('#display_buyer').text(data.BUYER || '-');
                 $('#buyer').val(data.BUYER || '');
 
-                $('#color').val(data.COLOR || '');
+                $('#color').val('');
                 $('#finish_gsm').val(data.FINISH_GSM || '');
                 $('#finish_dia').val(data.FINISH_DIA || '');
                 $('#open_tube').val(data.OPEN_TUBE || '');
@@ -798,10 +814,10 @@
                 }
                 if (!rowData) rowData = bookingData;
 
-                $('#display_color').text(rowData.COLOR || '-');
                 $('#display_customer').text(rowData.CUSTOMER || '-');
                 $('#display_finish_gsm').text(rowData.FINISH_GSM || '-');
                 $('#finish_gsm').val(rowData.FINISH_GSM || '');
+                setAvailableColor(rowData.COLOR);
                 $('#finish_dia').val(rowData.FINISH_DIA || '');
                 $('#open_tube').val(rowData.OPEN_TUBE || '');
                 $('#fabrics_type').val(rowData.FABRICS_TYPE || '');
@@ -1018,6 +1034,44 @@
             $(function() {
                 sessionStorage.removeItem('kp_booking');
 
+                // Load all Finish GSM options from database for dropdown
+                $.ajax({
+                    url: 'ajaxKnittingProgram.php',
+                    data: { action: 'finish_gsm_list' },
+                    dataType: 'json',
+                    method: 'GET'
+                }).done(function(resp) {
+                    if (resp && resp.success) {
+                        var dl = $('#finishGsmOptions');
+                        dl.empty();
+                        resp.data.forEach(function(v) {
+                            dl.append('<option value="' + String(v).replace(/"/g, '&quot;') + '">');
+                        });
+                    }
+                });
+
+                // Load all Color options from database for dropdown
+                $.ajax({
+                    url: 'ajaxKnittingProgram.php',
+                    data: { action: 'color_list' },
+                    dataType: 'json',
+                    method: 'GET'
+                }).done(function(resp) {
+                    if (resp && resp.success) {
+                        var colorSelect = $('#color');
+                        var currentValue = colorSelect.val();
+                        colorSelect.empty();
+                        resp.data.forEach(function(v) {
+                            var value = String(v);
+                            colorSelect.append($('<option>', {
+                                value: value,
+                                text: value
+                            }));
+                        });
+                        setAvailableColor(pendingColor || (bookingData && bookingData.COLOR) || currentValue);
+                    }
+                });
+
                 $('#backBtn').on('click', function() {
                     window.location.href = 'initialPage.php';
                 });
@@ -1043,6 +1097,8 @@
                     bookingData = null;
                     allRowsData = [];
                     targetQty = 0;
+                    pendingColor = '';
+                    $('#color').val('');
                     $('#detailsContainer').removeClass('visible');
                     $('#display_target_qty').text('0.00');
                     $('#knitting_target_qty').val('');
