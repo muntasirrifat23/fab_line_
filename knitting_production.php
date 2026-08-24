@@ -16,7 +16,29 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
   $res = mysqli_query($db, $q);
 
   if ($res && mysqli_num_rows($res) > 0) {
-    echo json_encode(['success' => true, 'data' => mysqli_fetch_assoc($res)]);
+    $data = mysqli_fetch_assoc($res);
+
+    $kc = isset($data['KNITCARD']) && trim($data['KNITCARD']) !== '' ? trim($data['KNITCARD']) : $KNITCARD;
+    $origQty = isset($data['QTY']) ? floatval($data['QTY']) : 0;
+
+    $produced = 0;
+    $pStmt = mysqli_prepare($db, "SELECT COALESCE(SUM(PQTY),0) AS produced FROM knitting_production WHERE TRIM(KNITCARD) = ?");
+    if ($pStmt) {
+      mysqli_stmt_bind_param($pStmt, "s", $kc);
+      mysqli_stmt_execute($pStmt);
+      $pRes = mysqli_stmt_get_result($pStmt);
+      if ($pRes) {
+        $pRow = mysqli_fetch_assoc($pRes);
+        $produced = $pRow ? floatval($pRow['produced']) : 0;
+      }
+      mysqli_stmt_close($pStmt);
+    }
+
+    $data['ORIGINAL_QTY'] = $origQty;
+    $data['PRODUCED_QTY'] = round($produced, 2);
+    $data['REMAINING_QTY'] = round(max($origQty - $produced, 0), 2);
+
+    echo json_encode(['success' => true, 'data' => $data]);
   } else {
     echo json_encode(['success' => false, 'error' => 'No data found for KNITCARD: ' . $KNITCARD]);
   }
@@ -56,6 +78,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
   <title>Knitting | Production</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="js/qrcode.min.js"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -731,6 +755,94 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
     </div>
   </div>
 
+  <!-- Knit Card Print Area -->
+  <style>
+    #knitCardPrintArea { display: none; }
+
+    .kc-card {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      color: #111827;
+      border: 2px solid #111827;
+      border-radius: 10px;
+      padding: 16px 18px;
+      background: #ffffff;
+    }
+    .kc-head {
+      text-align: center;
+      border-bottom: 2px solid #111827;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+    .kc-head h2 { margin: 0; font-size: 20px; letter-spacing: 1.5px; text-transform: uppercase; }
+    .kc-head .kc-sub { font-size: 11.5px; color: #4b5563; margin-top: 3px; }
+
+    .kc-body { display: flex; gap: 14px; align-items: flex-start; }
+    .kc-left {
+      width: 168px; flex-shrink: 0;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 8px;
+      padding-top: 4px;
+    }
+    .kc-qr-box {
+      width: 150px; height: 150px;
+      border: 1px dashed #9ca3af;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    .kc-qr-roll {
+      width: 100%;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      background: #111827;
+      color: #ffffff;
+      border-radius: 6px;
+      padding: 5px 4px;
+    }
+    .kc-fields {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      overflow: hidden;
+      align-content: start;
+    }
+    .kc-field {
+      padding: 5px 10px;
+      font-size: 12px;
+      line-height: 1.45;
+      border-bottom: 1px solid #e5e7eb;
+      border-right: 1px solid #e5e7eb;
+      word-break: break-word;
+      background: #ffffff;
+    }
+    .kc-field:nth-child(2n) { border-right: none; }
+    .kc-field-full { grid-column: 1 / -1; border-right: none; }
+    .kc-label { font-weight: 700; color: #374151; }
+    .kc-value { color: #111827; margin-left: 6px; font-weight: 600; }
+    .kc-field.kc-highlight { background: #eff6ff; }
+    .kc-highlight .kc-value { font-weight: 800; font-size: 13.5px; color: #1d4ed8; }
+
+    @media print {
+      body * { visibility: hidden !important; }
+      #knitCardPrintArea {
+        display: block !important;
+        visibility: visible !important;
+        position: absolute;
+        left: 0; top: 0;
+        width: 100%;
+        background: #ffffff;
+      }
+      #knitCardPrintArea * { visibility: visible !important; }
+      @page { size: A4; margin: 12mm; }
+    }
+  </style>
+  <div id="knitCardPrintArea"></div>
+
   <script>
     (function() {
       "use strict";
@@ -1014,6 +1126,18 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           originalQTY: m(row.QTY)
         };
 
+        const origQty = parseFloat(row.QTY) || 0;
+        const producedQty = parseFloat(row.PRODUCED_QTY) || 0;
+        let remainingQty;
+        if (row.REMAINING_QTY === null || row.REMAINING_QTY === undefined || row.REMAINING_QTY === '') {
+          remainingQty = origQty - producedQty;
+        } else {
+          remainingQty = parseFloat(row.REMAINING_QTY) || 0;
+        }
+        scannedInfo.ORIGINAL_QTY = origQty;
+        scannedInfo.PRODUCED_QTY = producedQty;
+        scannedInfo.REMAINING_QTY = Math.max(remainingQty, 0);
+
         hideActionContent();
 
         const buildFieldRow = (fields, extraClass) => `
@@ -1038,7 +1162,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           <div class="data-row default-row knit-flow">
             ${['KNITCARD', 'BOOKING', 'SONO', 'BUYER', 'STYLE', 'COLOR', 'MCNO',
               'MC_DIA', 'CUSTOMER', 'SHIFT', 'YARN_TYPE', 'YARN_COUNT', 'FABRICS_TYPE', 'FINISH_GSM',
-              'FINISH_DIA', 'OPEN_TUBE', 'SL_VDQ', 'GGSM', 'FEEDER_PLAN', 'LOT_NO', 'QTY'].map(field => `
+              'FINISH_DIA', 'OPEN_TUBE', 'SL_VDQ', 'GGSM', 'FEEDER_PLAN', 'LOT_NO'].map(field => `
               <div class="field-block">
                 <span class="field-label">${FIELD_LABELS[field] || field}</span>
                 <span class="field-value">${scannedInfo[field] || '-'}</span>
@@ -1047,11 +1171,47 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           </div>
         `;
 
+        const remaining = scannedInfo.REMAINING_QTY;
+        const qtyColor = remaining <= 0 ? '#b91c1c' : '#047857';
+
+        html += `
+          <div class="data-row default-row" style="border-left-color:${remaining <= 0 ? '#ef4444' : '#10b981'}; background:${remaining <= 0 ? '#fef2f2' : '#f0fdf4'};">
+            <div class="field-block">
+              <span class="field-label">Original QTY (KG)</span>
+              <span class="field-value">${origQty || '-'}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">Produced QTY (KG)</span>
+              <span class="field-value">${producedQty || 0}</span>
+            </div>
+            <div class="field-block">
+              <span class="field-label">Remaining QTY (KG)</span>
+              <span class="field-value" style="font-weight:800;color:${qtyColor};">${remaining}</span>
+            </div>
+          </div>
+        `;
+
+        if (remaining <= 0) {
+          html += `
+            <div class="data-row" style="background:#fef2f2;border-left-color:#ef4444;">
+              <span class="value" style="color:#b91c1c;font-weight:700;">
+                QTY not available! Remaining qty is 0
+              </span>
+            </div>
+            <button class="rescan-btn" onclick="window.location.reload();">
+              <i class="fas fa-redo"></i> Scan Another QR
+            </button>
+          `;
+          resultContainer.innerHTML = html;
+          hideActionContent();
+          return;
+        }
+
         html += `
           <div class="data-row default-row scale-qty-row">
             <div class="field-block">
               <span class="field-label">Scale QTY</span>
-              <input type="number" id="scaleQtyInput" class="field-input" min="0.01" step="0.01" placeholder="Enter QTY">
+              <input type="number" id="scaleQtyInput" class="field-input" min="0.01" max="${remaining}" step="0.01" placeholder="Max ${remaining}">
             </div>
           </div>
         `;
@@ -1187,6 +1347,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           .catch(err => {
             console.error('Knit Card lookup failed:', err);
             renderUnstructuredData(text, 'Failed to fetch Knit Card data');
+          })
+          .finally(() => {
+            processingRoll = false;
           });
         return;
 
@@ -1263,7 +1426,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
         actionContainer.innerHTML = `
           <div class="action-card">
             <button class="btn-action production" type="button" id="productionBtn">
-              <i class="fas fa-save"></i> Production
+              <i class="fas fa-save"></i> Save Production
             </button>
             <button class="btn-action cancel" type="button" id="cancelProductionBtn">
               <i class="fas fa-times"></i> Cancel
@@ -1296,6 +1459,22 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           if (scaleQtyInput) scaleQtyInput.focus();
           return;
         }
+
+        const remainingQty = scannedInfo ? parseFloat(scannedInfo.REMAINING_QTY) : NaN;
+        if (Number.isFinite(remainingQty)) {
+          if (remainingQty <= 0) {
+            alert('QTY not available! Remaining qty is 0 for this Knit Card.');
+            window.location.reload();
+            return;
+          }
+          if (pqty > remainingQty) {
+            alert('Scale QTY (' + pqty + ') exceeds Remaining QTY (' + remainingQty + ').\nOriginal - Produced = ' + remainingQty);
+            if (scaleQtyInput) scaleQtyInput.focus();
+            return;
+          }
+        }
+
+        window.__kpSavedQty = pqty;
 
         const payload = {
           knitcard: scannedInfo.KNITCARD || "",
@@ -1356,10 +1535,37 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
 
             if (data.success) {
 
-              renderResultMessage(
-                 data.message,
-                "success"
-              );
+              window.__kpSavedRoll = data.roll || "";
+              window.__kpSavedMsg = data.message || "Production saved successfully.";
+
+              const prodBtn = document.getElementById("productionBtn");
+              if (prodBtn) prodBtn.disabled = true;
+
+              if (typeof Swal === "undefined") {
+                renderResultMessage(data.message, "success");
+                return;
+              }
+
+              Swal.fire({
+                icon: "success",
+                title: "Successfully Saved!",
+                text: "Roll No: " + (window.__kpSavedRoll || "-"),
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-print"></i> Print Knit Card',
+                cancelButtonText: "Close",
+                confirmButtonColor: "#1d4ed8",
+                cancelButtonColor: "#6b7280",
+                allowOutsideClick: false,
+                allowEscapeKey: false
+              }).then((result) => {
+                if (result.isConfirmed) {
+                  printKnitCard();
+                } else {
+                  window.location.reload();
+                }
+              }).catch(() => {
+                window.location.reload();
+              });
 
             } else {
 
@@ -1404,6 +1610,89 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
 
         }
 
+      }
+
+      function escHtml(v) {
+        return String(v === null || v === undefined ? '' : v)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+
+      function printKnitCard() {
+        const info = scannedInfo || {};
+        const roll = window.__kpSavedRoll || '';
+        const pqty = window.__kpSavedQty || '';
+        const opId = operatorInfo && operatorInfo.OPERATOR_ID ? operatorInfo.OPERATOR_ID : '';
+        const opName = operatorInfo && operatorInfo.OPERATOR_NAME ? operatorInfo.OPERATOR_NAME : '';
+        const today = new Date().toISOString().slice(0, 10);
+
+        const fields = [
+          ['PO NUMBER', info.BOOKING],
+          ['SONO', info.SONO],
+          ['BUYER', info.BUYER],
+          ['STYLE', info.STYLE],
+          ['COLOR', info.COLOR],
+          ['CUSTOMER', info.CUSTOMER],
+          ['MACHINE NO', info.MCNO],
+          ['MACHINE DIA', info.MC_DIA],
+          ['FABRICS TYPE', info.FABRICS_TYPE],
+          ['YARN TYPE', info.YARN_TYPE],
+          ['YARN COUNT', info.YARN_COUNT],
+          ['FINISH GSM', info.FINISH_GSM],
+          ['FINISH DIA', info.FINISH_DIA],
+          ['OPEN / TUBE', info.OPEN_TUBE],
+          ['GRAY GSM', info.GGSM],
+          ['LOT NO', info.LOT_NO],
+          ['SL / VDQ', info.SL_VDQ],
+          ['FEEDER PLAN', info.FEEDER_PLAN]
+        ];
+
+        const fieldHTML = fields.map(function(f) {
+          return '<div class="kc-field"><span class="kc-label">' + f[0] + ' :</span><span class="kc-value">' + escHtml(f[1] || '-') + '</span></div>';
+        }).join('');
+
+        const area = document.getElementById('knitCardPrintArea');
+
+        area.innerHTML =
+          '<div class="kc-card">' +
+            '<div class="kc-head">' +
+              '<h2>Knit Card</h2>' +
+              '<div class="kc-sub">Date: ' + today + ' &nbsp;|&nbsp; Shift: ' + escHtml(info.SHIFT || '-') + '</div>' +
+            '</div>' +
+            '<div class="kc-body">' +
+              '<div class="kc-left">' +
+                '<div class="kc-qr-box" id="kcQrBox"></div>' +
+                '<div class="kc-qr-roll">ROLL: ' + escHtml(roll) + '</div>' +
+              '</div>' +
+              '<div class="kc-fields">' +
+                '<div class="kc-field kc-highlight"><span class="kc-label">ROLL :</span><span class="kc-value">' + escHtml(roll || '-') + '</span></div>' +
+                '<div class="kc-field kc-highlight"><span class="kc-label">PRODUCTION QTY :</span><span class="kc-value">' + escHtml(pqty || '-') + ' KG</span></div>' +
+                fieldHTML +
+                '<div class="kc-field"><span class="kc-label">KNIT MATERIAL CODE :</span><span class="kc-value">' + escHtml(info.KNIT_MATERIAL_CODE || '-') + '</span></div>' +
+                '<div class="kc-field"><span class="kc-label">OPERATOR :</span><span class="kc-value">' + escHtml(((opId ? opId : '') + (opName ? ' - ' + opName : '')) || '-') + '</span></div>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+
+        const qrBox = document.getElementById('kcQrBox');
+        qrBox.innerHTML = '';
+
+        if (roll && typeof QRCode !== 'undefined') {
+          new QRCode(qrBox, {
+            text: String(roll),
+            width: 140,
+            height: 140,
+            colorDark: '#000000',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.L
+          });
+        } else {
+          qrBox.textContent = roll || 'No Roll';
+        }
+
+        setTimeout(function() {
+          window.print();
+          window.location.reload();
+        }, 500);
       }
 
       function startScanner() {

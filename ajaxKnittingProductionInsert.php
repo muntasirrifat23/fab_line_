@@ -34,6 +34,7 @@ function val($name){
 }
 
 $lot_no = val("lot_no");
+$knitcard = val("knitcard");
 
 $booking      = val("booking");
 $sono         = val("sono");
@@ -70,6 +71,52 @@ $roll = intval($rollRow['max_roll']) + 1;
 
 if ($roll < 3000000001) {
     $roll = 3000000001;
+}
+
+//========================
+// QTY AVAILABILITY CHECK (remaining = card QTY - produced)
+//========================
+
+if ($knitcard !== '') {
+
+    $cardStmt = mysqli_prepare($db, "SELECT IFNULL(QTY,0) AS q FROM knit_card WHERE TRIM(KNITCARD) = ? LIMIT 1");
+    mysqli_stmt_bind_param($cardStmt, "s", $knitcard);
+    mysqli_stmt_execute($cardStmt);
+    $cardRes = mysqli_stmt_get_result($cardStmt);
+    $cardRow = mysqli_fetch_assoc($cardRes);
+    mysqli_stmt_close($cardStmt);
+
+    if ($cardRow) {
+
+        $origQty = floatval($cardRow['q']);
+
+        $prodStmt = mysqli_prepare($db, "SELECT COALESCE(SUM(PQTY),0) AS produced FROM knitting_production WHERE TRIM(KNITCARD) = ?");
+        mysqli_stmt_bind_param($prodStmt, "s", $knitcard);
+        mysqli_stmt_execute($prodStmt);
+        $prodRes = mysqli_stmt_get_result($prodStmt);
+        $prodRow = mysqli_fetch_assoc($prodRes);
+        mysqli_stmt_close($prodStmt);
+
+        $remaining = $origQty - floatval($prodRow['produced']);
+
+        if ($remaining <= 0) {
+            echo json_encode([
+                "success" => false,
+                "message" => "QTY not available! Remaining qty is 0 for this Knit Card.",
+                "qty_not_available" => true
+            ]);
+            exit;
+        }
+
+        if ($pqty > $remaining) {
+            echo json_encode([
+                "success" => false,
+                "message" => "Scale QTY (" . $pqty . ") exceeds remaining QTY (" . $remaining . ").",
+                "exceeds_remaining" => true
+            ]);
+            exit;
+        }
+    }
 }
 
 date_default_timezone_set('Asia/Dhaka');
@@ -119,6 +166,7 @@ mysqli_stmt_close($stmt);
 (
 BUDAT,
 ROLL,
+KNITCARD,
 PO_NUMBER,
 PQTY,
 SONO,
@@ -171,8 +219,8 @@ VALUES
 ?,
 ?,
 ?,
-?
-)";
+?,
+?)";
 
 $stmt = mysqli_prepare($db,$sql);
 if(!$stmt){
@@ -185,10 +233,11 @@ if(!$stmt){
 
 mysqli_stmt_bind_param(
     $stmt,
-    "ssssssssssssssssssssssssss",
+    "sssssssssssssssssssssssssss",
 
     $budat,
     $roll,
+    $knitcard,
     $booking,
     $pqty,
     $sono,
