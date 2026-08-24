@@ -26,14 +26,14 @@ if (!isset($_SESSION['username'])) {
 $program_id = isset($_GET['program_id']) ? intval($_GET['program_id']) : (isset($_POST['program_id']) ? intval($_POST['program_id']) : 0);
 
 if ($program_id <= 0) {
-    header("Location: knitting_program_list.php?error=Invalid+program+ID");
+    header("Location: knit_card.php?error=Invalid+program+ID");
     exit();
 }
 
 // 1. Read selected Knitting Program using KPTID (Rule 2)
 $stmt = $db->prepare("SELECT * FROM knitting_program WHERE KPTID = ?");
 if (!$stmt) {
-    header("Location: knitting_program_list.php?error=" . urlencode("Database error: " . $db->error));
+    header("Location: knit_card.php?error=" . urlencode("Database error: " . $db->error));
     exit();
 }
 $stmt->bind_param("i", $program_id);
@@ -41,7 +41,7 @@ $stmt->execute();
 $res = $stmt->get_result();
 
 if (!$res || $res->num_rows == 0) {
-    header("Location: knitting_program_list.php?error=Knitting+Program+not+found");
+    header("Location: knit_card.php?error=Knitting+Program+not+found");
     exit();
 }
 
@@ -951,8 +951,8 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             </div>
             <div class="top-bar-right">
                 <span class="pill-badge">Knitting Program: <?php echo htmlspecialchars($p_sub_tid ?: 'N/A'); ?></span>
-                <a href="knitting_program_list.php" class="btn-back">
-                    <i class="fa-solid fa-arrow-left"></i> Back to Programs
+                <a href="knit_card.php" class="btn-back">
+                    <i class="fa-solid fa-arrow-left"></i> Back to Knit Card
                 </a>
             </div>
         </div>
@@ -1206,7 +1206,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
 
             <!-- Bottom Action Bar -->
             <div class="bottom-actions">
-                <a href="knitting_program_list.php" class="btn btn-cancel">
+                <a href="knit_card.php" class="btn btn-cancel">
                     <i class="fa-solid fa-xmark"></i> Cancel
                 </a>
                 <button type="submit" class="btn btn-submit" <?php echo ($remaining_qty <= 0) ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''; ?>>

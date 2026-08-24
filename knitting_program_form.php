@@ -91,7 +91,7 @@ if ($is_edit) {
             $lot_no = $row['LOT'] ?? '';
             $knit_material_code = $row['KNIT_MATERIAL_CODE'] ?? '';
         } else {
-            header("Location: knitting_program_list.php?error=Program+not+found");
+            header("Location: knit_card.php?error=Program+not+found");
             exit();
         }
     }
@@ -160,7 +160,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                     $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code, $uname, $edit_id
                 );
                 if ($stmt->execute()) {
-                    header("Location: knitting_program_list.php?msg=Program+updated+successfully");
+                    header("Location: knit_card.php?msg=Program+updated+successfully");
                     exit();
                 } else {
                     $errors[] = "Database update error: " . $db->error;
@@ -183,7 +183,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                     $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code, $uname
                 );
                 if ($stmt->execute()) {
-                    header("Location: knitting_program_list.php?msg=New+program+added+successfully");
+                    header("Location: knit_card.php?msg=New+program+added+successfully");
                     exit();
                 } else {
                     $errors[] = "Database insertion error: " . $db->error;
@@ -530,8 +530,8 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                 </div>
                 <!-- Right: action buttons -->
                 <div>
-                    <a href="knitting_program_list.php" class="btn nav-btn btn-glass">
-                        <i class="fa-solid fa-arrow-left"></i> Back to Program List
+                    <a href="knit_card.php" class="btn nav-btn btn-glass">
+                        <i class="fa-solid fa-arrow-left"></i> Back to Knit Card
                     </a>
                 </div>
             </div>
@@ -725,7 +725,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
 
             <!-- Actions Panel -->
             <div class="actions-panel d-flex justify-content-end align-items-center gap-3">
-                <a href="knitting_program_list.php" class="btn btn-cancel">
+                <a href="knit_card.php" class="btn btn-cancel">
                     <i class="fa-solid fa-xmark me-1"></i> Cancel
                 </a>
                 <button type="submit" class="btn btn-teal">

@@ -350,7 +350,7 @@ if ($result && $result->num_rows > 0) {
                 </div>
                 <!-- Right: nav buttons -->
                 <div class="d-flex gap-2 flex-wrap align-items-center">
-                    <a href="knitting_program_list.php" class="btn nav-btn btn-blue-solid">
+                    <a href="knit_card.php" class="btn nav-btn btn-blue-solid">
                         <i class="fa-solid fa-arrow-left"></i> Back to Knit Card
                     </a>
                     <a href="initialPage.php" class="btn nav-btn btn-glass">
