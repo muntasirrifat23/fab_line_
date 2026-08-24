@@ -4,20 +4,21 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
   header('Content-Type: application/json');
   header('X-Content-Type-Options: nosniff');
 
-  $roll = isset($_GET['roll']) ? trim($_GET['roll']) : '';
-  if ($roll === '') {
-    echo json_encode(['success' => false, 'error' => 'ROLL is required']);
+  $KNITCARD = isset($_GET['knitcard']) ? trim($_GET['knitcard']) :
+    (isset($_GET['roll']) ? trim($_GET['roll']) : '');
+  if ($KNITCARD === '') {
+    echo json_encode(['success' => false, 'error' => 'KNITCARD is required']);
     exit();
   }
 
-  $s = mysqli_real_escape_string($db, $roll);
-  $q = "SELECT * FROM knit_card WHERE ROLL = '$s' LIMIT 1";
+  $s = mysqli_real_escape_string($db, $KNITCARD);
+  $q = "SELECT * FROM knit_card WHERE KNITCARD = '$s' LIMIT 1";
   $res = mysqli_query($db, $q);
 
   if ($res && mysqli_num_rows($res) > 0) {
     echo json_encode(['success' => true, 'data' => mysqli_fetch_assoc($res)]);
   } else {
-    echo json_encode(['success' => false, 'error' => 'No data found for ROLL: ' . $roll]);
+    echo json_encode(['success' => false, 'error' => 'No data found for KNITCARD: ' . $KNITCARD]);
   }
   exit();
 }
@@ -741,13 +742,13 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
       const cameraControls = document.getElementById('cameraControls');
 
       const QR_FIELDS = [
-        'SUB_TID', 'BOOKING', 'SONO', 'BUYER', 'MCNO', 'MC_DIA', 'STYLE',
+        'KNITCARD', 'BOOKING', 'SONO', 'BUYER', 'MCNO', 'MC_DIA', 'STYLE',
         'YARN_TYPE', 'YARN_COUNT', 'FABRICS_TYPE', 'FINISH_GSM', 'FINISH_DIA',
         'OPEN_TUBE', 'COLOR', 'QTY', 'SL_VDQ', 'LOT_NO'
       ];
 
       const FIELD_LABELS = {
-        'SUB_TID': 'ROLL NO',
+        'KNITCARD': 'Knit Card No',
         'BOOKING': 'PO NUMBER',
         'SONO': 'SONO',
         'BUYER': 'Buyer',
@@ -790,7 +791,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
         value: 'Scan/ Enter Knitting Operator ID'
       }, {
         label: 'Step 2',
-        value: 'Scan/ Enter Production Roll QR'
+        value: 'Scan/ Enter Production Knit Card QR'
       }];
 
       function renderDefaultData() {
@@ -843,19 +844,19 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
         console.log('âœ“ Parsed parts count:', parts.length, 'Parts:', parts);
 
         const format16WithCustomer = [
-          'SUB_TID', 'MCNO', 'BUYER', 'CUSTOMER', 'BOOKING', 'SONO', 'STYLE',
+          'KNITCARD', 'MCNO', 'BUYER', 'CUSTOMER', 'BOOKING', 'SONO', 'STYLE',
           'FABRICS_TYPE', 'YARN_COUNT', 'YARN_TYPE', 'FINISH_GSM', 'FINISH_DIA',
           'OPEN_TUBE', 'LOT_NO', 'QTY', 'COLOR'
         ];
 
         const format16WithoutCustomer = [
-          'SUB_TID', 'MCNO', 'BUYER', 'BOOKING', 'SONO', 'STYLE',
+          'KNITCARD', 'MCNO', 'BUYER', 'BOOKING', 'SONO', 'STYLE',
           'FABRICS_TYPE', 'YARN_COUNT', 'YARN_TYPE', 'FINISH_GSM', 'FINISH_DIA',
           'OPEN_TUBE', 'LOT_NO', 'QTY', 'COLOR'
         ];
 
         const format17 = [
-          'SUB_TID', 'BOOKING', 'SONO', 'BUYER', 'MCNO', 'MC_DIA', 'STYLE',
+          'KNITCARD', 'BOOKING', 'SONO', 'BUYER', 'MCNO', 'MC_DIA', 'STYLE',
           'YARN_TYPE', 'YARN_COUNT', 'FABRICS_TYPE', 'FINISH_GSM', 'FINISH_DIA',
           'OPEN_TUBE', 'COLOR', 'QTY', 'SL_VDQ', 'LOT_NO'
         ];
@@ -981,7 +982,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
         const m = (v) => (v === null || v === undefined) ? '' : String(v);
 
         scannedInfo = {
-          SUB_TID: m(row.ROLL),
+          KNITCARD: m(row.KNITCARD),
           BOOKING: m(row.PO_NUMBER),
           SONO: m(row.SONO),
           BUYER: m(row.BUYER),
@@ -1028,14 +1029,14 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
 
         let html = `
           <div class="data-row header-row" style="border-left-color:#4fc3f7;">
-            <span class="label">Scanned Data (Roll Scanned) <span class="scanned-badge">ROLL NO</span></span>
+            <span class="label">Scanned Data (Knit Card Scanned) <span class="scanned-badge">KNITCARD</span></span>
             <span class="value">${new Date().toLocaleTimeString()}</span>
           </div>
         `;
 
         html += `
           <div class="data-row default-row knit-flow">
-            ${['ROLL', 'BOOKING', 'SONO', 'BUYER', 'STYLE', 'COLOR', 'MCNO',
+            ${['KNITCARD', 'BOOKING', 'SONO', 'BUYER', 'STYLE', 'COLOR', 'MCNO',
               'MC_DIA', 'CUSTOMER', 'SHIFT', 'YARN_TYPE', 'YARN_COUNT', 'FABRICS_TYPE', 'FINISH_GSM',
               'FINISH_DIA', 'OPEN_TUBE', 'SL_VDQ', 'GGSM', 'FEEDER_PLAN', 'LOT_NO', 'QTY'].map(field => `
               <div class="field-block">
@@ -1043,16 +1044,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
                 <span class="field-value">${scannedInfo[field] || '-'}</span>
               </div>
             `).join('')}
-            <div class="knit-pair">
-              <div class="field-block">
-                <span class="field-label">${FIELD_LABELS.KNIT_MATERIAL_CODE}</span>
-                <span class="field-value">${scannedInfo.KNIT_MATERIAL_CODE || '-'}</span>
-              </div>
-              <div class="field-block">
-                <span class="field-label">${FIELD_LABELS.KNIT_M_DESCRIPTION}</span>
-                <span class="field-value">${scannedInfo.KNIT_M_DESCRIPTION || '-'}</span>
-              </div>
-            </div>
           </div>
         `;
 
@@ -1098,7 +1089,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
       function renderOperatorVerified() {
         resultContainer.innerHTML = `
           <div class="manual-entry">
-            <input type="text" id="manualRollInput" placeholder="Roll No (e.g. 1234)" autocomplete="off">
+            <input type="text" id="manualRollInput" placeholder="Knit Card QR / Card No" autocomplete="off">
             <button type="button" id="manualRollBtn">Load Data</button>
           </div>
           <div class="data-row header-row" style="border-left-color:#10b981;">
@@ -1110,7 +1101,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
             <div class="field-block"><span class="field-label">Operator Name</span><span class="field-value">${operatorInfo.OPERATOR_NAME || '-'}</span></div>
           </div>
           <div class="data-row" style="border-left-color:#f59e0b; background:#fffbeb; margin-top:8px;">
-            <span class="value" style="color:#92400e; font-weight:600;">Now Scan/ Enter the Production Roll QR</span>
+            <span class="value" style="color:#92400e; font-weight:600;">Now Scan/ Enter the Knit Card QR</span>
           </div>
         `;
         hideActionContent();
@@ -1132,7 +1123,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
         const inp = document.getElementById('manualRollInput');
         const val = inp ? String(inp.value).trim() : '';
         if (!val) {
-          alert('Please enter Roll No!');
+          alert('Please scan or enter Knit Card QR!');
           return;
         }
         processingRoll = true;
@@ -1166,25 +1157,34 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
         }
 
         const text = String(qrText).trim();
-        const isBareRoll = /^\d+$/.test(text) || /^ROLL:\s*\d+$/i.test(text);
+        fetch('knitting_production.php?action=get_roll&knitcard=' + encodeURIComponent(text))
+          .then(r => r.json())
+          .then(res => {
+            if (res && res.success) {
+              renderRollData(res.data, text);
+              return;
+            }
 
-        if (isBareRoll) {
-          const roll = text.replace(/^ROLL:\s*/i, '').trim();
-          fetch('knitting_production.php?action=get_roll&roll=' + encodeURIComponent(roll))
-            .then(r => r.json())
-            .then(res => {
-              if (res && res.success) {
-                renderRollData(res.data, text);
-              } else {
-                renderUnstructuredData(text, (res && res.error) || 'No data found for ROLL: ' + roll);
-              }
-            })
-            .catch(err => {
-              console.error('ROLL lookup failed:', err);
-              renderUnstructuredData(text, 'Failed to fetch ROLL data');
-            });
-          return;
-        }
+            // Keep support for older pipe-delimited Knit Card QR payloads.
+            if (!scannedInfo || scannedInfo.raw !== text) {
+              scannedInfo = parseQrText(text);
+            }
+            if (!scannedInfo.parsed) {
+              renderUnstructuredData(text, (res && res.error) || 'No Knit Card data found');
+              return;
+            }
+            renderScannedDataFromParsedQr(text);
+          })
+          .catch(err => {
+            console.error('Knit Card lookup failed:', err);
+            renderUnstructuredData(text, 'Failed to fetch Knit Card data');
+          });
+        return;
+
+      }
+
+      function renderScannedDataFromParsedQr(qrText) {
+        const text = String(qrText || '').trim();
 
         if (!scannedInfo || scannedInfo.raw !== text) {
           scannedInfo = parseQrText(text);
@@ -1225,12 +1225,12 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
 
         let html = `
           <div class="data-row header-row" style="border-left-color:#4fc3f7;">
-            <span class="label">Scanned Data (Roll Scanned) <span class="scanned-badge">ROLL NO</span></span>
+            <span class="label">Scanned Data (Knit Card Scanned) <span class="scanned-badge">KNITCARD</span></span>
             <span class="value">${new Date().toLocaleTimeString()}</span>
           </div>
         `;
 
-        html += buildFieldRow(['SUB_TID', 'BOOKING', 'SONO', 'MCNO', 'MC_DIA', 'BUYER', 'STYLE']);
+        html += buildFieldRow(['KNITCARD', 'BOOKING', 'SONO', 'MCNO', 'MC_DIA', 'BUYER', 'STYLE']);
         html += buildFieldRow(['YARN_TYPE', 'YARN_COUNT', 'FABRICS_TYPE', 'FINISH_GSM', 'FINISH_DIA', 'OPEN_TUBE', 'COLOR']);
         html += buildFieldRow(['SL_VDQ', 'LOT_NO', 'QTY']);
         html += buildOperatorInfoHtml();
@@ -1282,7 +1282,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
         let pqty = parseFloat(scannedInfo.originalQTY || scannedInfo.QTY || 0);
 
         const payload = {
-          sub_tid: scannedInfo.SUB_TID || "",
+          knitcard: scannedInfo.KNITCARD || "",
           booking: scannedInfo.BOOKING || "",
           sono: scannedInfo.SONO || "",
           buyer: scannedInfo.BUYER || "",
