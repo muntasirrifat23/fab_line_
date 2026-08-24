@@ -5,9 +5,7 @@ ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
 header('Content-Type: application/json; charset=utf-8');
-
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-
 session_start();
 
 require_once "config.php";
@@ -21,9 +19,7 @@ if (!$db) {
 }
 
 mysqli_set_charset($db, "utf8");
-
 $raw=file_get_contents("php://input");
-
 $data=json_decode($raw,true);
 
 if(!is_array($data)){
@@ -36,24 +32,8 @@ function val($name){
     global $data;
     return trim($data[$name] ?? "");
 }
-//========================
-// GET DATA
-//========================
 
-$roll = val("sub_tid");      // QR Roll No
 $lot_no = val("lot_no");
-
-if ($roll == "") {
-    $roll = $lot_no;
-}
-
-if ($roll == "") {
-    echo json_encode([
-        "success" => false,
-        "message" => "Roll No not found."
-    ]);
-    exit;
-}
 
 $booking      = val("booking");
 $sono         = val("sono");
@@ -74,7 +54,6 @@ $gray_gsm     = val("gray_gsm");
 $feeder_plan  = val("feeder_plan");
 $knit_material_code = val("knit_material_code");
 $knit_m_des   = val("knit_m_desc") ? val("knit_m_desc") : val("knit_m_description");
-
 $pqty         = val("pqty");
 
 if ($pqty <= 0) {
@@ -85,9 +64,14 @@ if ($pqty <= 0) {
     exit;
 }
 
-//========================
-// LOGGED-IN USER & SHIFT
-//========================
+$rollRes = mysqli_query($db, "SELECT COALESCE(MAX(CAST(ROLL AS UNSIGNED)), 3000000000) AS max_roll FROM knitting_production");
+$rollRow = mysqli_fetch_assoc($rollRes);
+$roll = intval($rollRow['max_roll']) + 1;
+
+if ($roll < 3000000001) {
+    $roll = 3000000001;
+}
+
 date_default_timezone_set('Asia/Dhaka');
 
 $uid   = val("uid");
@@ -110,24 +94,15 @@ if ($bdHour >= 6 && $bdHour < 14) {
     $shift = 'C';
 }
 
-$budat = date('Y-m-d');      // only date
-
-//========================
-// DUPLICATE CHECK
-//========================
-
+$budat = date('Y-m-d');
 $sql = "SELECT PID FROM knitting_production WHERE ROLL=?";
-
 $stmt = mysqli_prepare($db, $sql);
 
 mysqli_stmt_bind_param($stmt, "s", $roll);
-
 mysqli_stmt_execute($stmt);
-
 $result = mysqli_stmt_get_result($stmt);
 
 if (mysqli_num_rows($result) > 0) {
-
     mysqli_stmt_close($stmt);
 
     echo json_encode([
@@ -135,12 +110,10 @@ if (mysqli_num_rows($result) > 0) {
         "message" => "Already production done. Scan another roll.",
         "duplicate" => true
     ]);
-
     exit;
 }
 
 mysqli_stmt_close($stmt);
-
 
  $sql = "INSERT INTO knitting_production
 (
@@ -202,14 +175,11 @@ VALUES
 )";
 
 $stmt = mysqli_prepare($db,$sql);
-
 if(!$stmt){
-
     echo json_encode([
         "success"=>false,
         "message"=>mysqli_error($db)
     ]);
-
     exit;
 }
 
@@ -246,22 +216,15 @@ mysqli_stmt_bind_param(
 );
 
 if(!mysqli_stmt_execute($stmt)){
-
     echo json_encode([
         "success"=>false,
         "message"=>"Insert Failed : ".mysqli_stmt_error($stmt)
     ]);
-
     mysqli_stmt_close($stmt);
-
     exit;
 }
-//========================
-// SUCCESS
-//========================
 
 $newPID = mysqli_insert_id($db);
-
 mysqli_stmt_close($stmt);
 ob_clean();
 
