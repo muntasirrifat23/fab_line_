@@ -82,6 +82,7 @@ $query = "SELECT
     SONO,
     STYLE,
     COLOR,
+    CUSTOMER,
     YARN_TYPE, 
     FABRICS_TYPE, 
     FINISH_GSM, 
