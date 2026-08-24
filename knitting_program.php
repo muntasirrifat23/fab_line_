@@ -240,20 +240,6 @@
             }
         }
 
-        /* yarn & fabric grid — same responsive */
-        .yarn-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1rem 1.8rem;
-        }
-
-        @media (max-width: 576px) {
-            .yarn-grid {
-                grid-template-columns: 1fr 1fr;
-                gap: 0.8rem;
-            }
-        }
-
         .form-group {
             display: flex;
             flex-direction: column;
@@ -288,6 +274,10 @@
         .form-group input[readonly] {
             background: #f1f5f9;
             color: #1e293b;
+        }
+
+        #lot_no {
+            background: #f8fbff;
         }
 
         /* machine table & target */
@@ -620,7 +610,7 @@
 
             <div class="alert-box" id="alertBox"></div>
 
-            <div class="card-title"><i class="fa-regular fa-file-lines"></i> Knitting Program</div>
+            <div class="card-title"><i class="fa-regular fa-file-lines"></i> Knitting Program (Default Data)</div>
 
             <form id="knittingForm">
 
@@ -631,37 +621,33 @@
                         <div class="info-item"><label>Buyer</label><span id="display_buyer">-</span><input type="hidden" id="buyer"></div>
                         <div class="info-item"><label>STYLE</label><span id="display_style">-</span><input type="hidden" id="style"></div>
                         <div class="info-item"><label>CUSTOMER</label><span id="display_customer">-</span><input type="hidden" id="customer"></div>
+                        <div class="info-item"><label>Yarn Type</label><span id="display_yarn_type">-</span><input type="hidden" id="yarn_type"></div>
                         <div class="info-item"><label>COLOR</label><select id="color"></select></div>
                         <div class="info-item"><label>Finish GSM</label><select id="finish_gsm"></select></div>
                         <div class="info-item"><label>Finish DIA</label><input type="text" id="finish_dia" placeholder="Finish DIA"></div>
                         <div class="info-item"><label>Open / Tube</label><input type="text" id="open_tube" placeholder="Open / Tube"></div>
                         <div class="info-item"><label>Fabrics Type</label><input type="text" id="fabrics_type" placeholder="Fabrics Type"></div>
-                        <div class="info-item"><label>Yarn Type</label><span id="display_yarn_type">-</span><input type="hidden" id="yarn_type"></div>
-                        <div class="info-item"><label>Knit Material Code</label><span id="display_knit_material_code">-</span><input type="hidden" id="knit_material_code"></div>
+                        <!-- <div class="info-item"><label>Knit Material Code</label><span id="display_knit_material_code">-</span><input type="hidden" id="knit_material_code"></div> -->
                     </div>
-                    <div class="info-item"><label>Knit M Description</label><span id="display_knit_m_description">-</span><input type="hidden" id="knit_m_description"></div>
-
+                    <!-- <div class="info-item"><label>Knit M Description</label><span id="display_knit_m_description">-</span><input type="hidden" id="knit_m_description"></div> -->
                 </div>
 
-
-                <!-- YARN & FABRIC (3 cols → 2 on small) -->
                 <div id="detailsContainer">
                     <div class="card-title" style="margin-top:1.8rem; border-top:2px solid #eef2f6; padding-top:1.2rem;"><i class="fa-solid fa-scissors"></i> Enter Fabric Details</div>
-                    <div class="yarn-grid">
-                        <input type="hidden" id="customer">
-                        <div class="form-group"><label>Yarn Count</label><input type="text" id="yarn_count" placeholder="Enter Yarn Count"></div>
-                        <div class="form-group"><label>SL/VQ</label><input type="text" id="sl_vdq" placeholder="Enter SL/VQ"></div>
-                        <div class="form-group"><label>MC DIA</label><input type="text" id="mc_dia" placeholder="Enter MC DIA"></div>
-                        <div class="form-group"><label>Gray GSM</label><input type="text" id="gray_gsm" list="grayGsmOptions" placeholder="Enter Gray GSM"><datalist id="grayGsmOptions"></datalist></div>
-                        <div class="form-group"><label>Feeder Plan</label><input type="text" id="feeder_plan" placeholder="Enter Feeder Plan"></div>
-                        <div class="form-group"><label>Lot No</label><input type="text" id="lot_no" placeholder="Enter Lot No"></div>
+                    <div class="info-grid-6" id="infoGrid">
+                        <div class="info-item"><label>Lot No</label><input type="text" id="lot_no" placeholder="Enter Lot No"></div>
+                        <div class="info-item"><label>Yarn Count</label><input type="text" id="yarn_count" placeholder="Enter Yarn Count"></div>
+                        <div class="info-item"><label>SL/VQ</label><input type="text" id="sl_vdq" placeholder="Enter SL/VQ"></div>
+                        <div class="info-item"><label>MC DIA</label><input type="text" id="mc_dia" placeholder="Enter MC DIA"></div>
+                        <div class="info-item"><label>Gray GSM</label><input type="text" id="gray_gsm" list="grayGsmOptions" placeholder="Enter Gray GSM"><datalist id="grayGsmOptions"></datalist></div>
+                        <div class="info-item"><label>Feeder Plan</label><input type="text" id="feeder_plan" placeholder="Enter Feeder Plan"></div>
                     </div>
                 </div>
 
                 <!-- MACHINE NO & QTY -->
-                <div class="card-title" style="margin-top:2rem; border-top:2px solid #eef2f6; padding-top:1.2rem;"><i class="fa-solid fa-list-check"></i> Machine No. &amp; Quantity</div>
+                <!-- <div class="card-title" style="margin-top:2rem; border-top:2px solid #eef2f6; padding-top:1.2rem;"><i class="fa-solid fa-list-check"></i> Enter Quantity</div> -->
 
-                <div class="target-qty-box">
+                <div class="target-qty-box" style="margin-top:2rem;">
                     <label>Total Knitting Target QTY :</label>
                     <span class="qty-value" id="display_target_qty">0.00</span>
                 </div>
