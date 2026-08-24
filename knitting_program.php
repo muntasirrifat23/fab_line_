@@ -627,9 +627,9 @@
                         <div class="info-item"><label>Finish DIA</label><input type="text" id="finish_dia" placeholder="Finish DIA"></div>
                         <div class="info-item"><label>Open / Tube</label><input type="text" id="open_tube" placeholder="Open / Tube"></div>
                         <div class="info-item"><label>Fabrics Type</label><input type="text" id="fabrics_type" placeholder="Fabrics Type"></div>
-                        <!-- <div class="info-item"><label>Knit Material Code</label><span id="display_knit_material_code">-</span><input type="hidden" id="knit_material_code"></div> -->
+                        <input type="hidden" id="knit_material_code">
                     </div>
-                    <!-- <div class="info-item"><label>Knit M Description</label><span id="display_knit_m_description">-</span><input type="hidden" id="knit_m_description"></div> -->
+                    <input type="hidden" id="knit_m_description">
                 </div>
 
                 <div id="detailsContainer">
