@@ -8,7 +8,7 @@ $booking = isset($_GET['booking']) ? trim($_GET['booking']) : '';
 $conditions = [];
 if ($booking !== '') {
     $b = mysqli_real_escape_string($db, $booking);
-    $conditions[] = "(PO_NUMBER LIKE '%$b%' OR SONO LIKE '%$b%')";
+    $conditions[] = "(PROGRAM_NO LIKE '%$b%' OR PO_NUMBER LIKE '%$b%')";
 }
  
 $where = '';
