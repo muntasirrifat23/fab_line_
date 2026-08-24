@@ -15,7 +15,7 @@ $booking_filter  = isset($_GET['booking_no']) ? trim($_GET['booking_no']) : '';
 $shift_filter    = isset($_GET['shift'])      ? trim($_GET['shift'])      : '';
 
 // Build query using real KPTID column; LEFT JOIN knit_card on KPTID
-    $query = "SELECT kp.KPTID, kp.SUB_TID, kp.PO_NUMBER, kp.CREATED_DATE,
+    $query = "SELECT kp.KPTID, kp.PROGRAM_NO, kp.PO_NUMBER, kp.CREATED_DATE,
                      kp.SHIFT, kp.BUYER, kp.STYLE, kp.COLOR,
                      kp.CUSTOMER, kp.SL, kp.FGSM, kp.FDIA, kp.O_T,
                      kp.FTYPE, kp.YTYPE, kp.YCOUNT,
@@ -680,9 +680,9 @@ function kc_page_url($p) {
                             <?php foreach ($rows_array as $row):
                                 $p_id          = intval($row['KPTID'] ?? 0);
                                 $p_date        = !empty($row['CREATED_DATE']) ? date('Y-m-d', strtotime($row['CREATED_DATE'])) : '';
-                                $p_sub_tid     = $row['SUB_TID']     ?? '';
+                                $p_program_no  = $row['PROGRAM_NO']  ?? '';
                                 $p_po          = $row['PO_NUMBER']   ?? '';
-                                $p_qty       = $row['QTY']       ?? '';
+                                $p_qty         = $row['QTY']         ?? '';
                                 $p_shift       = $row['SHIFT']       ?? '';
                                 $p_buyer       = $row['BUYER']       ?? '';
                                 $p_style       = $row['STYLE']       ?? '';
@@ -705,7 +705,7 @@ function kc_page_url($p) {
                                         <i class="fa-regular fa-calendar me-1 text-muted"></i>
                                         <?php echo htmlspecialchars($p_date); ?>
                                     </td>
-                                    <td class="text-nowrap"><strong><?php echo htmlspecialchars($p_sub_tid); ?></strong></td>
+                                    <td class="text-nowrap"><strong><?php echo htmlspecialchars($p_program_no); ?></strong></td>
                                     <td class="text-nowrap"><strong><?php echo htmlspecialchars($p_po); ?></strong></td>
                                     <td class="text-nowrap"><strong><?php echo htmlspecialchars($p_qty); ?></strong></td>
                                     <td class="text-nowrap"><strong><?php echo htmlspecialchars($p_shift); ?></strong></td>

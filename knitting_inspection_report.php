@@ -506,8 +506,11 @@
             });
         }
 
+        var isSearching = false;
+
         function searchBooking() {
             var search = $('#bookingInput').val().trim();
+            isSearching = (search !== '');
             $('#searchBtn').prop('disabled', true).html('Searching...');
             $.ajax({
                     url: 'ajaxKnittingInspection_Report.php',
@@ -530,22 +533,28 @@
                 });
         }
 
-        function loadAll() {
-            $('#tableBody').html('<tr><td colspan="51" class="loading-cell">Loading data...</td></tr>');
+        function loadAll(silent) {
+            if (!silent) {
+                $('#tableBody').html('<tr><td colspan="51" class="loading-cell">Loading data...</td></tr>');
+            }
+            var search = $('#bookingInput').val().trim();
             $.ajax({
                     url: 'ajaxKnittingInspection_Report.php',
+                    data: search !== '' ? { search: search } : {},
                     dataType: 'json',
                     method: 'GET'
                 })
                 .done(function(resp) {
                     if (resp && resp.success) {
                         renderTableRows(resp.data);
-                    } else {
+                    } else if (!silent) {
                         $('#tableBody').html('<tr class="empty-row"><td colspan="51">No data returned</td></tr>');
                     }
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr class="empty-row"><td colspan="51" style="color:#dc2626;">Error loading data</td></tr>');
+                    if (!silent) {
+                        $('#tableBody').html('<tr class="empty-row"><td colspan="51" style="color:#dc2626;">Error loading data</td></tr>');
+                    }
                 });
         }
 
@@ -556,13 +565,19 @@
             $('#searchBtn').on('click', searchBooking);
             $('#clearBtn').on('click', function() {
                 $('#bookingInput').val('');
-                loadAll();
+                isSearching = false;
+                loadAll(false);
             });
             $('#bookingInput').on('keypress', function(e) {
                 if (e.which === 13) searchBooking();
             });
 
-            loadAll();
+            loadAll(false);
+
+            // Real-time polling every 5 seconds
+            setInterval(function() {
+                loadAll(true);
+            }, 5000);
         });
     </script>
 

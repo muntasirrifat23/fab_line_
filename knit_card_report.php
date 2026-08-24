@@ -349,9 +349,12 @@ if ($result && $result->num_rows > 0) {
                     </div>
                 </div>
                 <!-- Right: nav buttons -->
-                <div class="d-flex gap-2">
+                <div class="d-flex gap-2 flex-wrap align-items-center">
+                    <a href="knit_card.php" class="btn nav-btn btn-blue-solid">
+                        <i class="fa-solid fa-arrow-left"></i> Back to Knit Card
+                    </a>
                     <a href="initialPage.php" class="btn nav-btn btn-glass">
-                        <i class="fa-solid fa-house"></i> Back to Dashboard
+                        <i class="fa-solid fa-house"></i> Dashboard
                     </a>
                 </div>
             </div>

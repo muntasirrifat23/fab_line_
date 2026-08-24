@@ -208,39 +208,32 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                     throw new Exception("Total required quantity (" . number_format($total_user_req_qty, 2) . " KG) exceeds the remaining program quantity (" . number_format($remaining_qty_locked, 2) . " KG).");
                 }
 
-                // Generate next MCARD and ROLL numbers (same-to-same with knit_card structure)
-                $next_mcard = 200000001;
-                $res_mc = $db->query("SELECT MAX(MCARD) AS mx FROM knit_card");
+                // Generate next KNITCARD and ROLL numbers (same-to-same with knit_card structure)
+                $next_knitcard = 200000001;
+                $res_mc = $db->query("SELECT MAX(KNITCARD) AS mx FROM knit_card");
                 if ($res_mc && ($r_mc = $res_mc->fetch_assoc()) && !empty($r_mc['mx'])) {
-                    $next_mcard = intval($r_mc['mx']) + 1;
+                    $next_knitcard = intval($r_mc['mx']) + 1;
                 }
                 $res_mc->free();
 
-                $prog_mcard_res = $db->prepare("SELECT MAX(MCARD) AS mx FROM knit_card WHERE KPTID = ?");
+                $prog_mcard_res = $db->prepare("SELECT MAX(KNITCARD) AS mx FROM knit_card WHERE KPTID = ?");
                 if ($prog_mcard_res) {
                     $prog_mcard_res->bind_param("i", $p_kptid);
                     $prog_mcard_res->execute();
                     $res_pm = $prog_mcard_res->get_result();
                     if ($res_pm && ($r_pm = $res_pm->fetch_assoc()) && !empty($r_pm['mx'])) {
-                        $next_mcard = intval($r_pm['mx']);
+                        $next_knitcard = intval($r_pm['mx']);
                     }
                     $prog_mcard_res->close();
                 }
 
-                $next_roll = 300000001;
-                $res_roll = $db->query("SELECT MAX(ROLL) AS mx FROM knit_card");
-                if ($res_roll && ($r_roll = $res_roll->fetch_assoc()) && !empty($r_roll['mx'])) {
-                    $next_roll = intval($r_roll['mx']) + 1;
-                }
-                $res_roll->free();
-
                 // Insert into knit_card
                 $ins = $db->prepare("
                     INSERT INTO knit_card (
-                        KPTID, MCARD, ROLL, MCNO, QTY, PO_NUMBER, SONO, BUYER, STYLE, COLOR,
+                        KPTID, KNITCARD, MCNO, QTY, PO_NUMBER, SONO, BUYER, STYLE, COLOR,
                         FGSM, FDIA, O_T, FTYPE, YTYPE, CUSTOMER, YCOUNT, SL, MCDIA, GGSM,
                         FEEDER_PLAN, LOT, SHIFT, KNIT_MATERIAL_CODE, KNIT_M_DESCRIPTION, UNAME
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
 
                 if (!$ins) {
@@ -261,10 +254,9 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                     $r_qty   = round($row_item['qty']);
 
                     $ins->bind_param(
-                        "iiisdsssssssssssssssssssss",
+                        "iiiisssssssssssssssssssss",
                         $p_kptid,
-                        $next_mcard,
-                        $current_roll,
+                        $next_knitcard,
                         $r_mcno,
                         $r_qty,
                         $p_booking,
