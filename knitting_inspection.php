@@ -13,43 +13,48 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' && !isset($_GET['action'])) 
   unset($_SESSION['active_operator']);
 }
 
-// ── ACTION: VERIFY OPERATOR QR CODE ──
+// ── ACTION: VERIFY OPERATOR / QC QR CODE ──
+// Checks knitting_operator first; if not found, falls back to knitting_operator_qc
+// so that QR codes generated from the "Knitting All QC" section also authenticate.
 if (isset($_GET['action']) && $_GET['action'] === 'verify_operator') {
     header('Content-Type: application/json');
     $op_id = trim($_GET['operator_id'] ?? $_GET['query'] ?? '');
-    
+
     if (empty($op_id)) {
         echo json_encode(['success' => false, 'error' => 'Operator ID is required']);
         exit();
     }
 
+    // ── 1) Try knitting_operator table first ──
     $stmt = $db->prepare("
-      SELECT KOTID, OPERATOR_ID, OPERATOR_NAME
-        FROM knitting_operator 
-      WHERE LOWER(TRIM(OPERATOR_ID)) = LOWER(TRIM(?))
+        SELECT KOTID, OPERATOR_ID, OPERATOR_NAME
+        FROM knitting_operator
+        WHERE LOWER(TRIM(OPERATOR_ID)) = LOWER(TRIM(?))
         LIMIT 1
     ");
     if ($stmt) {
-      $stmt->bind_param("s", $op_id);
-      if (!$stmt->execute()) {
-        error_log('Operator verification failed: ' . $stmt->error);
-        $stmt->close();
-        echo json_encode(['success' => false, 'error' => 'Operator verification database error']);
-        exit();
-      }
+        $stmt->bind_param("s", $op_id);
+        if (!$stmt->execute()) {
+            error_log('Operator verification failed: ' . $stmt->error);
+            $stmt->close();
+            echo json_encode(['success' => false, 'error' => 'Operator verification database error']);
+            exit();
+        }
         $res = $stmt->get_result();
         if ($res && $row = $res->fetch_assoc()) {
             $_SESSION['active_operator'] = [
                 'id'   => $row['OPERATOR_ID'],
                 'name' => $row['OPERATOR_NAME'],
-                'kotid'=> $row['KOTID']
+                'kotid'=> $row['KOTID'],
+                'role' => 'operator'
             ];
             echo json_encode([
                 'success' => true,
                 'data'    => [
                     'OPERATOR_ID'   => $row['OPERATOR_ID'],
                     'OPERATOR_NAME' => $row['OPERATOR_NAME'],
-                    'KOTID'         => $row['KOTID']
+                    'KOTID'         => $row['KOTID'],
+                    'ROLE'          => 'Operator'
                 ]
             ]);
             $stmt->close();
@@ -57,7 +62,46 @@ if (isset($_GET['action']) && $_GET['action'] === 'verify_operator') {
         }
         $stmt->close();
     }
-    echo json_encode(['success' => false, 'error' => 'Invalid Operator ID: "' . $op_id . '"']);
+
+    // ── 2) Fallback: Try knitting_operator_qc table (QC QR codes) ──
+    $qc_stmt = $db->prepare("
+        SELECT KQCTID, KNITTING_QC_ID, KNITTING_QC_NAME
+        FROM knitting_operator_qc
+        WHERE LOWER(TRIM(KNITTING_QC_ID)) = LOWER(TRIM(?))
+        LIMIT 1
+    ");
+    if ($qc_stmt) {
+        $qc_stmt->bind_param("s", $op_id);
+        if (!$qc_stmt->execute()) {
+            error_log('QC verification failed: ' . $qc_stmt->error);
+            $qc_stmt->close();
+            echo json_encode(['success' => false, 'error' => 'QC verification database error']);
+            exit();
+        }
+        $qc_res = $qc_stmt->get_result();
+        if ($qc_res && $qc_row = $qc_res->fetch_assoc()) {
+            $_SESSION['active_operator'] = [
+                'id'    => $qc_row['KNITTING_QC_ID'],
+                'name'  => $qc_row['KNITTING_QC_NAME'],
+                'kotid' => $qc_row['KQCTID'],
+                'role'  => 'qc'
+            ];
+            echo json_encode([
+                'success' => true,
+                'data'    => [
+                    'OPERATOR_ID'   => $qc_row['KNITTING_QC_ID'],
+                    'OPERATOR_NAME' => $qc_row['KNITTING_QC_NAME'],
+                    'KOTID'         => $qc_row['KQCTID'],
+                    'ROLE'          => 'Knitting QC'
+                ]
+            ]);
+            $qc_stmt->close();
+            exit();
+        }
+        $qc_stmt->close();
+    }
+
+    echo json_encode(['success' => false, 'error' => 'Invalid Operator/QC ID: "' . htmlspecialchars($op_id) . '"']);
     exit();
 }
 
