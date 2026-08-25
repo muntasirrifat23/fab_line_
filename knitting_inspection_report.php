@@ -238,9 +238,9 @@
                             <th>KITID</th>
                             <th>BUDAT</th>
                             <th>ROLL</th>
-                            <th>OQTY</th>
-                            <th>RQTY</th>
-                            <th>UQTY</th>
+                            <th>MAIN QTY</th>
+                            <th>REJECT QTY</th>
+                            <th>UPDATE QTY</th>
                             <th>PO_NUMBER</th>
                             <th>QTY</th>
                             <th>SONO</th>
@@ -307,9 +307,9 @@
             { key: 'KITID', label: 'KITID' },
             { key: 'BUDAT', label: 'BUDAT' },
             { key: 'ROLL', label: 'ROLL' },
-            { key: 'OQTY', label: 'OQTY' },
-            { key: 'RQTY', label: 'RQTY' },
-            { key: 'UQTY', label: 'UQTY' },
+            { key: 'MAIN_QTY',   label: 'MAIN QTY'   },
+            { key: 'REJECT_QTY', label: 'REJECT QTY'  },
+            { key: 'UPDATE_QTY', label: 'UPDATE QTY'  },
             { key: 'PO_NUMBER', label: 'PO_NUMBER' },
             { key: 'QTY', label: 'QTY' },
             { key: 'SONO', label: 'SONO' },

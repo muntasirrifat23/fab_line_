@@ -215,7 +215,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
     } else {
         $production_id       = intval($_POST['PRODUCTION_ID'] ?? 0);
         $roll_no             = trim($_POST['ROLL_NO'] ?? '');
-        $roll_weight         = floatval($_POST['ROLL_WEIGHT'] ?? 0);
+        $main_qty            = floatval($_POST['MAIN_QTY'] ?? 0);
+        $reject_qty          = floatval($_POST['REJECT_QTY'] ?? 0);
+        $update_qty          = max(0, $main_qty - $reject_qty);
         
         $card_meta = [];
         if ($production_id > 0) {
@@ -277,8 +279,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
           $error = "Please select a valid production roll or enter Roll Number.";
         } elseif (empty($roll_no)) {
             $error = "Roll Number is required.";
-        } elseif ($roll_weight <= 0) {
-            $error = "Roll Weight must be greater than 0.";
+        } elseif ($main_qty <= 0) {
+            $error = "Main Quantity must be greater than 0.";
         } else {
             // ── DUPLICATE ROLL GUARD (server-side safety net) ──
             $dup2_stmt = $db->prepare("SELECT KITID FROM knitting_inspection WHERE TRIM(ROLL) = ? LIMIT 1");
@@ -297,7 +299,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
           try {
             $stmt = $db->prepare("
                     INSERT INTO knitting_inspection (
-                        `BUDAT`, `ROLL`, `OQTY`, `RQTY`, `UQTY`, `PO_NUMBER`, `QTY`, `SONO`, `BUYER`, `STYLE`, `COLOR`,
+                        `BUDAT`, `ROLL`, `MAIN_QTY`, `REJECT_QTY`, `UPDATE_QTY`, `PO_NUMBER`, `QTY`, `SONO`, `BUYER`, `STYLE`, `COLOR`,
                         `MCNO`, `MC_DIA`, `CUSTOMER`, `SHIFT`, `YTYPE`, `YCOUNT`, `FTYPE`, `FGSM`, `FDIA`, `O_T`,
                         `SL`, `GGSM`, `FPLAN`, `LOTNO`, `MATERIAL_CODE`, `M_DES`,
                         `TT`, `PATTA`, `SLUB`, `YC_SPOT`, `OILSPOT`, `FF`, `SEEDS`, `MSTITCH`, `SINKERMARK`, `NEEDLEMARK`,
@@ -317,11 +319,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                 }
                 
                 $budat       = date('Y-m-d');
-                $oqty        = strval($card_meta['PQTY'] ?? $roll_weight);
-                $rqty        = strval($card_meta['PQTY'] ?? $roll_weight);
-                $uqty        = strval($roll_weight);
+                $v_main_qty  = $main_qty;
+                $v_reject    = $reject_qty;
+                $v_update    = $update_qty;
                 $po_number   = strval($card_meta['PO_NUMBER'] ?? '');
-                $qty         = strval($roll_weight);
+                $qty         = strval($main_qty);
                 $sono        = strval($card_meta['SONO'] ?? '');
                 $buyer       = strval($card_meta['BUYER'] ?? '');
                 $style       = strval($card_meta['STYLE'] ?? '');
@@ -364,11 +366,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                 $uname        = strval($_SESSION['active_operator']['name']);
                 $uid          = strval($_SESSION['active_operator']['id']);
 
-                $types = str_repeat('s', 21) . 'd' . str_repeat('s', 26);
+                // BUDAT(s), ROLL(s), MAIN_QTY(d), REJECT_QTY(d), UPDATE_QTY(d),
+                // PO_NUMBER..O_T = 16 strings(s), SL(d), GGSM..M_DES = 6 strings(s),
+                // defects 16 strings(s), QC_GRADE..UID = 4 strings(s)
+                $types = 'ssddd' . str_repeat('s', 16) . 'd' . str_repeat('s', 6)
+                       . str_repeat('s', 17) . str_repeat('s', 4);
 
                 $stmt->bind_param(
                     $types,
-                    $budat, $roll_no, $oqty, $rqty, $uqty, $po_number, $qty, $sono, $buyer, $style, $color,
+                    $budat, $roll_no, $v_main_qty, $v_reject, $v_update,
+                    $po_number, $qty, $sono, $buyer, $style, $color,
                     $mcno, $mc_dia, $supplier, $shift, $ytype, $ycount, $ftype, $fgsm, $fdia, $o_t,
                     $sl, $ggsm, $fplan, $lotno, $mat_code, $m_des,
                     $v_tt, $v_patta, $v_slub, $v_yc_spot, $v_oilspot, $v_ff, $v_seeds, $v_mstitch, $v_sinkermark, $v_needlemark,
@@ -1060,11 +1067,34 @@ $active_operator = $_SESSION['active_operator'] ?? null;
           <div class="data-row"><span class="label">Lot No / Feeder Plan:</span><span class="value">${d.lot_no || 'N/A'} / ${d.feeder_plan || 'N/A'}</span></div>
           <div class="data-row"><span class="label">Material Code / Desc:</span><span class="value">${d.material_code || 'N/A'} / ${d.material_desc || 'N/A'}</span></div>
           
-          <div style="margin-top:14px; font-weight:800; font-size:0.85rem; color:#334155;">
-            <i class="fa-solid fa-weight-hanging me-1 text-primary"></i> ROLL WEIGHT (KG):
+          <div style="margin-top:14px; font-weight:800; font-size:0.85rem; color:#1d4ed8;">
+            <i class="fa-solid fa-weight-hanging me-1"></i> MAIN QTY (KG):
           </div>
           <div style="margin-top:4px;">
-            <input type="number" step="0.01" id="weightInput" class="field-input" value="${parseFloat(d.suggested_weight).toFixed(2)}" style="font-weight:700; font-size:1.1rem; text-align:center;">
+            <input type="number" step="0.01" min="0" id="mainQtyInput" class="field-input"
+              value="${parseFloat(d.suggested_weight).toFixed(2)}"
+              style="font-weight:700; font-size:1.1rem; text-align:center;"
+              oninput="window.calcUpdateQty()">
+          </div>
+
+          <div style="margin-top:14px; font-weight:800; font-size:0.85rem; color:#b91c1c;">
+            <i class="fa-solid fa-ban me-1"></i> REJECT QTY (KG):
+          </div>
+          <div style="margin-top:4px;">
+            <input type="number" step="0.01" min="0" id="rejectQtyInput" class="field-input"
+              value="0" placeholder="0.00"
+              style="font-weight:700; font-size:1.1rem; text-align:center; border-color:#fca5a5;"
+              oninput="window.calcUpdateQty()">
+          </div>
+
+          <div style="margin-top:14px; font-weight:800; font-size:0.85rem; color:#166534;">
+            <i class="fa-solid fa-circle-check me-1"></i> UPDATE QTY / NET GOOD QTY (KG):
+          </div>
+          <div style="margin-top:4px;">
+            <input type="number" step="0.01" id="updateQtyInput" class="field-input"
+              value="${parseFloat(d.suggested_weight).toFixed(2)}"
+              readonly tabindex="-1"
+              style="font-weight:800; font-size:1.1rem; text-align:center; background:#f0fdf4; border-color:#86efac; color:#166534; cursor:not-allowed;">
           </div>
 
           <div style="margin-top:16px; font-weight:800; font-size:0.85rem; color:#334155;">
@@ -1146,10 +1176,31 @@ $active_operator = $_SESSION['active_operator'] ?? null;
         }
       }
 
+      // ── Real-time UPDATE QTY calculator ──
+      window.calcUpdateQty = function() {
+        const mainQty   = parseFloat(document.getElementById('mainQtyInput')?.value) || 0;
+        const rejectQty = parseFloat(document.getElementById('rejectQtyInput')?.value) || 0;
+        const updateQty = Math.max(0, mainQty - rejectQty);
+        const updateEl  = document.getElementById('updateQtyInput');
+        if (updateEl) updateEl.value = updateQty.toFixed(2);
+      };
+
       window.saveInspectionRecord = function() {
         if (!rollData) return;
-        const weightInput = document.getElementById('weightInput');
-        const weightVal = weightInput ? parseFloat(weightInput.value) : 25.00;
+        const mainQty   = parseFloat(document.getElementById('mainQtyInput')?.value)   || 0;
+        const rejectQty = parseFloat(document.getElementById('rejectQtyInput')?.value) || 0;
+        const updateQty = Math.max(0, mainQty - rejectQty);
+
+        if (mainQty <= 0) {
+          alert('Please enter a valid Main Quantity (must be > 0).');
+          document.getElementById('mainQtyInput')?.focus();
+          return;
+        }
+        if (rejectQty > mainQty) {
+          alert('Reject QTY cannot exceed Main QTY.');
+          document.getElementById('rejectQtyInput')?.focus();
+          return;
+        }
 
         const form = document.createElement('form');
         form.method = 'POST';
@@ -1166,7 +1217,9 @@ $active_operator = $_SESSION['active_operator'] ?? null;
         addField('save_inspection', '1');
         addField('PRODUCTION_ID', rollData.production_id || 0);
         addField('ROLL_NO', rollData.suggested_roll);
-        addField('ROLL_WEIGHT', weightVal);
+        addField('MAIN_QTY',   mainQty.toFixed(2));
+        addField('REJECT_QTY', rejectQty.toFixed(2));
+        addField('UPDATE_QTY', updateQty.toFixed(2));
 
         FAULTS.forEach(f => {
           if (selectedFaults[f.id]) {
