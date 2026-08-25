@@ -8,6 +8,14 @@ if ($res) {
         $users[] = $row;
     }
 }
+
+$qcs = [];
+$res2 = mysqli_query($db, "SELECT KQCTID, KNITTING_QC_NAME, KNITTING_QC_ID, KNITTING_QC_EMAIL, KNITTING_QC_PASSWORD, CREATED FROM knitting_operator_qc ORDER BY KQCTID ASC");
+if ($res2) {
+    while ($row = mysqli_fetch_assoc($res2)) {
+        $qcs[] = $row;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -177,6 +185,30 @@ if ($res) {
             font-weight: 600;
         }
 
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 26px 0 12px;
+        }
+
+        .section-title .sec-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.05rem;
+        }
+
+        .section-title .op-icon { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+        .section-title .qc-icon { background: linear-gradient(135deg, #16a34a, #15803d); }
+
         .print-btn {
             display: inline-flex;
             align-items: center;
@@ -211,14 +243,25 @@ if ($res) {
             }
 
             .qr-print-area {
-                display: flex !important;
-                align-items: flex-start;
-                justify-content: flex-start;
-                padding: 20px;
+                display: block !important;
+                padding: 14px;
+                text-align: left;
             }
 
-            .qr-print-area .qr-box {
-                text-align: center;
+            .print-qr-label {
+                font-family: sans-serif;
+                font-weight: 800;
+                font-size: 13px;
+                color: #000000;
+                margin: 0 0 4px 0;
+                line-height: 1.2;
+            }
+
+            .qr-print-area #qrPrintBox img,
+            .qr-print-area #qrPrintBox canvas {
+                width: 1in !important;
+                height: 1in !important;
+                display: block;
             }
         }
     </style>
@@ -230,7 +273,7 @@ if ($res) {
         <a href="user_management.php" class="back-btn">
             <i class="fa-solid fa-arrow-left"></i> Back
         </a>
-        <h1><i class="fa-solid fa-user-tie"></i> All Operators</h1>
+        <h1><i class="fa-solid fa-user-tie"></i> Knitting All Operators</h1>
     </div>
 
     <div class="search-panel">
@@ -240,6 +283,10 @@ if ($res) {
             <button class="btn btn-clear" id="clearBtn"><i class="fa-solid fa-rotate-left"></i> Clear</button>
         </div>
     </div>
+
+    <h2 class="section-title">
+        <span class="sec-icon op-icon"><i class="fa-solid fa-user-tie"></i></span> All Knitting Operator
+    </h2>
 
     <div class="table-card">
         <div class="table-scroll">
@@ -262,52 +309,111 @@ if ($res) {
 
     <div class="row-count" id="rowCount"></div>
 
+    <h2 class="section-title">
+        <span class="sec-icon qc-icon"><i class="fa-solid fa-user-shield"></i></span> Knitting All QC
+    </h2>
+
+    <div class="table-card">
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>PRINT</th>
+                        <th>ID</th>
+                        <th>QC NAME</th>
+                        <th>QC ID</th>
+                        <th>EMAIL</th>
+                        <th>PASSWORD</th>
+                        <th>CREATED</th>
+                    </tr>
+                </thead>
+                <tbody id="qcBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="row-count" id="qcRowCount"></div>
+
     <script src="js/bootstrap.bundle.min.js"></script>
     <script>
         var allUsers = <?php echo json_encode($users); ?>;
+        var allQcs = <?php echo json_encode($qcs); ?>;
+        var viewUsers = [];
+        var viewQcs = [];
 
         function esc(v) {
             return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
 
-        function renderTable(rows) {
-            var body = document.getElementById('userBody');
+        function renderRows(rows, bodyId, type) {
             var html = '';
             rows.forEach(function(u, i) {
-                html += '<tr>' +
-                    '<td><button class="print-btn" onclick="showOperatorBadge(' + i + ')"><i class="fa-solid fa-qrcode"></i> Print / View ID</button></td>' +
-                    '<td>' + esc(u.KOTID) + '</td>' +
-                    '<td>' + esc(u.OPERATOR_NAME) + '</td>' +
-                    '<td><strong class="font-monospace text-primary">' + esc(u.OPERATOR_ID) + '</strong></td>' +
-                    '<td>' + esc(u.OPERATOR_EMAIL) + '</td>' +
-                    '<td>' + '********' + '</td>' +
-                    '<td>' + esc(u.CREATED) + '</td>' +
-                    '</tr>';
+                if (type === 'qc') {
+                    html += '<tr>' +
+                        '<td><button class="print-btn" onclick="showOperatorBadge(' + i + ', \'qc\')"><i class="fa-solid fa-qrcode"></i> Print / View ID</button></td>' +
+                        '<td>' + esc(u.KQCTID) + '</td>' +
+                        '<td>' + esc(u.KNITTING_QC_NAME) + '</td>' +
+                        '<td><strong class="font-monospace text-primary">' + esc(u.KNITTING_QC_ID) + '</strong></td>' +
+                        '<td>' + esc(u.KNITTING_QC_EMAIL) + '</td>' +
+                        '<td>' + '********' + '</td>' +
+                        '<td>' + esc(u.CREATED) + '</td>' +
+                        '</tr>';
+                } else {
+                    html += '<tr>' +
+                        '<td><button class="print-btn" onclick="showOperatorBadge(' + i + ', \'op\')"><i class="fa-solid fa-qrcode"></i> Print / View ID</button></td>' +
+                        '<td>' + esc(u.KOTID) + '</td>' +
+                        '<td>' + esc(u.OPERATOR_NAME) + '</td>' +
+                        '<td><strong class="font-monospace text-primary">' + esc(u.OPERATOR_ID) + '</strong></td>' +
+                        '<td>' + esc(u.OPERATOR_EMAIL) + '</td>' +
+                        '<td>' + '********' + '</td>' +
+                        '<td>' + esc(u.CREATED) + '</td>' +
+                        '</tr>';
+                }
             });
-            body.innerHTML = html;
-            document.getElementById('rowCount').textContent = 'Total Operators: ' + rows.length;
+            document.getElementById(bodyId).innerHTML = html;
+        }
+
+        function renderTable() {
+            renderRows(viewUsers, 'userBody', 'op');
+            renderRows(viewQcs, 'qcBody', 'qc');
+            document.getElementById('rowCount').textContent = 'Total Operators: ' + viewUsers.length;
+            document.getElementById('qcRowCount').textContent = 'Total QC: ' + viewQcs.length;
         }
 
         function applyFilter() {
             var q = document.getElementById('searchInput').value.trim().toLowerCase();
+
             if (q === '') {
-                renderTable(allUsers);
+                viewUsers = allUsers.slice();
+                viewQcs = allQcs.slice();
+                renderTable();
                 return;
             }
-            var filtered = allUsers.filter(function(u) {
+
+            viewUsers = allUsers.filter(function(u) {
                 return String(u.OPERATOR_NAME || '').toLowerCase().indexOf(q) !== -1 ||
                     String(u.OPERATOR_ID || '').toLowerCase().indexOf(q) !== -1 ||
                     String(u.OPERATOR_EMAIL || '').toLowerCase().indexOf(q) !== -1 ||
                     String(u.KOTID || '').toLowerCase().indexOf(q) !== -1;
             });
-            renderTable(filtered);
+
+            viewQcs = allQcs.filter(function(u) {
+                return String(u.KNITTING_QC_NAME || '').toLowerCase().indexOf(q) !== -1 ||
+                    String(u.KNITTING_QC_ID || '').toLowerCase().indexOf(q) !== -1 ||
+                    String(u.KNITTING_QC_EMAIL || '').toLowerCase().indexOf(q) !== -1 ||
+                    String(u.KQCTID || '').toLowerCase().indexOf(q) !== -1;
+            });
+
+            renderTable();
         }
 
         document.getElementById('searchBtn').addEventListener('click', applyFilter);
         document.getElementById('clearBtn').addEventListener('click', function() {
             document.getElementById('searchInput').value = '';
-            renderTable(allUsers);
+            viewUsers = allUsers.slice();
+            viewQcs = allQcs.slice();
+            renderTable();
         });
         document.getElementById('searchInput').addEventListener('keyup', function(e) {
             if (e.key === 'Enter') {
@@ -315,104 +421,51 @@ if ($res) {
             }
         });
 
-        function showOperatorBadge(idx) {
-            var u = allUsers[idx];
-            if (!u) return;
-
-            document.getElementById('modalOpName').textContent = u.OPERATOR_NAME;
-            document.getElementById('modalOpId').textContent = u.OPERATOR_ID;
-
-            var qrBox = document.getElementById('modalQrBox');
-            qrBox.innerHTML = '';
-            if (typeof QRCode !== 'undefined') {
-                new QRCode(qrBox, {
-                    text: String(u.OPERATOR_ID || ''),
-                    width: 180,
-                    height: 180,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
-                });
+        function showOperatorBadge(idx, type) {
+            var u, idVal, roleLabel;
+            if (type === 'qc') {
+                u = viewQcs[idx];
+                idVal = u.KNITTING_QC_ID;
+                roleLabel = 'Knitting QC';
+            } else {
+                u = viewUsers[idx];
+                idVal = u.OPERATOR_ID;
+                roleLabel = 'Knitting Operator';
             }
+            if (!u) return;
 
             var printBox = document.getElementById('qrPrintBox');
             printBox.innerHTML = '';
-            var printBadge = document.createElement('div');
-            printBadge.className = 'badge-print-box';
-            printBadge.style.cssText = 'width: 320px; background: #ffffff; padding: 20px; border: 3px solid #000000; border-radius: 12px; text-align: center; color: #000000; font-family: sans-serif;';
-            printBadge.innerHTML = `
-                <div style="font-weight: 800; font-size: 16px; text-transform: uppercase; color: #000000; margin-bottom: 4px;">Purbani Fabrics Ltd.</div>
-                <div style="display: inline-block; background: #000000; color: #ffffff; padding: 3px 14px; font-weight: 700; font-size: 11px; border-radius: 12px; margin-bottom: 14px; text-transform: uppercase;">Knitting Operator Badge</div>
-                <div style="background: #ffffff; padding: 14px; border: 2px solid #000000; border-radius: 8px; display: inline-block; margin-bottom: 12px;" id="printQrInner"></div>
-                <div style="font-weight: 800; font-size: 18px; color: #000000; margin-bottom: 2px;">${esc(u.OPERATOR_NAME)}</div>
-                <div style="font-weight: 800; font-size: 16px; font-family: monospace; color: #1e40af;">ID: ${esc(u.OPERATOR_ID)}</div>
-            `;
-            printBox.appendChild(printBadge);
+
+            var wrap = document.createElement('div');
+            var label = document.createElement('div');
+            label.className = 'print-qr-label';
+            label.textContent = roleLabel;
+            var qrHolder = document.createElement('div');
+            qrHolder.id = 'printQrInner';
+            wrap.appendChild(label);
+            wrap.appendChild(qrHolder);
+            printBox.appendChild(wrap);
 
             setTimeout(function() {
-                var printQrInner = document.getElementById('printQrInner');
-                if (printQrInner && typeof QRCode !== 'undefined') {
-                    new QRCode(printQrInner, {
-                        text: String(u.OPERATOR_ID || ''),
-                        width: 200,
-                        height: 200,
+                if (qrHolder && typeof QRCode !== 'undefined') {
+                    new QRCode(qrHolder, {
+                        text: String(idVal || ''),
+                        width: 96,
+                        height: 96,
                         colorDark: "#000000",
                         colorLight: "#ffffff",
                         correctLevel: QRCode.CorrectLevel.H
                     });
                 }
+                window.print();
             }, 100);
-
-            var modalElem = document.getElementById('opBadgeModal');
-            if (modalElem && typeof bootstrap !== 'undefined') {
-                var myModal = new bootstrap.Modal(modalElem);
-                myModal.show();
-            }
         }
 
-        function triggerBadgePrint() {
-            window.print();
-        }
-
-        renderTable(allUsers);
+        viewUsers = allUsers.slice();
+        viewQcs = allQcs.slice();
+        renderTable();
     </script>
-
-    <!-- OPERATOR BADGE & QR MODAL (SCREEN PREVIEW) -->
-    <div class="modal fade no-print" id="opBadgeModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" style="max-width: 380px;">
-            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                <div class="modal-header bg-dark text-white py-3">
-                    <h5 class="modal-title fs-6 fw-bold mb-0">
-                        <i class="fa-solid fa-id-card me-2 text-primary"></i> Operator Badge QR Code
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body text-center p-4" style="background: #f8fafc;">
-                    <div id="modalBadgeCard" class="badge-print-box p-3 bg-white border border-2 border-dark rounded-3 shadow-sm mx-auto" style="max-width: 300px;">
-                        <div class="text-uppercase fw-extrabold text-dark small mb-1" style="letter-spacing: 0.5px; font-weight: 800;">Purbani Fabrics Ltd.</div>
-                        <div class="badge bg-dark text-white px-3 py-1 mb-3 rounded-pill fw-bold text-uppercase" style="font-size: 10px;">Knitting Operator</div>
-                        
-                        <!-- QR Code Frame with White Quiet Zone -->
-                        <div class="qr-frame-box p-3 bg-white border border-2 border-dark rounded-3 d-inline-block shadow-sm mb-3">
-                            <div id="modalQrBox"></div>
-                        </div>
-
-                        <div class="fw-bold text-dark fs-5 mb-0" id="modalOpName">Md. Rahim</div>
-                        <div class="font-monospace text-primary fw-bold fs-6" id="modalOpId">OP01</div>
-                    </div>
-                    <div class="text-muted small mt-3" style="font-size: 11px;">
-                        <i class="fa-solid fa-circle-info text-primary me-1"></i> Point your camera at this QR code in <strong>Knitting Inspection</strong> page to authenticate.
-                    </div>
-                </div>
-                <div class="modal-footer bg-light justify-content-between">
-                    <button type="button" class="btn btn-secondary px-3 btn-sm fw-bold" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-success px-4 btn-sm fw-bold" onclick="triggerBadgePrint()">
-                        <i class="fa-solid fa-print me-1"></i> Print Badge
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- PRINT AREA -->
     <div class="qr-print-area">

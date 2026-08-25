@@ -243,11 +243,11 @@ session_start();
 
         <div class="col-12 col-md-4 d-flex">
           <div class="report-card-item w-100" style="background: linear-gradient(135deg, #2563eb, #7c3aed);">
-            <form method="POST" action="users_operator.php" class="h-100 w-100">
+            <form method="POST" action="users_knitting_operator.php" class="h-100 w-100">
               <button type="submit" class="btn-report-style">
                 <i class="fa-solid fa-user-tie"></i>
                 <span class="floor-text">
-                  <span>All Operators</span>
+                  <span>Knitting All Operators</span>
                 </span>
               </button>
             </form>
