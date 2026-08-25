@@ -25,29 +25,48 @@ if (isset($_POST['change_password'])) {
     return false;
   }
 
-  $query = "SELECT password FROM users WHERE USER_ID = '$username' LIMIT 1";
-  $res = mysqli_query($db, $query);
-  if (!$res) {
-    echo 'Server error';
+  function change_password_in_table($db, $table, $id_col, $pass_col, $username, $oldp, $newp)
+  {
+    $query = "SELECT $pass_col FROM $table WHERE $id_col = '$username' LIMIT 1";
+    $res = mysqli_query($db, $query);
+    if (!$res) return 'server_error';
+    if (mysqli_num_rows($res) != 1) return 'not_found';
+
+    $row = mysqli_fetch_assoc($res);
+    if (!check_password_match($row[$pass_col], $oldp)) return 'wrong_old';
+
+    $new_md5 = md5($newp);
+    $update = "UPDATE $table SET $pass_col = '$new_md5' WHERE $id_col = '$username'";
+    return mysqli_query($db, $update) ? 'OK' : 'update_failed';
+  }
+
+  // 1) users table
+  $result = change_password_in_table($db, 'users', 'USER_ID', 'password', $username, $oldp, $newp);
+  if ($result !== 'not_found') {
+    if ($result === 'OK') echo 'OK';
+    elseif ($result === 'wrong_old') echo 'Old password not correct';
+    else echo 'Failed to update password';
     exit;
   }
-  if (mysqli_num_rows($res) == 1) {
-    $row = mysqli_fetch_assoc($res);
-    $stored_password = $row['password'];
 
-    if (check_password_match($stored_password, $oldp)) {
-      $new_md5 = md5($newp);
-      $update = "UPDATE users SET password = '$new_md5' WHERE USER_ID = '$username'";
-      if (mysqli_query($db, $update)) {
-        echo 'OK';
-      } else {
-        echo 'Failed to update password';
-      }
-    } else {
-      echo 'Old password not correct';
-    }
-  } else {
-    echo 'User ID not found';
+  // 2) knitting_operator table
+  $result = change_password_in_table($db, 'knitting_operator', 'OPERATOR_ID', 'OPERATOR_PASSWORD', $username, $oldp, $newp);
+  if ($result !== 'not_found') {
+    if ($result === 'OK') echo 'OK';
+    elseif ($result === 'wrong_old') echo 'Old password not correct';
+    else echo 'Failed to update password';
+    exit;
   }
+
+  // 3) knitting_operator_qc table
+  $result = change_password_in_table($db, 'knitting_operator_qc', 'KNITTING_QC_ID', 'KNITTING_QC_PASSWORD', $username, $oldp, $newp);
+  if ($result !== 'not_found') {
+    if ($result === 'OK') echo 'OK';
+    elseif ($result === 'wrong_old') echo 'Old password not correct';
+    else echo 'Failed to update password';
+    exit;
+  }
+
+  echo 'User ID not found';
 }
 exit;

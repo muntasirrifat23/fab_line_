@@ -38,7 +38,7 @@ if (isset($_POST['login_user'])) {
     }
     
    // Login using only OPERATOR_ID
-$query_operator = "SELECT * FROM knitting_operator WHERE OPERATOR_ID='$username'";
+$query_operator = "SELECT * FROM knitting_operator WHERE OPERATOR_ID='$username' AND OPERATOR_PASSWORD='$password_md5'";
 $results_operator = mysqli_query($db, $query_operator);
 
 if (mysqli_num_rows($results_operator) == 1) {
@@ -58,7 +58,7 @@ if (mysqli_num_rows($results_operator) == 1) {
 }
 
     // Login using KNITTING_QC_ID
-    $query_qc = "SELECT * FROM knitting_operator_qc WHERE KNITTING_QC_ID='$username'";
+    $query_qc = "SELECT * FROM knitting_operator_qc WHERE KNITTING_QC_ID='$username' AND KNITTING_QC_PASSWORD='$password_md5'";
     $results_qc = mysqli_query($db, $query_qc);
 
     if (mysqli_num_rows($results_qc) == 1) {
