@@ -138,17 +138,19 @@
     </div>
 
     <script src="jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <script>
-        // ---------- ROW PDF DOWNLOAD (image-style card, same as Knitting Program Report) ----------
+        // ---------- ROW PDF DOWNLOAD (A4 page, 6cm x 6cm label top-left, QR contains ROLL No only) ----------
         function downloadRowPdf(row) {
             var fieldHTML = [
-                ['Date', row.BUDAT],
-                ['Roll No', row.ROLL],
                 ['PO Number', row.PO_NUMBER],
-                ['PQTY', row.PQTY],
+                ['QTY', row.PQTY],
+                ['Shift', row.SHIFT],
+                ['Date', row.BUDAT],
+                ['UName', row.UNAME],
                 ['SONO', row.SONO],
                 ['Buyer', row.BUYER],
                 ['Style', row.STYLE],
@@ -156,7 +158,6 @@
                 ['MCNO', row.MCNO],
                 ['MC Dia', row.MC_DIA],
                 ['Customer', row.CUSTOMER],
-                ['Shift', row.SHIFT],
                 ['Yarn Type', row.YARN_TYPE],
                 ['Yarn Count', row.YARN_COUNT],
                 ['Fabrics Type', row.FABRICS_TYPE],
@@ -166,37 +167,27 @@
                 ['SL/VDQ', row.SL_VDQ],
                 ['Gray GSM', row.GRAY_GSM],
                 ['Feeder Plan', row.FEEDER_PLAN],
-                ['Lot No', row.LOT_NO],
-                ['KNIT MATERIAL CODE', row.KNIT_MATERIAL_CODE, true],
-                ['KNIT M DES', row.KNIT_M_DES, true]
+                ['Lot No', row.LOT_NO]
             ];
 
             var rowsHTML = fieldHTML.map(function(f) {
                 var val = (f[1] === null || f[1] === undefined) ? '' : f[1];
-                var cls = f[2] ? 'pdf-item pdf-item-full' : 'pdf-item';
-                return '<div class="' + cls + '"><span class="pdf-label">' + f[0] + ' :</span><span class="pdf-value">' + val + '</span></div>';
+                return '<div class="pdf-item"><span class="pdf-label">' + f[0] + ':</span> <span class="pdf-value">' + val + '</span></div>';
             }).join('');
 
             var content = '' +
-                '<div id="rowPdfCard" style="position:relative;width:760px;min-height:1050px;padding:24px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">' +
-                '<div style="text-align:center;font-size:20px;font-weight:bold;color:#1e3a8a;border-bottom:3px solid #2563eb;padding-bottom:10px;margin-bottom:16px;">' +
-                'Knitting Production Report' +
+                '<div id="rowPdfCard" style="width:700px;height:700px;padding:16px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#000000;box-sizing:border-box;border:2px solid #94a3b8;">' +
+                '<div style="background:#1e3a8a;color:#ffffff;text-align:center;font-size:24px;font-weight:800;padding:8px;border-radius:6px;margin-bottom:12px;letter-spacing:1px;">' +
+                'PURBANI FABRICS LTD.' +
                 '</div>' +
-                '<div style="display:flex;justify-content:space-between;align-items:center;width:100%;font-size:14px;font-weight:bold;margin-bottom:10px; margin-left:10px;">' +
-                '<span>Roll : ' + (row.ROLL || '') + '</span>' +
+                '<div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:12px;">' +
+                '<div style="flex:1;min-width:0;background:#f1f5f9;border:2px solid #1e3a8a;border-radius:8px;padding:10px 14px;">' +
+                '<div style="font-size:17px;font-weight:800;color:#1e3a8a;margin-bottom:4px;">ROLL NO</div>' +
+                '<div style="font-size:30px;font-weight:800;color:#000000;font-family:Consolas,monospace;word-break:break-all;line-height:1.2;">' + (row.ROLL || '') + '</div>' +
+                '</div>' +
+                '<div id="rowQrBox" style="flex:none;width:186px;height:186px;display:flex;align-items:center;justify-content:center;border:2px solid #000000;border-radius:8px;background:#ffffff;"></div>' +
                 '</div>' +
                 '<div class="pdf-grid">' + rowsHTML + '</div>' +
-                '<div style="text-align:center;font-size:11px;color: black; margin-top:16px;border-top:1px solid #e5e7eb;padding-top:8px;">' +
-                'Generated from Knitting Production Report - ' + new Date().toLocaleString() +
-                '</div>' +
-
-                '<div class="pdf-sign">' +
-                '<div class="pdf-sign-item"><div class="pdf-sign-line"></div><span>Supervisor</span></div>' +
-                '<div class="pdf-sign-item"><div class="pdf-sign-line"></div><span>Incharge</span></div>' +
-                '<div class="pdf-sign-item"><div class="pdf-sign-line"></div><span>AGM</span></div>' +
-                '<div class="pdf-sign-item"><div class="pdf-sign-line"></div><span>GM</span></div>' +
-                '</div>' +
-
                 '</div>';
 
             var tempDiv = document.createElement('div');
@@ -206,41 +197,56 @@
             tempDiv.style.top = '0';
             document.body.appendChild(tempDiv);
 
+            // Generate QR code - contains ONLY the ROLL number (knitting_production.ROLL)
+            var qrBox = tempDiv.querySelector('#rowQrBox');
+            if (qrBox && typeof QRCode !== 'undefined') {
+                new QRCode(qrBox, {
+                    text: String(row.ROLL || ''),
+                    width: 180,
+                    height: 180,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            }
+
             var style = document.createElement('style');
             style.textContent = '' +
-                '.pdf-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:2px solid #d1d5db;border-radius:6px;padding:0;background:#ffffff;}' +
-                '.pdf-item{font-size:13px;line-height:1.7;border-bottom:1px solid #d1d5db;border-right:1px solid #d1d5db;padding:7px 12px;word-break:break-word;background:#ffffff;color:#000000;}' +
+                '.pdf-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:2px solid #94a3b8;border-radius:6px;background:#ffffff;}' +
+                '.pdf-item{font-size:16px;line-height:1.35;border-bottom:1px solid #cbd5e1;border-right:1px solid #cbd5e1;padding:5px 9px;word-break:break-word;background:#ffffff;color:#000000;}' +
                 '.pdf-item:nth-child(2n){border-right:none;}' +
-                '.pdf-item-full{grid-column:1 / -1;border-right:none;border-top:2px solid #d1d5db;}' +
-                '.pdf-label{font-weight:bold;color:#000000;}' +
-                '.pdf-value{margin-left:8px;color:#000000;}' +
-                '.pdf-sign{position:absolute;left:24px;right:24px;bottom:55px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:20px;padding:0 10px;text-align:center;font-size:13px;font-weight:bold;color:#000000;}' +
-                '.pdf-sign-item{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:8px;}' +
-                '.pdf-sign-line{width:80%;border-top:1px solid #000000;margin-top:0;}' +
+                '.pdf-item:nth-last-child(-n+2){border-bottom:none;}' +
+                '.pdf-label{font-weight:800;color:#1e3a8a;}' +
+                '.pdf-value{color:#111111;}' +
                 '</style>';
             document.body.appendChild(style);
 
-            html2canvas(tempDiv, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                logging: false
-            }).then(function(canvas) {
-                var imgData = canvas.toDataURL('image/png');
-                var jsPDFLib = window.jspdf;
-                var pdf = new jsPDFLib.jsPDF('p', 'mm', 'a4');
-                var pdfWidth = pdf.internal.pageSize.getWidth();
-                var pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                pdf.save('Knitting_Production_' + (row.ROLL || 'Roll') + '.pdf');
-                document.body.removeChild(tempDiv);
-                document.body.removeChild(style);
-            }).catch(function(err) {
-                console.error('PDF generation error:', err);
-                alert('Error generating PDF. Please try again.');
-                document.body.removeChild(tempDiv);
-                document.body.removeChild(style);
-            });
+            setTimeout(function() {
+                html2canvas(tempDiv, {
+                    scale: 3,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    logging: false
+                }).then(function(canvas) {
+                    var imgData = canvas.toDataURL('image/png');
+                    var jsPDFLib = window.jspdf;
+                    // A4 page - 6cm x 6cm label placed at top-left
+                    var pdf = new jsPDFLib.jsPDF({
+                        orientation: 'portrait',
+                        unit: 'cm',
+                        format: 'a4'
+                    });
+                    pdf.addImage(imgData, 'PNG', 0, 0, 6, 6);
+                    pdf.save('Knitting_Production_' + (row.ROLL || 'Roll') + '.pdf');
+                    document.body.removeChild(tempDiv);
+                    document.body.removeChild(style);
+                }).catch(function(err) {
+                    console.error('PDF generation error:', err);
+                    alert('Error generating PDF. Please try again.');
+                    document.body.removeChild(tempDiv);
+                    document.body.removeChild(style);
+                });
+            }, 400);
         }
 
         function renderTableRows(data) {
