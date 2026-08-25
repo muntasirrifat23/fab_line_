@@ -56,7 +56,26 @@ if (mysqli_num_rows($results_operator) == 1) {
     echo "OK";
     exit();
 }
-    
+
+    // Login using KNITTING_QC_ID
+    $query_qc = "SELECT * FROM knitting_operator_qc WHERE KNITTING_QC_ID='$username'";
+    $results_qc = mysqli_query($db, $query_qc);
+
+    if (mysqli_num_rows($results_qc) == 1) {
+        $qc_data = mysqli_fetch_assoc($results_qc);
+
+        $_SESSION['username'] = $qc_data['KNITTING_QC_ID'];
+        $_SESSION['user_name'] = $qc_data['KNITTING_QC_NAME'];
+        $_SESSION['user_type'] = 'qc';
+        $_SESSION['knitting_qc_id'] = $qc_data['KNITTING_QC_ID'];
+        $_SESSION['operator_name'] = $qc_data['KNITTING_QC_NAME'];
+        $_SESSION['success'] = "You are now logged in as knitting QC";
+        $_SESSION['expire_time'] = time() + 60000;
+
+        echo "OK";
+        exit();
+    }
+
     // If no match found in either table
     echo 'NOTOK';
     exit();

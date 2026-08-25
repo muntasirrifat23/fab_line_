@@ -386,7 +386,7 @@
         alert('New password and confirmation do not match');
         return;
       }
-      if (newp.length < 4) {
+      if (newp.length < 3) {
         alert('New password must be at least 4 characters long');
         return;
       }
