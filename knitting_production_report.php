@@ -176,16 +176,19 @@
             }).join('');
 
             var content = '' +
-                '<div id="rowPdfCard" style="width:700px;height:700px;padding:16px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#000000;box-sizing:border-box;border:2px solid #94a3b8;">' +
-                '<div style="background:#1e3a8a;color:#ffffff;text-align:center;font-size:24px;font-weight:800;padding:8px;border-radius:6px;margin-bottom:12px;letter-spacing:1px;">' +
+                '<div id="rowPdfCard" style="width:700px;padding:10px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#000000;box-sizing:border-box;border:2px solid #94a3b8;font-weight:700;">' +
+                '<div style="background: white;color: #000000;text-align:center;font-size:24px;font-weight:800;padding:7px;border-radius:6px;margin-bottom:8px;letter-spacing:1px;">' +
                 'PURBANI FABRICS LTD.' +
                 '</div>' +
-                '<div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:12px;">' +
-                '<div style="flex:1;min-width:0;background:#f1f5f9;border:2px solid #1e3a8a;border-radius:8px;padding:10px 14px;">' +
-                '<div style="font-size:17px;font-weight:800;color:#1e3a8a;margin-bottom:4px;">ROLL NO</div>' +
-                '<div style="font-size:30px;font-weight:800;color:#000000;font-family:Consolas,monospace;word-break:break-all;line-height:1.2;">' + (row.ROLL || '') + '</div>' +
+                '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">' +
+                '<div id="rowQrBoxLeft" style="flex:none;width:126px;height:126px;display:flex;align-items:center;justify-content:center;border:2px solid #000000;background:#ffffff;"></div>' +
+                '<div style="flex:1;min-height:126px;display:flex;align-items:center;justify-content:center;text-align:center;background:#f1f5f9;border:2px solid #1e3a8a;padding:8px;box-sizing:border-box;">' +
+                '<div style="font-weight:800;color:#000000;line-height:1.5;word-break:break-word;">' +
+                '<div style="font-size:25px;">ROLL NO: ' + (row.ROLL || '') + '</div>' +
+                '<div style="font-size:20px;">QTY: ' + (row.PQTY || '') + ' &nbsp;|&nbsp; PO NO: ' + (row.PO_NUMBER || '') + '</div>' +
                 '</div>' +
-                '<div id="rowQrBox" style="flex:none;width:186px;height:186px;display:flex;align-items:center;justify-content:center;border:2px solid #000000;border-radius:8px;background:#ffffff;"></div>' +
+                '</div>' +
+                '<div id="rowQrBoxRight" style="flex:none;width:126px;height:126px;display:flex;align-items:center;justify-content:center;border:2px solid #000000;background:#ffffff;"></div>' +
                 '</div>' +
                 '<div class="pdf-grid">' + rowsHTML + '</div>' +
                 '</div>';
@@ -198,26 +201,30 @@
             document.body.appendChild(tempDiv);
 
             // Generate QR code - contains ONLY the ROLL number (knitting_production.ROLL)
-            var qrBox = tempDiv.querySelector('#rowQrBox');
-            if (qrBox && typeof QRCode !== 'undefined') {
-                new QRCode(qrBox, {
-                    text: String(row.ROLL || ''),
-                    width: 180,
-                    height: 180,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
+            var qrBoxes = [tempDiv.querySelector('#rowQrBoxLeft'), tempDiv.querySelector('#rowQrBoxRight')];
+            if (typeof QRCode !== 'undefined') {
+                qrBoxes.forEach(function(qrBox) {
+                    if (qrBox) {
+                        new QRCode(qrBox, {
+                            text: String(row.ROLL || ''),
+                            width: 120,
+                            height: 120,
+                            colorDark: "#000000",
+                            colorLight: "#ffffff",
+                            correctLevel: QRCode.CorrectLevel.H
+                        });
+                    }
                 });
             }
 
             var style = document.createElement('style');
             style.textContent = '' +
                 '.pdf-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:2px solid #94a3b8;border-radius:6px;background:#ffffff;}' +
-                '.pdf-item{font-size:16px;line-height:1.35;border-bottom:1px solid #cbd5e1;border-right:1px solid #cbd5e1;padding:5px 9px;word-break:break-word;background:#ffffff;color:#000000;}' +
+                '.pdf-item{font-size:16px;font-weight:700;line-height:1.25;border-bottom:1px solid #cbd5e1;border-right:1px solid #cbd5e1;padding:4px 8px;word-break:break-word;background:#ffffff;color:#000000;}' +
                 '.pdf-item:nth-child(2n){border-right:none;}' +
                 '.pdf-item:nth-last-child(-n+2){border-bottom:none;}' +
-                '.pdf-label{font-weight:800;color:#1e3a8a;}' +
-                '.pdf-value{color:#111111;}' +
+                '.pdf-label{font-weight:800;color:#000000;}' +
+                '.pdf-value{font-weight:700;color:#000000;}' +
                 '</style>';
             document.body.appendChild(style);
 
@@ -230,13 +237,14 @@
                 }).then(function(canvas) {
                     var imgData = canvas.toDataURL('image/png');
                     var jsPDFLib = window.jspdf;
-                    // A4 page - 6cm x 6cm label placed at top-left
+                    // Keep the printed label proportional to its actual content height.
                     var pdf = new jsPDFLib.jsPDF({
                         orientation: 'portrait',
                         unit: 'cm',
                         format: 'a4'
                     });
-                    pdf.addImage(imgData, 'PNG', 0, 0, 6, 6);
+                    // Leave a printer-safe margin on the A4 page.
+                    pdf.addImage(imgData, 'PNG', 1, 1, 6, 6 * canvas.height / canvas.width);
                     pdf.save('Knitting_Production_' + (row.ROLL || 'Roll') + '.pdf');
                     document.body.removeChild(tempDiv);
                     document.body.removeChild(style);
