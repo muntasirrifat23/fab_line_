@@ -43,8 +43,20 @@
             background: transparent;
         }
 
+        .table {
+            font-size: 16px;
+        }
+
         .table thead th {
             vertical-align: middle;
+            font-size: 16px;
+            padding: 14px 10px;
+        }
+
+        .table tbody td {
+            vertical-align: middle;
+            font-size: 16px;
+            padding: 12px 8px;
         }
 
         .small-muted {
@@ -143,52 +155,50 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <script>
-        // ---------- ROW PDF DOWNLOAD (A4 page, 6cm x 6cm label top-left, QR contains ROLL No only) ----------
         function downloadRowPdf(row) {
             var fieldHTML = [
-                ['PO Number', row.PO_NUMBER],
-                ['QTY', row.PQTY],
                 ['Shift', row.SHIFT],
-                ['Date', row.BUDAT],
                 ['UName', row.UNAME],
                 ['SONO', row.SONO],
-                ['Buyer', row.BUYER],
+                ['LOT', row.LOT_NO],
                 ['Style', row.STYLE],
                 ['Color', row.COLOR],
                 ['MCNO', row.MCNO],
                 ['MC Dia', row.MC_DIA],
                 ['Customer', row.CUSTOMER],
-                ['Yarn Type', row.YARN_TYPE],
-                ['Yarn Count', row.YARN_COUNT],
-                ['Fabrics Type', row.FABRICS_TYPE],
-                ['Finish GSM', row.FINISH_GSM],
-                ['Finish Dia', row.FINISH_DIA],
-                ['Open / Tube', row.OPEN_TUBE],
+                ['FGSM', row.FINISH_GSM],
+                ['F. DIA', row.FINISH_DIA],
+                ['O/T', row.OPEN_TUBE],
                 ['SL/VDQ', row.SL_VDQ],
-                ['Gray GSM', row.GRAY_GSM],
-                ['Feeder Plan', row.FEEDER_PLAN],
-                ['Lot No', row.LOT_NO]
+                ['GGSM', row.GRAY_GSM],
+                ['Buyer', row.BUYER, , 'vertical'],
+                ['Y. TYPE', row.YARN_TYPE, 'vertical'],
+                ['Y. COUNT', row.YARN_COUNT, 'vertical'],
+                ['F. TYPE', row.FABRICS_TYPE, 'vertical'],
+                ['F. PLAN', row.FEEDER_PLAN, 'vertical']
             ];
 
             var rowsHTML = fieldHTML.map(function(f) {
                 var val = (f[1] === null || f[1] === undefined) ? '' : f[1];
-                return '<div class="pdf-item"><span class="pdf-label">' + f[0] + ':</span> <span class="pdf-value">' + val + '</span></div>';
+                return '<div class="pdf-item' + (f[2] ? ' pdf-' + f[2] : '') + '"><span class="pdf-label">' + f[0] + ':</span> <span class="pdf-value">' + val + '</span></div>';
             }).join('');
 
             var content = '' +
-                '<div id="rowPdfCard" style="width:700px;padding:10px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#000000;box-sizing:border-box;border:2px solid #94a3b8;font-weight:700;">' +
-                '<div style="background: white;color: #000000;text-align:center;font-size:24px;font-weight:800;padding:7px;border-radius:6px;margin-bottom:8px;letter-spacing:1px;">' +
-                'PURBANI FABRICS LTD.' +
+                '<div id="rowPdfCard" style="width:700px;height:700px;padding:4px;background: white;font-family:Arial,Helvetica,sans-serif;color:#000000;box-sizing:border-box;border:2px solid #000000;font-weight:800;display:flex;flex-direction:column;">' +
+                '<div style="display:flex;gap:4px;align-items:stretch;margin-bottom:4px;">' +
+                '<div style="flex:1;min-height:215px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:#ffffff;border:2px solid #000000;padding:6px;box-sizing:border-box;">' +
+                '<div style="background:white;color:#000000;text-align:center;font-size:27px;font-weight:800;padding:2px 0;margin-bottom:8px;letter-spacing:0;white-space:nowrap;display:inline-block;">' +
+                '<span style="text-decoration:none;">PURBANI FABRICS LTD.</span>' +
+                '<span style="display:block;width:100%;height:3px;background:#000000;margin-top:2px;"></span>' +
                 '</div>' +
-                '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">' +
-                '<div id="rowQrBoxLeft" style="flex:none;width:126px;height:126px;display:flex;align-items:center;justify-content:center;border:2px solid #000000;background:#ffffff;"></div>' +
-                '<div style="flex:1;min-height:126px;display:flex;align-items:center;justify-content:center;text-align:center;background:#f1f5f9;border:2px solid #1e3a8a;padding:8px;box-sizing:border-box;">' +
                 '<div style="font-weight:800;color:#000000;line-height:1.5;word-break:break-word;">' +
-                '<div style="font-size:25px;">ROLL NO: ' + (row.ROLL || '') + '</div>' +
-                '<div style="font-size:20px;">QTY: ' + (row.PQTY || '') + ' &nbsp;|&nbsp; PO NO: ' + (row.PO_NUMBER || '') + '</div>' +
+                '<div style="font-size:27px;">ROLL: ' + (row.ROLL || '') + '</div>' +
+                '<div style="font-size:26px;">QTY: ' + (row.PQTY || '') + '</div>' +
+                '<div style="font-size:24px;">PO NO: ' + (row.PO_NUMBER || '') + '</div>' +
+                '<div style="font-size:23px;">Date: ' + (row.BUDAT || '') + '</div>' +
                 '</div>' +
                 '</div>' +
-                '<div id="rowQrBoxRight" style="flex:none;width:126px;height:126px;display:flex;align-items:center;justify-content:center;border:2px solid #000000;background:#ffffff;"></div>' +
+                '<div id="rowQrBoxRight" style="flex:none;width:215px;height:215px;display:flex;align-items:center;justify-content:center;border:2px solid #000000;background:#ffffff;"></div>' +
                 '</div>' +
                 '<div class="pdf-grid">' + rowsHTML + '</div>' +
                 '</div>';
@@ -201,14 +211,14 @@
             document.body.appendChild(tempDiv);
 
             // Generate QR code - contains ONLY the ROLL number (knitting_production.ROLL)
-            var qrBoxes = [tempDiv.querySelector('#rowQrBoxLeft'), tempDiv.querySelector('#rowQrBoxRight')];
+            var qrBoxes = [tempDiv.querySelector('#rowQrBoxRight')];
             if (typeof QRCode !== 'undefined') {
                 qrBoxes.forEach(function(qrBox) {
                     if (qrBox) {
                         new QRCode(qrBox, {
                             text: String(row.ROLL || ''),
-                            width: 120,
-                            height: 120,
+                            width: 208,
+                            height: 208,
                             colorDark: "#000000",
                             colorLight: "#ffffff",
                             correctLevel: QRCode.CorrectLevel.H
@@ -219,12 +229,10 @@
 
             var style = document.createElement('style');
             style.textContent = '' +
-                '.pdf-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:2px solid #94a3b8;border-radius:6px;background:#ffffff;}' +
-                '.pdf-item{font-size:16px;font-weight:700;line-height:1.25;border-bottom:1px solid #cbd5e1;border-right:1px solid #cbd5e1;padding:4px 8px;word-break:break-word;background:#ffffff;color:#000000;}' +
-                '.pdf-item:nth-child(2n){border-right:none;}' +
-                '.pdf-item:nth-last-child(-n+2){border-bottom:none;}' +
-                '.pdf-label{font-weight:800;color:#000000;}' +
-                '.pdf-value{font-weight:700;color:#000000;}' +
+                '.pdf-grid{display:grid;grid-template-columns:repeat(4,1fr);column-gap:8px;row-gap:2px;background:#ffffff;}' +
+                '.pdf-item{grid-column:span 2;font-size:25px;font-weight:800;line-height:1.15;margin-left:3px; padding:3px 0;word-break:break-word;background:#ffffff;color:#000000;}' +
+                '.pdf-item.pdf-vertical{grid-column:1 / -1;}' +
+                '.pdf-label,.pdf-value{font-weight:800;color:#000000;}' +
                 '</style>';
             document.body.appendChild(style);
 
@@ -244,7 +252,7 @@
                         format: 'a4'
                     });
                     // Leave a printer-safe margin on the A4 page.
-                    pdf.addImage(imgData, 'PNG', 1, 1, 6, 6 * canvas.height / canvas.width);
+                    pdf.addImage(imgData, 'PNG', 1, 1, 6, 6);
                     pdf.save('Knitting_Production_' + (row.ROLL || 'Roll') + '.pdf');
                     document.body.removeChild(tempDiv);
                     document.body.removeChild(style);
