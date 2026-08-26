@@ -57,6 +57,16 @@ if (isset($_POST['knitting_store'])) {
     header('location:knitting_store.php');
     exit();
 }
+if (isset($_POST['knitting_rack_transfer'])) {
+    $_SESSION['lineNo'] = $_POST['option'];
+    header('location:knitting_rack_transfer.php');
+    exit();
+}
+if (isset($_POST['knitting_roll_split'])) {
+    $_SESSION['lineNo'] = $_POST['option'];
+    header('location:knitting_roll_split.php');
+    exit();
+}
 if (isset($_POST['dyeing_batch_card'])) {
     $_SESSION['lineNo'] = $_POST['option'];
     header('location:dyeing_batch_card.php');
@@ -487,6 +497,14 @@ mysqli_close($db);
 
                     <button class="w3-button w3-teal" name="knitting_store" id="knitting_store">
                         <i class="fas fa-warehouse"></i> Knitting Store
+                    </button>
+                    
+                    <button class="w3-button w3-teal" name="knitting_rack_transfer" id="knitting_rack_transfer">
+                        <i class="fas fa-warehouse"></i> Knitting Rack Transfer
+                    </button>
+
+                    <button class="w3-button w3-teal" name="knitting_roll_split" id="knitting_roll_split">
+                        <i class="fas fa-warehouse"></i> Knitting Roll Split
                     </button>
 
                     <!-- Dyeing Buttons -->
