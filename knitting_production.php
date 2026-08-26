@@ -80,6 +80,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="js/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -834,11 +836,19 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
         visibility: visible !important;
         position: absolute;
         left: 0; top: 0;
-        width: 100%;
+        width: 6cm;
+        height: 6cm;
+        overflow: hidden;
         background: #ffffff;
       }
       #knitCardPrintArea * { visibility: visible !important; }
-      @page { size: A4; margin: 12mm; }
+      /* rendered label image -> exact 6cm x 6cm at top-left of A4 */
+      #knitCardPrintArea img {
+        width: 6cm !important;
+        height: 6cm !important;
+        display: block;
+      }
+      @page { size: A4 portrait; margin: 0; }
     }
   </style>
   <div id="knitCardPrintArea"></div>
@@ -1618,81 +1628,153 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
       }
 
       function printKnitCard() {
-        const info = scannedInfo || {};
         const roll = window.__kpSavedRoll || '';
+        const info = scannedInfo || {};
         const pqty = window.__kpSavedQty || '';
         const opId = operatorInfo && operatorInfo.OPERATOR_ID ? operatorInfo.OPERATOR_ID : '';
         const opName = operatorInfo && operatorInfo.OPERATOR_NAME ? operatorInfo.OPERATOR_NAME : '';
-        const today = new Date().toISOString().slice(0, 10);
 
-        const fields = [
-          ['PO NUMBER', info.BOOKING],
-          ['SONO', info.SONO],
-          ['BUYER', info.BUYER],
-          ['STYLE', info.STYLE],
-          ['COLOR', info.COLOR],
-          ['CUSTOMER', info.CUSTOMER],
-          ['MACHINE NO', info.MCNO],
-          ['MACHINE DIA', info.MC_DIA],
-          ['FABRICS TYPE', info.FABRICS_TYPE],
-          ['YARN TYPE', info.YARN_TYPE],
-          ['YARN COUNT', info.YARN_COUNT],
-          ['FINISH GSM', info.FINISH_GSM],
-          ['FINISH DIA', info.FINISH_DIA],
-          ['OPEN / TUBE', info.OPEN_TUBE],
-          ['GRAY GSM', info.GGSM],
-          ['LOT NO', info.LOT_NO],
-          ['SL / VDQ', info.SL_VDQ],
-          ['FEEDER PLAN', info.FEEDER_PLAN]
-        ];
+        // Fallback values if saved row cannot be fetched
+        var fallbackRow = {
+          ROLL: roll,
+          PO_NUMBER: info.BOOKING,
+          PQTY: pqty,
+          SHIFT: info.SHIFT,
+          BUDAT: new Date().toISOString().slice(0, 10),
+          UNAME: (opId ? opId : '') + (opName ? ' - ' + opName : ''),
+          SONO: info.SONO,
+          BUYER: info.BUYER,
+          STYLE: info.STYLE,
+          COLOR: info.COLOR,
+          MCNO: info.MCNO,
+          MC_DIA: info.MC_DIA,
+          CUSTOMER: info.CUSTOMER,
+          YARN_TYPE: info.YARN_TYPE,
+          YARN_COUNT: info.YARN_COUNT,
+          FABRICS_TYPE: info.FABRICS_TYPE,
+          FINISH_GSM: info.FINISH_GSM,
+          FINISH_DIA: info.FINISH_DIA,
+          OPEN_TUBE: info.OPEN_TUBE,
+          SL_VDQ: info.SL_VDQ,
+          GRAY_GSM: info.GGSM,
+          FEEDER_PLAN: info.FEEDER_PLAN,
+          LOT_NO: info.LOT_NO
+        };
 
-        const fieldHTML = fields.map(function(f) {
-          return '<div class="kc-field"><span class="kc-label">' + f[0] + ' :</span><span class="kc-value">' + escHtml(f[1] || '-') + '</span></div>';
+        // Fetch the exact saved production row (same source as Production Report page)
+        fetch('ajaxKnittingProduction_Report.php?search=' + encodeURIComponent(roll))
+          .then(function(res) { return res.json(); })
+          .then(function(resp) {
+            var row = (resp && resp.success && resp.data && resp.data.length > 0) ? resp.data[0] : fallbackRow;
+            renderLabelAndPrint(row);
+          })
+          .catch(function() {
+            renderLabelAndPrint(fallbackRow);
+          });
+      }
+
+      function renderLabelAndPrint(row) {
+        var roll = row.ROLL || window.__kpSavedRoll || '';
+
+        var fieldHTML = [
+            ['Shift', row.SHIFT],
+            ['UName', row.UNAME],
+            ['SONO', row.SONO],
+          ['LOT', row.LOT_NO],
+          ['Style', row.STYLE],
+          ['Color', row.COLOR],
+          ['MCNO', row.MCNO],
+          ['MC Dia', row.MC_DIA],
+          ['Customer', row.CUSTOMER],
+          ['FGSM', row.FINISH_GSM],
+          ['F. DIA', row.FINISH_DIA],
+          ['O/T', row.OPEN_TUBE],
+          ['SL/VDQ', row.SL_VDQ],
+          ['GGSM', row.GRAY_GSM],
+            ['Buyer', row.BUYER],
+          ['Y. TYPE', row.YARN_TYPE, , 'vertical'],
+          ['Y. COUNT', row.YARN_COUNT, 'vertical'],
+          ['F. TYPE', row.FABRICS_TYPE, 'vertical'],
+          ['F. PLAN', row.FEEDER_PLAN, 'vertical']
+        ].map(function(f) {
+            var val = (f[1] === null || f[1] === undefined) ? '' : f[1];
+          return '<div class="pdf-item' + (f[2] ? ' pdf-' + f[2] : '') + '"><span class="pdf-label">' + f[0] + ':</span> <span class="pdf-value">' + escHtml(val) + '</span></div>';
         }).join('');
 
-        const area = document.getElementById('knitCardPrintArea');
+        var content = '' +
+          '<div id="rowPdfCard" style="width:700px;height:700px;padding:4px;background: white;font-family:Arial,Helvetica,sans-serif;color:#000000;box-sizing:border-box;border:2px solid #000000;font-weight:800;display:flex;flex-direction:column;">' +
+          '<div style="display:flex;gap:4px;align-items:stretch;margin-bottom:4px;">' +
+          '<div style="flex:1;min-height:215px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:#ffffff;border:2px solid #000000;padding:6px;box-sizing:border-box;">' +
+          '<div style="background:white;color:#000000;text-align:center;font-size:27px;font-weight:800;padding:2px 0;margin-bottom:8px;letter-spacing:0;white-space:nowrap;display:inline-block;">' +
+          '<span style="text-decoration:none;">PURBANI FABRICS LTD.</span>' +
+          '<span style="display:block;width:100%;height:3px;background:#000000;margin-top:2px;"></span>' +
+          '</div>' +
+          '<div style="font-weight:800;color:#000000;line-height:1.5;word-break:break-word;">' +
+          '<div style="font-size:27px;">ROLL: ' + escHtml(roll) + '</div>' +
+          '<div style="font-size:26px;">QTY: ' + escHtml(row.PQTY || '') + '</div>' +
+          '<div style="font-size:24px;">PO NO: ' + escHtml(row.PO_NUMBER || '') + '</div>' +
+          '<div style="font-size:23px;">Date: ' + escHtml(row.BUDAT || '') + '</div>' +
+          '</div>' +
+          '</div>' +
+          '<div id="rowQrBoxRight" style="flex:none;width:215px;height:215px;display:flex;align-items:center;justify-content:center;border:2px solid #000000;background:#ffffff;"></div>' +
+          '</div>' +
+            '<div class="pdf-grid">' + fieldHTML + '</div>' +
+            '</div>';
 
-        area.innerHTML =
-          '<div class="kc-card">' +
-            '<div class="kc-head">' +
-              '<h2>Knit Card</h2>' +
-              '<div class="kc-sub">Date: ' + today + ' &nbsp;|&nbsp; Shift: ' + escHtml(info.SHIFT || '-') + '</div>' +
-            '</div>' +
-            '<div class="kc-body">' +
-              '<div class="kc-left">' +
-                '<div class="kc-qr-box" id="kcQrBox"></div>' +
-                '<div class="kc-qr-roll">ROLL: ' + escHtml(roll) + '</div>' +
-              '</div>' +
-              '<div class="kc-fields">' +
-                '<div class="kc-field kc-highlight"><span class="kc-label">ROLL :</span><span class="kc-value">' + escHtml(roll || '-') + '</span></div>' +
-                '<div class="kc-field kc-highlight"><span class="kc-label">PRODUCTION QTY :</span><span class="kc-value">' + escHtml(pqty || '-') + ' KG</span></div>' +
-                fieldHTML +
-                '<div class="kc-field"><span class="kc-label">KNIT MATERIAL CODE :</span><span class="kc-value">' + escHtml(info.KNIT_MATERIAL_CODE || '-') + '</span></div>' +
-                '<div class="kc-field"><span class="kc-label">OPERATOR :</span><span class="kc-value">' + escHtml(((opId ? opId : '') + (opName ? ' - ' + opName : '')) || '-') + '</span></div>' +
-              '</div>' +
-            '</div>' +
-          '</div>';
+        var tempDiv = document.createElement('div');
+        tempDiv.innerHTML = content;
+        tempDiv.style.position = 'absolute';
+        tempDiv.style.left = '-9999px';
+        tempDiv.style.top = '0';
+        document.body.appendChild(tempDiv);
 
-        const qrBox = document.getElementById('kcQrBox');
-        qrBox.innerHTML = '';
-
-        if (roll && typeof QRCode !== 'undefined') {
+        var qrBox = tempDiv.querySelector('#rowQrBoxRight');
+        if (qrBox && typeof QRCode !== 'undefined') {
           new QRCode(qrBox, {
             text: String(roll),
-            width: 140,
-            height: 140,
-            colorDark: '#000000',
-            colorLight: '#ffffff',
-            correctLevel: QRCode.CorrectLevel.L
+            width: 208,
+            height: 208,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
           });
-        } else {
-          qrBox.textContent = roll || 'No Roll';
         }
 
+        var style = document.createElement('style');
+        style.textContent = '' +
+          '.pdf-grid{display:grid;grid-template-columns:repeat(4,1fr);column-gap:8px;row-gap:2px;background:#ffffff;}' +
+          '.pdf-item{grid-column:span 2;font-size:25px;font-weight:800;line-height:1.15;margin-left:3px; padding:3px 0;word-break:break-word;background:#ffffff;color:#000000;}' +
+          '.pdf-item.pdf-vertical{grid-column:1 / -1;}' +
+          '.pdf-label,.pdf-value{font-weight:800;color:#000000;}';
+        document.body.appendChild(style);
+
+        // Render to canvas first -> guarantees identical look with the report PDF (colors included)
         setTimeout(function() {
-          window.print();
-          window.location.reload();
-        }, 500);
+          html2canvas(tempDiv, {
+            scale: 3,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            logging: false
+          }).then(function(canvas) {
+            var imgData = canvas.toDataURL('image/png');
+            document.body.removeChild(tempDiv);
+            document.body.removeChild(style);
+
+            var area = document.getElementById('knitCardPrintArea');
+            area.innerHTML = '<img src="' + imgData + '" alt="Knit Card" />';
+
+            setTimeout(function() {
+              window.print();
+              setTimeout(function() {
+                window.location.reload();
+              }, 300);
+            }, 200);
+          }).catch(function(err) {
+            console.error('Render error:', err);
+            alert('Error preparing print. Please try again.');
+            document.body.removeChild(tempDiv);
+          });
+        }, 400);
       }
 
       function startScanner() {
