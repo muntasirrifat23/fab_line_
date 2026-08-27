@@ -72,8 +72,9 @@ if ($is_edit) {
         $res = $stmt->get_result();
         if ($res && $res->num_rows == 1) {
             $row = $res->fetch_assoc();
-            $main_tid = $row['MAIN_TID'] ?? '';
-            $sub_tid = $row['SUB_TID'] ?? '';
+            $program_no = $row['PROGRAM_NO'] ?? '';
+            $main_tid = $program_no;
+            $sub_tid = $program_no;
             $po_number = $row['PO_NUMBER'] ?? '';
             $sono = $row['SONO'] ?? '';
             $style = $row['STYLE'] ?? '';
@@ -117,24 +118,18 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
     $knit_material_code = trim($_POST['KNIT_MATERIAL_CODE'] ?? '');
     $operator_id = trim($_POST['OPERATOR_ID'] ?? '');
     $mcno_id = intval($_POST['MCNO_ID'] ?? 0);
-    $main_tid = trim($_POST['MAIN_TID'] ?? '');
-    $sub_tid = trim($_POST['SUB_TID'] ?? '');
+    $program_no = trim($_POST['PROGRAM_NO'] ?? '');
 
-    // Auto-generate MAIN_TID & SUB_TID if empty (follow save_knitting_program.php ranges)
-    if (empty($main_tid)) {
-        $maxRow = mysqli_fetch_assoc(mysqli_query($db, "SELECT COALESCE(MAX(MAIN_TID), 1000000000) AS mx FROM knitting_program"));
-        $main_tid = intval($maxRow['mx']) + 1;
-        if ($main_tid < 1000000001) {
-            $main_tid = 1000000001;
+    // Auto-generate PROGRAM_NO if empty
+    if (empty($program_no)) {
+        $maxRow = mysqli_fetch_assoc(mysqli_query($db, "SELECT COALESCE(MAX(PROGRAM_NO), 1000000000) AS mx FROM knitting_program"));
+        $program_no = intval($maxRow['mx']) + 1;
+        if ($program_no < 1000000001) {
+            $program_no = 1000000001;
         }
     }
-    if (empty($sub_tid)) {
-        $maxRow = mysqli_fetch_assoc(mysqli_query($db, "SELECT COALESCE(MAX(SUB_TID), 2000000000) AS mx FROM knitting_program"));
-        $sub_tid = intval($maxRow['mx']) + 1;
-        if ($sub_tid < 2000000001) {
-            $sub_tid = 2000000001;
-        }
-    }
+    $main_tid = $program_no;
+    $sub_tid = $program_no;
 
     // Validation
     if (empty($po_number)) {
@@ -147,15 +142,15 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
     if (empty($errors)) {
         if ($is_edit) {
             $sql = "UPDATE knitting_program SET 
-                MAIN_TID=?, SUB_TID=?, PO_NUMBER=?, SONO=?, STYLE=?, BUYER=?, CUSTOMER=?,
+                PROGRAM_NO=?, PO_NUMBER=?, SONO=?, STYLE=?, BUYER=?, CUSTOMER=?,
                 KNIT_M_DESCRIPTION=?, QTY=?, SHIFT=?, YTYPE=?, YCOUNT=?,
                 FTYPE=?, FGSM=?, FDIA=?, O_T=?, LOT=?, KNIT_MATERIAL_CODE=?, UNAME=?
                 WHERE KPTID=?";
             $stmt = $db->prepare($sql);
             if ($stmt) {
                 $stmt->bind_param(
-                    "iisssssssssssssssssi",
-                    $main_tid, $sub_tid, $po_number, $sono, $style, $buyer, $customer,
+                    "isssssssssssssssssi",
+                    $program_no, $po_number, $sono, $style, $buyer, $customer,
                     $knit_m_description, $qty, $shift, $yarn_type, $yarn_count,
                     $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code, $uname, $edit_id
                 );
@@ -170,15 +165,15 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
             }
         } else {
             $sql = "INSERT INTO knitting_program (
-                MAIN_TID, SUB_TID, PO_NUMBER, SONO, STYLE, BUYER, CUSTOMER,
+                PROGRAM_NO, PO_NUMBER, SONO, STYLE, BUYER, CUSTOMER,
                 KNIT_M_DESCRIPTION, QTY, SHIFT, YTYPE, YCOUNT,
                 FTYPE, FGSM, FDIA, O_T, LOT, KNIT_MATERIAL_CODE, UNAME
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $db->prepare($sql);
             if ($stmt) {
                 $stmt->bind_param(
-                    "iisssssssssssssssss",
-                    $main_tid, $sub_tid, $po_number, $sono, $style, $buyer, $customer,
+                    "isssssssssssssssss",
+                    $program_no, $po_number, $sono, $style, $buyer, $customer,
                     $knit_m_description, $qty, $shift, $yarn_type, $yarn_count,
                     $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code, $uname
                 );
@@ -714,10 +709,10 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                         <input type="number" step="0.01" min="0.01" name="QTY" class="form-control fw-bold text-success" placeholder="0.00" value="<?php echo htmlspecialchars($qty); ?>" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">MAIN_TID / SUB_TID <small class="text-muted">(Auto-Generated)</small></label>
+                        <label class="form-label">Program No <small class="text-muted">(Auto-Generated)</small></label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-lock"></i></span>
-                            <input type="text" class="form-control bg-light border-start-0" value="<?php echo htmlspecialchars(($main_tid ? $main_tid . ' / ' . $sub_tid : 'Auto-generated on save')); ?>" readonly>
+                            <input type="text" name="PROGRAM_NO" class="form-control bg-light border-start-0" value="<?php echo htmlspecialchars(($program_no ?: 'Auto-generated on save')); ?>" readonly>
                         </div>
                     </div>
                 </div>

@@ -53,6 +53,9 @@ while ($row = mysqli_fetch_assoc($result)) {
     if (isset($row['ROLL'])) {
         $row['ROLL'] = trim($row['ROLL']);
     }
+    $row['MAIN_QTY']   = $row['OQTY'] ?? '';
+    $row['REJECT_QTY'] = $row['RQTY'] ?? '';
+    $row['UPDATE_QTY'] = $row['UQTY'] ?? '';
     $data[] = $row;
 }
 

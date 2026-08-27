@@ -32,6 +32,10 @@ if ($result) {
         if (isset($row['ROLL'])) {
             $row['ROLL'] = trim($row['ROLL']);
         }
+        // Map database columns to report fields
+        $row['MAIN_QTY']   = $row['OQTY'] ?? '';
+        $row['REJECT_QTY'] = $row['RQTY'] ?? '';
+        $row['UPDATE_QTY'] = $row['UQTY'] ?? '';
         $data[] = $row;
     }
     echo json_encode(['success' => true, 'data' => $data]);

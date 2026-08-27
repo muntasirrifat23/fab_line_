@@ -41,8 +41,7 @@ $knit_material_code = trim($data['KNIT_MATERIAL_CODE'] ?? '');
 $color              = trim($data['COLOR'] ?? '');
 $sl_vdq             = trim($data['SL_VDQ'] ?? '');
 $operator_id        = trim($data['OPERATOR_ID'] ?? '');
-$main_tid           = trim($data['MAIN_TID'] ?? '');
-$sub_tid            = trim($data['SUB_TID'] ?? '');
+$program_no         = trim($data['PROGRAM_NO'] ?? ($data['MAIN_TID'] ?? ''));
 
 // Auto-detect SHIFT based on current server time
 $shiftHour = (int)date('G');
@@ -69,27 +68,19 @@ if (!empty($errors)) {
     exit();
 }
 
-// Generate MAIN_TID and SUB_TID for new entries if missing
-if (empty($main_tid)) {
-    $maxRow = mysqli_fetch_assoc(mysqli_query($db, 'SELECT MAX(MAIN_TID) AS max_main FROM knitting_program'));
-    $main_tid = intval($maxRow['max_main']) + 1;
-    if ($main_tid < 1000000001) {
-        $main_tid = 1000000001;
-    }
-}
-if (empty($sub_tid)) {
-    $maxRow = mysqli_fetch_assoc(mysqli_query($db, 'SELECT MAX(SUB_TID) AS max_sub FROM knitting_program'));
-    $sub_tid = intval($maxRow['max_sub']) + 1;
-    if ($sub_tid < 2000000001) {
-        $sub_tid = 2000000001;
+// Generate PROGRAM_NO for new entries if missing
+if (empty($program_no)) {
+    $maxRow = mysqli_fetch_assoc(mysqli_query($db, 'SELECT COALESCE(MAX(PROGRAM_NO), 1000000000) AS max_prog FROM knitting_program'));
+    $program_no = intval($maxRow['max_prog']) + 1;
+    if ($program_no < 1000000001) {
+        $program_no = 1000000001;
     }
 }
 
 try {
     if ($is_edit) {
         $sql = "UPDATE knitting_program SET 
-            MAIN_TID = ?, 
-            SUB_TID = ?, 
+            PROGRAM_NO = ?, 
             PO_NUMBER = ?, 
             SONO = ?, 
             STYLE = ?, 
@@ -110,8 +101,8 @@ try {
 
         $stmt = $db->prepare($sql);
         $stmt->bind_param(
-            "sssssssssdssssssssi",
-            $main_tid, $sub_tid, $booking, $sono, $style, $buyer, $customer,
+            "isssssssdssssssssi",
+            $program_no, $booking, $sono, $style, $buyer, $customer,
             $knit_m_description, $qty, $shift, $yarn_type, $yarn_count,
             $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code, $kptid
         );
@@ -121,8 +112,9 @@ try {
                 'success' => true,
                 'message' => 'Knitting program updated successfully!',
                 'KPTID' => $kptid,
-                'MAIN_TID' => $main_tid,
-                'SUB_TID' => $sub_tid
+                'PROGRAM_NO' => $program_no,
+                'MAIN_TID' => $program_no,
+                'SUB_TID' => $program_no
             ]);
         } else {
             http_response_code(500);
@@ -131,15 +123,15 @@ try {
         $stmt->close();
     } else {
         $sql = "INSERT INTO knitting_program (
-            MAIN_TID, SUB_TID, PO_NUMBER, SONO, STYLE, BUYER, CUSTOMER, 
+            PROGRAM_NO, PO_NUMBER, SONO, STYLE, BUYER, CUSTOMER, 
             KNIT_M_DESCRIPTION, QTY, SHIFT, YTYPE, YCOUNT, 
             FTYPE, FGSM, FDIA, O_T, LOT, KNIT_MATERIAL_CODE
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $db->prepare($sql);
         $stmt->bind_param(
-            "sssssssssdssssssss",
-            $main_tid, $sub_tid, $booking, $sono, $style, $buyer, $customer,
+            "isssssssdssssssss",
+            $program_no, $booking, $sono, $style, $buyer, $customer,
             $knit_m_description, $qty, $shift, $yarn_type, $yarn_count,
             $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code
         );
@@ -150,8 +142,9 @@ try {
                 'success' => true,
                 'message' => 'New Knitting Program inserted successfully!',
                 'KPTID' => $inserted_id,
-                'MAIN_TID' => $main_tid,
-                'SUB_TID' => $sub_tid
+                'PROGRAM_NO' => $program_no,
+                'MAIN_TID' => $program_no,
+                'SUB_TID' => $program_no
             ]);
         } else {
             http_response_code(500);

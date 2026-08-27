@@ -388,6 +388,7 @@ $end_entry   = min($offset + $limit, $total_records);
             padding: 16px;
             border: none;
             border-bottom: 2px solid #1e293b;
+            text-align: center;
         }
         .custom-table thead th:first-child { border-top-left-radius: 16px; border-bottom-left-radius: 16px; }
         .custom-table thead th:last-child  { border-top-right-radius: 16px; border-bottom-right-radius: 16px; }
@@ -399,6 +400,7 @@ $end_entry   = min($offset + $limit, $total_records);
             border-bottom: 1px solid #f1f5f9; 
             color: #334155;
             font-weight: 500;
+            text-align: center;
         }
         .custom-table tbody tr {
             transition: all 0.2s ease;
@@ -820,6 +822,7 @@ $end_entry   = min($offset + $limit, $total_records);
                             <th class="text-nowrap">M/C</th>
                             <th class="text-nowrap">Feeder Plan</th>
                             <th class="text-nowrap">Gray GSM</th>
+                            <th class="text-nowrap">Qty (KG)</th>
                             <th class="text-nowrap">Card Status</th>
                             <th class="text-center text-nowrap">Actions</th>
                         </tr>
@@ -829,7 +832,7 @@ $end_entry   = min($offset + $limit, $total_records);
                             <?php foreach ($rows_array as $row):
                                 $p_id          = intval($row['KPTID']);
                                 $p_date        = !empty($row['CREATED_DATE']) ? date('Y-m-d', strtotime($row['CREATED_DATE'])) : '';
-                                $p_prog        = !empty($row['SUB_TID']) ? $row['SUB_TID'] : ($row['KPTID'] ?? '');
+                                $p_prog        = !empty($row['PROGRAM_NO']) ? $row['PROGRAM_NO'] : (!empty($row['SUB_TID']) ? $row['SUB_TID'] : ($row['KPTID'] ?? ''));
                                 $p_shift       = $row['SHIFT']       ?? '';
                                 $p_buyer       = $row['BUYER']       ?? '';
                                 $p_style       = $row['STYLE']       ?? '';
@@ -860,17 +863,24 @@ $end_entry   = min($offset + $limit, $total_records);
                                     <td class="text-nowrap"><?php echo htmlspecialchars($p_feeder_plan ?: 'N/A'); ?></td>
                                     <td class="text-nowrap"><?php echo htmlspecialchars($p_ggsm ?: 'N/A'); ?></td>
                                     <td class="text-nowrap">
-                                        <?php 
+                                        <?php
                                             $prog_total_qty = floatval($row['QTY'] ?? 0);
                                             $prog_carded    = floatval($row['total_carded_qty'] ?? 0);
                                             $prog_rem       = max(0.00, $prog_total_qty - $prog_carded);
                                         ?>
+                                        <div style="line-height:1.6; font-size:12.5px;">
+                                            <div><span style="color:#64748b; font-weight:600;">Req:</span> <strong><?php echo number_format($prog_total_qty, 0); ?> KG</strong></div>
+                                            <div><span style="color:#059669; font-weight:600;">Carded:</span> <strong style="color:#059669;"><?php echo number_format($prog_carded, 0); ?> KG</strong></div>
+                                            <div><span style="color:#d97706; font-weight:600;">Rem:</span> <strong style="color:#d97706;"><?php echo number_format($prog_rem, 0); ?> KG</strong></div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center text-nowrap">
                                         <?php if ($prog_carded <= 0): ?>
-                                            <span class="badge-status badge-pending"><i class="fa-solid fa-clock"></i> Pending (<?php echo number_format($prog_total_qty, 0); ?> KG)</span>
+                                            <span class="badge-status badge-pending"><i class="fa-solid fa-clock"></i> Pending</span>
                                         <?php elseif ($prog_rem > 0.001): ?>
-                                            <span class="badge-status" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd;"><i class="fa-solid fa-spinner"></i> Partial (Rem: <?php echo number_format($prog_rem, 0); ?> KG)</span>
+                                            <span class="badge-status" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd;"><i class="fa-solid fa-spinner"></i> Partial</span>
                                         <?php else: ?>
-                                            <span class="badge-status badge-generated"><i class="fa-solid fa-circle-check"></i> Completed (<?php echo number_format($prog_carded, 0); ?> KG)</span>
+                                            <span class="badge-status badge-generated"><i class="fa-solid fa-circle-check"></i> Completed</span>
                                         <?php endif; ?>
                                     </td>
                                     <td class="text-center text-nowrap">
@@ -908,7 +918,7 @@ $end_entry   = min($offset + $limit, $total_records);
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="14" class="text-center py-5 text-muted">
+                                <td colspan="15" class="text-center py-5 text-muted">
                                     <i class="fa-solid fa-folder-open fa-3x mb-3 text-secondary d-block"></i>
                                     <h6 class="fw-bold">No Knitting Programs Found</h6>
                                     <p class="small mb-0">Try adjusting your filters or click "New Program" to add an entry.</p>

@@ -17,11 +17,7 @@ if (!$db) {
     exit();
 }
 
-$search = isset($_GET['program_no']) && trim($_GET['program_no']) !== ''
-        ? trim($_GET['program_no'])
-        : (isset($_GET['booking']) && trim($_GET['booking']) !== ''
-            ? trim($_GET['booking'])
-            : (isset($_POST['program_no']) ? trim($_POST['program_no']) : ''));
+$search = trim($_GET['program_no'] ?? ($_GET['booking'] ?? ($_GET['search'] ?? ($_GET['po_number'] ?? ($_POST['program_no'] ?? '')))));
 
 if (isset($_GET['action']) && $_GET['action'] === 'finish_gsm_list') {
     $fgRes = mysqli_query($db, "SELECT DISTINCT TRIM(FINISH_GSM) AS FG

@@ -41,7 +41,7 @@ if ($booking === '') {
 }
 
 // Check if this booking already exists
-$checkSql = "SELECT MAIN_TID, SUB_TID FROM knitting_program WHERE PO_NUMBER = ?";
+$checkSql = "SELECT KPTID, PROGRAM_NO FROM knitting_program WHERE PO_NUMBER = ?";
 $checkStmt = mysqli_prepare($db, $checkSql);
 mysqli_stmt_bind_param($checkStmt, 's', $booking);
 mysqli_stmt_execute($checkStmt);
@@ -54,7 +54,7 @@ if (mysqli_num_rows($checkResult) > 0) {
     
     // Mapping of request fields to database columns
     $updateableColumns = [
-        'sub_tid' => 'SUB_TID',
+        'program_no' => 'PROGRAM_NO',
         'buyer' => 'BUYER',
         'sono' => 'SONO',
         'style' => 'STYLE',
@@ -198,6 +198,16 @@ if (isset($schemaColumns['KNIT_MATERIAL_CODE']) && !in_array('KNIT_MATERIAL_CODE
     $insertFields[] = 'KNIT_MATERIAL_CODE';
     $insertValues[] = '';
 }
+if (isset($schemaColumns['PROGRAM_NO']) && !in_array('PROGRAM_NO', $insertFields, true)) {
+    $tidRow = mysqli_fetch_assoc(mysqli_query($db, 'SELECT COALESCE(MAX(PROGRAM_NO), 1000000000) AS max_prog FROM knitting_program'));
+    $progNo = intval($tidRow['max_prog']) + 1;
+    if ($progNo < 1000000001) {
+        $progNo = 1000000001;
+    }
+    $insertFields[] = 'PROGRAM_NO';
+    $insertValues[] = (string)$progNo;
+}
+
 if (isset($schemaColumns['MAIN_TID']) && !in_array('MAIN_TID', $insertFields, true)) {
     $tidRow = mysqli_fetch_assoc(mysqli_query($db, 'SELECT COALESCE(MAX(MAIN_TID), 1000000000) AS max_main FROM knitting_program'));
     $mainTid = intval($tidRow['max_main']) + 1;

@@ -27,10 +27,10 @@ try {
             kc.GGSM, kc.SL, kc.O_T, kc.BUYER, kc.CUSTOMER, kc.PO_NUMBER, 
             kc.SONO, kc.STYLE, kc.FTYPE, kc.YTYPE, kc.YCOUNT, kc.LOT, 
             kc.KNIT_M_DESCRIPTION, kc.QTY, kc.UNAME,
-            kp.MAIN_TID, kp.SUB_TID
+            kp.PROGRAM_NO
         FROM knit_card kc
         LEFT JOIN knitting_program kp ON kc.KPTID = kp.KPTID
-        WHERE kc.KCTID = ? OR kc.ROLL = ? OR kc.BUYER LIKE ? OR kc.STYLE LIKE ? OR kc.SONO LIKE ? OR kc.PO_NUMBER LIKE ?
+        WHERE kc.KCTID = ? OR kc.KNITCARD = ? OR kc.BUYER LIKE ? OR kc.STYLE LIKE ? OR kc.SONO LIKE ? OR kc.PO_NUMBER LIKE ?
         ORDER BY kc.KCTID DESC LIMIT 1
     ";
 
@@ -67,6 +67,8 @@ try {
         echo json_encode([
             'success'            => true,
             'card_id'            => $kcid,
+            'knitcard'           => $row['KNITCARD'] ?? '',
+            'program_no'         => $row['PROGRAM_NO'] ?? '',
             'kptid'              => intval($row['KPTID']),
             'buyer'              => $row['BUYER'] ?: 'N/A',
             'style'              => $row['STYLE'] ?: 'N/A',
