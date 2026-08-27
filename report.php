@@ -231,7 +231,21 @@ $user = strtolower($_SESSION['username'] ?? '');
           </div>
         </div>
 
-        <!-- 3. Knit Card Report -->
+        <!-- 3. Knitting Program Status -->
+        <div class="col-md-4 mb-3 d-flex">
+          <div class="report-card w-100 card-bg">
+            <form method="POST" action="knitting_program_status.php" class="h-100 w-100">
+              <button type="submit" class="btn btn-report">
+                <i class="fa-solid fa-clipboard-list card-btn"></i>
+                <span class="floor-text">
+                  <span>Knitting Program Status</span>
+                </span>
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- 4. Knit Card Report -->
         <div class="col-md-4 mb-3 d-flex">
           <div class="report-card w-100 card-bg">
             <form method="POST" action="knit_card_report.php" class="h-100 w-100">
@@ -245,7 +259,7 @@ $user = strtolower($_SESSION['username'] ?? '');
           </div>
         </div>
 
-        <!-- 4. Knitting production Report -->
+        <!-- 5. Knitting production Report -->
         <div class="col-md-4 mb-3 d-flex">
           <div class="report-card w-100 card-bg">
             <form method="POST" action="knitting_production_report.php" class="h-100 w-100">
@@ -259,7 +273,7 @@ $user = strtolower($_SESSION['username'] ?? '');
           </div>
         </div>
 
-        <!-- 5. Knitting Inspection Report -->
+        <!-- 6. Knitting Inspection Report -->
         <div class="col-md-4 mb-3 d-flex">
           <div class="report-card w-100 card-bg">
             <form method="POST" action="knitting_inspection_report.php" class="h-100 w-100">
@@ -273,7 +287,7 @@ $user = strtolower($_SESSION['username'] ?? '');
           </div>
         </div>
 
-        <!-- 6. Knitting Store Report -->
+        <!-- 7. Knitting Store Report -->
         <div class="col-md-4 mb-3 d-flex">
           <div class="report-card w-100 card-bg">
             <form method="POST" action="knitting_store_report.php" class="h-100 w-100">
@@ -288,7 +302,7 @@ $user = strtolower($_SESSION['username'] ?? '');
         </div>
 
         <!-- Dyeing Part Start -->
-        <!-- 7. Dyeing Batch Card Report -->
+        <!-- 8. Dyeing Batch Card Report -->
         <div class="col-md-4 mb-3 d-flex">
           <div class="report-card w-100 card-bg">
             <form method="POST" action="dyeing_batch_card_report.php" class="h-100 w-100">
@@ -302,24 +316,6 @@ $user = strtolower($_SESSION['username'] ?? '');
           </div>
         </div>
 
-
-        <!-- TESTING -->
-        <!-- 001. Knitting Test Inspection Report -->
-        <!-- <div class="col-md-4 mb-3 d-flex">
-          <div class="report-card w-100 card-bg">
-            <form method="POST" action="knitting_inspection_report_test.php" class="h-100 w-100">
-              <button type="submit" class="btn btn-report">
-                <i class="fa-solid fa-vial card-btn"></i>
-                <span class="floor-text">
-                  <span>K Test Inspection</span>
-                </span>
-              </button>
-            </form>
-          </div>
-        </div> -->
-
-
-    
 
       </div>
 

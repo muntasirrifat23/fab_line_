@@ -134,8 +134,7 @@
                             <th>GRAY GSM</th>
                             <th>FEEDER PLAN</th>
                             <th>LOT NO</th>
-                            <th>KNIT MATERIAL CODE</th>
-                            <th>KNIT M DES</th>
+
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -160,9 +159,9 @@
                 ['Shift', row.SHIFT],
                 ['UName', row.UNAME],
                 ['SONO', row.SONO],
+                ['Buyer', row.BUYER],
                 ['LOT', row.LOT_NO],
                 ['Style', row.STYLE],
-                ['Color', row.COLOR],
                 ['MCNO', row.MCNO],
                 ['MC Dia', row.MC_DIA],
                 ['Customer', row.CUSTOMER],
@@ -171,7 +170,7 @@
                 ['O/T', row.OPEN_TUBE],
                 ['SL/VDQ', row.SL_VDQ],
                 ['GGSM', row.GRAY_GSM],
-                ['Buyer', row.BUYER, , 'vertical'],
+                ['Color', row.COLOR, 'vertical'],
                 ['Y. TYPE', row.YARN_TYPE, 'vertical'],
                 ['Y. COUNT', row.YARN_COUNT, 'vertical'],
                 ['F. TYPE', row.FABRICS_TYPE, 'vertical'],
@@ -306,8 +305,6 @@
                 tr.append($('<td>').text(row.GRAY_GSM || ''));
                 tr.append($('<td>').text(row.FEEDER_PLAN || ''));
                 tr.append($('<td>').text(row.LOT_NO || ''));
-                tr.append($('<td>').text(row.KNIT_MATERIAL_CODE || ''));
-                tr.append($('<td>').text(row.KNIT_M_DES || ''));
                 tbody.append(tr);
             });
         }
