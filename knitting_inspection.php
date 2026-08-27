@@ -299,7 +299,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
           try {
             $stmt = $db->prepare("
                     INSERT INTO knitting_inspection (
-                        `BUDAT`, `ROLL`, `MAIN_QTY`, `REJECT_QTY`, `UPDATE_QTY`, `PO_NUMBER`, `QTY`, `SONO`, `BUYER`, `STYLE`, `COLOR`,
+                        `BUDAT`, `ROLL`, `OQTY`, `RQTY`, `UQTY`, `PO_NUMBER`, `QTY`, `SONO`, `BUYER`, `STYLE`, `COLOR`,
                         `MCNO`, `MC_DIA`, `CUSTOMER`, `SHIFT`, `YTYPE`, `YCOUNT`, `FTYPE`, `FGSM`, `FDIA`, `O_T`,
                         `SL`, `GGSM`, `FPLAN`, `LOTNO`, `MATERIAL_CODE`, `M_DES`,
                         `TT`, `PATTA`, `SLUB`, `YC_SPOT`, `OILSPOT`, `FF`, `SEEDS`, `MSTITCH`, `SINKERMARK`, `NEEDLEMARK`,
@@ -366,10 +366,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                 $uname        = strval($_SESSION['active_operator']['name']);
                 $uid          = strval($_SESSION['active_operator']['id']);
 
-                // BUDAT(s), ROLL(s), MAIN_QTY(d), REJECT_QTY(d), UPDATE_QTY(d),
-                // PO_NUMBER..O_T = 16 strings(s), SL(d), GGSM..M_DES = 6 strings(s),
-                // defects 16 strings(s), QC_GRADE..UID = 4 strings(s)
-                $types = 'ssddd' . str_repeat('s', 16) . 'd' . str_repeat('s', 6)
+                // BUDAT(s), ROLL(s), OQTY(d), RQTY(d), UQTY(d),
+                // PO_NUMBER..O_T = 16 strings(s), SL(d), GGSM..M_DES = 5 strings(s),
+                // defects 17 strings(s), QC_GRADE..UID = 4 strings(s)
+                $types = 'ssddd' . str_repeat('s', 16) . 'd' . str_repeat('s', 5)
                        . str_repeat('s', 17) . str_repeat('s', 4);
 
                 $stmt->bind_param(
