@@ -123,8 +123,6 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
     $fTPOINT  = mysqli_real_escape_string($db, $orig['TPOINT']);
     $fMCODE   = mysqli_real_escape_string($db, $orig['MCODE']);
     $fMDES    = mysqli_real_escape_string($db, $orig['MDESCRIPTION']);
-    $fUNAME   = mysqli_real_escape_string($db, $orig['UNAME']);
-    $fUID     = mysqli_real_escape_string($db, $orig['UID']);
 
     mysqli_begin_transaction($db);
 
@@ -134,11 +132,11 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
     $i2 = "INSERT INTO knitting_store
             (BUDAT, RACKNO, RACKLOCATION, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
              MCNO, MCDIA, CUSTOMER, YTYPE, YCOUNT, O_T, SL, FTYPE, FGSM, FDIA, GGSM,
-             FEEDER_PLAN, LOT_NO, TPOINT, MCODE, MDESCRIPTION, UNAME, UID)
+             FEEDER_PLAN, LOT_NO, TPOINT, MCODE, MDESCRIPTION)
            VALUES
             ('$fBUDAT', '$fRACKNO', '$fRACKLOC', '$newRollB', '$fPO', '$remainB', '$fSONO', '$fSHIFT', '$fBUYER', '$fSTYLE', '$fCOLOR',
              '$fMCNO', '$fMCDIA', '$fCUST', '$fYTYPE', '$fYCOUNT', '$fOT', '$fSL', '$fFTYPE', '$fFGSM', '$fFDIA', '$fGGSM',
-             '$fFEEDER', '$fLOT', '$fTPOINT', '$fMCODE', '$fMDES', '$fUNAME', '$fUID')";
+             '$fFEEDER', '$fLOT', '$fTPOINT', '$fMCODE', '$fMDES')";
 
     $ok1 = mysqli_query($db, $u1);
     $ok2 = $ok1 ? mysqli_query($db, $i2) : false;
@@ -291,13 +289,12 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
 
             var html = '' +
                 '<div class="panel">' +
-                '<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">' +
-                '<h5 class="mb-0 fw-bold" style="color:#1e293b;"><i class="fa-solid fa-circle-info me-2 text-primary"></i>Store Roll Details</h5>' +
-                '<span class="badge bg-success fs-6">Current QTY: ' + esc(d.QTY) + '</span>' +
+                '<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2" style="font-size: larger; color: black; font-weight: bold;">' +
+                '<h5 class="mb-0 fw-bold" style="color:#1e293b;"><i class="fa-solid fa-circle-info me-2 text-primary"></i> Store Roll Details</h5>' +
                 '</div>' +
                 '<div class="info-grid mb-3">' +
                 infoItem('Roll No', d.ROLL, true) +
-                infoItem('Date', d.BUDAT) +
+                infoItem('Current QTY', d.QTY) +
                 infoItem('Rack No', d.RACKNO) +
                 infoItem('Rack Location', d.RACKLOCATION) +
                 infoItem('PO Number', d.PO_NUMBER) +
@@ -316,9 +313,10 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
                 infoItem('Finish Dia', d.FDIA) +
                 infoItem('Open / Tube', d.O_T) +
                 infoItem('Gray GSM', d.GGSM) +
+                infoItem('SL', d.SL) +
                 infoItem('Feeder Plan', d.FEEDER_PLAN) +
                 infoItem('Lot No', d.LOT_NO) +
-                infoItem('Entry By', d.UNAME) +
+                infoItem('Date', d.BUDAT) +
                 '</div>' +
                 '<hr>' +
                 '<h5 class="fw-bold mb-3" style="color:#1e293b;"><i class="fa-solid fa-scissors me-2 text-danger"></i>Split This Roll</h5>' +
