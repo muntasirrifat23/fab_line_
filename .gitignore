@@ -2,3 +2,4 @@ vendor/
 tmp/
 *.tmp
 *.log
+fab_line_-main/
