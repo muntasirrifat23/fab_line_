@@ -54,6 +54,7 @@ if (empty($initialMasterRacks)) {
       color: #0f172a;
       min-height: 100vh;
       padding-bottom: 60px;
+      font-size: 1.15rem;
     }
 
     /* Top Bar */
@@ -61,8 +62,8 @@ if (empty($initialMasterRacks)) {
       background: linear-gradient(135deg, #0b1329 0%, #1e293b 100%);
       border-bottom: 3px solid #0284c7;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-      padding: 12px 36px;
-      margin-bottom: 20px;
+      padding: 14px 38px;
+      margin-bottom: 22px;
       position: relative;
       z-index: 100;
     }
@@ -72,7 +73,7 @@ if (empty($initialMasterRacks)) {
       align-items: center;
       justify-content: space-between;
       width: 100%;
-      gap: 20px;
+      gap: 22px;
     }
 
     .nav-left {
@@ -86,9 +87,9 @@ if (empty($initialMasterRacks)) {
       color: #f8fafc;
       border: 1.5px solid rgba(255, 255, 255, 0.2);
       border-radius: 12px;
-      padding: 10px 20px;
+      padding: 11px 22px;
       font-weight: 700;
-      font-size: 0.96rem;
+      font-size: 1.05rem;
       text-decoration: none;
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       display: inline-flex;
@@ -107,7 +108,7 @@ if (empty($initialMasterRacks)) {
     }
 
     .btn-nav-dashboard i {
-      font-size: 1.05rem;
+      font-size: 1.15rem;
       transition: transform 0.2s ease;
     }
 
@@ -125,20 +126,20 @@ if (empty($initialMasterRacks)) {
     .brand-title {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 16px;
     }
 
     .brand-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
+      width: 48px;
+      height: 48px;
+      border-radius: 13px;
       background: rgba(56, 189, 248, 0.15);
       border: 1.5px solid rgba(56, 189, 248, 0.35);
       display: flex;
       align-items: center;
       justify-content: center;
       color: #38bdf8;
-      font-size: 1.35rem;
+      font-size: 1.5rem;
       box-shadow: 0 0 16px rgba(56, 189, 248, 0.2);
     }
 
@@ -148,7 +149,7 @@ if (empty($initialMasterRacks)) {
     }
 
     .brand-main-title {
-      font-size: 1.55rem;
+      font-size: 1.78rem;
       font-weight: 800;
       color: #ffffff;
       letter-spacing: -0.4px;
@@ -157,7 +158,7 @@ if (empty($initialMasterRacks)) {
     }
 
     .brand-subtitle {
-      font-size: 0.8rem;
+      font-size: 0.92rem;
       font-weight: 600;
       color: #94a3b8;
       letter-spacing: 0.5px;
@@ -167,30 +168,30 @@ if (empty($initialMasterRacks)) {
     .nav-right {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 18px;
       flex: 0 0 auto;
     }
 
     .user-profile-badge {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
       background: rgba(255, 255, 255, 0.06);
       border: 1.5px solid rgba(255, 255, 255, 0.12);
-      border-radius: 12px;
-      padding: 8px 16px;
+      border-radius: 13px;
+      padding: 9px 18px;
     }
 
     .user-avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
+      width: 40px;
+      height: 40px;
+      border-radius: 11px;
       background: linear-gradient(135deg, #0284c7, #0d9488);
       color: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1rem;
+      font-size: 1.15rem;
       box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
     }
 
@@ -202,13 +203,13 @@ if (empty($initialMasterRacks)) {
 
     .user-name {
       font-weight: 800;
-      font-size: 0.96rem;
+      font-size: 1.08rem;
       color: #f8fafc;
       letter-spacing: -0.2px;
     }
 
     .user-role {
-      font-size: 0.74rem;
+      font-size: 0.86rem;
       font-weight: 600;
       color: #38bdf8;
       text-transform: uppercase;
@@ -218,14 +219,14 @@ if (empty($initialMasterRacks)) {
     .btn-nav-history {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
+      gap: 11px;
       background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
       color: #ffffff;
       border: 1.5px solid #38bdf8;
       border-radius: 12px;
-      padding: 10px 20px;
+      padding: 11px 22px;
       font-weight: 700;
-      font-size: 0.95rem;
+      font-size: 1.05rem;
       cursor: pointer;
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       box-shadow: 0 4px 14px rgba(2, 132, 199, 0.28);
@@ -268,11 +269,11 @@ if (empty($initialMasterRacks)) {
     .kpi-card {
       background: #ffffff;
       border: 1px solid #e2e8f0;
-      border-radius: 14px;
-      padding: 12px 18px;
+      border-radius: 16px;
+      padding: 14px 20px;
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 16px;
       box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
       transition: all 0.2s ease;
     }
@@ -284,13 +285,13 @@ if (empty($initialMasterRacks)) {
     }
 
     .kpi-icon {
-      width: 46px;
-      height: 46px;
-      border-radius: 12px;
+      width: 48px;
+      height: 48px;
+      border-radius: 13px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.3rem;
+      font-size: 1.35rem;
       flex-shrink: 0;
     }
 
@@ -316,7 +317,7 @@ if (empty($initialMasterRacks)) {
     }
 
     .kpi-label {
-      font-size: 0.72rem;
+      font-size: 0.9rem;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -326,7 +327,7 @@ if (empty($initialMasterRacks)) {
     }
 
     .kpi-val {
-      font-size: 1.55rem;
+      font-size: 1.9rem;
       font-weight: 800;
       color: #0f172a;
       line-height: 1.15;
@@ -343,24 +344,24 @@ if (empty($initialMasterRacks)) {
     }
 
     .table-panel-header {
-      padding: 24px 34px;
+      padding: 22px 34px;
       background: #ffffff;
       border-bottom: 1.5px solid #e2e8f0;
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
-      gap: 16px;
+      gap: 18px;
     }
 
     .table-panel-header h5 {
       font-weight: 800;
-      font-size: 1.32rem;
+      font-size: 1.45rem;
       color: #0f172a;
       margin: 0;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 13px;
       letter-spacing: -0.3px;
     }
 
@@ -396,8 +397,8 @@ if (empty($initialMasterRacks)) {
     .batch-toolbar-content {
       display: flex;
       align-items: center;
-      gap: 16px;
-      padding: 10px 20px;
+      gap: 18px;
+      padding: 11px 22px;
       white-space: nowrap;
       flex-wrap: nowrap;
     }
@@ -405,16 +406,16 @@ if (empty($initialMasterRacks)) {
     .batch-left {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 13px;
     }
 
     .badge-batch-count {
       background: rgba(56, 189, 248, 0.16);
       color: #38bdf8;
       border: 1px solid rgba(56, 189, 248, 0.35);
-      font-size: 0.92rem;
+      font-size: 1.05rem;
       font-weight: 700;
-      padding: 7px 14px;
+      padding: 7px 16px;
       border-radius: 20px;
       display: inline-flex;
       align-items: center;
@@ -424,7 +425,7 @@ if (empty($initialMasterRacks)) {
     .batch-label {
       color: #e2e8f0;
       font-weight: 700;
-      font-size: 0.94rem;
+      font-size: 1.05rem;
       letter-spacing: -0.2px;
     }
 
@@ -439,11 +440,11 @@ if (empty($initialMasterRacks)) {
       border: 1.5px solid #475569;
       border-radius: 12px;
       padding: 8px 16px;
-      font-size: 0.92rem;
+      font-size: 1.05rem;
       font-weight: 700;
       outline: none;
       cursor: pointer;
-      min-width: 175px;
+      min-width: 180px;
       transition: all 0.2s ease;
     }
 
@@ -463,11 +464,11 @@ if (empty($initialMasterRacks)) {
       border: 1.5px solid #475569;
       border-radius: 12px;
       padding: 8px 16px;
-      font-size: 0.92rem;
+      font-size: 1.05rem;
       font-weight: 700;
       outline: none;
       cursor: pointer;
-      min-width: 145px;
+      min-width: 155px;
       transition: all 0.2s ease;
     }
 
@@ -502,7 +503,7 @@ if (empty($initialMasterRacks)) {
     .batch-right {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 11px;
     }
 
     .btn-batch-apply {
@@ -510,12 +511,12 @@ if (empty($initialMasterRacks)) {
       color: #ffffff;
       border: none;
       border-radius: 12px;
-      padding: 9px 20px;
-      font-size: 0.92rem;
+      padding: 10px 21px;
+      font-size: 1.05rem;
       font-weight: 800;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 7px;
       cursor: pointer;
       box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
       transition: all 0.2s ease;
@@ -539,12 +540,12 @@ if (empty($initialMasterRacks)) {
       color: #cbd5e1;
       border: 1px solid rgba(255, 255, 255, 0.16);
       border-radius: 12px;
-      padding: 9px 15px;
-      font-size: 0.92rem;
+      padding: 10px 17px;
+      font-size: 1.05rem;
       font-weight: 700;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
       cursor: pointer;
       transition: all 0.2s ease;
     }
@@ -557,9 +558,9 @@ if (empty($initialMasterRacks)) {
 
     /* Filter Controls */
     .filter-bar {
-      padding: 24px 34px 10px;
+      padding: 24px 34px 12px;
       display: flex;
-      gap: 16px;
+      gap: 18px;
       flex-wrap: wrap;
       align-items: center;
       background: #ffffff;
@@ -572,10 +573,10 @@ if (empty($initialMasterRacks)) {
     }
 
     .search-box input {
-      padding: 14px 22px 14px 52px;
+      padding: 14px 22px 14px 50px;
       border-radius: 12px;
-      border: 2px solid #cbd5e1;
-      font-size: 1.05rem;
+      border: 1.5px solid #cbd5e1;
+      font-size: 1.18rem;
       font-weight: 600;
       color: #0f172a;
       width: 100%;
@@ -586,7 +587,7 @@ if (empty($initialMasterRacks)) {
     .search-box input:focus {
       background: #ffffff;
       border-color: var(--primary);
-      box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.15);
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
       outline: none;
     }
 
@@ -596,27 +597,27 @@ if (empty($initialMasterRacks)) {
       top: 50%;
       transform: translateY(-50%);
       color: #64748b;
-      font-size: 1.15rem;
+      font-size: 1.2rem;
     }
 
     .rack-filter-select {
-      border: 2px solid #cbd5e1;
+      border: 1.5px solid #cbd5e1;
       border-radius: 12px;
       padding: 13px 20px;
-      font-size: 1.02rem;
+      font-size: 1.12rem;
       font-weight: 700;
       color: #0f172a;
       background: #f8fafc;
       outline: none;
       cursor: pointer;
-      min-width: 180px;
+      min-width: 185px;
       transition: all 0.2s;
     }
 
     .rack-filter-select:focus {
       background: #ffffff;
       border-color: var(--primary);
-      box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.15);
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
     }
 
     /* Table Styles */
@@ -629,7 +630,7 @@ if (empty($initialMasterRacks)) {
       width: 100%;
       border-collapse: separate;
       border-spacing: 0;
-      font-size: 1.02rem;
+      font-size: 1.12rem;
       white-space: nowrap;
     }
 
@@ -637,10 +638,10 @@ if (empty($initialMasterRacks)) {
       background: #f8fafc;
       color: #0f172a;
       font-weight: 800;
-      font-size: 0.94rem;
+      font-size: 1.05rem;
       text-transform: uppercase;
-      letter-spacing: 0.6px;
-      padding: 20px 24px;
+      letter-spacing: 0.5px;
+      padding: 18px 22px;
       border-bottom: 2px solid #e2e8f0;
       border-top: 1px solid #e2e8f0;
       vertical-align: middle;
@@ -657,11 +658,11 @@ if (empty($initialMasterRacks)) {
     }
 
     .rack-table td {
-      padding: 20px 24px;
+      padding: 16px 22px;
       border-bottom: 1px solid #f1f5f9;
       vertical-align: middle;
       color: #0f172a;
-      font-size: 1.02rem;
+      font-size: 1.12rem;
       line-height: 1.5;
       transition: background 0.2s;
     }
@@ -678,7 +679,7 @@ if (empty($initialMasterRacks)) {
       width: 22px;
       height: 22px;
       cursor: pointer;
-      border: 2px solid #94a3b8;
+      border: 1.5px solid #94a3b8;
     }
 
     /* Roll Barcode Monospace Asset Tag */
@@ -686,10 +687,10 @@ if (empty($initialMasterRacks)) {
       background: #f0f9ff;
       color: #0284c7;
       border: 1.5px solid #bae6fd;
-      padding: 6px 14px;
+      padding: 6px 15px;
       border-radius: 8px;
       font-weight: 800;
-      font-size: 1.08rem;
+      font-size: 1.22rem;
       font-family: 'JetBrains Mono', Consolas, monospace;
       letter-spacing: 0.5px;
       display: inline-block;
@@ -705,41 +706,41 @@ if (empty($initialMasterRacks)) {
       color: #854d0e;
       border: 1.5px solid #fde047;
       font-weight: 800;
-      font-size: 0.98rem;
+      font-size: 1.1rem;
       padding: 7px 16px;
       border-radius: 10px;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.2px;
       box-shadow: 0 1px 3px rgba(133, 77, 14, 0.06);
     }
 
     /* Table Typography Enhancements */
     .table-data-po {
       font-weight: 800;
-      font-size: 1.02rem;
+      font-size: 1.1rem;
       color: #0f172a;
     }
 
     .table-data-buyer {
       font-weight: 700;
-      font-size: 1.02rem;
+      font-size: 1.1rem;
       color: #1e293b;
     }
 
     .table-data-style {
       font-weight: 700;
-      font-size: 1.02rem;
+      font-size: 1.1rem;
       color: #334155;
     }
 
     .table-data-color {
       font-weight: 700;
-      font-size: 1.02rem;
+      font-size: 1.1rem;
       color: #475569;
     }
 
     .table-data-qty {
       font-weight: 800;
-      font-size: 1.1rem;
+      font-size: 1.25rem;
       color: #0f172a;
       font-family: monospace;
     }
@@ -748,18 +749,18 @@ if (empty($initialMasterRacks)) {
       background: #f1f5f9;
       color: #475569;
       border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      padding: 4px 10px;
+      border-radius: 7px;
+      padding: 5px 12px;
       font-weight: 700;
-      font-size: 0.88rem;
+      font-size: 1rem;
     }
 
     /* Inline Destination Rack & Shelf Controls */
     .destination-group {
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      min-width: 290px;
+      gap: 5px;
+      min-width: 295px;
     }
 
     .destination-selects-wrapper {
@@ -770,15 +771,15 @@ if (empty($initialMasterRacks)) {
 
     .inline-rack-select {
       font-weight: 700;
-      font-size: 0.95rem;
-      padding: 9px 12px;
+      font-size: 1.08rem;
+      padding: 9px 14px;
       border-radius: 10px;
-      border: 2px solid #cbd5e1;
+      border: 1.5px solid #cbd5e1;
       color: #0f172a;
       background: #ffffff;
       outline: none;
       transition: all 0.2s ease;
-      width: 135px;
+      width: 138px;
       cursor: pointer;
       flex-shrink: 0;
     }
@@ -791,20 +792,20 @@ if (empty($initialMasterRacks)) {
     .inline-rack-select:focus {
       border-color: var(--teal);
       background: #ffffff;
-      box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.15);
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
     }
 
     .inline-shelf-select {
       font-weight: 700;
-      font-size: 0.9rem;
-      padding: 9px 12px;
+      font-size: 1.08rem;
+      padding: 9px 14px;
       border-radius: 10px;
-      border: 2px solid #cbd5e1;
+      border: 1.5px solid #cbd5e1;
       color: #0f172a;
       background: #f8fafc;
       outline: none;
       transition: all 0.2s ease;
-      min-width: 155px;
+      min-width: 158px;
       flex-grow: 1;
       cursor: pointer;
     }
@@ -817,24 +818,24 @@ if (empty($initialMasterRacks)) {
     .inline-shelf-select:focus {
       border-color: var(--teal);
       background: #ffffff;
-      box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.15);
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
     }
 
     .shelf-hint-text {
-      font-size: 0.76rem;
+      font-size: 0.9rem;
       font-weight: 700;
       line-height: 1.2;
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
       min-height: 16px;
     }
 
     .badge-batch-capacity {
       margin-left: 12px;
-      font-size: 0.85rem;
+      font-size: 0.98rem;
       font-weight: 700;
-      padding: 6px 12px;
+      padding: 6px 13px;
       border-radius: 12px;
       display: inline-flex;
       align-items: center;
@@ -847,9 +848,9 @@ if (empty($initialMasterRacks)) {
       background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
       color: #ffffff;
       border: none;
-      border-radius: 12px;
-      padding: 11px 22px;
-      font-size: 0.96rem;
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-size: 1.08rem;
       font-weight: 800;
       cursor: pointer;
       display: inline-flex;
@@ -1041,7 +1042,7 @@ if (empty($initialMasterRacks)) {
     }
 
     .history-modal-title {
-      font-size: 1.25rem;
+      font-size: 1.6rem;
       font-weight: 800;
       color: #ffffff;
       margin: 0;
@@ -1050,7 +1051,7 @@ if (empty($initialMasterRacks)) {
     }
 
     .history-modal-subtitle {
-      font-size: 0.84rem;
+      font-size: 1.05rem;
       font-weight: 500;
       color: #94a3b8;
       margin: 0;
@@ -1061,15 +1062,15 @@ if (empty($initialMasterRacks)) {
       background: rgba(255, 255, 255, 0.08);
       border: 1.5px solid rgba(255, 255, 255, 0.18);
       color: #cbd5e1;
-      width: 38px;
-      height: 38px;
-      min-width: 38px;
-      border-radius: 11px;
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      font-size: 1.15rem;
+      font-size: 1.3rem;
       flex-shrink: 0;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       outline: none;
@@ -1085,40 +1086,40 @@ if (empty($initialMasterRacks)) {
     }
 
     .history-modal-search {
-      padding: 16px 28px;
+      padding: 18px 34px;
       background: #f8fafc;
       border-bottom: 1.5px solid #e2e8f0;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
+      gap: 20px;
       flex-wrap: wrap;
     }
 
     .history-search-wrapper {
       position: relative;
       flex: 1;
-      min-width: 280px;
-      max-width: 480px;
+      min-width: 320px;
+      max-width: 520px;
     }
 
     .history-search-wrapper i {
       position: absolute;
-      left: 16px;
+      left: 18px;
       top: 50%;
       transform: translateY(-50%);
       color: #64748b;
-      font-size: 1rem;
+      font-size: 1.2rem;
       pointer-events: none;
     }
 
     .history-search-input {
       width: 100%;
-      padding: 10px 16px 10px 44px;
+      padding: 13px 20px 13px 48px;
       border-radius: 12px;
       border: 1.5px solid #cbd5e1;
       background: #ffffff;
-      font-size: 0.94rem;
+      font-size: 1.18rem;
       font-weight: 600;
       color: #0f172a;
       outline: none;
@@ -1134,7 +1135,7 @@ if (empty($initialMasterRacks)) {
     .history-actions-wrapper {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
     }
 
     .history-count-pill {
@@ -1142,12 +1143,12 @@ if (empty($initialMasterRacks)) {
       color: #334155;
       border: 1px solid #cbd5e1;
       border-radius: 20px;
-      padding: 7px 16px;
-      font-size: 0.85rem;
+      padding: 8px 18px;
+      font-size: 1.08rem;
       font-weight: 700;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
     }
 
     .btn-refresh-history {
@@ -1155,12 +1156,12 @@ if (empty($initialMasterRacks)) {
       color: #0284c7;
       border: 1.5px solid #0284c7;
       border-radius: 12px;
-      padding: 8px 18px;
-      font-size: 0.88rem;
+      padding: 10px 22px;
+      font-size: 1.08rem;
       font-weight: 700;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 9px;
       cursor: pointer;
       transition: all 0.2s ease;
     }
@@ -1173,7 +1174,7 @@ if (empty($initialMasterRacks)) {
     }
 
     .history-modal-body {
-      max-height: 520px;
+      max-height: 550px;
       overflow-y: auto;
       padding: 0;
       background: #ffffff;
@@ -1183,17 +1184,17 @@ if (empty($initialMasterRacks)) {
       width: 100%;
       border-collapse: separate;
       border-spacing: 0;
-      font-size: 0.94rem;
+      font-size: 1.12rem;
     }
 
     .history-table thead th {
       background: #f8fafc;
       color: #475569;
-      font-size: 0.78rem;
+      font-size: 1.05rem;
       font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.6px;
-      padding: 14px 18px;
+      letter-spacing: 0.5px;
+      padding: 18px 22px;
       border-bottom: 2px solid #e2e8f0;
       position: sticky;
       top: 0;
@@ -1201,10 +1202,11 @@ if (empty($initialMasterRacks)) {
     }
 
     .history-table tbody td {
-      padding: 13px 18px;
+      padding: 18px 22px;
       border-bottom: 1px solid #f1f5f9;
       vertical-align: middle;
       font-weight: 600;
+      font-size: 1.12rem;
       color: #1e293b;
     }
 
@@ -1215,63 +1217,64 @@ if (empty($initialMasterRacks)) {
     .history-from-rack {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       background: #f1f5f9 !important;
       color: #0f172a !important; /* Explicit high-contrast dark slate */
       border: 1.5px solid #cbd5e1 !important;
-      border-radius: 8px;
-      padding: 6px 14px;
-      font-size: 0.92rem;
+      border-radius: 9px;
+      padding: 7px 16px;
+      font-size: 1.12rem;
       font-weight: 800;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.2px;
       opacity: 1 !important;
       line-height: 1.3;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
     .history-from-rack i {
       color: #475569 !important;
-      font-size: 0.85rem;
+      font-size: 1rem;
     }
 
     .history-to-rack {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       background: #ecfdf5 !important;
       color: #065f46 !important; /* Vibrant high-contrast emerald */
       border: 1.5px solid #6ee7b7 !important;
-      border-radius: 8px;
-      padding: 6px 14px;
-      font-size: 0.92rem;
+      border-radius: 9px;
+      padding: 7px 16px;
+      font-size: 1.12rem;
       font-weight: 800;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.2px;
       opacity: 1 !important;
       line-height: 1.3;
       box-shadow: 0 1px 2px rgba(16, 185, 129, 0.08);
     }
     .history-to-rack i {
       color: #059669 !important;
-      font-size: 0.85rem;
+      font-size: 1rem;
     }
 
     .history-modal-footer {
-      padding: 16px 28px;
+      padding: 18px 34px;
       background: #f8fafc;
       border-top: 1.5px solid #e2e8f0;
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 14px;
+      font-size: 1.08rem;
     }
 
     .btn-close-modal-bottom {
       background: #475569;
       color: #ffffff;
       border: none;
-      border-radius: 11px;
-      padding: 9px 24px;
-      font-size: 0.92rem;
+      border-radius: 12px;
+      padding: 11px 28px;
+      font-size: 1.08rem;
       font-weight: 700;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -2205,36 +2208,36 @@ if (empty($initialMasterRacks)) {
           const tr = `
             <tr>
               <td class="ps-4">
-                <span class="badge bg-light text-secondary border px-2 py-1 fw-bold font-monospace">#${safeId}</span>
+                <span class="badge bg-light text-secondary border px-3 py-1.5 fw-bold font-monospace" style="font-size: 1.05rem;">#${safeId}</span>
               </td>
               <td>
-                <span class="roll-barcode-text" style="font-size: 0.95rem;">${safeRoll}</span>
+                <span class="roll-barcode-text" style="font-size: 1.15rem; padding: 6px 14px;">${safeRoll}</span>
               </td>
               <td>
-                <span class="history-from-rack" style="color: #0f172a !important; font-weight: 800; background: #f1f5f9 !important; border: 1.5px solid #cbd5e1 !important; opacity: 1 !important;">
+                <span class="history-from-rack" style="color: #0f172a !important; font-weight: 800; font-size: 1.12rem; padding: 7px 16px; background: #f1f5f9 !important; border: 1.5px solid #cbd5e1 !important; opacity: 1 !important;">
                   <i class="fa-solid fa-location-dot me-1" style="color: #475569 !important;"></i> ${safeFrom}
                 </span>
               </td>
               <td class="text-center px-1">
-                <i class="fa-solid fa-arrow-right-long fs-6 text-primary"></i>
+                <i class="fa-solid fa-arrow-right-long fs-5 text-primary"></i>
               </td>
               <td>
-                <span class="history-to-rack" style="color: #065f46 !important; font-weight: 800; background: #ecfdf5 !important; border: 1.5px solid #6ee7b7 !important; opacity: 1 !important;">
+                <span class="history-to-rack" style="color: #065f46 !important; font-weight: 800; font-size: 1.12rem; padding: 7px 16px; background: #ecfdf5 !important; border: 1.5px solid #6ee7b7 !important; opacity: 1 !important;">
                   <i class="fa-solid fa-circle-check me-1" style="color: #059669 !important;"></i> ${safeTo}
                 </span>
               </td>
               <td>
-                <span class="badge bg-dark-subtle text-dark px-2.5 py-1.5 fw-bold" style="font-size: 0.86rem;">
+                <span class="badge bg-dark-subtle text-dark px-3 py-2 fw-bold" style="font-size: 1.05rem;">
                   <i class="fa-solid fa-user-check me-1 text-primary"></i> ${safeBy}
                 </span>
               </td>
               <td>
-                <span class="text-muted fw-semibold" style="font-size: 0.86rem;">
+                <span class="text-dark fw-bold" style="font-size: 1.05rem;">
                   <i class="fa-regular fa-clock me-1 text-secondary"></i> ${safeDate}
                 </span>
               </td>
               <td class="pe-4">
-                <span class="fw-bold text-dark small">${safeBuyer}</span> <span class="text-muted small">${safeStyle}</span>
+                <span class="fw-bold text-dark" style="font-size: 1.1rem;">${safeBuyer}</span> <span class="text-muted fw-semibold" style="font-size: 1.05rem;">${safeStyle}</span>
               </td>
             </tr>
           `;

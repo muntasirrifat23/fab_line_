@@ -207,16 +207,18 @@
                 justify-content: center;
         @page {
             size: A4 landscape;
-            margin: 5mm;
+            margin: 8mm;
         }
 
         @media print {
             @page {
                 size: A4 landscape;
-                margin: 5mm;
+                margin: 8mm;
             }
             body {
                 background: #ffffff !important;
+                padding: 0 !important;
+                margin: 0 !important;
             }
             body * {
                 visibility: hidden !important;
@@ -232,6 +234,7 @@
                 height: auto !important;
                 background: transparent !important;
                 padding: 0 !important;
+                margin: 0 !important;
             }
             #reportModal > div {
                 box-shadow: none !important;
@@ -239,6 +242,13 @@
                 width: 100% !important;
                 padding: 0 !important;
                 margin: 0 !important;
+            }
+            #rowPdfCard {
+                margin: 0 auto !important;
+                padding: 10px 14px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
             }
             .no-print {
                 display: none !important;
@@ -431,10 +441,10 @@
             var isReject = (String(row.QC_GRADE || '').toLowerCase() === 'reject' || String(row.QC_STATUS || '').toLowerCase() === 'rejected');
 
             return '' +
-                '<div id="rowPdfCard" style="position:relative;width:1100px;margin:0 auto;padding:12px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#000000;font-size:9.5px;box-sizing:border-box;">' +
+                '<div id="rowPdfCard" style="position:relative;width:1100px;margin:0 auto;padding:18px 20px 16px 20px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#000000;font-size:9.5px;box-sizing:border-box;">' +
                 
                 '<!-- Topmost Header Section (Above Outer Border) -->' +
-                '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;padding:0 2px;">' +
+                '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;padding:0 4px;">' +
                 '<div style="font-size:9px;line-height:1.3;font-weight:bold;">' +
                 'PFL/QF/QAD: 03<br>' +
                 'Effective Date : 01-06-2021<br>' +
@@ -451,7 +461,7 @@
                 '<div style="border:1.5px solid #000000;padding:0;background:#ffffff;">' +
 
                 '<!-- Title Bar Row -->' +
-                '<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1.5px solid #000000;padding:3px 6px;background:#ffffff;">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1.5px solid #000000;padding:4px 8px;background:#ffffff;">' +
                 '<div style="font-size:10px;font-weight:bold;width:150px;">' +
                 'Date : <span style="font-weight:normal;">' + esc(row.P_CREATED || row.BUDAT) + '</span>' +
                 '</div>' +
@@ -494,7 +504,7 @@
                 '<table style="width:100%;border-collapse:collapse;font-size:7.5px;text-align:center;border:1px solid #000000;background:#ffffff;table-layout:fixed;" border="1" cellpadding="2">' +
                 '<thead>' +
                 '<tr style="background:#ffffff;color:#000000;font-weight:bold;font-size:7.5px;">' +
-                '<th style="width:6%;border:1px solid #000000;padding:3px 1px;">Batch No.</th>' +
+                '<th style="width:6%;border:1px solid #000000;padding:3px 1px;">Roll No</th>' +
                 '<th style="width:4%;border:1px solid #000000;padding:3px 1px;">Wt in kg</th>' +
                 '<th style="width:4%;border:1px solid #000000;padding:3px 1px;">Roll Length</th>' +
                 '<th style="width:4%;border:1px solid #000000;padding:3px 1px;">G. GSM</th>' +
@@ -523,7 +533,7 @@
                 '</thead>' +
                 '<tbody>' +
                 '<tr style="background:#ffffff;color:#000000;">' +
-                '<td style="border:1px solid #000000;word-break:break-all;padding:3px 1px;">' + esc(row.PO_NUMBER || row.SONO || row.ROLL) + '</td>' +
+                '<td style="border:1px solid #000000;word-break:break-all;padding:3px 1px;font-weight:bold;">' + esc(row.ROLL) + '</td>' +
                 '<td style="border:1px solid #000000;padding:3px 1px;">' + esc(row.MAIN_QTY || row.QTY) + '</td>' +
                 '<td style="border:1px solid #000000;padding:3px 1px;">' + esc(row.O_T) + '</td>' +
                 '<td style="border:1px solid #000000;padding:3px 1px;">' + esc(row.GGSM) + '</td>' +
@@ -568,7 +578,7 @@
                 '<div style="display:flex;gap:3px;padding:3px;font-size:7.5px;align-items:stretch;background:#ffffff;border:1px solid #000000;border-top:none;">' +
 
                 '<!-- Box 1: Defect Point Size in Inch -->' +
-                '<div style="width:16%;border:1px solid #000000;padding:1px;background:#ffffff;">' +
+                '<div style="width:20%;border:1px solid #000000;padding:1px;background:#ffffff;">' +
                 '<table style="width:100%;border-collapse:collapse;text-align:center;font-size:7px;background:#ffffff;" border="1" cellpadding="1">' +
                 '<thead>' +
                 '<tr style="font-weight:bold;background:#ffffff;color:#000000;"><th colspan="2" style="border:1px solid #000000;padding:2px 1px;">Defect Point Size in Inch</th></tr>' +
@@ -580,15 +590,12 @@
                 '<tr><td style="border:1px solid #000000;">&gt;6" to 9"</td><td style="border:1px solid #000000;">3</td></tr>' +
                 '<tr><td style="border:1px solid #000000;">9"above to 36"</td><td style="border:1px solid #000000;">4</td></tr>' +
                 '<tr><td style="border:1px solid #000000;">Any hole</td><td style="border:1px solid #000000;">4</td></tr>' +
-                '<tr style="font-weight:bold;background:#ffffff;color:#000000;"><th colspan="2" style="border:1px solid #000000;">H&amp;M</th></tr>' +
-                '<tr><td style="border:1px solid #000000;">Hole &lt; 1"</td><td style="border:1px solid #000000;">2</td></tr>' +
-                '<tr><td style="border:1px solid #000000;">Hole &gt; 1"</td><td style="border:1px solid #000000;">4</td></tr>' +
                 '</tbody>' +
                 '</table>' +
                 '</div>' +
 
                 '<!-- Box 2: Formula for 100 sq/yrds -->' +
-                '<div style="width:17%;border:1px solid #000000;padding:4px;text-align:center;display:flex;flex-direction:column;justify-content:center;background:#ffffff;color:#000000;">' +
+                '<div style="width:20%;border:1px solid #000000;padding:4px;text-align:center;display:flex;flex-direction:column;justify-content:center;background:#ffffff;color:#000000;">' +
                 '<div style="font-weight:bold;margin-bottom:6px;text-decoration:underline;font-size:8px;">Formula for 100 sq/yrds</div>' +
                 '<div style="font-size:8px;font-weight:bold;line-height:1.4;">' +
                 '<u>Fabrics Fault x 36 x 100</u><br>' +
@@ -596,38 +603,24 @@
                 '</div>' +
                 '</div>' +
 
-                '<!-- Box 3: Acceptance Criteria (H&M & Others Buyer) -->' +
-                '<div style="width:22%;border:1px solid #000000;padding:1px;background:#ffffff;">' +
-                '<div style="display:flex;gap:1px;height:100%;">' +
-                '<table style="width:50%;border-collapse:collapse;text-align:center;font-size:7px;background:#ffffff;" border="1" cellpadding="1">' +
-                '<thead>' +
-                '<tr style="font-weight:bold;background:#ffffff;color:#000000;"><th colspan="2" style="border:1px solid #000000;">H&amp;M</th></tr>' +
-                '<tr style="font-weight:bold;background:#ffffff;color:#000000;"><th style="border:1px solid #000000;">Accept Point (Ins Roll)</th><th style="border:1px solid #000000;">A</th></tr>' +
-                '</thead>' +
-                '<tbody>' +
-                '<tr><td style="border:1px solid #000000;">up to 20</td><td style="border:1px solid #000000;">A</td></tr>' +
-                '<tr><td style="border:1px solid #000000;">20 up to 28</td><td style="border:1px solid #000000;">B</td></tr>' +
-                '<tr><td style="font-weight:bold;border:1px solid #000000;">Above</td><td rowspan="2" style="font-weight:bold;vertical-align:middle;border:1px solid #000000;">Reject</td></tr>' +
-                '<tr><td style="border:1px solid #000000;">&nbsp;</td></tr>' +
-                '</tbody>' +
-                '</table>' +
-                '<table style="width:50%;border-collapse:collapse;text-align:center;font-size:7px;background:#ffffff;" border="1" cellpadding="1">' +
+                '<!-- Box 3: Acceptance Criteria (Others Buyer) -->' +
+                '<div style="width:20%;border:1px solid #000000;padding:1px;background:#ffffff;">' +
+                '<table style="width:100%;border-collapse:collapse;text-align:center;font-size:7px;background:#ffffff;" border="1" cellpadding="1">' +
                 '<thead>' +
                 '<tr style="font-weight:bold;background:#ffffff;color:#000000;"><th colspan="2" style="border:1px solid #000000;">Others Buyer</th></tr>' +
                 '<tr style="font-weight:bold;background:#ffffff;color:#000000;"><th style="border:1px solid #000000;">Accept Point (Ins Roll)</th><th style="border:1px solid #000000;">Grade</th></tr>' +
                 '</thead>' +
                 '<tbody>' +
                 '<tr><td style="border:1px solid #000000;">up to 26</td><td style="border:1px solid #000000;">A</td></tr>' +
-                '<tr><td style="border:1px solid #000000;">26 up to 38</td><td style="border:1px solid #000000;">B</td></tr>' +
-                '<tr><td style="border:1px solid #000000;">38 up to 60</td><td style="border:1px solid #000000;">C</td></tr>' +
+                '<tr><td style="border:1px solid #000000;">26 to 38</td><td style="border:1px solid #000000;">B</td></tr>' +
+                '<tr><td style="border:1px solid #000000;">38 to 60</td><td style="border:1px solid #000000;">C</td></tr>' +
                 '<tr><td style="border:1px solid #000000;">Above</td><td style="border:1px solid #000000;">Reject</td></tr>' +
                 '</tbody>' +
                 '</table>' +
                 '</div>' +
-                '</div>' +
 
                 '<!-- Box 4: Avg Points per 100 sqr. Yards -->' +
-                '<div style="width:15%;border:1px solid #000000;padding:1px;background:#ffffff;">' +
+                '<div style="width:18%;border:1px solid #000000;padding:1px;background:#ffffff;">' +
                 '<table style="width:100%;border-collapse:collapse;text-align:center;font-size:7px;height:100%;background:#ffffff;" border="1" cellpadding="1">' +
                 '<thead>' +
                 '<tr style="font-weight:bold;background:#ffffff;color:#000000;"><th colspan="3" style="border:1px solid #000000;">Avg Points per 100 sqr. Yards</th></tr>' +
@@ -644,7 +637,7 @@
                 '</div>' +
 
                 '<!-- Box 5: Special Comments -->' +
-                '<div style="width:14%;border:1px solid #000000;padding:1px;font-size:7px;background:#ffffff;">' +
+                '<div style="width:11%;border:1px solid #000000;padding:1px;font-size:7px;background:#ffffff;">' +
                 '<table style="width:100%;border-collapse:collapse;background:#ffffff;" border="1" cellpadding="1">' +
                 '<thead>' +
                 '<tr style="font-weight:bold;background:#ffffff;color:#000000;"><th style="padding:1px;border:1px solid #000000;">Special Comments :</th></tr>' +
@@ -659,7 +652,7 @@
                 '</div>' +
 
                 '<!-- Box 6: Comments -->' +
-                '<div style="width:16%;border:1px solid #000000;padding:4px;font-size:7.5px;background:#ffffff;color:#000000;">' +
+                '<div style="width:11%;border:1px solid #000000;padding:4px;font-size:7.5px;background:#ffffff;color:#000000;">' +
                 '<div style="font-weight:bold;text-decoration:underline;margin-bottom:3px;">Comments</div>' +
                 '<div style="font-weight:bold;">' + esc(row.QC_GRADE || '') + '</div>' +
                 '</div>' +
@@ -739,13 +732,16 @@
                 var pdf = new jsPDFLib.jsPDF('l', 'mm', 'a4');
                 var pdfWidth = pdf.internal.pageSize.getWidth();
                 var pageHeight = pdf.internal.pageSize.getHeight();
-                var pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                var margin = 6; // 6mm breathing room on PDF export
+                var printW = pdfWidth - (margin * 2);
+                var printH = pageHeight - (margin * 2);
+                var pdfHeight = (canvas.height * printW) / canvas.width;
                 
-                if (pdfHeight > pageHeight) {
-                    var scaledWidth = (canvas.width * pageHeight) / canvas.height;
-                    pdf.addImage(imgData, 'PNG', (pdfWidth - scaledWidth) / 2, 0, scaledWidth, pageHeight);
+                if (pdfHeight > printH) {
+                    var scaledWidth = (canvas.width * printH) / canvas.height;
+                    pdf.addImage(imgData, 'PNG', margin + (printW - scaledWidth) / 2, margin, scaledWidth, printH);
                 } else {
-                    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                    pdf.addImage(imgData, 'PNG', margin, margin, printW, pdfHeight);
                 }
 
                 pdf.save('Knitting_Inspection_' + (row.ROLL || 'Roll') + '.pdf');

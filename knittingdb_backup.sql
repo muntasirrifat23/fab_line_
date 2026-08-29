@@ -1,4 +1,4 @@
-﻿-- MariaDB dump 10.19  Distrib 10.4.32-MariaDB, for Win64 (AMD64)
+-- MariaDB dump 10.19  Distrib 10.4.32-MariaDB, for Win64 (AMD64)
 --
 -- Host: localhost    Database: knittingdb
 -- ------------------------------------------------------
@@ -217,7 +217,7 @@ DROP TABLE IF EXISTS `knitting_input`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `knitting_input` (
   `KITID` int(11) NOT NULL AUTO_INCREMENT,
-  `BUDAT` date DEFAULT current_timestamp(),
+  `BUDAT` date DEFAULT (CURRENT_DATE),
   `PO_NUMBER` varchar(50) DEFAULT NULL,
   `SONO` varchar(50) DEFAULT NULL,
   `BUYER` varchar(50) DEFAULT NULL,
@@ -543,7 +543,7 @@ DROP TABLE IF EXISTS `mcno`;
 CREATE TABLE `mcno` (
   `MCNOID` int(11) NOT NULL AUTO_INCREMENT,
   `MCNO` varchar(50) DEFAULT NULL,
-  `CBUDAT` date DEFAULT curdate(),
+  `CBUDAT` date DEFAULT (CURRENT_DATE),
   PRIMARY KEY (`MCNOID`)
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
