@@ -21,15 +21,16 @@ if (empty($query)) {
 $clean_id = intval(preg_replace('/[^0-9]/', '', $query));
 
 try {
+    $kc_prog_col = get_knit_card_program_col($db);
     $sql = "
         SELECT 
-            kc.KCTID, kc.KPTID, kc.MCNO, kc.FDIA, kc.FGSM, 
+            kc.KCTID, kc.{$kc_prog_col} AS prog_id, kc.MCNO, kc.FDIA, kc.FGSM, 
             kc.GGSM, kc.SL, kc.O_T, kc.BUYER, kc.CUSTOMER, kc.PO_NUMBER, 
             kc.SONO, kc.STYLE, kc.FTYPE, kc.YTYPE, kc.YCOUNT, kc.LOT, 
             kc.KNIT_M_DESCRIPTION, kc.QTY, kc.UNAME,
             kp.PROGRAM_NO
         FROM knit_card kc
-        LEFT JOIN knitting_program kp ON kc.KPTID = kp.KPTID
+        LEFT JOIN knitting_program kp ON (kc.{$kc_prog_col} = kp.PROGRAM_NO OR kc.{$kc_prog_col} = kp.KPTID)
         WHERE kc.KCTID = ? OR kc.KNITCARD = ? OR kc.BUYER LIKE ? OR kc.STYLE LIKE ? OR kc.SONO LIKE ? OR kc.PO_NUMBER LIKE ?
         ORDER BY kc.KCTID DESC LIMIT 1
     ";
@@ -69,7 +70,8 @@ try {
             'card_id'            => $kcid,
             'knitcard'           => $row['KNITCARD'] ?? '',
             'program_no'         => $row['PROGRAM_NO'] ?? '',
-            'kptid'              => intval($row['KPTID']),
+            'kptid'              => intval($row['prog_id'] ?? $row['KNITTING_PROGRAM_ID'] ?? $row['KPTID'] ?? 0),
+            'knitting_program_id'=> intval($row['prog_id'] ?? $row['KNITTING_PROGRAM_ID'] ?? $row['KPTID'] ?? 0),
             'buyer'              => $row['BUYER'] ?: 'N/A',
             'style'              => $row['STYLE'] ?: 'N/A',
             'sono'               => $row['SONO'] ?: 'N/A',

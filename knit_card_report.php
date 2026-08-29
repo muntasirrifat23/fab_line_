@@ -12,10 +12,11 @@ $mc_no_filter  = isset($_GET['mc_no'])      ? trim($_GET['mc_no'])      : '';
 $start_date    = isset($_GET['start_date']) ? trim($_GET['start_date']) : '';
 $end_date      = isset($_GET['end_date'])   ? trim($_GET['end_date'])   : '';
 
-// Build query using real column names
+// Build query using real column names dynamically
+$kc_prog_col = get_knit_card_program_col($db);
 $query  = "SELECT kc.*, kp.PO_NUMBER AS kp_booking
            FROM knit_card kc
-           LEFT JOIN knitting_program kp ON kc.KPTID = kp.KPTID
+           LEFT JOIN knitting_program kp ON (kc.{$kc_prog_col} = kp.PROGRAM_NO OR kc.{$kc_prog_col} = kp.KPTID)
            WHERE 1=1";
 $params = [];
 $types  = '';
@@ -182,33 +183,32 @@ if ($result && $result->num_rows > 0) {
             letter-spacing: 0.2px;
         }
 
-        /* Nav buttons */
-        .nav-btn {
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 13px;
-            padding: 9px 18px;
-            transition: all 0.22s ease;
+        /* Project Standard Back Button */
+        .back-btn {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 7px;
+            background: #000000;
+            color: #ffffff;
+            border: 2px solid #000000;
+            border-radius: 8px;
+            padding: 9px 18px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background .15s, color .15s, transform .2s ease;
+            white-space: nowrap;
         }
-        .nav-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,.2); }
 
-        .btn-glass {
-            background: rgba(255,255,255,0.11);
-            border: 1px solid rgba(255,255,255,0.22);
-            color: white;
-            backdrop-filter: blur(8px);
+        .back-btn:hover {
+            background: #ffffff;
+            color: #000000;
+            border-color: #000000;
+            text-decoration: none;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,.2);
         }
-        .btn-glass:hover { background: rgba(255,255,255,0.2); color: white; }
-
-        .btn-blue-solid {
-            background: rgba(59, 130, 246, 0.85);
-            border: 1px solid rgba(96, 165, 250, 0.5);
-            color: white;
-        }
-        .btn-blue-solid:hover { background: rgba(37, 99, 235, 1); color: white; }
 
         /* Bottom glassy strip inside header */
         .banner-info-strip {
@@ -350,11 +350,8 @@ if ($result && $result->num_rows > 0) {
                 </div>
                 <!-- Right: nav buttons -->
                 <div class="d-flex gap-2 flex-wrap align-items-center">
-                    <a href="knit_card.php" class="btn nav-btn btn-blue-solid">
-                        <i class="fa-solid fa-arrow-left"></i> Back to Knit Card
-                    </a>
-                    <a href="initialPage.php" class="btn nav-btn btn-glass">
-                        <i class="fa-solid fa-house"></i> Dashboard
+                    <a href="report.php" class="back-btn">
+                        <i class="fa-solid fa-arrow-left"></i> Back to Report
                     </a>
                 </div>
             </div>
@@ -439,16 +436,15 @@ if ($result && $result->num_rows > 0) {
                 <table class="table custom-table align-middle mb-0">
                     <thead>
                         <tr>
-                            <th>Card ID</th>
                             <th>Card Date</th>
+                            <th>Knit Card Number</th>
+                            <th>PO</th>
                             <th>M/C No</th>
                             <th>Buyer</th>
-                            <th>PO Number</th>
                             <th>Style</th>
                             <th>Fabric Type</th>
                             <th>Yarn Type</th>
                             <th>Req Qty (KG)</th>
-                            <th>Prepared By</th>
                             <th class="text-center">Actions</th>
                         </tr>
                     </thead>
@@ -456,16 +452,15 @@ if ($result && $result->num_rows > 0) {
                         <?php if (count($rows_array) > 0): ?>
                             <?php foreach ($rows_array as $row): ?>
                                 <tr>
-                                    <td><span class="badge-kc">#KC-<?php echo intval($row['KCTID']); ?></span></td>
                                     <td><i class="fa-regular fa-calendar me-1 text-muted"></i><?php echo htmlspecialchars($row['CREATED_DATE'] ?? ''); ?></td>
+                                    <td><span class="badge-kc"><?php echo htmlspecialchars(!empty($row['KNITCARD']) ? $row['KNITCARD'] : ('KC-' . $row['KCTID'])); ?></span></td>
+                                    <td><strong><?php echo htmlspecialchars($row['PO_NUMBER'] ?? ''); ?></strong></td>
                                     <td><span class="badge-mc">M/C <?php echo htmlspecialchars($row['MCNO'] ?? ''); ?></span></td>
                                     <td><span class="badge-buyer"><?php echo htmlspecialchars($row['BUYER'] ?? ''); ?></span></td>
-                                    <td><?php echo htmlspecialchars($row['PO_NUMBER'] ?? ''); ?></td>
                                     <td><?php echo htmlspecialchars($row['STYLE'] ?? ''); ?></td>
-                    <td><?php echo htmlspecialchars($row['FTYPE'] ?? ''); ?></td>
-                    <td><small class="text-muted"><?php echo htmlspecialchars($row['YTYPE'] ?? ''); ?></small></td>
-                    <td><strong class="text-success"><?php echo number_format((float)($row['QTY'] ?? 0), 2); ?> KG</strong></td>
-                    <td><small class="text-secondary"><i class="fa-solid fa-user-circle me-1"></i><?php echo htmlspecialchars($row['UNAME'] ?? ''); ?></small></td>
+                                    <td><?php echo htmlspecialchars($row['FTYPE'] ?? ''); ?></td>
+                                    <td><small class="text-muted"><?php echo htmlspecialchars($row['YTYPE'] ?? ''); ?></small></td>
+                                    <td><strong class="text-success"><?php echo number_format((float)($row['QTY'] ?? 0), 2); ?> KG</strong></td>
                                     <td class="text-center">
                                         <div class="d-inline-flex gap-1.5 flex-wrap justify-content-center">
                                             <a href="knit_card_view.php?id=<?php echo intval($row['KCTID']); ?>"
@@ -486,7 +481,7 @@ if ($result && $result->num_rows > 0) {
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="11" class="text-center py-5 text-muted">
+                                <td colspan="10" class="text-center py-5 text-muted">
                                     <i class="fa-solid fa-folder-open fa-3x mb-3 text-secondary d-block"></i>
                                     <h6 class="fw-bold">No Knit Cards Found</h6>
                                     <p class="small mb-0">Try clearing your search filters or generate a new card from the Knitting Programs page.</p>

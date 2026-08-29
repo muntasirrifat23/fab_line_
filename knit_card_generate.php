@@ -48,11 +48,14 @@ if (!$res || $res->num_rows == 0) {
 $prog = $res->fetch_assoc();
 $stmt->close();
 
-// 2. Fetch already carded quantity for this program from knit_card
+// 2. Fetch already carded quantity for this program from knit_card dynamically
 $already_carded = 0.00;
-$sum_stmt = $db->prepare("SELECT SUM(QTY) AS total_carded FROM knit_card WHERE KPTID = ?");
+$kc_prog_col = get_knit_card_program_col($db);
+$p_kptid = intval($prog['KPTID']);
+$p_prog_no = !empty($prog['PROGRAM_NO']) ? strval($prog['PROGRAM_NO']) : strval($p_kptid);
+$sum_stmt = $db->prepare("SELECT SUM(QTY) AS total_carded FROM knit_card WHERE ({$kc_prog_col} = ? OR {$kc_prog_col} = ?)");
 if ($sum_stmt) {
-    $sum_stmt->bind_param("i", $program_id);
+    $sum_stmt->bind_param("ss", $p_prog_no, $p_kptid);
     $sum_stmt->execute();
     $res_sum = $sum_stmt->get_result();
     if ($res_sum && $row_sum = $res_sum->fetch_assoc()) {
@@ -183,11 +186,11 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                 $program_qty_locked = floatval($lock_row['QTY'] ?? 0);
 
                 // Fetch current sum of QTY for this program from knit_card (using lock since it's in transaction)
-                $stmt_sum = $db->prepare("SELECT SUM(QTY) AS total_carded FROM knit_card WHERE KPTID = ?");
+                $stmt_sum = $db->prepare("SELECT SUM(QTY) AS total_carded FROM knit_card WHERE ({$kc_prog_col} = ? OR {$kc_prog_col} = ?)");
                 if (!$stmt_sum) {
                     throw new Exception("Database query error: " . $db->error);
                 }
-                $stmt_sum->bind_param("i", $p_kptid);
+                $stmt_sum->bind_param("ss", $p_prog_no, $p_kptid);
                 $stmt_sum->execute();
                 $res_sum = $stmt_sum->get_result();
                 $already_carded_locked = 0.00;
@@ -208,7 +211,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                     throw new Exception("Total required quantity (" . number_format($total_user_req_qty, 2) . " KG) exceeds the remaining program quantity (" . number_format($remaining_qty_locked, 2) . " KG).");
                 }
 
-                // Generate next KNITCARD and ROLL numbers (same-to-same with knit_card structure)
+                // Generate next KNITCARD number (always increments globally, even for the same PO)
                 $next_knitcard = 200000001;
                 $res_mc = $db->query("SELECT MAX(KNITCARD) AS mx FROM knit_card");
                 if ($res_mc && ($r_mc = $res_mc->fetch_assoc()) && !empty($r_mc['mx'])) {
@@ -216,21 +219,10 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                 }
                 $res_mc->free();
 
-                $prog_mcard_res = $db->prepare("SELECT MAX(KNITCARD) AS mx FROM knit_card WHERE KPTID = ?");
-                if ($prog_mcard_res) {
-                    $prog_mcard_res->bind_param("i", $p_kptid);
-                    $prog_mcard_res->execute();
-                    $res_pm = $prog_mcard_res->get_result();
-                    if ($res_pm && ($r_pm = $res_pm->fetch_assoc()) && !empty($r_pm['mx'])) {
-                        $next_knitcard = intval($r_pm['mx']);
-                    }
-                    $prog_mcard_res->close();
-                }
-
-                // Insert into knit_card
+                // Insert into knit_card dynamically
                 $ins = $db->prepare("
                     INSERT INTO knit_card (
-                        KPTID, KNITCARD, MCNO, QTY, PO_NUMBER, SONO, BUYER, STYLE, COLOR,
+                        {$kc_prog_col}, KNITCARD, MCNO, QTY, PO_NUMBER, SONO, BUYER, STYLE, COLOR,
                         FGSM, FDIA, O_T, FTYPE, YTYPE, CUSTOMER, YCOUNT, SL, MCDIA, GGSM,
                         FEEDER_PLAN, LOT, SHIFT, KNIT_MATERIAL_CODE, KNIT_M_DESCRIPTION, UNAME
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -247,6 +239,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
 
                 $inserted_ids = [];
                 $current_roll = $next_roll;
+                $current_knitcard = $next_knitcard;
 
                 foreach ($rows_data as $row_item) {
                     $r_mcno  = $row_item['mcno'];
@@ -254,9 +247,9 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                     $r_qty   = round($row_item['qty']);
 
                     $ins->bind_param(
-                        "iisdsssssssssssssssssssss",
-                        $p_kptid,
-                        $next_knitcard,
+                        "sisdsssssssssssssssssssss",
+                        $p_prog_no,
+                        $current_knitcard,
                         $r_mcno,
                         $r_qty,
                         $p_booking,
@@ -289,6 +282,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
 
                     $inserted_ids[] = $ins->insert_id;
                     $current_roll++;
+                    $current_knitcard++;
                 }
 
                 $ins->close();
@@ -950,7 +944,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                 </div>
             </div>
             <div class="top-bar-right">
-                <span class="pill-badge">Knitting Program: <?php echo htmlspecialchars($p_sub_tid ?: 'N/A'); ?></span>
+                <span class="pill-badge">Knitting Program: <?php echo htmlspecialchars(!empty($prog['PROGRAM_NO']) ? $prog['PROGRAM_NO'] : ($p_sub_tid ?: $p_kptid)); ?></span>
                 <a href="knit_card.php" class="btn-back">
                     <i class="fa-solid fa-arrow-left"></i> Back to Knit Card
                 </a>

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
   require_once 'config.php';
   header('Content-Type: application/json');
@@ -11,8 +11,10 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
     exit();
   }
 
+  $clean = preg_replace('/^KC\-/i', '', $KNITCARD);
   $s = mysqli_real_escape_string($db, $KNITCARD);
-  $q = "SELECT * FROM knit_card WHERE KNITCARD = '$s' LIMIT 1";
+  $sc = mysqli_real_escape_string($db, $clean);
+  $q = "SELECT * FROM knit_card WHERE KNITCARD = '$s' OR KCTID = '$sc' OR PO_NUMBER = '$s' ORDER BY KCTID DESC LIMIT 1";
   $res = mysqli_query($db, $q);
 
   if ($res && mysqli_num_rows($res) > 0) {
@@ -1282,11 +1284,12 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
       function renderOperatorVerified() {
         resultContainer.innerHTML = `
           <div class="manual-entry">
-            <input type="text" id="manualRollInput" placeholder="Knit Card QR / Card No" autocomplete="off">
+            <input type="text" id="manualRollInput" placeholder="Knit Card No (e.g. 200000001) / Card ID" autocomplete="off">
             <button type="button" id="manualRollBtn">Load Data</button>
           </div>
+          <div id="rollInputStatus"></div>
           <div class="data-row header-row" style="border-left-color:#10b981;">
-            <span class="label">Scanned Data (Knitting Operator) <span class="scanned-badge" style="background:#10b981;">OPERATOR</span></span>
+            <span class="label">Operator Verified <span class="scanned-badge" style="background:#10b981;">OPERATOR</span></span>
             <span class="value">${new Date().toLocaleTimeString()}</span>
           </div>
           <div class="data-row default-row operator-info-row">
@@ -1294,7 +1297,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
             <div class="field-block"><span class="field-label">Operator Name</span><span class="field-value">${operatorInfo.OPERATOR_NAME || '-'}</span></div>
           </div>
           <div class="data-row" style="border-left-color:#f59e0b; background:#fffbeb; margin-top:8px;">
-            <span class="value" style="color:#92400e; font-weight:600;">Now Scan/ Enter the Knit Card QR</span>
+            <span class="value" style="color:#92400e; font-weight:600;">Now Scan / Enter Knit Card No (e.g. 200000001)</span>
           </div>
         `;
         hideActionContent();
@@ -1312,12 +1315,20 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
       }
 
       function submitManualRoll() {
-        if (processingRoll || !operatorScanned) return;
+        if (!operatorScanned) {
+          alert('Please scan or enter Operator ID first!');
+          return;
+        }
         const inp = document.getElementById('manualRollInput');
         const val = inp ? String(inp.value).trim() : '';
         if (!val) {
-          alert('Please scan or enter Knit Card QR!');
+          alert('Please enter Knit Card Number (e.g. 200000001) or Card ID!');
+          if (inp) inp.focus();
           return;
+        }
+        const statusDiv = document.getElementById('rollInputStatus');
+        if (statusDiv) {
+          statusDiv.innerHTML = '<div style="color:#2563eb; font-weight:700; font-size:0.85rem; margin-top:8px;"><i class="fas fa-spinner fa-spin"></i> Loading Knit Card data...</div>';
         }
         processingRoll = true;
         stopCameraAndProcess(val);
@@ -1353,30 +1364,40 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
         fetch('knitting_production.php?action=get_roll&knitcard=' + encodeURIComponent(text))
           .then(r => r.json())
           .then(res => {
-            if (res && res.success) {
+            processingRoll = false;
+            if (res && res.success && res.data) {
               renderRollData(res.data, text);
               return;
             }
 
             // Keep support for older pipe-delimited Knit Card QR payloads.
-            if (!scannedInfo || scannedInfo.raw !== text) {
+            if (text.includes('|')) {
               scannedInfo = parseQrText(text);
+              if (scannedInfo && scannedInfo.parsed) {
+                renderScannedDataFromParsedQr(text);
+                return;
+              }
             }
-            if (!scannedInfo.parsed) {
-              renderUnstructuredData(text, (res && res.error) || 'No Knit Card data found');
-              return;
+
+            const errMsg = (res && res.error) || ('No Knit Card found for: ' + text);
+            const statusDiv = document.getElementById('rollInputStatus');
+            if (statusDiv) {
+              statusDiv.innerHTML = `<div style="color:#ef4444; font-weight:700; font-size:0.85rem; margin-top:8px;"><i class="fas fa-times-circle"></i> ${errMsg}</div>`;
+            } else {
+              renderUnstructuredData(text, errMsg);
             }
-            renderScannedDataFromParsedQr(text);
           })
           .catch(err => {
-            console.error('Knit Card lookup failed:', err);
-            renderUnstructuredData(text, 'Failed to fetch Knit Card data');
-          })
-          .finally(() => {
             processingRoll = false;
+            console.error('Knit Card lookup failed:', err);
+            const statusDiv = document.getElementById('rollInputStatus');
+            if (statusDiv) {
+              statusDiv.innerHTML = `<div style="color:#ef4444; font-weight:700; font-size:0.85rem; margin-top:8px;"><i class="fas fa-exclamation-triangle"></i> Failed to fetch Knit Card data: ${err.message}</div>`;
+            } else {
+              renderUnstructuredData(text, 'Failed to fetch Knit Card data');
+            }
           });
         return;
-
       }
 
       function renderScannedDataFromParsedQr(qrText) {
@@ -1839,22 +1860,15 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
             renderDefaultData();
           }
         }).catch(err => {
-          console.error("Camera start error:", err);
-          cameraStatus.innerText = 'Camera error';
-          cameraStatus.style.color = '#f7a1a1';
-          resultContainer.innerHTML = `
-            <div class="data-row default-row" style="border-left-color: #c44;">
-              <span class="label"><i class="fas fa-exclamation-triangle"></i> Camera unavailable</span>
-              <span class="value" style="font-size:0.8rem;">${err.message || 'Please allow camera access'}</span>
-            </div>
-            <div class="data-row default-row" style="border-left-color:#7a8bb0;">
-              <span class="label">ðŸ’¡ Tip:</span>
-              <span class="value">Tap restart or grant permissions</span>
-            </div>
-            <button class="rescan-btn" onclick="window.location.reload();">
-              <i class="fas fa-redo"></i> Retry Camera
-            </button>
-          `;
+          console.warn("Camera start error:", err);
+          if (cameraStatus) {
+            cameraStatus.innerText = 'Camera unavailable (Use manual input below)';
+            cameraStatus.style.color = '#f59e0b';
+          }
+          // Ensure manual input controls remain fully available and are not overwritten
+          if (!operatorScanned) {
+            renderDefaultData();
+          }
         });
       }
 
@@ -1865,20 +1879,33 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
       }
 
       function stopCameraAndProcess(text) {
-        if (html5QrCode) {
-          html5QrCode.stop().then(() => {
-            isScanning = false;
-            cameraStatus.innerText = 'Scan complete';
-            cameraStatus.style.color = '#7dd3fc';
-            scannerContainer.style.display = 'none';
-            cameraControls.style.display = 'none';
-            renderScannedData(text);
-          }).catch(err => {
-            console.warn('Failed to stop scanner:', err);
-            renderScannedData(text);
-          });
-        } else {
+        const proceed = () => {
+          if (scannerContainer) scannerContainer.style.display = 'none';
+          if (cameraControls) cameraControls.style.display = 'none';
           renderScannedData(text);
+        };
+
+        if (html5QrCode && isScanning) {
+          try {
+            html5QrCode.stop().then(() => {
+              isScanning = false;
+              if (cameraStatus) {
+                cameraStatus.innerText = 'Scan complete';
+                cameraStatus.style.color = '#7dd3fc';
+              }
+              proceed();
+            }).catch(err => {
+              console.warn('Failed to stop scanner:', err);
+              isScanning = false;
+              proceed();
+            });
+          } catch (e) {
+            console.warn('Sync exception stopping scanner:', e);
+            isScanning = false;
+            proceed();
+          }
+        } else {
+          proceed();
         }
       }
 

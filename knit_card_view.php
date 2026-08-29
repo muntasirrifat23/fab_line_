@@ -27,7 +27,7 @@ $sql = "SELECT kc.*,
                kp.SHIFT AS prog_shift,
                kp.PO_NUMBER AS prog_po
          FROM knit_card kc
-         LEFT JOIN knitting_program kp ON kc.KPTID = kp.KPTID
+         LEFT JOIN knitting_program kp ON (kc." . get_knit_card_program_col($db) . " = kp.PROGRAM_NO OR kc." . get_knit_card_program_col($db) . " = kp.KPTID)
          WHERE kc.KCTID = ?";
 $stmt = $db->prepare($sql);
 if ($stmt) {
@@ -52,7 +52,8 @@ $qr_payload = strval($roll_number);
 
 // Extract dynamic values
 $val_card_id      = "#KC-" . $card['KCTID'];
-$val_sub_tid      = !empty($card['prog_program_no']) ? $card['prog_program_no'] : ('KP-' . $card['KPTID']);
+$prog_id_val      = !empty($card['KNITTING_PROGRAM_ID']) ? $card['KNITTING_PROGRAM_ID'] : (!empty($card['Knitting Program ID']) ? $card['Knitting Program ID'] : (!empty($card['knitting_program_id']) ? $card['knitting_program_id'] : ($card['KPTID'] ?? '')));
+$val_sub_tid      = !empty($card['prog_program_no']) ? $card['prog_program_no'] : ('KP-' . $prog_id_val);
 $val_date         = !empty($card['CREATED_DATE']) ? date('d M Y', strtotime($card['CREATED_DATE'])) : date('d M Y');
 $val_buyer        = !empty($card['BUYER']) ? $card['BUYER'] : 'N/A';
 $val_customer     = !empty($card['CUSTOMER']) ? $card['CUSTOMER'] : ($card['prog_customer'] ?? 'N/A');
