@@ -660,8 +660,8 @@
     <div class="result-panel">
       <div class="result-header">
         <i class="fas fa-qrcode"></i>
-        <span>Scanned Data</span>
-        <span style="margin-left: auto; font-size: 0.7rem; background: #14b8a6; padding: 2px 12px; border-radius: 40px; color: #ffffff;">live</span>
+        <span>Roll Data</span>
+        <span style="margin-left: auto; font-size: 0.7rem; background: #14b8a6; padding: 2px 12px; border-radius: 40px; color: #ffffff;">Ready</span>
       </div>
       <div id="result-content">
         <!-- Default content will be injected by JS -->
@@ -776,14 +776,28 @@
       let selectedSubRack = null;
       let html5QrCode = null;
       let isScanning = false;
+      let hasLoadedData = false;
 
       function renderDefaultData() {
+        if (hasLoadedData) return;
         scannedInfo = null;
         hideRackSection();
         resultContainer.innerHTML = `
+          <div class="manual-entry">
+            <input type="text" id="manualRollInput" placeholder="Enter ROLL number (e.g. 3000000001)" autocomplete="off">
+            <button type="button" id="manualRollBtn">Load Data</button>
+          </div>
           <div class="data-row header-row"><span class="label">Default Information</span><span class="value"></span></div>
-          <div class="data-row default-row"><span class="label">Status</span><span class="value">Awaiting QR scan</span></div>
+          <div class="data-row default-row"><span class="label">Status</span><span class="value">Awaiting ROLL number</span></div>
         `;
+      }
+
+      function renderLoadedStateIfAny() {
+        if (scannedInfo) {
+          showRackSection();
+          return;
+        }
+        renderDefaultData();
       }
 
       function showMessage(msg, type) {
@@ -828,12 +842,13 @@
 
       function renderScannedData(row) {
         scannedInfo = row;
+        hasLoadedData = true;
         clearMessage();
         showRackSection();
 
         let html = `
           <div class="data-row header-row" style="border-left-color:#4fc3f7;">
-            <span class="label">✅ QR Scanned <span class="scanned-badge">ROLL NO</span></span>
+            <span class="label">✓ ROLL Loaded <span class="scanned-badge">ROLL NO</span></span>
             <span class="value">${new Date().toLocaleTimeString()}</span>
           </div>
         `;
@@ -847,7 +862,7 @@
 
         html += `
           <button class="rescan-btn" onclick="window.location.reload();">
-            <i class="fas fa-redo"></i> Scan Another QR
+            <i class="fas fa-redo"></i> Enter Another Roll
           </button>
         `;
 
@@ -1107,6 +1122,40 @@
         });
       }
 
+      function submitManualRoll() {
+        const inp = document.getElementById('manualRollInput');
+        const roll = inp ? String(inp.value).trim() : '';
+
+        if (!roll) {
+          showMessage('Please enter a ROLL number first.', 'error');
+          return;
+        }
+
+        cameraStatus.innerText = 'Searching...';
+        cameraStatus.style.color = '#fbbf24';
+
+        if (html5QrCode) {
+          try { html5QrCode.stop(); html5QrCode.clear(); } catch (e) {}
+          isScanning = false;
+          scannerContainer.style.display = 'none';
+          cameraControls.style.display = 'none';
+        }
+
+        fetchDataByRoll(roll)
+          .then(function(row) {
+            renderScannedData(row);
+            cameraStatus.innerText = 'Found';
+            cameraStatus.style.color = '#7dd3fc';
+            showMessage('Data loaded for ROLL: ' + roll + '! Select rack location.', 'success');
+          })
+          .catch(function(err) {
+            cameraStatus.innerText = 'Not found';
+            cameraStatus.style.color = '#f7a1a1';
+            renderBareData(roll, 'No data found for ROLL: ' + roll);
+            showMessage((err && err.message) || String(err), 'error');
+          });
+      }
+
       function processScannedData(decodedText) {
         const roll = extractRollFromQR(decodedText);
 
@@ -1135,17 +1184,18 @@
       }
 
       function renderBareData(text, msg) {
+        hasLoadedData = false;
         resultContainer.innerHTML = `
           <div class="data-row header-row" style="border-left-color:#f59e0b; background:#c8e2dd;">
             <span class="label" style="color:#8a4a00; font-weight:800;">📌 ${msg || 'No data'}</span>
             <span class="value"></span>
           </div>
           <div class="data-row" style="background:#d6e9e5; border-left-color:#6b7280; flex-wrap:wrap;">
-            <span class="label" style="color:#0b4f47; font-weight:700; min-width:100%;">Scanned Data:</span>
+            <span class="label" style="color:#0b4f47; font-weight:700; min-width:100%;">Entered ROLL:</span>
             <span class="value" style="text-align:left; font-size:0.8rem; word-break:break-all; color:#052522; font-weight:600;">${text}</span>
           </div>
           <button class="rescan-btn" onclick="window.location.reload();">
-            <i class="fas fa-redo"></i> Scan Another QR
+            <i class="fas fa-redo"></i> Enter Another Roll
           </button>
         `;
         hideRackSection();
@@ -1158,7 +1208,7 @@
 
       saveRackBtn.addEventListener('click', function() {
         if (!scannedInfo) {
-          showMessage('No data scanned. Please scan a QR code first.', 'error');
+          showMessage('No data loaded. Please enter a ROLL number first.', 'error');
           return;
         }
 
@@ -1319,6 +1369,14 @@
 
       document.addEventListener('DOMContentLoaded', function() {
         renderDefaultData();
+
+        const mRollInput = document.getElementById('manualRollInput');
+        const mRollBtn = document.getElementById('manualRollBtn');
+        if (mRollBtn) mRollBtn.addEventListener('click', submitManualRoll);
+        if (mRollInput) mRollInput.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') { e.preventDefault(); submitManualRoll(); }
+        });
+
         setTimeout(function() {
           startScanner();
         }, 500);
