@@ -917,7 +917,7 @@
 
       function showSelectedRackMessage() {
         if (selectedRack && selectedSubRack) {
-          showMessage('Selected: ' + selectedRack + '-' + selectedSubRack, '');
+          showMessage('Selected: ' + selectedRack + selectedSubRack, '');
         }
       }
 
@@ -932,7 +932,7 @@
           btn.textContent = opt;
           btn.onclick = function() {
             setActiveRackSection(opt);
-            showMessage('Selected: ' + selectedRack + '-' + opt, '');
+            showMessage('Selected: ' + selectedRack + opt, '');
           };
           subRackGroup.appendChild(btn);
         });

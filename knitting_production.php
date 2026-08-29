@@ -830,16 +830,25 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
     .kc-highlight .kc-value { font-weight: 800; font-size: 13.5px; color: #1d4ed8; }
 
     @media print {
+      @page { size: A4 portrait; margin: 0; }
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+      }
       body * { visibility: hidden !important; }
       #knitCardPrintArea {
         display: block !important;
         visibility: visible !important;
-        position: absolute;
-        left: 0; top: 0;
+        position: fixed;
+        left: 1cm; top: 1cm;
         width: 6cm;
         height: 6cm;
         overflow: hidden;
         background: #ffffff;
+        margin: 0 !important;
+        padding: 0 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
       #knitCardPrintArea * { visibility: visible !important; }
       /* rendered label image -> exact 6cm x 6cm at top-left of A4 */
@@ -847,8 +856,13 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
         width: 6cm !important;
         height: 6cm !important;
         display: block;
+        margin: 0 !important;
+        padding: 0 !important;
+        position: relative;
+        top: 0; left: 0;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
-      @page { size: A4 portrait; margin: 0; }
     }
   </style>
   <div id="knitCardPrintArea"></div>
