@@ -13,100 +13,101 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' && !isset($_GET['action'])) 
   unset($_SESSION['active_operator']);
 }
 
-// ── ACTION: VERIFY OPERATOR / QC QR CODE ──
-// Checks knitting_operator first; if not found, falls back to knitting_operator_qc
-// so that QR codes generated from the "Knitting All QC" section also authenticate.
-if (isset($_GET['action']) && $_GET['action'] === 'verify_operator') {
+// ── ACTION: VERIFY QC OPERATOR QR CODE / ID ──
+// Only authenticated QC Operators from knitting_operator_qc are authorized
+// to conduct fabric inspection. Standard operators from knitting_operator are rejected.
+if (isset($_GET['action']) && ($_GET['action'] === 'verify_operator' || $_GET['action'] === 'verify_qc')) {
     header('Content-Type: application/json');
-    $op_id = trim($_GET['operator_id'] ?? $_GET['query'] ?? '');
+    $qc_input = trim($_GET['operator_id'] ?? $_GET['qc_id'] ?? $_GET['query'] ?? '');
 
-    if (empty($op_id)) {
-        echo json_encode(['success' => false, 'error' => 'Operator ID is required']);
+    if (empty($qc_input)) {
+        echo json_encode(['success' => false, 'error' => 'QC Operator ID is required']);
         exit();
     }
 
-    // ── 1) Try knitting_operator table first ──
-    $stmt = $db->prepare("
-        SELECT KOTID, OPERATOR_ID, OPERATOR_NAME
-        FROM knitting_operator
-        WHERE LOWER(TRIM(OPERATOR_ID)) = LOWER(TRIM(?))
-        LIMIT 1
-    ");
-    if ($stmt) {
-        $stmt->bind_param("s", $op_id);
-        if (!$stmt->execute()) {
-            error_log('Operator verification failed: ' . $stmt->error);
-            $stmt->close();
-            echo json_encode(['success' => false, 'error' => 'Operator verification database error']);
-            exit();
-        }
-        $res = $stmt->get_result();
-        if ($res && $row = $res->fetch_assoc()) {
-            $_SESSION['active_operator'] = [
-                'id'   => $row['OPERATOR_ID'],
-                'name' => $row['OPERATOR_NAME'],
-                'kotid'=> $row['KOTID'],
-                'role' => 'operator'
-            ];
-            echo json_encode([
-                'success' => true,
-                'data'    => [
-                    'OPERATOR_ID'   => $row['OPERATOR_ID'],
-                    'OPERATOR_NAME' => $row['OPERATOR_NAME'],
-                    'KOTID'         => $row['KOTID'],
-                    'ROLE'          => 'Operator'
-                ]
-            ]);
-            $stmt->close();
-            exit();
-        }
-        $stmt->close();
-    }
-
-    // ── 2) Fallback: Try knitting_operator_qc table (QC QR codes) ──
+    // ── 1) Dynamic verification against knitting_operator_qc table ──
     $qc_stmt = $db->prepare("
-        SELECT KQCTID, KNITTING_QC_ID, KNITTING_QC_NAME
+        SELECT KQCTID, KNITTING_QC_ID, KNITTING_QC_NAME, KNITTING_QC_EMAIL
         FROM knitting_operator_qc
         WHERE LOWER(TRIM(KNITTING_QC_ID)) = LOWER(TRIM(?))
+           OR LOWER(TRIM(KNITTING_QC_NAME)) = LOWER(TRIM(?))
         LIMIT 1
     ");
-    if ($qc_stmt) {
-        $qc_stmt->bind_param("s", $op_id);
-        if (!$qc_stmt->execute()) {
-            error_log('QC verification failed: ' . $qc_stmt->error);
-            $qc_stmt->close();
-            echo json_encode(['success' => false, 'error' => 'QC verification database error']);
-            exit();
-        }
-        $qc_res = $qc_stmt->get_result();
-        if ($qc_res && $qc_row = $qc_res->fetch_assoc()) {
-            $_SESSION['active_operator'] = [
-                'id'    => $qc_row['KNITTING_QC_ID'],
-                'name'  => $qc_row['KNITTING_QC_NAME'],
-                'kotid' => $qc_row['KQCTID'],
-                'role'  => 'qc'
-            ];
-            echo json_encode([
-                'success' => true,
-                'data'    => [
-                    'OPERATOR_ID'   => $qc_row['KNITTING_QC_ID'],
-                    'OPERATOR_NAME' => $qc_row['KNITTING_QC_NAME'],
-                    'KOTID'         => $qc_row['KQCTID'],
-                    'ROLE'          => 'Knitting QC'
-                ]
-            ]);
-            $qc_stmt->close();
-            exit();
-        }
-        $qc_stmt->close();
+    if (!$qc_stmt) {
+        echo json_encode(['success' => false, 'error' => 'Database error: ' . $db->error]);
+        exit();
     }
 
-    echo json_encode(['success' => false, 'error' => 'Invalid Operator/QC ID: "' . htmlspecialchars($op_id) . '"']);
+    $qc_stmt->bind_param("ss", $qc_input, $qc_input);
+    if (!$qc_stmt->execute()) {
+        error_log('QC verification failed: ' . $qc_stmt->error);
+        $qc_stmt->close();
+        echo json_encode(['success' => false, 'error' => 'QC verification database error']);
+        exit();
+    }
+
+    $qc_res = $qc_stmt->get_result();
+    if ($qc_res && $qc_row = $qc_res->fetch_assoc()) {
+        $_SESSION['active_operator'] = [
+            'id'         => $qc_row['KNITTING_QC_ID'],
+            'name'       => $qc_row['KNITTING_QC_NAME'],
+            'email'      => $qc_row['KNITTING_QC_EMAIL'],
+            'kotid'      => $qc_row['KQCTID'],
+            'kqctid'     => $qc_row['KQCTID'],
+            'role'       => 'qc',
+            'role_title' => 'Knitting QC'
+        ];
+        echo json_encode([
+            'success' => true,
+            'data'    => [
+                'OPERATOR_ID'      => $qc_row['KNITTING_QC_ID'],
+                'OPERATOR_NAME'    => $qc_row['KNITTING_QC_NAME'],
+                'KNITTING_QC_ID'   => $qc_row['KNITTING_QC_ID'],
+                'KNITTING_QC_NAME' => $qc_row['KNITTING_QC_NAME'],
+                'KOTID'            => $qc_row['KQCTID'],
+                'KQCTID'           => $qc_row['KQCTID'],
+                'ROLE'             => 'Knitting QC',
+                'ROLE_TITLE'       => 'QC Operator'
+            ]
+        ]);
+        $qc_stmt->close();
+        exit();
+    }
+    $qc_stmt->close();
+
+    // ── 2) Check if this is a standard knitting operator to give an informative error ──
+    $op_stmt = $db->prepare("
+        SELECT OPERATOR_ID, OPERATOR_NAME
+        FROM knitting_operator
+        WHERE LOWER(TRIM(OPERATOR_ID)) = LOWER(TRIM(?))
+           OR LOWER(TRIM(OPERATOR_NAME)) = LOWER(TRIM(?))
+        LIMIT 1
+    ");
+    if ($op_stmt) {
+        $op_stmt->bind_param("ss", $qc_input, $qc_input);
+        $op_stmt->execute();
+        $op_res = $op_stmt->get_result();
+        if ($op_res && $op_row = $op_res->fetch_assoc()) {
+            $op_stmt->close();
+            echo json_encode([
+                'success' => false,
+                'error'   => 'Access Denied: "' . htmlspecialchars($op_row['OPERATOR_NAME']) . ' (' . htmlspecialchars($op_row['OPERATOR_ID']) . ')" is a Knitting Operator, not a QC Operator. Only authorized QC Operators from "Knitting All QC" can perform fabric inspections.'
+            ]);
+            exit();
+        }
+        $op_stmt->close();
+    }
+
+    // ── 3) Neither QC nor Operator: Invalid ID ──
+    echo json_encode([
+        'success' => false,
+        'error'   => 'Invalid QC Operator ID: "' . htmlspecialchars($qc_input) . '". Only valid QC Operators from Knitting All QC are authorized.'
+    ]);
     exit();
 }
 
-// ── ACTION: SWITCH / LOGOUT OPERATOR ──
-if (isset($_GET['action']) && $_GET['action'] === 'logout_operator') {
+// ── ACTION: SWITCH / LOGOUT QC OPERATOR ──
+if (isset($_GET['action']) && ($_GET['action'] === 'logout_operator' || $_GET['action'] === 'logout_qc')) {
     header('Content-Type: application/json');
     unset($_SESSION['active_operator']);
     echo json_encode(['success' => true]);
@@ -117,8 +118,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'logout_operator') {
 if (isset($_GET['action']) && $_GET['action'] === 'search_card') {
     header('Content-Type: application/json');
 
-    if (!isset($_SESSION['active_operator']) || empty($_SESSION['active_operator']['id'])) {
-        echo json_encode(['success' => false, 'error' => 'Please scan Operator ID QR Code first!']);
+    if (!isset($_SESSION['active_operator']) || empty($_SESSION['active_operator']['id']) || ($_SESSION['active_operator']['role'] ?? '') !== 'qc') {
+        echo json_encode(['success' => false, 'error' => 'Please scan Operator ID first!']);
         exit();
     }
 
@@ -210,8 +211,8 @@ $msg = '';
 
 // ── SAVE INSPECTION RECORD ──
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspection'])) {
-    if (!isset($_SESSION['active_operator']) || empty($_SESSION['active_operator']['id'])) {
-        $error = "Unauthorized: You must scan a valid Operator ID QR Code before completing fabric inspection.";
+    if (!isset($_SESSION['active_operator']) || empty($_SESSION['active_operator']['id']) || ($_SESSION['active_operator']['role'] ?? '') !== 'qc') {
+        $error = "Unauthorized: You must authenticate with a valid QC Operator ID QR Code before completing fabric inspection.";
     } else {
         $production_id       = intval($_POST['PRODUCTION_ID'] ?? 0);
         $roll_no             = trim($_POST['ROLL_NO'] ?? '');
@@ -413,6 +414,10 @@ if ($c_res) {
 }
 
 $active_operator = $_SESSION['active_operator'] ?? null;
+if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
+    unset($_SESSION['active_operator']);
+    $active_operator = null;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -813,15 +818,18 @@ $active_operator = $_SESSION['active_operator'] ?? null;
     <div class="result-panel">
       <div class="result-header">
         <i class="fas fa-qrcode"></i>
-        <span id="step-title-text"><?php echo $active_operator ? 'Step 2: Scan Roll QR' : 'Step 1: Scan Operator ID QR'; ?></span>
+        <span id="step-title-text"><?php echo $active_operator ? 'Step 2: Scan Roll QR' : 'Operator ID'; ?></span>
         <div id="op-header-badge-container" style="margin-left: auto; display: flex; align-items: center;">
           <?php if ($active_operator): ?>
-            <span style="font-size: 0.75rem; background: #10b981; padding: 2px 12px; border-radius: 40px; color: #ffffff; font-weight:700;">
-              <i class="fa-solid fa-user-check me-1"></i> <?php echo htmlspecialchars($active_operator['name']); ?> (<?php echo htmlspecialchars($active_operator['id']); ?>)
+            <span style="font-size: 0.75rem; background: #10b981; padding: 2px 12px; border-radius: 40px; color: #ffffff; font-weight:700; display:inline-flex; align-items:center;">
+              <i class="fa-solid fa-user-shield me-1"></i> <?php echo htmlspecialchars($active_operator['name']); ?> (<?php echo htmlspecialchars($active_operator['id']); ?>)
+              <span style="background:#0284c7; margin-left:6px; font-size:0.65rem; padding:1px 6px; border-radius:10px;">QC</span>
             </span>
-            <button type="button" onclick="logoutOperator()" style="margin-left: 8px; background:#ef4444; border:none; color:white; font-size:0.7rem; padding:3px 10px; border-radius:20px; cursor:pointer; font-weight:700;">Switch</button>
+            <button type="button" onclick="logoutOperator()" style="margin-left: 8px; background:#ef4444; border:none; color:white; font-size:0.7rem; padding:3px 10px; border-radius:20px; cursor:pointer; font-weight:700;">Switch QC</button>
           <?php else: ?>
-            <span style="font-size: 0.75rem; background: #f59e0b; padding: 2px 12px; border-radius: 40px; color: #ffffff; font-weight:700;">Operator Auth Required</span>
+            <span style="font-size: 0.75rem; background: #f59e0b; padding: 2px 12px; border-radius: 40px; color: #ffffff; font-weight:700; display:inline-flex; align-items:center;">
+              <i class="fa-solid fa-shield-halved me-1"></i> Operator Auth Required
+            </span>
           <?php endif; ?>
         </div>
       </div>
@@ -900,17 +908,16 @@ $active_operator = $_SESSION['active_operator'] ?? null;
         }
       }
 
-      // STEP 1: OPERATOR QR SCAN / AUTHENTICATION
+      // STEP 1: QC OPERATOR QR SCAN / AUTHENTICATION
       function renderStep1Operator() {
         actionContainer.innerHTML = '';
         let html = `
           <div style="background:#eff6ff; border:1.5px solid #bfdbfe; border-radius:18px; padding:16px; margin-bottom:14px; text-align:center; color:#1e3a8a;">
-            <div style="font-size:2.2rem; margin-bottom:6px; color:#2563eb;"><i class="fa-solid fa-qrcode"></i></div>
-            <div style="font-weight:800; font-size:1.05rem; margin-bottom:4px;">Scan Operator Badge QR Code</div>
-            <div style="font-size:0.85rem; opacity:0.85;">Align your Operator QR Code within the live camera feed above or scan/type below.</div>
+            <div style="font-size:2.2rem; margin-bottom:6px; color:#2563eb;"><i class="fa-solid fa-user-shield"></i></div>
+            <div style="font-weight:800; font-size:1.05rem; margin-bottom:4px;">Operator ID</div>
           </div>
           <div class="manual-entry">
-            <input type="text" id="opInput" placeholder="Scan / Type Operator ID (e.g. OP01, rifat001)" autocomplete="off" autofocus>
+            <input type="text" id="opInput" placeholder="" autocomplete="off" autofocus>
             <button type="button" id="opBtn">Authenticate</button>
           </div>
           <div class="data-row header-row"><span class="label">Workflow Progress</span><span class="value">Step 1 of 2</span></div>
@@ -940,17 +947,20 @@ $active_operator = $_SESSION['active_operator'] ?? null;
           if (titleText) titleText.textContent = 'Step 2: Scan Roll QR';
           if (headerContainer) {
             headerContainer.innerHTML = `
-              <span style="font-size: 0.75rem; background: #10b981; padding: 2px 12px; border-radius: 40px; color: #ffffff; font-weight:700;">
-                <i class="fa-solid fa-user-check me-1"></i> ${esc(activeOperatorInfo.name)} (${esc(activeOperatorInfo.id)})
+              <span style="font-size: 0.75rem; background: #10b981; padding: 2px 12px; border-radius: 40px; color: #ffffff; font-weight:700; display:inline-flex; align-items:center;">
+                <i class="fa-solid fa-user-shield me-1"></i> ${esc(activeOperatorInfo.name)} (${esc(activeOperatorInfo.id)})
+                <span style="background:#0284c7; margin-left:6px; font-size:0.65rem; padding:1px 6px; border-radius:10px;">QC</span>
               </span>
-              <button type="button" onclick="logoutOperator()" style="margin-left: 8px; background:#ef4444; border:none; color:white; font-size:0.7rem; padding:3px 10px; border-radius:20px; cursor:pointer; font-weight:700;">Switch</button>
+              <button type="button" onclick="logoutOperator()" style="margin-left: 8px; background:#ef4444; border:none; color:white; font-size:0.7rem; padding:3px 10px; border-radius:20px; cursor:pointer; font-weight:700;">Switch QC</button>
             `;
           }
         } else {
-          if (titleText) titleText.textContent = 'Step 1: Scan Operator ID QR';
+          if (titleText) titleText.textContent = 'Operator ID';
           if (headerContainer) {
             headerContainer.innerHTML = `
-              <span style="font-size: 0.75rem; background: #f59e0b; padding: 2px 12px; border-radius: 40px; color: #ffffff; font-weight:700;">Operator Auth Required</span>
+              <span style="font-size: 0.75rem; background: #f59e0b; padding: 2px 12px; border-radius: 40px; color: #ffffff; font-weight:700; display:inline-flex; align-items:center;">
+                <i class="fa-solid fa-shield-halved me-1"></i> Operator Auth Required
+              </span>
             `;
           }
         }
@@ -986,19 +996,20 @@ $active_operator = $_SESSION['active_operator'] ?? null;
               isOperatorActive = true;
               activeOperatorInfo = {
                 id: res.data.OPERATOR_ID,
-                name: res.data.OPERATOR_NAME
+                name: res.data.OPERATOR_NAME,
+                role: res.data.ROLE || 'Knitting QC'
               };
               updateOperatorHeaderUI();
               renderStep2RollScan();
             } else {
               verifying = false;
-              if (msgDiv) msgDiv.innerHTML = `<div style="color:#ef4444; font-weight:700; font-size:0.85rem;"><i class="fas fa-times-circle"></i> ${res.error || 'Invalid Operator ID'}</div>`;
+              if (msgDiv) msgDiv.innerHTML = `<div style="color:#ef4444; font-weight:700; font-size:0.85rem;"><i class="fas fa-times-circle"></i> ${res.error || 'Invalid QC Operator ID'}</div>`;
             }
           })
           .catch(err => {
             verifying = false;
             if (msgDiv) msgDiv.innerHTML = `<div style="color:#ef4444; font-weight:700; font-size:0.85rem;"><i class="fas fa-exclamation-triangle"></i> Verification Error: ${err.message}</div>`;
-            console.error('Operator verification failed:', err);
+            console.error('QC Operator verification failed:', err);
           });
       }
 
@@ -1010,7 +1021,7 @@ $active_operator = $_SESSION['active_operator'] ?? null;
             <button type="button" id="rollBtn">Load</button>
           </div>
           <div class="data-row header-row"><span class="label">Step 2: Roll Selection</span><span class="value"></span></div>
-          <div class="data-row"><span class="label">Operator:</span><span class="value" style="color:#10b981; font-weight:700;">${activeOperatorInfo.name} (${activeOperatorInfo.id})</span></div>
+          <div class="data-row"><span class="label">QC Operator:</span><span class="value" style="color:#10b981; font-weight:700;"><i class="fa-solid fa-user-shield me-1"></i> ${activeOperatorInfo.name} (${activeOperatorInfo.id})</span></div>
           <div class="data-row"><span class="label">Action:</span><span class="value">Scan Roll QR Code</span></div>
           <div id="rollStatusMsg" style="margin-top:8px;"></div>
         `;
@@ -1313,7 +1324,7 @@ $active_operator = $_SESSION['active_operator'] ?? null;
 
         if (!isOperatorActive) {
           if (isRollCode(text)) {
-            alert('Please scan Knitting Operator ID first!\nProduction roll cannot be scanned before operator.');
+            alert('Please scan Operator ID first!\nProduction roll cannot be scanned before operator authentication.');
             return;
           }
           if (verifying) return;

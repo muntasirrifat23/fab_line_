@@ -100,5 +100,51 @@ if (!defined('APP_BASE_URL')) {
     define('APP_BASE_URL', "http://" . $host . $scriptDir);
 }
 
+if (!function_exists('get_knit_card_program_col')) {
+    /**
+     * Dynamically resolves the Knitting Program ID column in knit_card table.
+     * Supports KNITTING_PROGRAM_ID, `Knitting Program ID`, knitting_program_id, or KPTID.
+     */
+    function get_knit_card_program_col($database_conn = null) {
+        static $resolved_col = null;
+        if ($resolved_col !== null) {
+            return $resolved_col;
+        }
+
+        global $db;
+        $conn = $database_conn ?: $db;
+        if (!$conn) {
+            return 'KNITTING_PROGRAM_ID';
+        }
+
+        $res = @mysqli_query($conn, "SHOW COLUMNS FROM knit_card");
+        if ($res) {
+            $fields = [];
+            while ($r = mysqli_fetch_assoc($res)) {
+                $fields[] = $r['Field'];
+            }
+            if (in_array('Knitting Program ID', $fields)) {
+                $resolved_col = '`Knitting Program ID`';
+                return $resolved_col;
+            }
+            if (in_array('KNITTING_PROGRAM_ID', $fields)) {
+                $resolved_col = '`KNITTING_PROGRAM_ID`';
+                return $resolved_col;
+            }
+            if (in_array('knitting_program_id', $fields)) {
+                $resolved_col = '`knitting_program_id`';
+                return $resolved_col;
+            }
+            if (in_array('KPTID', $fields)) {
+                $resolved_col = '`KPTID`';
+                return $resolved_col;
+            }
+        }
+
+        $resolved_col = 'KNITTING_PROGRAM_ID';
+        return $resolved_col;
+    }
+}
+
 // Return database connection for use in other files
 ?>

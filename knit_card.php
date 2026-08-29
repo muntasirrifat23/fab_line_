@@ -13,13 +13,14 @@ $uname = $_SESSION['username'];
 $search_program = isset($_GET['program_id']) ? trim($_GET['program_id']) : (isset($_GET['search']) ? trim($_GET['search']) : '');
 $search_term    = ltrim($search_program, '#');
 
-// Build query calculating total carded quantity per program
+// Build query calculating total carded quantity per program dynamically
+$kc_prog_col = get_knit_card_program_col($db);
 $query = "SELECT kp.*, 
                  MAX(kc.KCTID) AS card_id, 
                  COALESCE(SUM(kc.QTY), 0) AS total_carded_qty, 
                  MAX(kc.MCNO) AS card_mcno
           FROM knitting_program kp
-          LEFT JOIN knit_card kc ON kp.KPTID = kc.KPTID
+          LEFT JOIN knit_card kc ON (kp.PROGRAM_NO = kc.{$kc_prog_col} OR kp.KPTID = kc.{$kc_prog_col})
           WHERE 1=1";
 $params = [];
 $types  = '';
