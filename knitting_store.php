@@ -621,6 +621,46 @@
       }
     }
 
+    .manual-entry {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .manual-entry input {
+      flex: 1;
+      min-width: 0;
+      padding: 9px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      outline: none;
+      background: #ffffff;
+      color: #0f172a;
+    }
+
+    .manual-entry input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .manual-entry button {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #ffffff;
+      border: none;
+      padding: 9px 20px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: 0.2s;
+    }
+
+    .manual-entry button:hover {
+      filter: brightness(1.1);
+    }
+
     @media(max-width:768px) {
       .data-row.default-row {
         grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
@@ -783,10 +823,10 @@
         scannedInfo = null;
         hideRackSection();
         resultContainer.innerHTML = `
-          <div class="manual-entry">
-            <input type="text" id="manualRollInput" placeholder="Enter ROLL number (e.g. 3000000001)" autocomplete="off">
-            <button type="button" id="manualRollBtn">Load Data</button>
-          </div>
+         <div class="manual-entry">
+         <input type="text" id="manualRollInput" placeholder="ROLL number (e.g. 3000000001)" autocomplete="off">
+         <button type="button" id="manualRollBtn">Load</button>
+        </div>
           <div class="data-row header-row"><span class="label">Default Information</span><span class="value"></span></div>
           <div class="data-row default-row"><span class="label">Status</span><span class="value">Awaiting ROLL number</span></div>
         `;
@@ -1059,7 +1099,9 @@
         options.forEach(function(option, index) {
           option.classList.toggle('keyboard-active', index === nextIndex);
         });
-        options[nextIndex].scrollIntoView({ block: 'nearest' });
+        options[nextIndex].scrollIntoView({
+          block: 'nearest'
+        });
       });
 
       rackNumberInput.addEventListener('focus', function() {
@@ -1135,7 +1177,10 @@
         cameraStatus.style.color = '#fbbf24';
 
         if (html5QrCode) {
-          try { html5QrCode.stop(); html5QrCode.clear(); } catch (e) {}
+          try {
+            html5QrCode.stop();
+            html5QrCode.clear();
+          } catch (e) {}
           isScanning = false;
           scannerContainer.style.display = 'none';
           cameraControls.style.display = 'none';
@@ -1374,7 +1419,10 @@
         const mRollBtn = document.getElementById('manualRollBtn');
         if (mRollBtn) mRollBtn.addEventListener('click', submitManualRoll);
         if (mRollInput) mRollInput.addEventListener('keydown', function(e) {
-          if (e.key === 'Enter') { e.preventDefault(); submitManualRoll(); }
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            submitManualRoll();
+          }
         });
 
         setTimeout(function() {
