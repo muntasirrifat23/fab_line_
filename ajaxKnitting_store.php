@@ -51,6 +51,13 @@ if ($action === 'search') {
 
     $roll = mysqli_real_escape_string($db, $roll);
 
+    // If the roll is already stored in knitting_store, do NOT show data again
+    $storeRes = mysqli_query($db, "SELECT ROLL FROM knitting_store WHERE TRIM(ROLL) = '$roll' LIMIT 1");
+    if ($storeRes && mysqli_num_rows($storeRes) > 0) {
+        echo json_encode(['success' => false, 'error' => "Data already stored in Knitting Store for Roll: $roll"]);
+        exit;
+    }
+
     $sql = "SELECT * FROM $TABLE WHERE TRIM(ROLL) = '$roll' LIMIT 1";
     $result = mysqli_query($db, $sql);
 

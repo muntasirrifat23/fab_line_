@@ -1196,8 +1196,9 @@
           .catch(function(err) {
             cameraStatus.innerText = 'Not found';
             cameraStatus.style.color = '#f7a1a1';
-            renderBareData(roll, 'No data found for ROLL: ' + roll);
-            showMessage((err && err.message) || String(err), 'error');
+            var msg = String((err && err.message) || err || 'No data found for ROLL: ' + roll);
+            renderBareData(roll, msg);
+            showMessage(msg, 'error');
           });
       }
 
@@ -1223,8 +1224,9 @@
           .catch(function(err) {
             cameraStatus.innerText = 'Not found';
             cameraStatus.style.color = '#f7a1a1';
-            renderBareData(decodedText, 'No data found for ROLL: ' + roll);
-            showMessage((err && err.message) || String(err), 'error');
+            var msg = String((err && err.message) || err || 'No data found for ROLL: ' + roll);
+            renderBareData(decodedText, msg);
+            showMessage(msg, 'error');
           });
       }
 
