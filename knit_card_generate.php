@@ -227,8 +227,8 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                         {$kc_prog_col}, KNITCARD, MCNO, QTY, PO_NUMBER, SONO, BUYER, STYLE, COLOR,
                         FGSM, FDIA, O_T, FTYPE, YTYPE, CUSTOMER, YCOUNT, SL, MCDIA, GGSM,
                         FEEDER_PLAN, LOT, SHIFT, KNIT_MATERIAL_CODE, KNIT_M_DESCRIPTION, UNAME,
-                        YBRAND, REMARKS
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        YBRAND
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
 
                 if (!$ins) {
@@ -250,7 +250,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                     $r_qty   = round($row_item['qty']);
 
                     $ins->bind_param(
-                        "sisdsssssssssssssssssssssss",
+                        "sisdssssssssssssssssssssss",
                         $p_prog_no,
                         $current_knitcard,
                         $r_mcno,
@@ -276,8 +276,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                         $p_knit_mat_code,
                         $p_knit_m_desc,
                         $p_uname,
-                        $p_yarn_brand,
-                        $p_remarks
+                        $p_yarn_brand
                     );
 
                     if (!$ins->execute()) {
@@ -1134,11 +1133,6 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                             <div class="spec-row">
                                 <span class="spec-label">Generation Date</span>
                                 <span class="spec-value"><?php echo htmlspecialchars($gen_date); ?></span>
-                            </div>
-
-                            <div class="spec-row">
-                                <span class="spec-label">Remarks</span>
-                                <span class="spec-value"><?php echo htmlspecialchars($p_remarks ?: 'N/A'); ?></span>
                             </div>
                         </div>
 

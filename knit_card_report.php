@@ -14,7 +14,7 @@ $end_date      = isset($_GET['end_date'])   ? trim($_GET['end_date'])   : '';
 
 // Build query using real column names dynamically
 $kc_prog_col = get_knit_card_program_col($db);
-$query  = "SELECT kc.*, kp.PO_NUMBER AS kp_booking
+$query  = "SELECT kc.*, kp.PO_NUMBER AS kp_booking, kp.REMARKS AS prog_remarks
            FROM knit_card kc
            LEFT JOIN knitting_program kp ON (kc.{$kc_prog_col} = kp.PROGRAM_NO OR kc.{$kc_prog_col} = kp.KPTID)
            WHERE 1=1";
@@ -463,7 +463,7 @@ if ($result && $result->num_rows > 0) {
                                     <td><?php echo htmlspecialchars($row['FTYPE'] ?? ''); ?></td>
                                     <td><small class="text-muted"><?php echo htmlspecialchars($row['YTYPE'] ?? ''); ?></small></td>
                                     <td><?php echo htmlspecialchars($row['YBRAND'] ?? ''); ?></td>
-                                    <td><small class="text-muted"><?php echo htmlspecialchars($row['REMARKS'] ?? ''); ?></small></td>
+                                    <td><small class="text-muted"><?php echo htmlspecialchars($row['prog_remarks'] ?? ($row['REMARKS'] ?? '')); ?></small></td>
                                     <td><strong class="text-success"><?php echo number_format((float)($row['QTY'] ?? 0), 2); ?> KG</strong></td>
                                     <td class="text-center">
                                         <div class="d-inline-flex gap-1.5 flex-wrap justify-content-center">
