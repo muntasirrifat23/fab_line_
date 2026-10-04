@@ -641,7 +641,6 @@
                         <div class="info-item" style="grid-column: span 6;"><label>Remarks</label><textarea id="remarks" rows="2" placeholder="Enter remarks (optional)" style="padding: 0.75rem 1rem; border: 2px solid #e2e8f0; border-radius: 16px; background: #f8fbff; width: 100%; font-weight: 500; resize: vertical;"></textarea></div>
                     </div>
                 </div>
-                </div>
 
                 <!-- MACHINE NO & QTY -->
                 <!-- <div class="card-title" style="margin-top:2rem; border-top:2px solid #eef2f6; padding-top:1.2rem;"><i class="fa-solid fa-list-check"></i> Enter Quantity</div> -->
@@ -732,7 +731,7 @@
                     method: 'GET',
                     timeout: 30000,
                     beforeSend: function() {
-                        $('#formContainer').removeClass('hidden');
+                        $('#formContainer').addClass('hidden');
                         $('#detailsContainer').removeClass('visible');
                         $('#alertBox').html('');
                     },
@@ -791,6 +790,7 @@
                             $('#sl_vdq, #mc_dia, #feeder_plan').val('');
                             $('#remarks').val('');
                             checkSubmitButton();
+                            $('#formContainer').removeClass('hidden');
 
                         } else {
                             $('#formContainer').addClass('hidden');
