@@ -281,9 +281,7 @@ if ($prod_stmt) {
             </tr>
             <tr>
                 <th>Yarn Brand</th>
-                <td><?php echo htmlspecialchars($card['YBRAND'] ?? ''); ?></td>
-                <th>Remarks</th>
-                <td><?php echo htmlspecialchars($card['REMARKS'] ?? ''); ?></td>
+                <td colspan="3"><?php echo htmlspecialchars($card['YBRAND'] ?? ''); ?></td>
             </tr>
             <tr>
                 <th>Finish Dia</th>

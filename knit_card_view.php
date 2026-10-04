@@ -418,18 +418,12 @@ if (!empty($card['UNAME'])) {
                     <tr>
                         <th>Yarn Brand</th>
                         <td><?php echo htmlspecialchars($val_ybrand); ?></td>
-                        <th>Remarks</th>
-                        <td><?php echo htmlspecialchars($val_remarks); ?></td>
-                    </tr>
-                    <tr>
                         <th>Lot No</th>
                         <td><?php echo htmlspecialchars($val_lot); ?></td>
-                        <th>SL/VDQ</th>
-                        <td><?php echo htmlspecialchars($val_sl); ?></td>
                     </tr>
                     <tr>
-                        <th>Finish GSM</th>
-                        <td><?php echo htmlspecialchars($val_fgsm); ?></td>
+                        <th>SL/VDQ</th>
+                        <td><?php echo htmlspecialchars($val_sl); ?></td>
                         <th>Finish Dia</th>
                         <td><?php echo htmlspecialchars($val_fdia); ?></td>
                     </tr>
