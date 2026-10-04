@@ -638,6 +638,7 @@
                         <div class="info-item"><label>SL/VQ</label><input type="text" id="sl_vdq" placeholder="Enter SL/VQ"></div>
                         <div class="info-item"><label>Gray GSM</label><input type="text" id="gray_gsm" list="grayGsmOptions" placeholder="Enter Gray GSM"><datalist id="grayGsmOptions"></datalist></div>
                         <div class="info-item"><label>Feeder Plan</label><input type="text" id="feeder_plan" placeholder="Enter Feeder Plan"></div>
+                        <div class="info-item" style="grid-column: span 6;"><label>Remarks</label><textarea id="remarks" rows="2" placeholder="Enter remarks (optional)" style="padding: 0.75rem 1rem; border: 2px solid #e2e8f0; border-radius: 16px; background: #f8fbff; width: 100%; font-weight: 500; resize: vertical;"></textarea></div>
                     </div>
                 </div>
                 </div>
@@ -781,13 +782,16 @@
                                         value: v
                                     }));
                                 });
+                                setAvailableFinishGsm(resp.data.FINISH_GSM);
+                                setAvailableColor(resp.data.COLOR);
                             }
 
                             renderForm(bookingData);
                             setKnitMDescription(resp);
-                            $('#finish_dia, #open_tube, #fabrics_type, #customer, #sl_vdq, #mc_dia, #feeder_plan, #knit_m_description').val('');
-                            $('#color, #finish_gsm').val('');
+                            $('#sl_vdq, #mc_dia, #feeder_plan').val('');
+                            $('#remarks').val('');
                             checkSubmitButton();
+
                         } else {
                             $('#formContainer').addClass('hidden');
                             showPageAlert(resp.error || 'Not available PO number', 'error', 5000);
@@ -815,14 +819,14 @@
 
                 $('#color').val('');
                 $('#finish_gsm').val('');
-                $('#finish_dia').val('');
-                $('#open_tube').val('');
-                $('#fabrics_type').val('');
-                $('#yarn_type').val('');
+                $('#finish_dia').val(data.FINISH_DIA || '');
+                $('#open_tube').val(data.OPEN_TUBE || '');
+                $('#fabrics_type').val(data.FABRICS_TYPE || '');
+                $('#yarn_type').val(data.YARN_TYPE || '');
                 $('#feeder_plan').val('');
                 $('#knit_material_code').val(data.KNIT_MATERIAL_CODE || '');
-                $('#knit_m_description').val('');
-                $('#customer').val('');
+                $('#knit_m_description').val(data.KNIT_M_DESCRIPTION || '');
+                $('#customer').val(data.CUSTOMER || '');
                 $('#yarn_count').val('');
                 $('#sl_vdq').val('');
                 $('#mc_dia').val('');
@@ -851,6 +855,7 @@
                 if (!rowData) rowData = bookingData;
 
                 $('#display_customer').text(rowData.CUSTOMER || '-');
+                $('#customer').val(rowData.CUSTOMER || '');
 
                 // Rebuild dropdowns for this specific knit_m_description if available
                 if (allRowsData && allRowsData.length) {
@@ -889,17 +894,18 @@
                     });
                 }
 
-
-                $('#finish_dia').val('');
-                $('#open_tube').val('');
-                $('#fabrics_type').val('');
+                setAvailableFinishGsm(rowData.FINISH_GSM);
+                setAvailableColor(rowData.COLOR);
+                $('#finish_dia').val(rowData.FINISH_DIA || '');
+                $('#open_tube').val(rowData.OPEN_TUBE || '');
+                $('#fabrics_type').val(rowData.FABRICS_TYPE || '');
                 $('#display_yarn_type').text(rowData.YARN_TYPE || '-');
                 $('#yarn_type').val(rowData.YARN_TYPE || '');
                 $('#display_knit_material_code').text(rowData.KNIT_MATERIAL_CODE || '-');
                 $('#knit_material_code').val(rowData.KNIT_MATERIAL_CODE || '');
                 $('#display_knit_m_description').text(rowData.KNIT_M_DESCRIPTION || '-');
                 $('#knit_m_description').val(rowData.KNIT_M_DESCRIPTION || '');
-                $('#customer').val('');
+                $('#customer').val(rowData.CUSTOMER || '');
                 $('#yarn_count').val('');
                 $('#sl_vdq').val('');
                 $('#mc_dia').val('');
@@ -913,6 +919,7 @@
                 targetQty = originalTargetQty - allocated;
                 $('#display_target_qty').text(targetQty > 0 ? targetQty.toFixed(2) : '0.00');
                 $('#knitting_target_qty').val(originalTargetQty);
+                $('#remarks').val('');
 
                 resetMcnoRows();
                 $('#detailsContainer').addClass('visible');
@@ -969,15 +976,16 @@
 
 
             function isManualDataValid() {
+                // Only user-editable visible inputs are required here.
+                // Hidden fields (customer, knit_m_description) come from the PO and
+                // must not block the Save button since the user cannot type into them.
                 var requiredFields = [
                     '#finish_dia',
                     '#open_tube',
                     '#fabrics_type',
-                    '#customer',
                     '#sl_vdq',
                     '#mc_dia',
-                    '#feeder_plan',
-                    '#knit_m_description'
+                    '#feeder_plan'
                 ];
                 for (var i = 0; i < requiredFields.length; i++) {
                     var value = $(requiredFields[i]).val();
@@ -1115,6 +1123,7 @@
                                 value: value
                             }));
                         });
+                        setAvailableFinishGsm(pendingFinishGsm || (bookingData && bookingData.FINISH_GSM));
                     }
                 });
 
@@ -1138,14 +1147,11 @@
                                 text: value
                             }));
                         });
+                        setAvailableColor(pendingColor || (bookingData && bookingData.COLOR) || currentValue);
                     }
                 });
 
-             $(manualFieldSelectors).on('input change', function() {
-                 checkSubmitButton();
-             });
-
-             $('#backBtn').on('click', function() {
+                $('#backBtn').on('click', function() {
                     window.location.href = 'initialPage.php';
                 });
 
@@ -1184,7 +1190,7 @@
                      $('#totalRemainingDisplay').text('0.00');
                      // reset all display fields
                      $('#infoGrid span').text('-');
-                     $('#finish_dia, #open_tube, #fabrics_type, #customer, #sl_vdq, #mc_dia, #feeder_plan, #knit_m_description').val('');
+                     $('#finish_dia, #open_tube, #fabrics_type, #customer, #sl_vdq, #mc_dia, #feeder_plan, #knit_m_description, #remarks').val('');
                      addMcnoRow();
                      $('#submitBtn').prop('disabled', true);
                  });
@@ -1206,7 +1212,6 @@
                     '#open_tube',
                     '#fabrics_type',
                     '#customer',
-                    '#yarn_count',
                     '#sl_vdq',
                     '#mc_dia',
                     '#feeder_plan',
@@ -1217,6 +1222,9 @@
                      checkSubmitButton();
                  });
                  $(document).on('input change', '.yarn_count_row, .yarn_brand_row, .lot_no_row, .qty-input', function() {
+                     checkSubmitButton();
+                 });
+                 $('#knittingForm').on('input change', function() {
                      checkSubmitButton();
                  });
 
@@ -1268,6 +1276,7 @@
                         lot_no: $('#lot_no').val(),
                         knit_material_code: $('#knit_material_code').val(),
                         knitting_target_qty: $('#knitting_target_qty').val(),
+                        remarks: $('#remarks').val(),
                         mcno_qty: mcnoResult.data
                     };
 
@@ -1324,11 +1333,9 @@
                 // initial row
                 addMcnoRow();
 
-                 $('#submitBtn').prop('disabled', true);
-                 $(manualFieldSelectors).on('input change', function() {
-                     checkSubmitButton();
-                 });
-                 var urlParams = new URLSearchParams(window.location.search);
+                $('#submitBtn').prop('disabled', true);
+
+                var urlParams = new URLSearchParams(window.location.search);
                  var bookingParam = urlParams.get('booking');
                  if (bookingParam) {
                      $('#bookingInput').val(bookingParam);
