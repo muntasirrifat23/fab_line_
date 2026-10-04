@@ -280,6 +280,12 @@ if ($prod_stmt) {
                 <td><?php echo htmlspecialchars($card['LOT'] ?? ''); ?></td>
             </tr>
             <tr>
+                <th>Yarn Brand</th>
+                <td><?php echo htmlspecialchars($card['YBRAND'] ?? ''); ?></td>
+                <th>Remarks</th>
+                <td><?php echo htmlspecialchars($card['REMARKS'] ?? ''); ?></td>
+            </tr>
+            <tr>
                 <th>Finish Dia</th>
                 <td><?php echo htmlspecialchars($card['FDIA'] ?? ''); ?></td>
                 <th>Grey GSM / Finish GSM</th>

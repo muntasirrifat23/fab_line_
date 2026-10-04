@@ -444,6 +444,8 @@ if ($result && $result->num_rows > 0) {
                             <th>Style</th>
                             <th>Fabric Type</th>
                             <th>Yarn Type</th>
+                            <th>Yarn Brand</th>
+                            <th>Remarks</th>
                             <th>Req Qty (KG)</th>
                             <th class="text-center">Actions</th>
                         </tr>
@@ -460,6 +462,8 @@ if ($result && $result->num_rows > 0) {
                                     <td><?php echo htmlspecialchars($row['STYLE'] ?? ''); ?></td>
                                     <td><?php echo htmlspecialchars($row['FTYPE'] ?? ''); ?></td>
                                     <td><small class="text-muted"><?php echo htmlspecialchars($row['YTYPE'] ?? ''); ?></small></td>
+                                    <td><?php echo htmlspecialchars($row['YBRAND'] ?? ''); ?></td>
+                                    <td><small class="text-muted"><?php echo htmlspecialchars($row['REMARKS'] ?? ''); ?></small></td>
                                     <td><strong class="text-success"><?php echo number_format((float)($row['QTY'] ?? 0), 2); ?> KG</strong></td>
                                     <td class="text-center">
                                         <div class="d-inline-flex gap-1.5 flex-wrap justify-content-center">
@@ -481,7 +485,7 @@ if ($result && $result->num_rows > 0) {
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="10" class="text-center py-5 text-muted">
+                                <td colspan="12" class="text-center py-5 text-muted">
                                     <i class="fa-solid fa-folder-open fa-3x mb-3 text-secondary d-block"></i>
                                     <h6 class="fw-bold">No Knit Cards Found</h6>
                                     <p class="small mb-0">Try clearing your search filters or generate a new card from the Knitting Programs page.</p>

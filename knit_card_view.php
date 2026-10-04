@@ -25,7 +25,9 @@ $sql = "SELECT kc.*,
                kp.YCOUNT AS prog_ycount, 
                kp.FEEDER_PLAN AS prog_feeder_plan, 
                kp.SHIFT AS prog_shift,
-               kp.PO_NUMBER AS prog_po
+               kp.PO_NUMBER AS prog_po,
+               kp.YBRAND AS prog_ybrand,
+               kp.REMARKS AS prog_remarks
          FROM knit_card kc
          LEFT JOIN knitting_program kp ON (kc." . get_knit_card_program_col($db) . " = kp.PROGRAM_NO OR kc." . get_knit_card_program_col($db) . " = kp.KPTID)
          WHERE kc.KCTID = ?";
@@ -66,6 +68,8 @@ $val_ftype        = !empty($card['FTYPE']) ? $card['FTYPE'] : 'N/A';
 $val_ot           = !empty($card['O_T']) ? $card['O_T'] : 'N/A';
 $val_ytype        = !empty($card['YTYPE']) ? $card['YTYPE'] : 'N/A';
 $val_ycount       = !empty($card['YCOUNT']) ? $card['YCOUNT'] : ($card['prog_ycount'] ?? 'N/A');
+$val_ybrand       = !empty($card['YBRAND']) ? $card['YBRAND'] : ($card['prog_ybrand'] ?? 'N/A');
+$val_remarks      = !empty($card['REMARKS']) ? $card['REMARKS'] : ($card['prog_remarks'] ?? 'N/A');
 $val_lot          = !empty($card['LOT']) ? $card['LOT'] : 'N/A';
 $val_fgsm         = !empty($card['FGSM']) ? $card['FGSM'] : 'N/A';
 $val_fdia         = !empty($card['FDIA']) ? $card['FDIA'] : 'N/A';
@@ -410,6 +414,12 @@ if (!empty($card['UNAME'])) {
                         <td><?php echo htmlspecialchars($val_ytype); ?></td>
                         <th>Yarn Count</th>
                         <td><?php echo htmlspecialchars($val_ycount); ?></td>
+                    </tr>
+                    <tr>
+                        <th>Yarn Brand</th>
+                        <td><?php echo htmlspecialchars($val_ybrand); ?></td>
+                        <th>Remarks</th>
+                        <td><?php echo htmlspecialchars($val_remarks); ?></td>
                     </tr>
                     <tr>
                         <th>Lot No</th>

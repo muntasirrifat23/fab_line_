@@ -104,6 +104,8 @@ $p_yarn_type        = !empty($prog['YTYPE']) ? $prog['YTYPE'] : ($input['YARN_TY
 $p_yarn_count       = !empty($prog['YCOUNT']) ? $prog['YCOUNT'] : ($input['YCOUNT'] ?? '');
 $p_color            = !empty($prog['COLOR']) ? $prog['COLOR'] : ($input['COLOR'] ?? '');
 $p_lot_no           = !empty($prog['LOT']) ? $prog['LOT'] : ($input['LOT'] ?? '');
+$p_yarn_brand       = !empty($prog['YBRAND']) ? $prog['YBRAND'] : ($input['YBRAND'] ?? '');
+$p_remarks          = !empty($prog['REMARKS']) ? $prog['REMARKS'] : ($input['REMARKS'] ?? '');
 $p_knit_m_desc      = !empty($prog['KNIT_M_DESCRIPTION']) ? $prog['KNIT_M_DESCRIPTION'] : ($input['KNIT_M_DESCRIPTION'] ?? '');
 $p_knit_mat_code    = !empty($prog['KNIT_MATERIAL_CODE']) ? $prog['KNIT_MATERIAL_CODE'] : ($input['KNIT_MATERIAL_CODE'] ?? '');
 $p_sl_vdq           = floatval(!empty($prog['SL']) ? $prog['SL'] : ($input['SL'] ?? 0));
@@ -224,8 +226,9 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                     INSERT INTO knit_card (
                         {$kc_prog_col}, KNITCARD, MCNO, QTY, PO_NUMBER, SONO, BUYER, STYLE, COLOR,
                         FGSM, FDIA, O_T, FTYPE, YTYPE, CUSTOMER, YCOUNT, SL, MCDIA, GGSM,
-                        FEEDER_PLAN, LOT, SHIFT, KNIT_MATERIAL_CODE, KNIT_M_DESCRIPTION, UNAME
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        FEEDER_PLAN, LOT, SHIFT, KNIT_MATERIAL_CODE, KNIT_M_DESCRIPTION, UNAME,
+                        YBRAND, REMARKS
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
 
                 if (!$ins) {
@@ -247,7 +250,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                     $r_qty   = round($row_item['qty']);
 
                     $ins->bind_param(
-                        "sisdsssssssssssssssssssss",
+                        "sisdsssssssssssssssssssssss",
                         $p_prog_no,
                         $current_knitcard,
                         $r_mcno,
@@ -272,7 +275,9 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                         $r_shift,
                         $p_knit_mat_code,
                         $p_knit_m_desc,
-                        $p_uname
+                        $p_uname,
+                        $p_yarn_brand,
+                        $p_remarks
                     );
 
                     if (!$ins->execute()) {
@@ -1112,6 +1117,11 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                                 <span class="spec-label">Yarn Type & Count</span>
                                 <span class="spec-value" style="font-size:12px;"><?php echo htmlspecialchars($p_yarn_type ?: 'N/A'); ?> (<?php echo htmlspecialchars($p_yarn_count ?: 'N/A'); ?>)</span>
                             </div>
+
+                            <div class="spec-row">
+                                <span class="spec-label">Yarn Brand</span>
+                                <span class="spec-value"><?php echo htmlspecialchars($p_yarn_brand ?: 'N/A'); ?></span>
+                            </div>
                             
                             <div class="spec-row">
                                 <span class="spec-label">Lot No</span>
@@ -1124,6 +1134,11 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                             <div class="spec-row">
                                 <span class="spec-label">Generation Date</span>
                                 <span class="spec-value"><?php echo htmlspecialchars($gen_date); ?></span>
+                            </div>
+
+                            <div class="spec-row">
+                                <span class="spec-label">Remarks</span>
+                                <span class="spec-value"><?php echo htmlspecialchars($p_remarks ?: 'N/A'); ?></span>
                             </div>
                         </div>
 
