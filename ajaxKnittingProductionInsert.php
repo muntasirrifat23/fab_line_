@@ -34,6 +34,7 @@ function val($name){
 }
 
 $lot_no = val("lot_no");
+$yarn_brand = val("yarn_brand");
 $knitcard = val("knitcard");
 
 $booking      = val("booking");
@@ -187,6 +188,7 @@ SL_VDQ,
 GRAY_GSM,
 FEEDER_PLAN,
 LOT_NO,
+YBRAND,
 KNIT_MATERIAL_CODE,
 KNIT_M_DES,
 UNAME,
@@ -194,33 +196,35 @@ UID
 )
 VALUES
 (
-?,
-?,
-?,
-?,
-?,
-?,
-?,
-?,
-?,
-?,
-?,
-?,
-?,
-?,
-?,
-?,
-?,
-?,
-?,
-?,
-?,
-?,
-?,
-?,
-?,
-?,
-?)";
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?
+)";
 
 $stmt = mysqli_prepare($db,$sql);
 if(!$stmt){
@@ -233,7 +237,7 @@ if(!$stmt){
 
 mysqli_stmt_bind_param(
     $stmt,
-    "sssssssssssssssssssssssssss",
+    "ssssssssssssssssssssssssssss",
 
     $budat,
     $roll,
@@ -258,6 +262,7 @@ mysqli_stmt_bind_param(
     $gray_gsm,
     $feeder_plan,
     $lot_no,
+    $yarn_brand,
     $knit_material_code,
     $knit_m_des,
     $uname,

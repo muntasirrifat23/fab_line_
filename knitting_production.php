@@ -903,6 +903,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
         'QTY': 'QTY',
         'SL_VDQ': 'SL / VDQ',
         'LOT_NO': 'Lot No',
+        'YARN_BRAND': 'Yarn Brand',
         'MCARD': 'MCARD',
         'ROLL': 'ROLL',
         'CUSTOMER': 'Customer',
@@ -1137,6 +1138,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           QTY: m(row.QTY),
           SL_VDQ: m(row.SL),
           LOT_NO: m(row.LOT),
+          YARN_BRAND: m(row.YBRAND),
           MCARD: m(row.MCARD),
           ROLL: m(row.ROLL),
           CUSTOMER: m(row.CUSTOMER),
@@ -1188,7 +1190,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           <div class="data-row default-row knit-flow">
             ${['KNITCARD', 'BOOKING', 'SONO', 'BUYER', 'STYLE', 'COLOR', 'MCNO',
               'MC_DIA', 'CUSTOMER', 'SHIFT', 'YARN_TYPE', 'YARN_COUNT', 'FABRICS_TYPE', 'FINISH_GSM',
-              'FINISH_DIA', 'OPEN_TUBE', 'SL_VDQ', 'GGSM', 'FEEDER_PLAN', 'LOT_NO'].map(field => `
+              'FINISH_DIA', 'OPEN_TUBE', 'SL_VDQ', 'GGSM', 'FEEDER_PLAN', 'LOT_NO', 'YARN_BRAND'].map(field => `
               <div class="field-block">
                 <span class="field-label">${FIELD_LABELS[field] || field}</span>
                 <span class="field-value">${scannedInfo[field] || '-'}</span>
@@ -1541,6 +1543,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           gray_gsm: scannedInfo.GGSM || "",
           feeder_plan: scannedInfo.FEEDER_PLAN || "",
           lot_no: scannedInfo.LOT_NO || "",
+          yarn_brand: scannedInfo.YARN_BRAND || "",
           knit_material_code: scannedInfo.KNIT_MATERIAL_CODE || "",
           knit_m_desc: scannedInfo.KNIT_M_DESCRIPTION || "",
           uid: operatorInfo && operatorInfo.OPERATOR_ID ? operatorInfo.OPERATOR_ID : "",
