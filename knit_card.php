@@ -26,12 +26,16 @@ $params = [];
 $types  = '';
 
 if ($search_term !== '') {
-    $query   .= " AND (kp.KPTID LIKE ? OR kp.PROGRAM_NO LIKE ? OR kp.PO_NUMBER LIKE ?)";
+    $query   .= " AND (kp.KPTID LIKE ? OR kp.PROGRAM_NO LIKE ? OR kp.PO_NUMBER LIKE ? OR kp.SONO LIKE ? OR kp.BUYER LIKE ? OR kp.STYLE LIKE ? OR kp.YBRAND LIKE ?)";
     $like_val = "%{$search_term}%";
     $params[] = $like_val;
     $params[] = $like_val;
     $params[] = $like_val;
-    $types   .= 'sss';
+    $params[] = $like_val;
+    $params[] = $like_val;
+    $params[] = $like_val;
+    $params[] = $like_val;
+    $types   .= 'sssssss';
 }
 
 $query .= " GROUP BY kp.KPTID ORDER BY kp.KPTID DESC";
@@ -592,15 +596,22 @@ $end_entry   = min($offset + $limit, $total_records);
                     <thead>
                         <tr>
                             <th class="text-nowrap">Date</th>
-                            <th class="text-nowrap">Knitting Program</th>
-                            <th class="text-nowrap">Shift</th>
+                            <th class="text-nowrap">Program No</th>
+                            <th class="text-nowrap">PO</th>
+                            <th class="text-nowrap">SONO</th>
                             <th class="text-nowrap">Buyer</th>
+                            <th class="text-nowrap">Customer</th>
                             <th class="text-nowrap">Style</th>
                             <th class="text-nowrap">Color</th>
-                            <th class="text-nowrap">Customer</th>
-                            <th class="text-nowrap">SL/VDQ</th>
+                            <th class="text-nowrap">Fabrics Type</th>
+                            <th class="text-nowrap">Yarn Type</th>
+                            <th class="text-nowrap">Yarn Count</th>
+                            <th class="text-nowrap">Brand</th>
+                            <th class="text-nowrap">Lot No</th>
+                            <th class="text-nowrap">O/T</th>
+                            <th class="text-nowrap">Dia</th>
                             <th class="text-nowrap">GSM</th>
-                            <th class="text-nowrap">M/C</th>
+                            <th class="text-nowrap">SL/VDQ</th>
                             <th class="text-nowrap">Feeder Plan</th>
                             <th class="text-nowrap">Gray GSM</th>
                             <th class="text-nowrap">Qty (KG)</th>
@@ -614,14 +625,21 @@ $end_entry   = min($offset + $limit, $total_records);
                                 $p_id          = intval($row['KPTID']);
                                 $p_date        = !empty($row['CREATED_DATE']) ? date('Y-m-d', strtotime($row['CREATED_DATE'])) : '';
                                 $p_prog        = !empty($row['PROGRAM_NO']) ? $row['PROGRAM_NO'] : (!empty($row['SUB_TID']) ? $row['SUB_TID'] : ($row['KPTID'] ?? ''));
-                                $p_shift       = $row['SHIFT']       ?? '';
+                                $p_po          = $row['PO_NUMBER']   ?? '';
+                                $p_sono        = $row['SONO']        ?? '';
                                 $p_buyer       = $row['BUYER']       ?? '';
                                 $p_style       = $row['STYLE']       ?? '';
                                 $p_color       = $row['COLOR']       ?? '';
                                 $p_customer    = $row['CUSTOMER']    ?? '';
+                                $p_ftype       = $row['FTYPE']       ?? '';
+                                $p_ytype       = $row['YTYPE']       ?? '';
+                                $p_ycount      = $row['YCOUNT']      ?? '';
+                                $p_ybrand      = $row['YBRAND']      ?? '';
+                                $p_lot         = $row['LOT']         ?? '';
+                                $p_ot          = $row['O_T']         ?? '';
+                                $p_dia         = !empty($row['MCDIA']) ? $row['MCDIA'] : ($row['FDIA'] ?? '');
                                 $p_sl          = $row['SL']          ?? '';
                                 $p_fgsm        = $row['FGSM']        ?? '';
-                                $p_mc          = !empty($row['MCDIA']) ? $row['MCDIA'] : ($row['card_mcno'] ?? '');
                                 $p_feeder_plan = $row['FEEDER_PLAN'] ?? '';
                                 $p_ggsm        = $row['GGSM']        ?? '';
                                 $p_card_gen    = !empty($row['card_id']) ? 1 : 0;
@@ -633,14 +651,21 @@ $end_entry   = min($offset + $limit, $total_records);
                                         <?php echo htmlspecialchars($p_date); ?>
                                     </td>
                                     <td class="text-nowrap"><strong><?php echo htmlspecialchars($p_prog); ?></strong></td>
-                                    <td class="text-nowrap"><strong><?php echo htmlspecialchars($p_shift); ?></strong></td>
-                                    <td class="text-nowrap"><strong><?php echo htmlspecialchars($p_buyer); ?></strong></td>
-                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_style); ?></td>
-                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_color ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap"><strong><?php echo htmlspecialchars($p_po ?: 'N/A'); ?></strong></td>
+                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_sono ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap"><strong><?php echo htmlspecialchars($p_buyer ?: 'N/A'); ?></strong></td>
                                     <td class="text-nowrap"><?php echo htmlspecialchars($p_customer ?: 'N/A'); ?></td>
-                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_sl ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_style ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_color ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_ftype ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_ytype ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_ycount ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_ybrand ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_lot ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_ot ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_dia ?: 'N/A'); ?></td>
                                     <td class="text-nowrap"><?php echo htmlspecialchars($p_fgsm ?: 'N/A'); ?></td>
-                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_mc ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_sl ?: 'N/A'); ?></td>
                                     <td class="text-nowrap"><?php echo htmlspecialchars($p_feeder_plan ?: 'N/A'); ?></td>
                                     <td class="text-nowrap"><?php echo htmlspecialchars($p_ggsm ?: 'N/A'); ?></td>
                                     <td class="text-nowrap">
@@ -699,7 +724,7 @@ $end_entry   = min($offset + $limit, $total_records);
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="15" class="text-center py-5 text-muted">
+                                <td colspan="22" class="text-center py-5 text-muted">
                                     <i class="fa-solid fa-folder-open fa-3x mb-3 text-secondary d-block"></i>
                                     <h6 class="fw-bold">No Knitting Programs Found</h6>
                                     <p class="small mb-0">Try adjusting your filters or click "New Program" to add an entry.</p>
