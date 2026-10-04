@@ -367,6 +367,21 @@
             box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.06);
         }
 
+        .btn-delete-row {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 10px;
+            background: #fee2e2;
+            color: #b91c1c;
+            transition: 0.15s;
+        }
+
+        .btn-delete-row:hover {
+            background: #fecaca;
+            color: #991b1b;
+        }
+
         .mcno-qty-table input:disabled,
         .mcno-qty-table select:disabled {
             background: #f1f5f9;
@@ -403,7 +418,10 @@
         }
 
         .summary-row .summary-label {
-            text-align: left;
+            text-align: right;
+            color: #000;
+            font-size: 1rem;
+            font-weight: 700;
         }
 
         @media (max-width: 576px) {
@@ -423,8 +441,9 @@
         }
 
         .summary-total {
-            color: #2563eb;
+            color: #000;
             font-size: 1rem;
+            font-weight: 700;
         }
 
         .summary-remaining {
@@ -658,16 +677,25 @@
                             <th>Lot No</th>
                             <th>QTY</th>
                             <th>Remaining</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody id="mcnoQtyTableBody"></tbody>
                     <tfoot>
                         <tr class="summary-row">
-                            <td colspan="4" class="summary-label">Total: <span class="summary-total" id="totalQtyDisplay">0.00</span></td>
+                            <td colspan="3"></td>
+                            <td class="summary-label">Total: <span class="summary-total" id="totalQtyDisplay">0.00</span></td>
                             <td class="summary-remaining">Remaining: <span id="totalRemainingDisplay">0.00</span></td>
+                            <td></td>
                         </tr>
                     </tfoot>
                 </table>
+
+                <div class="action-buttons">
+                    <button type="button" class="btn-add-row" id="addMcnoRowBtn">
+                        <i class="fa-solid fa-plus me-2"></i>Add New Data
+                    </button>
+                </div>
 
                 <div class="action-buttons" style="margin-top:1.8rem;">
                     <button type="button" class="btn-submit" id="submitBtn"><i class="fa-regular fa-floppy-disk me-2"></i>Save Program</button>
@@ -940,15 +968,50 @@
                 row.append($('<td>').html('<input type="text" class="lot_no_row" placeholder="Lot No">'));
                 row.append($('<td>').html('<input type="number" class="qty-input" placeholder="QTY" step="0.01">'));
                 row.append($('<td>').html('<input type="text" class="remaining-qty" readonly placeholder="Remaining">'));
+                row.append($('<td>').append(
+                    $('<button>', {
+                        type: 'button',
+                        class: 'btn-delete-row',
+                        title: 'Delete row',
+                        'aria-label': 'Delete this yarn row'
+                    }).append($('<i>', {
+                        class: 'fa-solid fa-trash'
+                    }))
+                ));
 
                 tbody.append(row);
 
                  row.find('.qty-input, .yarn_count_row, .yarn_brand_row, .lot_no_row').on('input change', function() {
                      updateRemainingQty();
                      checkSubmitButton();
+                     updateAddRowButton();
                  });
                  updateRemainingQty();
                  checkSubmitButton();
+                 updateAddRowButton();
+            }
+
+            function updateAddRowButton() {
+                var rows = $('#mcnoQtyTableBody tr');
+                var allRowsComplete = true;
+                var totalQty = 0;
+
+                rows.each(function() {
+                    var yarnCount = $.trim($(this).find('.yarn_count_row').val() || '');
+                    var yarnBrand = $.trim($(this).find('.yarn_brand_row').val() || '');
+                    var lotNo = $.trim($(this).find('.lot_no_row').val() || '');
+                    var qtyValue = $.trim($(this).find('.qty-input').val() || '');
+                    var qty = parseFloat(qtyValue);
+
+                    if (!yarnCount || !yarnBrand || !lotNo || !qtyValue || isNaN(qty) || qty <= 0) {
+                        allRowsComplete = false;
+                    } else {
+                        totalQty += qty;
+                    }
+                });
+
+                var withinTarget = targetQty > 0 && totalQty <= targetQty;
+                $('#addMcnoRowBtn').prop('disabled', !(allRowsComplete && withinTarget));
             }
 
             function updateRemainingQty() {
@@ -1194,6 +1257,17 @@
                      addMcnoRow();
                      $('#submitBtn').prop('disabled', true);
                  });
+
+                $('#addMcnoRowBtn').on('click', function() {
+                    addMcnoRow();
+                });
+
+                $('#mcnoQtyTableBody').on('click', '.btn-delete-row', function() {
+                    $(this).closest('tr').remove();
+                    updateRemainingQty();
+                    checkSubmitButton();
+                    updateAddRowButton();
+                });
 
                 $('#bookingInput').on('keypress', function(e) {
                     if (e.which === 13) $('#searchBtn').click();
