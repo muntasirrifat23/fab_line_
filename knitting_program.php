@@ -735,12 +735,43 @@
                     },
                     success: function(resp) {
                         if (resp && resp.success && resp.data) {
+                            window.bookingResponse = resp;
                             bookingData = resp.data;
                             allRowsData = resp.all_data || [];
                             allocatedByDescription = resp.allocated_by_description || {};
-                            originalTargetQty = parseFloat(resp.data.KNITTING_TARGET_QTY || resp.data.QTY) || 0;
+                            var poTotal = parseFloat(resp.po_total_qty || resp.data.KNITTING_TARGET_QTY || resp.data.QTY) || 0;
+                            originalTargetQty = poTotal;
                             var allocated = parseFloat(allocatedByDescription[resp.data.KNIT_M_DESCRIPTION]) || 0;
                             targetQty = originalTargetQty - allocated;
+                            
+                            // Populate color and finish_gsm dropdowns based on PO-specific data
+                            if (allRowsData && allRowsData.length) {
+                                var colorSet = {};
+                                var fgSet = {};
+                                for (var i = 0; i < allRowsData.length; i++) {
+                                    var r = allRowsData[i];
+                                    if (r.COLOR) colorSet[String(r.COLOR).trim()] = true;
+                                    if (r.FINISH_GSM) fgSet[String(r.FINISH_GSM).trim()] = true;
+                                }
+                                var colorSelect = $('#color');
+                                var fgSelect = $('#finish_gsm');
+                                var grayGsmOptions = $('#grayGsmOptions');
+                                colorSelect.empty();
+                                fgSelect.empty();
+                                grayGsmOptions.empty();
+                                Object.keys(colorSet).sort().forEach(function(v) {
+                                    colorSelect.append($('<option>', {value: v, text: v}));
+                                });
+                                Object.keys(fgSet).sort(function(a,b){
+                                    var na = parseFloat(a) || 0, nb = parseFloat(b) || 0;
+                                    if (na !== nb) return na - nb;
+                                    return String(a).localeCompare(String(b));
+                                }).forEach(function(v) {
+                                    fgSelect.append($('<option>', {value: v, text: v}));
+                                    grayGsmOptions.append($('<option>', {value: v}));
+                                });
+                            }
+                            
                             renderForm(bookingData);
                             setKnitMDescription(resp);
                         } else {
@@ -806,6 +837,34 @@
                 if (!rowData) rowData = bookingData;
 
                 $('#display_customer').text(rowData.CUSTOMER || '-');
+                
+                // Rebuild dropdowns for this specific knit_m_description if available
+                if (allRowsData && allRowsData.length) {
+                    var colorSet = {}, fgSet = {};
+                    for (var i = 0; i < allRowsData.length; i++) {
+                        var r = allRowsData[i];
+                        if (r.COLOR) colorSet[String(r.COLOR).trim()] = true;
+                        if (r.FINISH_GSM) fgSet[String(r.FINISH_GSM).trim()] = true;
+                    }
+                    var colorSelect = $('#color');
+                    var fgSelect = $('#finish_gsm');
+                    var grayGsmOptions = $('#grayGsmOptions');
+                    colorSelect.empty();
+                    fgSelect.empty();
+                    grayGsmOptions.empty();
+                    Object.keys(colorSet).sort().forEach(function(v) {
+                        colorSelect.append($('<option>', {value: v, text: v}));
+                    });
+                    Object.keys(fgSet).sort(function(a,b){
+                        var na = parseFloat(a) || 0, nb = parseFloat(b) || 0;
+                        if (na !== nb) return na - nb;
+                        return String(a).localeCompare(String(b));
+                    }).forEach(function(v) {
+                        fgSelect.append($('<option>', {value: v, text: v}));
+                        grayGsmOptions.append($('<option>', {value: v}));
+                    });
+                }
+                
                 setAvailableFinishGsm(rowData.FINISH_GSM);
                 setAvailableColor(rowData.COLOR);
                 $('#finish_dia').val(rowData.FINISH_DIA || '');
@@ -825,7 +884,8 @@
                 $('#feeder_plan').val(rowData.FEEDER_PLAN || '');
                 $('#lot_no').val(rowData.LOT_NO || '');
 
-                originalTargetQty = parseFloat(rowData.KNITTING_TARGET_QTY || rowData.QTY) || 0;
+                var poTotal = parseFloat((window.bookingResponse && window.bookingResponse.po_total_qty) || rowData.KNITTING_TARGET_QTY || rowData.QTY) || 0;
+                originalTargetQty = poTotal;
                 var allocated = parseFloat(allocatedByDescription[description]) || 0;
                 targetQty = originalTargetQty - allocated;
                 $('#display_target_qty').text(targetQty > 0 ? targetQty.toFixed(2) : '0.00');
@@ -1072,6 +1132,7 @@
                     $('#alertBox').html('');
                     bookingData = null;
                     allRowsData = [];
+                    window.bookingResponse = null;
                     targetQty = 0;
                     pendingColor = '';
                     pendingFinishGsm = '';

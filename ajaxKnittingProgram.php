@@ -88,6 +88,8 @@ if ($progRes && mysqli_num_rows($progRes) > 0) {
         'all_data' => [$mergedData],
         'descriptions' => [$mergedData['KNIT_M_DESCRIPTION'] ?? ''],
         'allocated_qty' => (float)($progData['QTY'] ?? 0),
+        'allocated_by_description' => [($mergedData['KNIT_M_DESCRIPTION'] ?? '') => (float)($progData['QTY'] ?? 0)],
+        'po_total_qty' => (float)($progData['QTY'] ?? ($mergedData['QTY'] ?? 0)),
         'remaining_qty' => 0
     ]);
     exit();
@@ -126,6 +128,7 @@ if (!$result) {
 $allData = [];
 $descriptions = [];
 $firstRow = null;
+$totalPoQty = 0;
 
 while ($row = mysqli_fetch_assoc($result)) {
     $row['BOOKING'] = isset($row['PO_NUMBER']) ? $row['PO_NUMBER'] : '';
@@ -134,6 +137,7 @@ while ($row = mysqli_fetch_assoc($result)) {
     $row['SL_VDQ'] = isset($row['SL_VDQ']) ? $row['SL_VDQ'] : '';
     $row['MC_DIA'] = isset($row['MC_DIA']) ? $row['MC_DIA'] : '';
     $row['YARN_COUNT'] = isset($row['YARN_COUNT']) ? $row['YARN_COUNT'] : '';
+    $totalPoQty += (float)($row['QTY'] ?? 0);
     
     $allData[] = $row;
     if ($firstRow === null) {
@@ -180,7 +184,9 @@ try {
 
 $response['allocated_qty'] = $allocated;
 $response['allocated_by_description'] = $allocatedByDesc;
-$response['remaining_qty'] = (float)($data['KNITTING_TARGET_QTY'] ?? $data['QTY'] ?? 0) - ($allocatedByDesc[$data['KNIT_M_DESCRIPTION']] ?? 0);
+$poTotalTarget = $totalPoQty > 0 ? $totalPoQty : ((float)($data['KNITTING_TARGET_QTY'] ?? $data['QTY'] ?? 0));
+$response['po_total_qty'] = $poTotalTarget;
+$response['remaining_qty'] = $poTotalTarget - ($allocatedByDesc[$data['KNIT_M_DESCRIPTION']] ?? 0);
 
 echo json_encode($response);
 ?>
