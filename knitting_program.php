@@ -785,6 +785,9 @@
 
                             renderForm(bookingData);
                             setKnitMDescription(resp);
+                            $('#finish_dia, #open_tube, #fabrics_type, #customer, #sl_vdq, #mc_dia, #feeder_plan, #knit_m_description').val('');
+                            $('#color, #finish_gsm').val('');
+                            checkSubmitButton();
                         } else {
                             $('#formContainer').addClass('hidden');
                             showPageAlert(resp.error || 'Not available PO number', 'error', 5000);
@@ -812,20 +815,19 @@
 
                 $('#color').val('');
                 $('#finish_gsm').val('');
-                $('#finish_dia').val(data.FINISH_DIA || '');
-                $('#open_tube').val(data.OPEN_TUBE || '');
-                $('#fabrics_type').val(data.FABRICS_TYPE || '');
-                $('#yarn_type').val(data.YARN_TYPE || '');
-                $('#feeder_plan').val(data.FEEDER_PLAN || '');
+                $('#finish_dia').val('');
+                $('#open_tube').val('');
+                $('#fabrics_type').val('');
+                $('#yarn_type').val('');
+                $('#feeder_plan').val('');
                 $('#knit_material_code').val(data.KNIT_MATERIAL_CODE || '');
-                $('#knit_m_description').val(data.KNIT_M_DESCRIPTION || '');
-                $('#customer').val(data.CUSTOMER || '');
-                $('#yarn_count').val(data.YARN_COUNT || '');
-
-                $('#sl_vdq').val(data.SL_VDQ || '');
-                $('#mc_dia').val(data.MC_DIA || '');
-                $('#gray_gsm').val(data.GRAY_GSM || '');
-                $('#lot_no').val(data.LOT_NO || '');
+                $('#knit_m_description').val('');
+                $('#customer').val('');
+                $('#yarn_count').val('');
+                $('#sl_vdq').val('');
+                $('#mc_dia').val('');
+                $('#gray_gsm').val('');
+                $('#lot_no').val('');
             }
 
             function setKnitMDescription(resp) {
@@ -887,25 +889,23 @@
                     });
                 }
 
-                setAvailableFinishGsm(rowData.FINISH_GSM);
-                setAvailableColor(rowData.COLOR);
-                $('#finish_dia').val(rowData.FINISH_DIA || '');
-                $('#open_tube').val(rowData.OPEN_TUBE || '');
-                $('#fabrics_type').val(rowData.FABRICS_TYPE || '');
+
+                $('#finish_dia').val('');
+                $('#open_tube').val('');
+                $('#fabrics_type').val('');
                 $('#display_yarn_type').text(rowData.YARN_TYPE || '-');
                 $('#yarn_type').val(rowData.YARN_TYPE || '');
                 $('#display_knit_material_code').text(rowData.KNIT_MATERIAL_CODE || '-');
                 $('#knit_material_code').val(rowData.KNIT_MATERIAL_CODE || '');
                 $('#display_knit_m_description').text(rowData.KNIT_M_DESCRIPTION || '-');
                 $('#knit_m_description').val(rowData.KNIT_M_DESCRIPTION || '');
-                $('#customer').val(rowData.CUSTOMER || '');
-                $('#yarn_count').val(rowData.YARN_COUNT || '');
-                $('#sl_vdq').val(rowData.SL_VDQ || '');
-                $('#mc_dia').val(rowData.MC_DIA || '');
-                $('#gray_gsm').val(rowData.GRAY_GSM || '');
-                $('#feeder_plan').val(rowData.FEEDER_PLAN || '');
-
-                $('#lot_no').val(rowData.LOT_NO || '');
+                $('#customer').val('');
+                $('#yarn_count').val('');
+                $('#sl_vdq').val('');
+                $('#mc_dia').val('');
+                $('#gray_gsm').val('');
+                $('#feeder_plan').val('');
+                $('#lot_no').val('');
 
                 var poTotal = parseFloat((window.bookingResponse && window.bookingResponse.po_total_qty) || rowData.KNITTING_TARGET_QTY || rowData.QTY) || 0;
                 originalTargetQty = poTotal;
@@ -1115,7 +1115,6 @@
                                 value: value
                             }));
                         });
-                        setAvailableFinishGsm(pendingFinishGsm || (bookingData && bookingData.FINISH_GSM));
                     }
                 });
 
@@ -1139,9 +1138,8 @@
                                 text: value
                             }));
                         });
-                     setAvailableColor(pendingColor || (bookingData && bookingData.COLOR) || currentValue);
-                 }
-             });
+                    }
+                });
 
              $(manualFieldSelectors).on('input change', function() {
                  checkSubmitButton();
@@ -1181,15 +1179,15 @@
                     $('#display_target_qty').text('0.00');
                     $('#knitting_target_qty').val('');
                     $('#selected_desc_label').html('');
-                    $('#mcnoQtyTableBody').html('');
-                    $('#totalQtyDisplay').text('0.00');
-                    $('#totalRemainingDisplay').text('0.00');
-                    // reset all display fields
-                 $('#infoGrid span').text('-');
-                 addMcnoRow();
-                 $('#submitBtn').prop('disabled', true);
-
-                });
+                     $('#mcnoQtyTableBody').html('');
+                     $('#totalQtyDisplay').text('0.00');
+                     $('#totalRemainingDisplay').text('0.00');
+                     // reset all display fields
+                     $('#infoGrid span').text('-');
+                     $('#finish_dia, #open_tube, #fabrics_type, #customer, #sl_vdq, #mc_dia, #feeder_plan, #knit_m_description').val('');
+                     addMcnoRow();
+                     $('#submitBtn').prop('disabled', true);
+                 });
 
                 $('#bookingInput').on('keypress', function(e) {
                     if (e.which === 13) $('#searchBtn').click();
