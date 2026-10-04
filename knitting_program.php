@@ -634,13 +634,12 @@
                 <div id="detailsContainer">
                     <div class="card-title" style="margin-top:1.8rem; border-top:2px solid #eef2f6; padding-top:1.2rem;"><i class="fa-solid fa-scissors"></i> Enter Fabric Details</div>
                     <div class="info-grid-6" id="infoGrid">
-                        <div class="info-item"><label>Lot No</label><input type="text" id="lot_no" placeholder="Enter Lot No"></div>
-                        <div class="info-item"><label>Yarn Count</label><input type="text" id="yarn_count" placeholder="Enter Yarn Count"></div>
-                        <div class="info-item"><label>SL/VQ</label><input type="text" id="sl_vdq" placeholder="Enter SL/VQ"></div>
                         <div class="info-item"><label>MC DIA</label><input type="text" id="mc_dia" placeholder="Enter MC DIA"></div>
+                        <div class="info-item"><label>SL/VQ</label><input type="text" id="sl_vdq" placeholder="Enter SL/VQ"></div>
                         <div class="info-item"><label>Gray GSM</label><input type="text" id="gray_gsm" list="grayGsmOptions" placeholder="Enter Gray GSM"><datalist id="grayGsmOptions"></datalist></div>
                         <div class="info-item"><label>Feeder Plan</label><input type="text" id="feeder_plan" placeholder="Enter Feeder Plan"></div>
                     </div>
+                </div>
                 </div>
 
                 <!-- MACHINE NO & QTY -->
@@ -651,17 +650,20 @@
                     <span class="qty-value" id="display_target_qty">0.00</span>
                 </div>
 
-                <table class="mcno-qty-table">
+                <table class="mcno-qty-table" style="width:100%; min-width:0;">
                     <thead>
                         <tr>
-                            <th style="width:20%;">QTY</th>
-                            <th style="width:20%;">Remaining</th>
+                            <th>Yarn Count</th>
+                            <th>Yarn Brand</th>
+                            <th>Lot No</th>
+                            <th>QTY</th>
+                            <th>Remaining</th>
                         </tr>
                     </thead>
                     <tbody id="mcnoQtyTableBody"></tbody>
                     <tfoot>
                         <tr class="summary-row">
-                            <td class="summary-label">Total: <span class="summary-total" id="totalQtyDisplay">0.00</span></td>
+                            <td colspan="4" class="summary-label">Total: <span class="summary-total" id="totalQtyDisplay">0.00</span></td>
                             <td class="summary-remaining">Remaining: <span id="totalRemainingDisplay">0.00</span></td>
                         </tr>
                     </tfoot>
@@ -743,7 +745,7 @@
                             originalTargetQty = poTotal;
                             var allocated = parseFloat(allocatedByDescription[resp.data.KNIT_M_DESCRIPTION]) || 0;
                             targetQty = originalTargetQty - allocated;
-                            
+
                             // Populate color and finish_gsm dropdowns based on PO-specific data
                             if (allRowsData && allRowsData.length) {
                                 var colorSet = {};
@@ -760,18 +762,27 @@
                                 fgSelect.empty();
                                 grayGsmOptions.empty();
                                 Object.keys(colorSet).sort().forEach(function(v) {
-                                    colorSelect.append($('<option>', {value: v, text: v}));
+                                    colorSelect.append($('<option>', {
+                                        value: v,
+                                        text: v
+                                    }));
                                 });
-                                Object.keys(fgSet).sort(function(a,b){
-                                    var na = parseFloat(a) || 0, nb = parseFloat(b) || 0;
+                                Object.keys(fgSet).sort(function(a, b) {
+                                    var na = parseFloat(a) || 0,
+                                        nb = parseFloat(b) || 0;
                                     if (na !== nb) return na - nb;
                                     return String(a).localeCompare(String(b));
                                 }).forEach(function(v) {
-                                    fgSelect.append($('<option>', {value: v, text: v}));
-                                    grayGsmOptions.append($('<option>', {value: v}));
+                                    fgSelect.append($('<option>', {
+                                        value: v,
+                                        text: v
+                                    }));
+                                    grayGsmOptions.append($('<option>', {
+                                        value: v
+                                    }));
                                 });
                             }
-                            
+
                             renderForm(bookingData);
                             setKnitMDescription(resp);
                         } else {
@@ -810,6 +821,7 @@
                 $('#knit_m_description').val(data.KNIT_M_DESCRIPTION || '');
                 $('#customer').val(data.CUSTOMER || '');
                 $('#yarn_count').val(data.YARN_COUNT || '');
+
                 $('#sl_vdq').val(data.SL_VDQ || '');
                 $('#mc_dia').val(data.MC_DIA || '');
                 $('#gray_gsm').val(data.GRAY_GSM || '');
@@ -837,10 +849,11 @@
                 if (!rowData) rowData = bookingData;
 
                 $('#display_customer').text(rowData.CUSTOMER || '-');
-                
+
                 // Rebuild dropdowns for this specific knit_m_description if available
                 if (allRowsData && allRowsData.length) {
-                    var colorSet = {}, fgSet = {};
+                    var colorSet = {},
+                        fgSet = {};
                     for (var i = 0; i < allRowsData.length; i++) {
                         var r = allRowsData[i];
                         if (r.COLOR) colorSet[String(r.COLOR).trim()] = true;
@@ -853,18 +866,27 @@
                     fgSelect.empty();
                     grayGsmOptions.empty();
                     Object.keys(colorSet).sort().forEach(function(v) {
-                        colorSelect.append($('<option>', {value: v, text: v}));
+                        colorSelect.append($('<option>', {
+                            value: v,
+                            text: v
+                        }));
                     });
-                    Object.keys(fgSet).sort(function(a,b){
-                        var na = parseFloat(a) || 0, nb = parseFloat(b) || 0;
+                    Object.keys(fgSet).sort(function(a, b) {
+                        var na = parseFloat(a) || 0,
+                            nb = parseFloat(b) || 0;
                         if (na !== nb) return na - nb;
                         return String(a).localeCompare(String(b));
                     }).forEach(function(v) {
-                        fgSelect.append($('<option>', {value: v, text: v}));
-                        grayGsmOptions.append($('<option>', {value: v}));
+                        fgSelect.append($('<option>', {
+                            value: v,
+                            text: v
+                        }));
+                        grayGsmOptions.append($('<option>', {
+                            value: v
+                        }));
                     });
                 }
-                
+
                 setAvailableFinishGsm(rowData.FINISH_GSM);
                 setAvailableColor(rowData.COLOR);
                 $('#finish_dia').val(rowData.FINISH_DIA || '');
@@ -882,6 +904,7 @@
                 $('#mc_dia').val(rowData.MC_DIA || '');
                 $('#gray_gsm').val(rowData.GRAY_GSM || '');
                 $('#feeder_plan').val(rowData.FEEDER_PLAN || '');
+
                 $('#lot_no').val(rowData.LOT_NO || '');
 
                 var poTotal = parseFloat((window.bookingResponse && window.bookingResponse.po_total_qty) || rowData.KNITTING_TARGET_QTY || rowData.QTY) || 0;
@@ -905,16 +928,20 @@
             function addMcnoRow() {
                 var tbody = $('#mcnoQtyTableBody');
                 var row = $('<tr>');
+                row.append($('<td>').html('<input type="text" class="yarn_count_row" placeholder="Yarn Count">'));
+                row.append($('<td>').html('<input type="text" class="yarn_brand_row" placeholder="Yarn Brand">'));
+                row.append($('<td>').html('<input type="text" class="lot_no_row" placeholder="Lot No">'));
                 row.append($('<td>').html('<input type="number" class="qty-input" placeholder="QTY" step="0.01">'));
                 row.append($('<td>').html('<input type="text" class="remaining-qty" readonly placeholder="Remaining">'));
+
                 tbody.append(row);
 
-                row.find('.qty-input').on('input', function() {
-                    updateRemainingQty();
-                    checkSubmitButton();
-                });
-                updateRemainingQty();
-                checkSubmitButton();
+                 row.find('.qty-input, .yarn_count_row, .yarn_brand_row, .lot_no_row').on('input change', function() {
+                     updateRemainingQty();
+                     checkSubmitButton();
+                 });
+                 updateRemainingQty();
+                 checkSubmitButton();
             }
 
             function updateRemainingQty() {
@@ -947,11 +974,9 @@
                     '#open_tube',
                     '#fabrics_type',
                     '#customer',
-                    '#yarn_count',
                     '#sl_vdq',
                     '#mc_dia',
                     '#feeder_plan',
-                    '#lot_no',
                     '#knit_m_description'
                 ];
                 for (var i = 0; i < requiredFields.length; i++) {
@@ -963,37 +988,41 @@
                 return true;
             }
 
-            function checkSubmitButton() {
-                var rows = $('#mcnoQtyTableBody tr');
-                var allValid = true;
-                var hasData = false;
+             function checkSubmitButton() {
+                 var rows = $('#mcnoQtyTableBody tr');
+                 var allValid = true;
+                 var hasData = false;
 
-                rows.each(function() {
-                    var qty = $(this).find('.qty-input').val().trim();
-                    var isEmpty = !qty;
-                    if (isEmpty) return true;
-                    hasData = true;
-                    if (!qty) {
-                        allValid = false;
-                        return false;
-                    }
-                    var qtyNum = parseFloat(qty);
-                    if (isNaN(qtyNum) || qtyNum <= 0) {
-                        allValid = false;
-                        return false;
-                    }
-                });
+                 rows.each(function() {
+                     var yarnCount = $(this).find('.yarn_count_row').val().trim();
+                     var yarnBrand = $(this).find('.yarn_brand_row').val().trim();
+                     var lotNoRow = $(this).find('.lot_no_row').val().trim();
+                     var qty = $(this).find('.qty-input').val().trim();
+                     var isEmpty = !qty && !yarnCount && !yarnBrand && !lotNoRow;
+                     if (isEmpty) return true;
+                     hasData = true;
+                     if (!qty || !yarnCount || !yarnBrand || !lotNoRow) {
+                         allValid = false;
+                         return false;
+                     }
+                     var qtyNum = parseFloat(qty);
+                     if (isNaN(qtyNum) || qtyNum <= 0) {
+                         allValid = false;
+                         return false;
+                     }
+                 });
 
-                var totalQty = 0;
-                rows.each(function() {
-                    var qty = parseFloat($(this).find('.qty-input').val()) || 0;
-                    if (qty > 0) totalQty += qty;
-                });
-                if (hasData && totalQty > targetQty) allValid = false;
+                 var totalQty = 0;
+                 rows.each(function() {
+                     var qty = parseFloat($(this).find('.qty-input').val()) || 0;
+                     if (qty > 0) totalQty += qty;
+                 });
+                 if (hasData && totalQty > targetQty) allValid = false;
 
-                var submitEnabled = allValid && hasData && isManualDataValid();
-                $('#submitBtn').prop('disabled', !submitEnabled);
-            }
+                 var manualValid = isManualDataValid();
+                 var submitEnabled = allValid && hasData && manualValid;
+                 $('#submitBtn').prop('disabled', !submitEnabled);
+             }
 
             function getMcnoQtyData() {
                 var data = [];
@@ -1004,10 +1033,13 @@
                     isValid: false
                 };
                 rows.each(function() {
+                    var yarnCount = $(this).find('.yarn_count_row').val().trim();
+                    var yarnBrand = $(this).find('.yarn_brand_row').val().trim();
+                    var lotNoRow = $(this).find('.lot_no_row').val().trim();
                     var qty = $(this).find('.qty-input').val().trim();
-                    var isEmpty = !qty;
+                    var isEmpty = !qty && !yarnCount && !yarnBrand && !lotNoRow;
                     if (isEmpty) return true;
-                    if (!qty) {
+                    if (!qty || !yarnCount || !yarnBrand || !lotNoRow) {
                         isValid = false;
                         return false;
                     }
@@ -1017,7 +1049,10 @@
                         return false;
                     }
                     data.push({
-                        qty: qtyNum
+                        qty: qtyNum,
+                        yarn_count: yarnCount,
+                        yarn_brand: yarnBrand,
+                        lot_no: lotNoRow
                     });
                 });
                 return {
@@ -1104,11 +1139,15 @@
                                 text: value
                             }));
                         });
-                        setAvailableColor(pendingColor || (bookingData && bookingData.COLOR) || currentValue);
-                    }
-                });
+                     setAvailableColor(pendingColor || (bookingData && bookingData.COLOR) || currentValue);
+                 }
+             });
 
-                $('#backBtn').on('click', function() {
+             $(manualFieldSelectors).on('input change', function() {
+                 checkSubmitButton();
+             });
+
+             $('#backBtn').on('click', function() {
                     window.location.href = 'initialPage.php';
                 });
 
@@ -1146,8 +1185,10 @@
                     $('#totalQtyDisplay').text('0.00');
                     $('#totalRemainingDisplay').text('0.00');
                     // reset all display fields
-                    $('#infoGrid span').text('-');
-                    addMcnoRow();
+                 $('#infoGrid span').text('-');
+                 addMcnoRow();
+                 $('#submitBtn').prop('disabled', true);
+
                 });
 
                 $('#bookingInput').on('keypress', function(e) {
@@ -1171,30 +1212,33 @@
                     '#sl_vdq',
                     '#mc_dia',
                     '#feeder_plan',
-                    '#lot_no',
                     '#knit_m_description'
                 ].join(', ');
 
-                $(manualFieldSelectors).on('input change', function() {
-                    checkSubmitButton();
-                });
+                 $(manualFieldSelectors).on('input change', function() {
+                     checkSubmitButton();
+                 });
+                 $(document).on('input change', '.yarn_count_row, .yarn_brand_row, .lot_no_row, .qty-input', function() {
+                     checkSubmitButton();
+                 });
+
 
                 $('#submitBtn').on('click', function(e) {
                     e.preventDefault();
-                    var mcnoResult = getMcnoQtyData();
-                    if (!mcnoResult.isValid) {
-                        showAlert('Fill all QTY fields with valid data.', 'error');
-                        return;
-                    }
-                    if (mcnoResult.data.length === 0) {
-                        showAlert('Add at least one quantity row.', 'error');
-                        return;
-                    }
-                    var desc = $('#knit_m_description').val();
-                    if (!desc || desc.trim() === '') {
-                        showAlert('Knit M Description missing.', 'error');
-                        return;
-                    }
+                     var mcnoResult = getMcnoQtyData();
+                     if (!mcnoResult.isValid) {
+                         showAlert('Fill all row fields with valid data.', 'error');
+                         return;
+                     }
+                     if (mcnoResult.data.length === 0) {
+                         showAlert('Add at least one quantity row.', 'error');
+                         return;
+                     }
+                     if (!isManualDataValid()) {
+                         showAlert('Please fill all required fields.', 'error');
+                         return;
+                     }
+                     var desc = $('#knit_m_description').val();
                     var totalQty = 0;
                     mcnoResult.data.forEach(function(item) {
                         totalQty += item.qty;
@@ -1282,12 +1326,16 @@
                 // initial row
                 addMcnoRow();
 
-                var urlParams = new URLSearchParams(window.location.search);
-                var bookingParam = urlParams.get('booking');
-                if (bookingParam) {
-                    $('#bookingInput').val(bookingParam);
-                    loadFormData(bookingParam);
-                }
+                 $('#submitBtn').prop('disabled', true);
+                 $(manualFieldSelectors).on('input change', function() {
+                     checkSubmitButton();
+                 });
+                 var urlParams = new URLSearchParams(window.location.search);
+                 var bookingParam = urlParams.get('booking');
+                 if (bookingParam) {
+                     $('#bookingInput').val(bookingParam);
+                     loadFormData(bookingParam);
+                 }
             });
 
         })(jQuery);

@@ -66,6 +66,7 @@ $finishGsm = isset($_POST['finish_gsm']) ? trim($_POST['finish_gsm']) : null;
 $finishDia = isset($_POST['finish_dia']) ? trim($_POST['finish_dia']) : null;
 $openTube = isset($_POST['open_tube']) ? trim($_POST['open_tube']) : null;
 $lotNo = isset($_POST['lot_no']) ? trim($_POST['lot_no']) : null;
+$yarnBrand = null;
 $knitMaterialCode = isset($_POST['knit_material_code']) ? trim($_POST['knit_material_code']) : null;
 $color = isset($_POST['color']) ? trim($_POST['color']) : null;
 $slVdq = isset($_POST['sl_vdq']) ? trim($_POST['sl_vdq']) : null;
@@ -152,11 +153,12 @@ $insertSql = "INSERT INTO knitting_program (
     GGSM,
     FEEDER_PLAN,
     LOT,
+    YBRAND,
     SHIFT,
     KNIT_MATERIAL_CODE,
     KNIT_M_DESCRIPTION,
     UNAME
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 $stmt = mysqli_prepare($db, $insertSql);
 
@@ -172,11 +174,14 @@ $insertedCount = 0;
 
 foreach ($mcnoQtyData as $row) {
     $qty = isset($row['qty']) ? (float)$row['qty'] : 0;
+    $rowYarnCount = isset($row['yarn_count']) ? trim($row['yarn_count']) : null;
+    $rowYarnBrand = isset($row['yarn_brand']) ? trim($row['yarn_brand']) : null;
+    $rowLotNo = isset($row['lot_no']) ? trim($row['lot_no']) : null;
 
-    if ($qty <= 0) {
+    if ($qty <= 0 || empty($rowYarnCount) || empty($rowYarnBrand) || empty($rowLotNo)) {
         mysqli_rollback($db);
         http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Each row needs a valid quantity.']);
+        echo json_encode(['success' => false, 'message' => 'Each row needs Yarn Count, Yarn Brand, Lot No and valid quantity.']);
         mysqli_stmt_close($stmt);
         mysqli_close($db);
         exit();
@@ -184,7 +189,7 @@ foreach ($mcnoQtyData as $row) {
 
     mysqli_stmt_bind_param(
         $stmt,
-        "isssssdssssssssssssssss",
+        "isssssdsssssssssssssssss",
         $programNo,
         $booking,
         $sono,
@@ -198,12 +203,13 @@ foreach ($mcnoQtyData as $row) {
         $fabricsType,
         $yarnType,
         $customer,
-        $yarnCount,
+        $rowYarnCount,
         $slVdq,
         $mcDia,
         $grayGsm,
         $feederPlan,
-        $lotNo,
+        $rowLotNo,
+        $rowYarnBrand,
         $shift,
         $knitMaterialCode,
         $knitDescription,
