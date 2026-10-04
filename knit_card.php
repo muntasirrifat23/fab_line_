@@ -108,7 +108,7 @@ $end_entry   = min($offset + $limit, $total_records);
             --dark-teal: #0f172a;
             --accent-green: #10b981;
             --surface-bg: #f8fafc;
-            --card-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+            --card-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
             --header-from:  #090d22;
             --header-mid:   #0f172a;
             --header-to:    #1e3a8a;
@@ -126,45 +126,30 @@ $end_entry   = min($offset + $limit, $total_records);
         }
 
         body {
-            padding: 24px;
+            padding: 10px 14px;
             background-color: var(--surface-bg);
             font-family: var(--font-main);
             color: #334155;
-            background-image: radial-gradient(circle at 10% 20%, rgba(30, 58, 138, 0.015) 0%, transparent 60%),
-                              radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.015) 0%, transparent 60%);
         }
 
-        /* ═══════════════════════════════════════════
-           HEADER BANNER
-        ═══════════════════════════════════════════ */
         .top-banner {
             position: relative;
             background: linear-gradient(135deg, var(--header-from) 0%, var(--header-mid) 50%, var(--header-to) 100%);
             color: white;
-            padding: 36px 40px 0 40px;
-            border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
-            margin-bottom: 30px;
+            padding: 12px 18px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+            margin-bottom: 12px;
             overflow: hidden;
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        /* Decorative background blobs */
         .top-banner::before {
             content: '';
             position: absolute;
-            width: 400px; height: 400px;
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.22) 0%, transparent 70%);
-            top: -120px; right: -80px;
-            border-radius: 50%;
-            pointer-events: none;
-        }
-        .top-banner::after {
-            content: '';
-            position: absolute;
             width: 250px; height: 250px;
-            background: radial-gradient(circle, rgba(147, 197, 253, 0.15) 0%, transparent 70%);
-            bottom: -20px; left: 80px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.18) 0%, transparent 70%);
+            top: -60px; right: -40px;
             border-radius: 50%;
             pointer-events: none;
         }
@@ -176,114 +161,61 @@ $end_entry   = min($offset + $limit, $total_records);
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 20px;
-            padding-bottom: 30px;
+            gap: 12px;
+            padding-bottom: 0;
         }
 
-        /* Icon badge */
         .banner-icon-wrap {
-            width: 62px; height: 62px;
-            border-radius: 18px;
+            width: 36px; height: 36px;
+            border-radius: 8px;
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
             display: flex; align-items: center; justify-content: center;
-            font-size: 28px;
+            font-size: 16px;
             flex-shrink: 0;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
             color: #60a5fa;
         }
 
-        .banner-title-group { display: flex; align-items: center; gap: 20px; }
+        .banner-title-group { display: flex; align-items: center; gap: 10px; }
 
         .top-banner h1 {
-            font-weight: 800;
-            font-size: 2rem;
-            margin: 0 0 6px 0;
-            letter-spacing: -0.5px;
-            line-height: 1.15;
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin: 0;
+            letter-spacing: -0.3px;
+            line-height: 1.2;
             background: linear-gradient(135deg, #ffffff 60%, #93c5fd 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
         .banner-subtitle {
-            font-size: 14px;
+            font-size: 11.5px;
             color: #93c5fd;
             margin: 0;
             font-weight: 500;
-            letter-spacing: 0.1px;
             opacity: 0.9;
         }
 
-        /* Nav buttons */
         .nav-btn {
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 13.5px;
-            padding: 10px 20px;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 12px;
+            padding: 5px 12px;
+            transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-        }
-        .nav-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+            gap: 6px;
         }
 
         .btn-glass {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             color: #f8fafc;
-            backdrop-filter: blur(10px);
         }
         .btn-glass:hover {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.2);
             color: #ffffff;
-            border-color: rgba(255, 255, 255, 0.3);
-        }
-
-        .btn-blue-solid {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-            border: 1px solid rgba(96, 165, 250, 0.3);
-            color: white;
-            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
-        }
-        .btn-blue-solid:hover {
-            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-            color: white;
-            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
-        }
-
-        /* Bottom glassy strip inside header */
-        .banner-info-strip {
-            position: relative;
-            z-index: 2;
-            background: rgba(15, 23, 42, 0.25);
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
-            margin: 0 -40px;
-            padding: 14px 40px;
-            display: flex;
-            align-items: center;
-            gap: 30px;
-            flex-wrap: wrap;
-        }
-
-        .strip-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 13px;
-            color: #e2e8f0;
-            font-weight: 600;
-        }
-
-        .strip-item .strip-dot {
-            width: 9px; height: 9px;
-            border-radius: 50%;
-            display: inline-block;
-            box-shadow: 0 0 8px currentColor;
         }
 
         /* ═══════════════════════════════════════════
@@ -291,79 +223,62 @@ $end_entry   = min($offset + $limit, $total_records);
         ═══════════════════════════════════════════ */
         .stat-card {
             background: #ffffff;
-            border-radius: 20px;
-            padding: 22px 24px;
+            border-radius: 10px;
+            padding: 10px 14px;
             box-shadow: var(--card-shadow);
             border: 1px solid #e2e8f0;
             display: flex;
             align-items: center;
-            gap: 18px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 35px rgba(15, 23, 42, 0.08);
-            border-color: #cbd5e1;
+            gap: 12px;
+            transition: all 0.2s ease;
         }
 
         .stat-icon {
-            width: 56px; height: 56px;
-            border-radius: 16px;
+            width: 36px; height: 36px;
+            border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 22px;
+            font-size: 16px;
             flex-shrink: 0;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.02);
         }
         
-        .bg-teal-light  { background: linear-gradient(135deg, #eff6ff, #dbeafe); color: #1d4ed8; }
-        .bg-blue-light  { background: linear-gradient(135deg, #f0f9ff, #e0f2fe); color: #0284c7; }
-        .bg-green-light { background: linear-gradient(135deg, #f0fdf4, #dcfce7); color: #166534; }
-        .bg-amber-light { background: linear-gradient(135deg, #fffbeb, #fef3c7); color: #b45309; }
+        .bg-teal-light  { background: #eff6ff; color: #1d4ed8; }
+        .bg-blue-light  { background: #f0f9ff; color: #0284c7; }
+        .bg-green-light { background: #f0fdf4; color: #166534; }
+        .bg-amber-light { background: #fffbeb; color: #b45309; }
+
+        .stat-lbl { font-size: 11px; font-weight: 600; color: #64748b; }
+        .stat-val { font-size: 1.15rem; font-weight: 700; line-height: 1.2; }
 
         /* ═══════════════════════════════════════════
            SEARCH & FILTER PANEL
         ═══════════════════════════════════════════ */
         .search-panel {
             background: #ffffff;
-            border-radius: 20px;
-            padding: 24px;
+            border-radius: 10px;
+            padding: 8px 12px !important;
             box-shadow: var(--card-shadow);
             border: 1px solid #e2e8f0;
-            margin-bottom: 28px;
+            margin-bottom: 12px;
         }
 
-        .form-control {
-            border-radius: 12px;
-            border: 1px solid #cbd5e1;
-            padding: 10px 16px;
-            font-size: 14px;
-            color: #0f172a;
-            font-weight: 500;
-            background-color: #f8fafc;
-            transition: all 0.2s ease;
-        }
-        .form-control:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
-            background-color: #ffffff;
-        }
-
-        /* Specific rules for filter form controls to align perfectly with button height */
         .search-panel .form-control {
-            height: 42px !important;
-            padding: 8px 14px !important;
-            font-size: 13.5px !important;
+            height: 34px !important;
+            padding: 4px 12px !important;
+            font-size: 12.5px !important;
             border-color: #cbd5e1;
+            border-radius: 0 8px 8px 0 !important;
+            background-color: #f8fafc;
         }
         
         .search-panel .btn {
-            height: 42px !important;
+            height: 34px !important;
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
-            border-radius: 12px !important;
-            font-weight: 700;
-            font-size: 13.5px;
+            border-radius: 8px !important;
+            font-weight: 600;
+            font-size: 12px;
+            padding: 0 14px !important;
         }
 
         /* ═══════════════════════════════════════════
@@ -371,8 +286,8 @@ $end_entry   = min($offset + $limit, $total_records);
         ═══════════════════════════════════════════ */
         .table-panel {
             background: #ffffff;
-            border-radius: 24px;
-            padding: 24px;
+            border-radius: 10px;
+            padding: 10px 12px;
             box-shadow: var(--card-shadow);
             border: 1px solid #e2e8f0;
             overflow: hidden;
@@ -382,43 +297,39 @@ $end_entry   = min($offset + $limit, $total_records);
         .custom-table thead th {
             background: #0f172a;
             color: #f8fafc;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.8px;
-            padding: 16px;
+            letter-spacing: 0.5px;
+            padding: 8px 10px;
             border: none;
             border-bottom: 2px solid #1e293b;
             text-align: center;
         }
-        .custom-table thead th:first-child { border-top-left-radius: 16px; border-bottom-left-radius: 16px; }
-        .custom-table thead th:last-child  { border-top-right-radius: 16px; border-bottom-right-radius: 16px; }
+        .custom-table thead th:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+        .custom-table thead th:last-child  { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
         
         .custom-table tbody td { 
-            padding: 16px; 
-            font-size: 14px; 
+            padding: 6px 8px; 
+            font-size: 12px; 
             vertical-align: middle; 
             border-bottom: 1px solid #f1f5f9; 
             color: #334155;
             font-weight: 500;
             text-align: center;
         }
-        .custom-table tbody tr {
-            transition: all 0.2s ease;
-        }
         .custom-table tbody tr:hover { 
             background-color: #f8fafc; 
-            transform: scale(1.002);
         }
 
         .badge-status {
-            font-size: 11px;
-            font-weight: 700;
-            padding: 6px 12px;
-            border-radius: 20px;
+            font-size: 10.5px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 12px;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 3px;
         }
         .badge-generated { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
         .badge-pending   { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
@@ -427,73 +338,61 @@ $end_entry   = min($offset + $limit, $total_records);
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             border: none;
             color: white;
-            font-weight: 700;
-            border-radius: 12px;
-            padding: 11px 24px;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+            font-weight: 600;
+            border-radius: 6px !important;
+            padding: 4px 10px !important;
+            font-size: 11.5px !important;
+            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);
             transition: all 0.2s ease;
         }
         .btn-teal:hover {
-            background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
             color: white;
-            transform: translateY(-1px);
-            box-shadow: 0 6px 18px rgba(16, 185, 129, 0.35);
         }
 
-        /* Action buttons */
         .btn-action-view {
             background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
             color: white !important;
-            font-weight: 700;
-            border-radius: 10px !important;
-            padding: 8px 16px !important;
+            font-weight: 600;
+            border-radius: 6px !important;
+            padding: 4px 10px !important;
             border: none;
-            font-size: 13px !important;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+            font-size: 11.5px !important;
             transition: all 0.2s ease;
         }
         .btn-action-view:hover {
-            background: linear-gradient(135deg, #3d75f5 0%, #2563eb 100%);
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
         }
 
         .btn-action-edit {
             background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
             color: white !important;
-            font-weight: 700;
-            border-radius: 10px !important;
-            padding: 8px 16px !important;
+            font-weight: 600;
+            border-radius: 6px !important;
+            padding: 4px 10px !important;
             border: none;
-            font-size: 13px !important;
-            box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2);
+            font-size: 11.5px !important;
             transition: all 0.2s ease;
         }
         .btn-action-edit:hover {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(217, 119, 6, 0.35);
+            background: linear-gradient(135deg, #b45309 0%, #92400e 100%);
         }
 
         .btn-action-download {
             background: linear-gradient(135deg, #059669 0%, #047857 100%);
             color: white !important;
-            font-weight: 700;
-            border-radius: 10px !important;
-            padding: 8px 16px !important;
+            font-weight: 600;
+            border-radius: 6px !important;
+            padding: 4px 10px !important;
             border: none;
-            font-size: 13px !important;
-            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);
+            font-size: 11.5px !important;
             transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 3px;
         }
         .btn-action-download:hover {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white !important;
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(5, 150, 105, 0.35);
+            background: linear-gradient(135deg, #047857 0%, #064e3b 100%);
         }
 
         /* ═══════════════════════════════════════════
@@ -504,19 +403,19 @@ $end_entry   = min($offset + $limit, $total_records);
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
-            gap: 16px;
-            padding-top: 20px;
-            margin-top: 10px;
+            gap: 10px;
+            padding-top: 8px;
+            margin-top: 6px;
             border-top: 1px solid #f1f5f9;
         }
         .pagination-info {
-            font-size: 13px;
+            font-size: 12px;
             color: #64748b;
             font-weight: 600;
         }
         .custom-pagination {
             display: inline-flex;
-            gap: 6px;
+            gap: 4px;
             list-style: none;
             padding: 0;
             margin: 0;
@@ -526,12 +425,12 @@ $end_entry   = min($offset + $limit, $total_records);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-width: 36px;
-            height: 36px;
-            padding: 0 12px;
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: 700;
+            min-width: 28px;
+            height: 28px;
+            padding: 0 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
             color: #334155;
             background: #f8fafc;
             border: 1px solid #e2e8f0;
@@ -541,13 +440,11 @@ $end_entry   = min($offset + $limit, $total_records);
         .custom-pagination .page-link-custom:hover:not(.disabled):not(.active) {
             background: #f1f5f9;
             color: #0f172a;
-            border-color: #cbd5e1;
         }
         .custom-pagination .page-item-custom.active .page-link-custom {
             background: #0f172a;
             color: #ffffff;
             border-color: #0f172a;
-            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
         }
         .custom-pagination .page-item-custom.disabled .page-link-custom {
             color: #94a3b8;
@@ -561,139 +458,23 @@ $end_entry   = min($offset + $limit, $total_records);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 32px;
-            height: 36px;
+            width: 24px;
+            height: 28px;
             color: #94a3b8;
-            font-weight: bold;
+            font-size: 12px;
         }
 
-        /* ═══════════════════════════════════════════
-           MOBILE RESPONSIVENESS & TOUCH OPTIMIZATIONS
-        ═══════════════════════════════════════════ */
         .table-responsive {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
-            border-radius: 16px;
-        }
-        .table-responsive::-webkit-scrollbar {
-            height: 8px;
-        }
-        .table-responsive::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 4px;
-        }
-        .table-responsive::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-        .table-responsive::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-
-        @media (max-width: 991.98px) {
-            body {
-                padding: 16px 12px;
-            }
-            .top-banner {
-                padding: 24px 20px 0 20px;
-                border-radius: 18px;
-                margin-bottom: 20px;
-            }
-            .banner-inner {
-                padding-bottom: 20px;
-                gap: 16px;
-            }
-            .top-banner h1 {
-                font-size: 1.5rem;
-            }
-            .banner-info-strip {
-                margin: 0 -20px;
-                padding: 12px 20px;
-                gap: 16px;
-            }
-            .search-panel {
-                padding: 18px;
-                border-radius: 16px;
-                margin-bottom: 20px;
-            }
-            .table-panel {
-                padding: 16px;
-                border-radius: 18px;
-            }
-            .custom-table thead th, 
-            .custom-table tbody td {
-                padding: 12px 14px;
-                font-size: 13px;
-            }
-        }
-
-        @media (max-width: 575.98px) {
-            body {
-                padding: 12px 6px;
-            }
-            .top-banner {
-                padding: 20px 16px 0 16px;
-                border-radius: 16px;
-            }
-            .banner-title-group {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-            }
-            .banner-icon-wrap {
-                width: 48px;
-                height: 48px;
-                font-size: 22px;
-                border-radius: 12px;
-            }
-            .top-banner h1 {
-                font-size: 1.3rem;
-            }
-            .banner-subtitle {
-                font-size: 12.5px;
-            }
-            .banner-info-strip {
-                margin: 0 -16px;
-                padding: 10px 16px;
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
-            .stat-card {
-                padding: 16px;
-                border-radius: 16px;
-                gap: 14px;
-            }
-            .stat-icon {
-                width: 46px;
-                height: 46px;
-                font-size: 18px;
-                border-radius: 12px;
-            }
-            .search-panel {
-                padding: 14px;
-            }
-            .pagination-container {
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
-                gap: 12px;
-            }
-            .custom-pagination {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-            .btn-action-view, .btn-teal, .btn-action-edit {
-                padding: 7px 12px !important;
-                font-size: 12px !important;
-            }
+            border-radius: 8px;
         }
     </style>
 </head>
 
 <body>
 
-    <div class="container-fluid" style="max-width: 1400px;">
+    <div class="container-fluid" style="max-width: 1600px;">
 
         <!-- ═══ HEADER BANNER ═══ -->
         <div class="top-banner">
@@ -740,65 +521,64 @@ $end_entry   = min($offset + $limit, $total_records);
         <?php endif; ?>
 
         <!-- Stat Cards -->
-        <div class="row g-3 mb-4">
+        <div class="row g-2 mb-2.5">
             <div class="col-12 col-sm-6 col-lg-3">
-                <div class="stat-card d-flex align-items-center gap-3">
+                <div class="stat-card d-flex align-items-center">
                     <div class="stat-icon bg-teal-light"><i class="fa-solid fa-clipboard-list"></i></div>
                     <div>
-                        <div class="text-muted small fw-semibold">Total Programs</div>
-                        <div class="fs-4 fw-bold text-dark"><?php echo number_format($total_programs); ?></div>
+                        <div class="stat-lbl">Total Programs</div>
+                        <div class="stat-val text-dark"><?php echo number_format($total_programs); ?></div>
                     </div>
                 </div>
             </div>
             <div class="col-12 col-sm-6 col-lg-3">
-                <div class="stat-card d-flex align-items-center gap-3">
+                <div class="stat-card d-flex align-items-center">
                     <div class="stat-icon bg-blue-light"><i class="fa-solid fa-weight-hanging"></i></div>
                     <div>
-                        <div class="text-muted small fw-semibold">Total Required Qty</div>
-                        <div class="fs-4 fw-bold text-dark"><?php echo number_format($total_req_qty, 2); ?> <span class="fs-6 text-muted font-normal">KG</span></div>
+                        <div class="stat-lbl">Total Required Qty</div>
+                        <div class="stat-val text-dark"><?php echo number_format($total_req_qty, 2); ?> <span style="font-size:11px; font-weight:normal; color:#64748b;">KG</span></div>
                     </div>
                 </div>
             </div>
             <div class="col-12 col-sm-6 col-lg-3">
-                <div class="stat-card d-flex align-items-center gap-3">
+                <div class="stat-card d-flex align-items-center">
                     <div class="stat-icon bg-green-light"><i class="fa-solid fa-circle-check"></i></div>
                     <div>
-                        <div class="text-muted small fw-semibold">Cards Generated</div>
-                        <div class="fs-4 fw-bold text-success"><?php echo number_format($generated_count); ?></div>
+                        <div class="stat-lbl">Cards Generated</div>
+                        <div class="stat-val text-success"><?php echo number_format($generated_count); ?></div>
                     </div>
                 </div>
             </div>
             <div class="col-12 col-sm-6 col-lg-3">
-                <div class="stat-card d-flex align-items-center gap-3">
+                <div class="stat-card d-flex align-items-center">
                     <div class="stat-icon bg-amber-light"><i class="fa-solid fa-clock"></i></div>
                     <div>
-                        <div class="text-muted small fw-semibold">Pending Cards</div>
-                        <div class="fs-4 fw-bold" style="color:#b45309;"><?php echo number_format($pending_count); ?></div>
+                        <div class="stat-lbl">Pending Cards</div>
+                        <div class="stat-val" style="color:#b45309;"><?php echo number_format($pending_count); ?></div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Search & Filter -->
-        <div class="search-panel py-3 px-3 px-md-4">
+        <div class="search-panel">
             <form method="GET" action="knit_card.php" class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2 w-100">
                 <div class="input-group flex-grow-1" style="min-width: 200px;">
-                    <span class="input-group-text bg-light border-end-0 text-muted" style="border-radius: 12px 0 0 12px; height: 42px; padding: 0 14px;">
+                    <span class="input-group-text bg-light border-end-0 text-muted">
                         <i class="fa-solid fa-magnifying-glass text-primary"></i>
                     </span>
                     <input type="text" 
                            name="program_id" 
                            class="form-control border-start-0" 
-                           style="border-radius: 0 12px 12px 0; height: 42px;"
                            placeholder="Search by Knitting Program (e.g. 57 or 2000000004)..." 
                            value="<?php echo htmlspecialchars($search_program); ?>"
                            autofocus>
                 </div>
                 <div class="d-flex gap-2 flex-shrink-0">
-                    <button type="submit" class="btn btn-teal px-4 fw-bold flex-grow-1 flex-sm-grow-0" style="white-space: nowrap; height: 42px;">
-                        <i class="fa-solid fa-magnifying-glass me-1.5"></i> Search
+                    <button type="submit" class="btn btn-teal flex-grow-1 flex-sm-grow-0" style="white-space: nowrap;">
+                        <i class="fa-solid fa-magnifying-glass me-1"></i> Search
                     </button>
-                    <a href="knit_card.php" class="btn btn-outline-secondary px-3 fw-bold flex-grow-1 flex-sm-grow-0" style="white-space: nowrap; height: 42px;">
+                    <a href="knit_card.php" class="btn btn-outline-secondary flex-grow-1 flex-sm-grow-0" style="white-space: nowrap;">
                         <i class="fa-solid fa-rotate-left me-1"></i> Reset
                     </a>
                 </div>

@@ -360,58 +360,58 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             font-family: var(--font-main);
             color: var(--text-primary);
             -webkit-font-smoothing: antialiased;
-            padding: 32px 24px;
+            padding: 16px 20px;
         }
 
         .main-container {
-            max-width: 1200px;
+            max-width: 1380px;
             margin: 0 auto;
         }
 
         /* ── PAGE HEADER (TOP BAR) ── */
         .top-bar {
-            background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
-            border-radius: var(--radius-card);
-            padding: 20px 24px;
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+            border-radius: 10px;
+            padding: 12px 20px;
             color: #ffffff;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 16px;
-            margin-bottom: 24px;
-            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.15);
+            gap: 12px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
         }
 
         .top-bar-left {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 12px;
         }
 
         .top-bar-icon {
             background: rgba(255, 255, 255, 0.12);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            width: 48px;
-            height: 48px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 22px;
+            font-size: 20px;
         }
 
         .top-bar-title-wrap h1 {
-            font-weight: 800;
-            font-size: 22px;
+            font-weight: 700;
+            font-size: 18px;
             margin: 0;
             color: #ffffff;
-            letter-spacing: -0.5px;
+            letter-spacing: -0.3px;
         }
 
         .top-bar-subtitle {
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+            color: #93c5fd;
             margin: 2px 0 0 0;
             font-weight: 400;
         }
@@ -419,48 +419,46 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
         .top-bar-right {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
         .pill-badge {
             background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.18);
             color: #ffffff;
             font-size: 12px;
-            font-weight: 700;
-            padding: 6px 14px;
-            border-radius: 30px;
-            letter-spacing: 0.3px;
+            font-weight: 600;
+            padding: 5px 12px;
+            border-radius: 20px;
         }
 
         .btn-back {
             background: #ffffff;
             color: #1e293b;
-            font-weight: 700;
-            font-size: 13px;
-            padding: 8px 18px;
-            border-radius: 30px;
+            font-weight: 600;
+            font-size: 12px;
+            padding: 6px 14px;
+            border-radius: 20px;
             transition: all 0.2s ease;
             text-decoration: none;
             border: none;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            gap: 6px;
         }
         .btn-back:hover {
             background: #f1f5f9;
             color: #0f172a;
-            transform: translateY(-1px);
             text-decoration: none;
         }
 
         /* ── RESPONSIVE 2-COLUMN GRID ── */
         .workspace-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 24px;
+            grid-template-columns: 350px 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+            align-items: stretch;
         }
 
         @media (max-width: 900px) {
@@ -473,9 +471,12 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
         .workspace-card {
             background: var(--surface-card);
             border: 1px solid var(--border-color);
-            border-radius: var(--radius-card);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
         .card-header-custom {
@@ -483,29 +484,29 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             align-items: center;
             justify-content: space-between;
             border-bottom: 1px solid var(--border-color);
-            padding-bottom: 16px;
-            margin-bottom: 20px;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
         }
 
         .card-header-title {
-            font-size: 15px;
-            font-weight: 800;
+            font-size: 13.5px;
+            font-weight: 700;
             color: var(--text-primary);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.4px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             margin: 0;
         }
 
         .badge-pill-header {
-            font-size: 11px;
+            font-size: 10.5px;
             font-weight: 700;
-            padding: 4px 10px;
-            border-radius: 30px;
+            padding: 3px 10px;
+            border-radius: 20px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.4px;
         }
         .badge-status-blue {
             background: var(--color-blue-light);
@@ -522,8 +523,12 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
         .metrics-row {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-bottom: 16px;
+            gap: 6px;
+            margin-bottom: 8px;
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            padding: 8px 10px;
+            border-radius: 8px;
         }
         .metric-col {
             display: flex;
@@ -531,42 +536,42 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             align-items: flex-start;
         }
         .metric-val-blue {
-            font-size: 20px;
-            font-weight: 800;
+            font-size: 15px;
+            font-weight: 700;
             color: var(--color-blue);
         }
         .metric-val-gray {
-            font-size: 20px;
-            font-weight: 800;
+            font-size: 15px;
+            font-weight: 700;
             color: var(--text-secondary);
         }
         .metric-val-green {
-            font-size: 20px;
-            font-weight: 800;
+            font-size: 15px;
+            font-weight: 700;
             color: var(--color-success);
         }
         .metric-lbl {
-            font-size: 11px;
+            font-size: 9.5px;
             font-weight: 700;
             color: var(--text-secondary);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-top: 2px;
+            letter-spacing: 0.3px;
+            margin-top: 1px;
         }
 
         /* ── PROGRESS BAR ── */
         .progress-bar-container {
-            background: #f1f5f9;
+            background: #e2e8f0;
             height: 6px;
             border-radius: 3px;
             overflow: hidden;
-            margin-bottom: 24px;
+            margin-bottom: 12px;
             position: relative;
         }
         .progress-bar-fill {
             height: 100%;
             background: linear-gradient(90deg, #3b82f6 0%, #06b6d4 100%);
-            width: 0%; /* Animated via JS */
+            width: 0%;
             border-radius: 3px;
         }
 
@@ -574,10 +579,10 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
         .form-label-custom {
             font-size: 11px;
             font-weight: 700;
-            color: var(--text-secondary);
+            color: #475569;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 6px;
+            letter-spacing: 0.4px;
+            margin-bottom: 4px;
             display: block;
         }
         .required-label::after {
@@ -587,14 +592,16 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
         
         .form-select-custom, .form-input-custom {
             background-color: #ffffff !important;
-            border: 1.5px solid var(--border-color) !important;
-            border-radius: var(--radius-input) !important;
-            padding: 12px 16px !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 8px !important;
+            padding: 7px 10px !important;
             font-weight: 600 !important;
-            font-size: 14px !important;
+            font-size: 13px !important;
             color: var(--text-primary) !important;
             transition: all 0.2s ease !important;
             width: 100%;
+            height: 36px !important;
+            line-height: 1.3 !important;
         }
         .form-select-custom:focus, .form-input-custom:focus {
             border-color: #3b82f6 !important;
@@ -612,15 +619,16 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             border-right: none !important;
         }
         .input-group-addon-custom {
-            background: #f8fafc;
-            border: 1.5px solid var(--border-color);
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
             border-left: none;
-            color: var(--text-secondary);
+            color: #475569;
             font-weight: 700;
-            font-size: 13px;
-            padding: 0 16px;
-            border-top-right-radius: var(--radius-input);
-            border-bottom-right-radius: var(--radius-input);
+            font-size: 12px;
+            padding: 0 12px;
+            height: 36px;
+            border-top-right-radius: 8px;
+            border-bottom-right-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -628,7 +636,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
         }
 
         .validation-msg {
-            font-size: 12px;
+            font-size: 11.5px;
             font-weight: 600;
             color: var(--color-success);
         }
@@ -637,7 +645,8 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
         .specs-inner-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
+            gap: 10px;
+            height: 100%;
         }
 
         @media (max-width: 900px) {
@@ -649,22 +658,23 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
         .spec-box-col {
             background: #f8fafc;
             border: 1px solid var(--border-color);
-            border-radius: var(--radius-box);
-            padding: 20px;
+            border-radius: 8px;
+            padding: 10px 12px;
             display: flex;
             flex-direction: column;
-            gap: 18px;
+            gap: 10px;
+            height: 100%;
         }
 
         .spec-box-title {
-            font-size: 11px;
+            font-size: 10.5px;
             font-weight: 800;
-            color: var(--text-secondary);
+            color: #0f172a;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-bottom: 1.5px solid var(--border-color);
-            padding-bottom: 8px;
-            margin-bottom: 4px;
+            letter-spacing: 0.4px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 4px;
+            margin-bottom: 2px;
             display: block;
         }
 
@@ -672,22 +682,24 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            gap: 4px;
-            font-size: 13px;
+            gap: 2px;
+            font-size: 12.5px;
         }
 
         .spec-label {
-            color: var(--text-secondary);
+            color: #64748b;
             font-size: 10px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
 
         .spec-value {
             color: var(--text-primary);
             font-weight: 700;
             text-align: left;
+            font-size: 12.5px;
+            word-break: break-word;
         }
 
         /* Highlights */
@@ -703,51 +715,51 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
 
         /* Badges & Pills */
         .badge-pill-green {
-            background: var(--color-success-light);
-            color: var(--color-success);
-            border: 1px solid var(--color-success-border);
-            padding: 4px 10px;
-            border-radius: 30px;
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+            padding: 3px 8px;
+            border-radius: 20px;
             font-size: 11px;
             font-weight: 700;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
         }
         .dot-green {
             width: 6px;
             height: 6px;
-            background-color: var(--color-success);
+            background-color: #166534;
             border-radius: 50%;
             display: inline-block;
         }
 
         .badge-pill-color {
-            background: #f1f5f9;
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-            padding: 4px 10px;
-            border-radius: 30px;
+            background: #e2e8f0;
+            color: #1e293b;
+            border: 1px solid #cbd5e1;
+            padding: 3px 8px;
+            border-radius: 20px;
             font-size: 11px;
             font-weight: 700;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
         }
         .dot-color {
-            width: 8px;
-            height: 8px;
-            background-color: var(--text-secondary);
+            width: 6px;
+            height: 6px;
+            background-color: #475569;
             border-radius: 50%;
             display: inline-block;
         }
 
         .badge-pill-amber {
-            background: var(--color-amber-light);
-            color: var(--color-amber);
-            border: 1px solid var(--color-amber-border);
-            padding: 4px 10px;
-            border-radius: 30px;
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fde68a;
+            padding: 3px 8px;
+            border-radius: 20px;
             font-size: 11px;
             font-weight: 700;
             display: inline-block;
@@ -761,11 +773,11 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             background: var(--color-blue-light);
             color: var(--color-blue);
             border: 1px solid var(--color-blue-border);
-            padding: 4px 8px;
-            border-radius: 6px;
+            padding: 3px 8px;
+            border-radius: 4px;
             word-break: break-all;
             display: block;
-            margin-top: 4px;
+            margin-top: 2px;
             text-align: left;
         }
 
@@ -776,13 +788,13 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             background: #f1f5f9;
             color: #475569;
             border: 1px solid var(--border-color);
-            padding: 10px 14px;
-            border-radius: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
             word-break: break-all;
             white-space: normal;
             line-height: 1.4;
             display: block;
-            margin-top: 6px;
+            margin-top: 4px;
             text-align: left;
             width: 100%;
         }
@@ -791,50 +803,48 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
         .bottom-actions {
             display: flex;
             justify-content: flex-end;
-            gap: 12px;
-            margin-top: 24px;
+            gap: 10px;
+            margin-top: 16px;
         }
 
         .btn-cancel {
             background: #ffffff !important;
-            border: 1.5px solid #cbd5e1 !important;
-            color: var(--text-secondary) !important;
+            border: 1px solid #cbd5e1 !important;
+            color: #334155 !important;
             font-weight: 700 !important;
-            font-size: 13.5px !important;
-            padding: 12px 24px !important;
-            border-radius: 10px !important;
+            font-size: 13px !important;
+            padding: 8px 18px !important;
+            border-radius: 8px !important;
             display: inline-flex !important;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
             transition: all 0.2s ease !important;
             text-decoration: none !important;
         }
         .btn-cancel:hover {
             background: #f8fafc !important;
-            color: var(--text-primary) !important;
+            color: #0f172a !important;
             border-color: #94a3b8 !important;
         }
 
         .btn-submit {
-            background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%) !important;
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%) !important;
             color: #ffffff !important;
             font-weight: 700 !important;
-            font-size: 13.5px !important;
-            padding: 12px 28px !important;
-            border-radius: 10px !important;
+            font-size: 13px !important;
+            padding: 8px 22px !important;
+            border-radius: 8px !important;
             border: none !important;
-            box-shadow: 0 4px 10px rgba(30, 58, 95, 0.25) !important;
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.15) !important;
             display: inline-flex !important;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
             transition: all 0.2s ease !important;
         }
         .btn-submit:hover:not([disabled]) {
-            transform: translateY(-1px) !important;
-            box-shadow: 0 6px 14px rgba(30, 58, 95, 0.35) !important;
-            filter: brightness(1.1);
+            filter: brightness(1.15);
         }
         .btn-submit[disabled] {
             background: #cbd5e1 !important;
@@ -848,84 +858,71 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
         .allocation-card {
             background: #f8fafc;
             border: 1px solid var(--border-color);
-            border-radius: var(--radius-box);
-            padding: 16px;
-            margin-bottom: 14px;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
             position: relative;
             transition: all 0.2s ease;
         }
         .allocation-card:hover {
             border-color: #cbd5e1;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
         }
         .allocation-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 1px dashed #e2e8f0;
+            margin-bottom: 6px;
+            padding-bottom: 4px;
+            border-bottom: 1px dashed #cbd5e1;
         }
         .allocation-title {
-            font-size: 12px;
-            font-weight: 800;
+            font-size: 11.5px;
+            font-weight: 700;
             color: var(--text-primary);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.4px;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
         }
         .btn-remove-row {
             background: #ffffff;
             border: 1px solid #fecaca;
             color: #ef4444;
-            font-size: 11px;
+            font-size: 10.5px;
             font-weight: 700;
-            padding: 4px 10px;
-            border-radius: 6px;
+            padding: 2px 8px;
+            border-radius: 4px;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 4px;
             cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .btn-remove-row:hover {
-            background: #fef2f2;
-            color: #dc2626;
-            border-color: #fca5a5;
         }
         .btn-add-row {
             background: #ffffff;
-            border: 1.5px dashed var(--color-blue);
+            border: 1px dashed var(--color-blue);
             color: var(--color-blue);
-            font-size: 13px;
-            font-weight: 700;
-            padding: 10px 16px;
-            border-radius: var(--radius-box);
+            font-size: 12.5px;
+            font-weight: 600;
+            padding: 8px 14px;
+            border-radius: 8px;
             width: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
             cursor: pointer;
-            transition: all 0.2s ease;
-            margin-bottom: 16px;
-        }
-        .btn-add-row:hover:not([disabled]) {
-            background: var(--color-blue-light);
-            border-color: #1d4ed8;
-            color: #1d4ed8;
+            margin-bottom: 10px;
         }
         .allocation-summary-box {
-            background: #ffffff;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-input);
-            padding: 12px 16px;
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            padding: 8px 12px;
             display: flex;
             flex-direction: column;
-            gap: 6px;
-            font-size: 12px;
+            gap: 4px;
+            font-size: 11.5px;
         }
     </style>
 </head>
@@ -975,7 +972,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                         <h4 class="card-header-title">
                             <span style="font-size:16px;">⚙️</span> Target Production Settings
                         </h4>
-                        <span class="badge-pill-header badge-status-blue">Editable</span>
+                        <span class="badge-pill-header badge-status-blue">Summary</span>
                     </div>
 
                     <!-- Metrics Row -->
@@ -1003,72 +1000,8 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                         <span class="metric-lbl" style="font-size: 10px;">Completion Status</span>
                         <span class="metric-lbl" style="font-size: 10px; font-weight: 800; color: var(--color-blue);" id="progressPercentText"><?php echo number_format($completion_pct, 0); ?>% Completion</span>
                     </div>
-                    <div class="progress-bar-container">
+                    <div class="progress-bar-container mb-0">
                         <div id="progressBarFill" class="progress-bar-fill"></div>
-                    </div>
-
-                    <!-- Dynamic Multi-Row Allocations Section -->
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <label class="form-label-custom mb-0" style="color: var(--text-primary); font-size: 11px;">
-                            <i class="fa-solid fa-layer-group text-primary me-1"></i> Sub-TID Allocations
-                        </label>
-                    </div>
-
-                    <!-- Container for rows -->
-                    <div id="allocationRowsContainer">
-                        <!-- Initial Row -->
-                        <div class="allocation-card" data-row-idx="1">
-                            <div class="allocation-header">
-                                <span class="allocation-title">
-                                    <i class="fa-solid fa-tag text-primary"></i> <span class="row-title-text">Sub-TID #1</span>
-                                </span>
-                                <button type="button" class="btn-remove-row" style="display: none;" title="Remove this row">
-                                    <i class="fa-solid fa-trash-can"></i> Remove
-                                </button>
-                            </div>
-                            <div class="row g-2 mb-2">
-                                <div class="col-6">
-                                    <label class="form-label-custom required-label">Machine (M/C NO)</label>
-                                    <select name="machine_no[]" class="form-select-custom row-mcno" required>
-                                        <option value="">-- Select M/C --</option>
-                                        <?php foreach ($mcno_list as $mc): ?>
-                                            <option value="<?php echo htmlspecialchars($mc); ?>" <?php echo ($p_mcno === $mc) ? 'selected' : ''; ?>>
-                                                <?php echo htmlspecialchars($mc); ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label-custom">Shift</label>
-                                    <input type="hidden" name="shift[]" value="<?php echo $shift; ?>">
-                                    <div class="form-input-custom bg-light fw-bold text-primary d-flex align-items-center justify-content-between" style="padding: 10px 14px !important;">
-                                        <span>Shift <?php echo $shift; ?></span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="form-label-custom required-label">Card Quantity (KG)</label>
-                                <div class="quantity-input-wrapper">
-                                    <input type="number" step="0.01" min="0.01" max="<?php echo htmlspecialchars($remaining_qty); ?>" name="required_qty[]" class="form-input-custom row-qty" value="" required placeholder="Enter card quantity (e.g. 100)">
-                                    <span class="input-group-addon-custom">KG</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Real-time Summary Box -->
-                    <div class="allocation-summary-box">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span style="color: var(--text-secondary); font-weight:600;">Card Qty to Generate:</span>
-                            <span class="fw-bold" id="liveTotalAllocated" style="font-size: 13px; color: var(--color-blue);">0.00 KG</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span style="color: var(--text-secondary); font-weight:600;">Net Remaining in Program:</span>
-                            <span class="fw-bold" id="liveNetRemaining" style="font-size: 13px; color: var(--color-success);"><?php echo number_format($remaining_qty, 2); ?> KG</span>
-                        </div>
-                        <div id="liveValidationMessage" class="validation-msg mt-1 d-flex align-items-center gap-1">
-                            <i class="fa-solid fa-circle-info"></i> Enter the quantity you want to generate for this card (Max: <?php echo number_format($remaining_qty, 2); ?> KG)
-                        </div>
                     </div>
                 </div>
 
@@ -1194,6 +1127,73 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                             </div>
                         </div>
 
+                    </div>
+                </div>
+            </div>
+
+            <!-- Full-Width Section: Sub-TID Allocations & Machine Assignments -->
+            <div class="workspace-card mb-3">
+                <div class="card-header-custom">
+                    <h4 class="card-header-title">
+                        <span style="font-size:16px;">🏷️</span> Sub-TID Allocations & Machine Assignments
+                    </h4>
+                    <span class="badge-pill-header badge-status-blue">Editable</span>
+                </div>
+
+                <!-- Container for rows -->
+                <div id="allocationRowsContainer">
+                    <!-- Initial Row -->
+                    <div class="allocation-card" data-row-idx="1">
+                        <div class="allocation-header">
+                            <span class="allocation-title">
+                                <i class="fa-solid fa-tag text-primary"></i> <span class="row-title-text">Sub-TID #1</span>
+                            </span>
+                            <button type="button" class="btn-remove-row" style="display: none;" title="Remove this row">
+                                <i class="fa-solid fa-trash-can"></i> Remove
+                            </button>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <label class="form-label-custom required-label">Machine (M/C NO)</label>
+                                <select name="machine_no[]" class="form-select-custom row-mcno" required>
+                                    <option value="">-- Select M/C --</option>
+                                    <?php foreach ($mcno_list as $mc): ?>
+                                        <option value="<?php echo htmlspecialchars($mc); ?>" <?php echo ($p_mcno === $mc) ? 'selected' : ''; ?>>
+                                            <?php echo htmlspecialchars($mc); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label-custom">Shift</label>
+                                <input type="hidden" name="shift[]" value="<?php echo $shift; ?>">
+                                <div class="form-input-custom bg-light fw-bold text-primary d-flex align-items-center justify-content-between">
+                                    <span>Shift <?php echo $shift; ?></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label-custom required-label">Card Quantity (KG)</label>
+                                <div class="quantity-input-wrapper">
+                                    <input type="number" step="0.01" min="0.01" max="<?php echo htmlspecialchars($remaining_qty); ?>" name="required_qty[]" class="form-input-custom row-qty" value="" required placeholder="Enter card quantity (e.g. 100)">
+                                    <span class="input-group-addon-custom">KG</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Real-time Summary Box -->
+                <div class="allocation-summary-box">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span style="color: var(--text-secondary); font-weight:600;">Card Qty to Generate:</span>
+                        <span class="fw-bold" id="liveTotalAllocated" style="font-size: 13px; color: var(--color-blue);">0.00 KG</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span style="color: var(--text-secondary); font-weight:600;">Net Remaining in Program:</span>
+                        <span class="fw-bold" id="liveNetRemaining" style="font-size: 13px; color: var(--color-success);"><?php echo number_format($remaining_qty, 2); ?> KG</span>
+                    </div>
+                    <div id="liveValidationMessage" class="validation-msg mt-1 d-flex align-items-center gap-1">
+                        <i class="fa-solid fa-circle-info"></i> Enter the quantity you want to generate for this card (Max: <?php echo number_format($remaining_qty, 2); ?> KG)
                     </div>
                 </div>
             </div>

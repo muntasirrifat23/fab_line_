@@ -217,7 +217,7 @@ DROP TABLE IF EXISTS `knitting_input`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `knitting_input` (
   `KITID` int(11) NOT NULL AUTO_INCREMENT,
-  `BUDAT` date DEFAULT (CURRENT_DATE),
+  `BUDAT` date DEFAULT curdate(),
   `PO_NUMBER` varchar(50) DEFAULT NULL,
   `SONO` varchar(50) DEFAULT NULL,
   `BUYER` varchar(50) DEFAULT NULL,
@@ -543,7 +543,7 @@ DROP TABLE IF EXISTS `mcno`;
 CREATE TABLE `mcno` (
   `MCNOID` int(11) NOT NULL AUTO_INCREMENT,
   `MCNO` varchar(50) DEFAULT NULL,
-  `CBUDAT` date DEFAULT (CURRENT_DATE),
+  `CBUDAT` date DEFAULT curdate(),
   PRIMARY KEY (`MCNOID`)
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -653,4 +653,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-08-29 13:51:36
+-- Dump completed on 2026-10-04 11:28:03
