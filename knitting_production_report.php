@@ -178,18 +178,18 @@
                 '<div id="rowPdfCard" style="width:700px;height:700px;padding:4px;background: white;font-family:Arial,Helvetica,sans-serif;color:#000000;box-sizing:border-box;border:2px solid #000000;font-weight:800;display:flex;flex-direction:column;">' +
                 '<div style="display:flex;gap:4px;align-items:stretch;margin-bottom:4px;">' +
                 '<div style="flex:1;min-height:215px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:#ffffff;border:2px solid #000000;padding:6px;box-sizing:border-box;">' +
-                '<div style="background:white;color:#000000;text-align:center;font-size:27px;font-weight:800;padding:2px 0;margin-bottom:8px;letter-spacing:0;white-space:nowrap;display:inline-block;">' +
+                '<div style="background:white;color:#000000;text-align:center;font-size:30px;font-weight:800;padding:2px 0;margin-bottom:8px;letter-spacing:0;white-space:nowrap;display:inline-block;">' +
                 '<span style="text-decoration:none;">PURBANI FABRICS LTD.</span>' +
                 '<span style="display:block;width:100%;height:3px;background:#000000;margin-top:2px;"></span>' +
                 '</div>' +
                 '<div style="font-weight:800;color:#000000;line-height:1.5;word-break:break-word;">' +
-                '<div style="font-size:27px;">ROLL: ' + (row.ROLL || '') + '</div>' +
-                '<div style="font-size:26px;">QTY: ' + (row.PQTY || '') + '</div>' +
-                '<div style="font-size:25px;">Buyer: ' + (row.BUYER || '') + '</div>' +
-                '<div style="font-size:23px;">Date: ' + (row.BUDAT || '') + '</div>' +
+                '<div style="font-size:30px;">ROLL: ' + (row.ROLL || '') + '</div>' +
+                '<div style="font-size:29px;">QTY: ' + (row.PQTY || '') + '</div>' +
+                '<div style="font-size:28px;">Buyer: ' + (row.BUYER || '') + '</div>' +
+                '<div style="font-size:25px;">Date: ' + (row.BUDAT || '') + '</div>' +
                 '</div>' +
                 '</div>' +
-                '<div id="rowQrBoxRight" style="flex:none;width:215px;height:215px;display:flex;align-items:center;justify-content:center;border:2px solid #000000;background:#ffffff;"></div>' +
+                '<div id="rowQrBoxRight" style="flex:none;width:215px;min-height:215px;height:auto;align-self:stretch;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:2px solid #000000;background:#ffffff;"></div>' +
                 '</div>' +
                 '<div class="pdf-grid">' + rowsHTML + '</div>' +
                 '</div>';
@@ -221,7 +221,7 @@
             var style = document.createElement('style');
             style.textContent = '' +
                 '.pdf-grid{display:grid;grid-template-columns:repeat(4,1fr);column-gap:8px;row-gap:2px;background:#ffffff;}' +
-                '.pdf-item{grid-column:span 2;font-size:25px;font-weight:800;line-height:1.15;margin-left:3px; padding:3px 0;word-break:break-word;background:#ffffff;color:#000000;}' +
+                '.pdf-item{grid-column:span 2;font-size:29px;font-weight:800;line-height:1.15;margin-left:3px; padding:3px 0;word-break:break-word;background:#ffffff;color:#000000;}' +
                 '.pdf-item.pdf-vertical{grid-column:1 / -1;}' +
                 '.pdf-label,.pdf-value{font-weight:800;color:#000000;}' +
                 '</style>';
