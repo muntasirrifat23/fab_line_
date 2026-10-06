@@ -579,6 +579,64 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
       color: #1e3a8a;
     }
 
+    .operator-switch-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 8px;
+      padding: 7px 12px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-left: 4px solid #10b981;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      color: #065f46;
+      font-weight: 600;
+    }
+
+    .operator-switch-bar .operator-switch-note {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      line-height: 1.2;
+    }
+
+    #changeOperatorBtn {
+      background: #ffffff;
+      border: 1px solid #10b981;
+      color: #047857;
+      font-weight: 700;
+      font-size: 0.75rem;
+      padding: 5px 12px;
+      border-radius: 16px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: 0.2s;
+    }
+
+    #changeOperatorBtn:hover {
+      background: #10b981;
+      color: #ffffff;
+    }
+
+    .reload-page-btn {
+      margin-top: 10px;
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      color: #ffffff;
+      border: none;
+      padding: 9px 20px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .reload-page-btn:hover {
+      filter: brightness(1.1);
+    }
+
     .manual-entry {
       display: flex;
       gap: 8px;
@@ -925,6 +983,54 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
       let processingRoll = false;
       let operatorInfo = null;
 
+      // ── Operator memory: one active operator per calendar date + production shift ──
+      // Mirrors ajaxKnittingProductionInsert.php (Asia/Dhaka, A 06:00-14:00, B 14:00-22:00, C otherwise).
+      function getShiftKey() {
+        var d = new Date();
+        var bd = new Date(d.getTime() + (d.getTimezoneOffset() + 360) * 1000);
+        var h = bd.getHours();
+        var shift = (h >= 6 && h < 14) ? 'A' : ((h >= 14 && h < 22) ? 'B' : 'C');
+        var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+        var date = bd.getFullYear() + '-' + pad(bd.getMonth() + 1) + '-' + pad(bd.getDate());
+        return { key: 'kp_operator_' + date + '_' + shift, date: date, shift: shift };
+      }
+
+      function loadStoredOperator() {
+        try {
+          var raw = localStorage.getItem(getShiftKey().key);
+          if (!raw) return null;
+          var o = JSON.parse(raw);
+          if (o && o.OPERATOR_ID) return o;
+        } catch (e) { /* storage blocked or corrupt entry */ }
+        return null;
+      }
+
+      function storeOperator(op) {
+        try {
+          localStorage.setItem(getShiftKey().key, JSON.stringify({
+            OPERATOR_ID: op.OPERATOR_ID || '',
+            OPERATOR_NAME: op.OPERATOR_NAME || ''
+          }));
+        } catch (e) { /* storage blocked */ }
+      }
+
+      function clearStoredOperator() {
+        try { localStorage.removeItem(getShiftKey().key); } catch (e) {}
+      }
+
+      // Drop memory left behind by earlier days.
+      function pruneOperatorStorage() {
+        try {
+          const keepPrefix = 'kp_operator_' + getShiftKey().date + '_';
+          const stale = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && k.indexOf('kp_operator_') === 0 && k.indexOf(keepPrefix) !== 0) stale.push(k);
+          }
+          stale.forEach(k => localStorage.removeItem(k));
+        } catch (e) {}
+      }
+
       const DEFAULT_DATA = [{
         label: 'Step 1',
         value: 'Scan/ Enter Knitting Operator ID'
@@ -942,6 +1048,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
             <input type="text" id="manualOperatorInput" placeholder="Operator ID (e.g. OP01)" autocomplete="off">
             <button type="button" id="manualOperatorBtn">Load</button>
           </div>
+          <div id="operatorInputStatus"></div>
         `;
         html += `<div class="data-row header-row"><span class="label">Default Information</span><span class="value"></span></div>`;
         DEFAULT_DATA.forEach(f => {
@@ -965,6 +1072,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           alert('Please enter Operator ID!');
           return;
         }
+        const statusEl = document.getElementById('operatorInputStatus');
+        if (statusEl) statusEl.innerHTML = '';
         verifying = true;
         verifyOperatorScan(val);
       }
@@ -1272,9 +1381,16 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
             if (res && res.success && res.data) {
               operatorScanned = true;
               operatorInfo = res.data;
+              storeOperator(res.data);
               renderOperatorVerified();
             } else {
-              alert('Please scan Knitting Operator ID first!\n' + ((res && res.error) || 'Invalid Operator ID'));
+              const errMsg = 'Not Found — ' + ((res && res.error) || ('Invalid Operator ID: ' + val));
+              const statusEl = document.getElementById('operatorInputStatus');
+              if (statusEl) {
+                statusEl.innerHTML = notFoundNoticeHtml(errMsg);
+              } else {
+                alert('Please scan Knitting Operator ID first!\n' + ((res && res.error) || 'Invalid Operator ID'));
+              }
             }
           })
           .catch(err => {
@@ -1283,7 +1399,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           });
       }
 
-      function renderOperatorVerified() {
+      function renderOperatorVerified(autoLoaded) {
+        const sk = getShiftKey();
         resultContainer.innerHTML = `
           <div class="manual-entry">
             <input type="text" id="manualRollInput" placeholder="Knit Card No (e.g. 200000001) / Card ID" autocomplete="off">
@@ -1297,6 +1414,10 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           <div class="data-row default-row operator-info-row">
             <div class="field-block"><span class="field-label">Operator ID</span><span class="field-value">${operatorInfo.OPERATOR_ID || '-'}</span></div>
             <div class="field-block"><span class="field-label">Operator Name</span><span class="field-value">${operatorInfo.OPERATOR_NAME || '-'}</span></div>
+          </div>
+          <div class="operator-switch-bar">
+            <span class="operator-switch-note">${autoLoaded ? '<i class="fas fa-history"></i> Auto-loaded' : '<i class="fas fa-user-check"></i> Saved'} for ${sk.date} · Shift ${sk.shift}</span>
+            <button type="button" id="changeOperatorBtn"><i class="fas fa-user-edit"></i> Change Operator</button>
           </div>
           <div class="data-row" style="border-left-color:#f59e0b; background:#fffbeb; margin-top:8px;">
             <span class="value" style="color:#92400e; font-weight:600;">Now Scan / Enter Knit Card No (e.g. 200000001)</span>
@@ -1314,6 +1435,21 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           if (e.key === 'Enter') { e.preventDefault(); submitManualRoll(); }
         });
         if (rollInput) rollInput.focus();
+
+        const changeBtn = document.getElementById('changeOperatorBtn');
+        if (changeBtn) changeBtn.addEventListener('click', changeOperator);
+      }
+
+      // Forget the remembered operator for this date+shift and go back to Step 1,
+      // so a different operator can take over during the running shift.
+      function changeOperator() {
+        clearStoredOperator();
+        operatorScanned = false;
+        operatorInfo = null;
+        renderDefaultData();
+        if (typeof cameraStatus !== 'undefined' && cameraStatus) {
+          cameraStatus.innerText = 'Scan operator ID';
+        }
       }
 
       function submitManualRoll() {
@@ -1356,6 +1492,16 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
         hideActionContent();
       }
 
+      function notFoundNoticeHtml(msg) {
+        return `
+          <div style="color:#ef4444; font-weight:700; font-size:0.85rem; margin-top:8px;">
+            <i class="fas fa-times-circle"></i> ${msg}
+          </div>
+          <button type="button" class="reload-page-btn" onclick="window.location.reload()">
+            <i class="fas fa-sync-alt"></i> Reload Page
+          </button>`;
+      }
+
       function renderScannedData(qrText) {
         if (!qrText || qrText.trim() === '') {
           renderDefaultData();
@@ -1381,10 +1527,10 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
               }
             }
 
-            const errMsg = (res && res.error) || ('No Knit Card found for: ' + text);
+            const errMsg = 'Not Found — ' + ((res && res.error) || ('No Knit Card for: ' + text));
             const statusDiv = document.getElementById('rollInputStatus');
             if (statusDiv) {
-              statusDiv.innerHTML = `<div style="color:#ef4444; font-weight:700; font-size:0.85rem; margin-top:8px;"><i class="fas fa-times-circle"></i> ${errMsg}</div>`;
+              statusDiv.innerHTML = notFoundNoticeHtml(errMsg);
             } else {
               renderUnstructuredData(text, errMsg);
             }
@@ -1394,7 +1540,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
             console.error('Knit Card lookup failed:', err);
             const statusDiv = document.getElementById('rollInputStatus');
             if (statusDiv) {
-              statusDiv.innerHTML = `<div style="color:#ef4444; font-weight:700; font-size:0.85rem; margin-top:8px;"><i class="fas fa-exclamation-triangle"></i> Failed to fetch Knit Card data: ${err.message}</div>`;
+              statusDiv.innerHTML = notFoundNoticeHtml('Failed to fetch Knit Card data: ' + err.message);
             } else {
               renderUnstructuredData(text, 'Failed to fetch Knit Card data');
             }
@@ -1957,7 +2103,15 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
       window.restartQrScanner = restartScanner;
 
       document.addEventListener('DOMContentLoaded', function() {
-        renderDefaultData();
+        pruneOperatorStorage();
+        const savedOp = loadStoredOperator();
+        if (savedOp) {
+          operatorInfo = savedOp;
+          operatorScanned = true;
+          renderOperatorVerified(true);
+        } else {
+          renderDefaultData();
+        }
         setTimeout(() => {
           startScanner();
         }, 500);
