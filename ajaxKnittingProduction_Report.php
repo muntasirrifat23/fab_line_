@@ -33,7 +33,14 @@ $query = "SELECT p.*,
                         FROM knit_card k
                        WHERE TRIM(k.KNITCARD) = TRIM(p.KNITCARD)
                        LIMIT 1)
-                 ) AS YBRAND
+                 ) AS YBRAND,
+                 COALESCE(
+                     (SELECT NULLIF(TRIM(k.LOT), '')
+                        FROM knit_card k
+                       WHERE TRIM(k.KNITCARD) = TRIM(p.KNITCARD)
+                       LIMIT 1),
+                     NULLIF(TRIM(p.LOT_NO), '')
+                 ) AS YARN_LOT
           FROM knitting_production p 
           $where 
           ORDER BY p.PID DESC";

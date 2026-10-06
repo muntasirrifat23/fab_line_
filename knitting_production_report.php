@@ -128,8 +128,8 @@
                             <th>FABRICS TYPE</th>
                             <th>FINISH GSM</th>
                             <th>FINISH DIA</th>
-                            <th>LOT NO</th>
                             <th>YARN BRAND</th>
+                            <th>YARN LOT</th>
 
                         </tr>
                     </thead>
@@ -162,11 +162,12 @@
                 ['MC Dia', row.MC_DIA],
                 ['Customer', row.CUSTOMER],
                 ['FGSM', row.FINISH_GSM],
-                ['F. DIA', row.FINISH_DIA],
                 ['Color', row.COLOR, 'vertical'],
+                ['F. DIA', row.FINISH_DIA, 'vertical'],
+                ['F. TYPE', row.FABRICS_TYPE, 'vertical'],
                 ['Y. COUNT', row.YARN_COUNT, 'vertical'],
                 ['Y. BRAND', row.YBRAND, 'vertical'],
-                ['F. TYPE', row.FABRICS_TYPE, 'vertical']
+                ['Y. LOT', row.YARN_LOT, 'vertical']
             ];
 
             var rowsHTML = fieldHTML.map(function(f) {
@@ -291,8 +292,8 @@
                 tr.append($('<td>').text(row.FABRICS_TYPE || ''));
                 tr.append($('<td>').text(row.FINISH_GSM || ''));
                 tr.append($('<td>').text(row.FINISH_DIA || ''));
-                tr.append($('<td>').text(row.LOT_NO || ''));
                 tr.append($('<td>').text(row.YBRAND || ''));
+                tr.append($('<td>').text(row.YARN_LOT || ''));
                 tbody.append(tr);
             });
         }
