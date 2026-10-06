@@ -2011,7 +2011,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
             cameraStatus.style.color = '#f59e0b';
           }
           // Ensure manual input controls remain fully available and are not overwritten
-          if (!operatorScanned) {
+          if (!operatorScanned) {   
             renderDefaultData();
           }
         });
@@ -2029,6 +2029,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           if (cameraControls) cameraControls.style.display = 'none';
           renderScannedData(text);
         };
+
 
         if (html5QrCode && isScanning) {
           try {
