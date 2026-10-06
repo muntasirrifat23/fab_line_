@@ -153,17 +153,16 @@
         function downloadRowPdf(row) {
             var fieldHTML = [
                 ['Shift', row.SHIFT],
-                ['UName', row.UNAME],
+                ['OPNAME', row.UNAME],
                 ['SONO', row.SONO],
-                ['Buyer', row.BUYER],
-                ['LOT', row.LOT_NO],
+                ['PO NO', row.PO_NUMBER],
                 ['Style', row.STYLE],
                 ['MCNO', row.MCNO],
                 ['MC Dia', row.MC_DIA],
                 ['Customer', row.CUSTOMER],
                 ['FGSM', row.FINISH_GSM],
+                ['F. DIA', row.FINISH_DIA],
                 ['Color', row.COLOR, 'vertical'],
-                ['F. DIA', row.FINISH_DIA, 'vertical'],
                 ['F. TYPE', row.FABRICS_TYPE, 'vertical'],
                 ['Y. COUNT', row.YARN_COUNT, 'vertical'],
                 ['Y. BRAND', row.YBRAND, 'vertical'],
@@ -186,7 +185,7 @@
                 '<div style="font-weight:800;color:#000000;line-height:1.5;word-break:break-word;">' +
                 '<div style="font-size:27px;">ROLL: ' + (row.ROLL || '') + '</div>' +
                 '<div style="font-size:26px;">QTY: ' + (row.PQTY || '') + '</div>' +
-                '<div style="font-size:24px;">PO NO: ' + (row.PO_NUMBER || '') + '</div>' +
+                '<div style="font-size:25px;">Buyer: ' + (row.BUYER || '') + '</div>' +
                 '<div style="font-size:23px;">Date: ' + (row.BUDAT || '') + '</div>' +
                 '</div>' +
                 '</div>' +
