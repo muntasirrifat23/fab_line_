@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 ob_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
@@ -52,7 +52,6 @@ $open_tube    = val("open_tube");
 $color        = val("color");
 $sl_vdq       = val("sl_vdq");
 $customer     = val("customer");
-$gray_gsm     = val("gray_gsm");
 $feeder_plan  = val("feeder_plan");
 $knit_material_code = val("knit_material_code");
 $knit_m_des   = val("knit_m_desc") ? val("knit_m_desc") : val("knit_m_description");
@@ -185,7 +184,6 @@ FINISH_GSM,
 FINISH_DIA,
 OPEN_TUBE,
 SL_VDQ,
-GRAY_GSM,
 FEEDER_PLAN,
 LOT_NO,
 YBRAND,
@@ -196,7 +194,6 @@ UID
 )
 VALUES
 (
-    ?,
     ?,
     ?,
     ?,
@@ -237,7 +234,7 @@ if(!$stmt){
 
 mysqli_stmt_bind_param(
     $stmt,
-    "ssssssssssssssssssssssssssss",
+    "sssssssssssssssssssssssssss",
 
     $budat,
     $roll,
@@ -259,7 +256,6 @@ mysqli_stmt_bind_param(
     $finish_dia,
     $open_tube,
     $sl_vdq,
-    $gray_gsm,
     $feeder_plan,
     $lot_no,
     $yarn_brand,

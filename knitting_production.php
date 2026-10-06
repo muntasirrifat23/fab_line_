@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 if (isset($_GET['action']) && $_GET['action'] === 'get_roll') {
   require_once 'config.php';
   header('Content-Type: application/json');
@@ -907,7 +907,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
         'MCARD': 'MCARD',
         'ROLL': 'ROLL',
         'CUSTOMER': 'Customer',
-        'GGSM': 'Gray GSM',
+
         'FEEDER_PLAN': 'Feeder Plan',
         'SHIFT': 'Shift',
         'KNIT_MATERIAL_CODE': 'Knit Material Code',
@@ -980,7 +980,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           parts.pop();
         }
 
-        console.log('âœ“ Parsed parts count:', parts.length, 'Parts:', parts);
+        console.log('Ã¢Å“â€œ Parsed parts count:', parts.length, 'Parts:', parts);
 
         const format16WithCustomer = [
           'KNITCARD', 'MCNO', 'BUYER', 'CUSTOMER', 'BOOKING', 'SONO', 'STYLE',
@@ -1034,12 +1034,12 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
             (looksLikeMachineNo(mcno) ? 1 : 0);
 
           if (keyFieldsValid >= 2 || (booking && sono)) {
-            console.log('âœ“ Detected format17 (17 fields from QR Report), valid fields:', keyFieldsValid);
+            console.log('Ã¢Å“â€œ Detected format17 (17 fields from QR Report), valid fields:', keyFieldsValid);
             return buildData(format17);
           }
 
           // Even if validation is weak, if length matches exactly, parse as format17
-          console.log('âš  Format17 length match, accepting as fallback (valid fields:', keyFieldsValid, ')');
+          console.log('Ã¢Å¡Â  Format17 length match, accepting as fallback (valid fields:', keyFieldsValid, ')');
           return buildData(format17);
         }
 
@@ -1050,12 +1050,12 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           const sono = parts[5];
 
           if ((looksLikeMachineNo(mcno) || mcno) && looksLikeBooking(booking) && looksLikeSono(sono)) {
-            console.log('âœ“ Detected format16WithCustomer');
+            console.log('Ã¢Å“â€œ Detected format16WithCustomer');
             return buildData(format16WithCustomer);
           }
           // If customer is blank, still try to parse
           if (parts[3] === '' && booking && sono) {
-            console.log('âœ“ Detected format16WithCustomer (empty customer)');
+            console.log('Ã¢Å“â€œ Detected format16WithCustomer (empty customer)');
             return buildData(format16WithCustomer);
           }
         }
@@ -1067,14 +1067,14 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           const sono = parts[4];
 
           if ((looksLikeMachineNo(mcno) || mcno) && booking && sono) {
-            console.log('âœ“ Detected format16WithoutCustomer');
+            console.log('Ã¢Å“â€œ Detected format16WithoutCustomer');
             return buildData(format16WithoutCustomer);
           }
         }
 
         // Priority 4: Check if length matches QR_FIELDS exactly
         if (parts.length === QR_FIELDS.length) {
-          console.log('âœ“ Detected QR_FIELDS format (length match)');
+          console.log('Ã¢Å“â€œ Detected QR_FIELDS format (length match)');
           return buildData(QR_FIELDS);
         }
 
@@ -1083,7 +1083,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           // If we have at least 10 parts that look semi-reasonable, try format17
           const hasGoodData = parts.filter(p => p && p.length > 0).length >= 8;
           if (hasGoodData) {
-            console.log('âš  Partial data detected, attempting format17 interpretation');
+            console.log('Ã¢Å¡Â  Partial data detected, attempting format17 interpretation');
             if (parts.length <= 17) {
               return buildData(format17.slice(0, parts.length).concat(format17.slice(parts.length)));
             }
@@ -1142,7 +1142,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           MCARD: m(row.MCARD),
           ROLL: m(row.ROLL),
           CUSTOMER: m(row.CUSTOMER),
-          GGSM: m(row.GGSM),
+  
           FEEDER_PLAN: m(row.FEEDER_PLAN),
           SHIFT: m(row.SHIFT),
           KNIT_MATERIAL_CODE: m(row.KNIT_MATERIAL_CODE),
@@ -1190,7 +1190,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           <div class="data-row default-row knit-flow">
             ${['KNITCARD', 'BOOKING', 'SONO', 'BUYER', 'STYLE', 'COLOR', 'MCNO',
               'MC_DIA', 'CUSTOMER', 'SHIFT', 'YARN_TYPE', 'YARN_COUNT', 'FABRICS_TYPE', 'FINISH_GSM',
-              'FINISH_DIA', 'OPEN_TUBE', 'SL_VDQ', 'GGSM', 'FEEDER_PLAN', 'LOT_NO', 'YARN_BRAND'].map(field => `
+              'FINISH_DIA', 'OPEN_TUBE', 'SL_VDQ', 'FEEDER_PLAN', 'LOT_NO', 'YARN_BRAND'].map(field => `
               <div class="field-block">
                 <span class="field-label">${FIELD_LABELS[field] || field}</span>
                 <span class="field-value">${scannedInfo[field] || '-'}</span>
@@ -1540,7 +1540,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           color: scannedInfo.COLOR || "",
           sl_vdq: scannedInfo.SL_VDQ || "",
           customer: scannedInfo.CUSTOMER || "",
-          gray_gsm: scannedInfo.GGSM || "",
           feeder_plan: scannedInfo.FEEDER_PLAN || "",
           lot_no: scannedInfo.LOT_NO || "",
           yarn_brand: scannedInfo.YARN_BRAND || "",
@@ -1694,7 +1693,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           FINISH_DIA: info.FINISH_DIA,
           OPEN_TUBE: info.OPEN_TUBE,
           SL_VDQ: info.SL_VDQ,
-          GRAY_GSM: info.GGSM,
           FEEDER_PLAN: info.FEEDER_PLAN,
           LOT_NO: info.LOT_NO,
           YBRAND: info.YBRAND || info.YBRAND_NAME || '',

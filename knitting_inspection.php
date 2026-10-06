@@ -131,8 +131,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'search_card') {
 
     $sql = "SELECT PID, BUDAT, ROLL, PO_NUMBER, PQTY, SONO, BUYER, STYLE, COLOR,
              MCNO, MC_DIA, CUSTOMER, SHIFT, YARN_TYPE, YARN_COUNT,
-             FABRICS_TYPE, FINISH_GSM, FINISH_DIA, OPEN_TUBE, SL_VDQ,
-             GRAY_GSM, FEEDER_PLAN, LOT_NO, KNIT_MATERIAL_CODE,
+FABRICS_TYPE, FINISH_GSM, FINISH_DIA, OPEN_TUBE, SL_VDQ,
+FEEDER_PLAN, LOT_NO, KNIT_MATERIAL_CODE,
              KNIT_M_DES, UNAME, UID
         FROM knitting_production
         WHERE TRIM(ROLL) = ?
@@ -190,7 +190,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'search_card') {
             'shift'            => $row['SHIFT'] ?: 'N/A',
             'open_tube'        => $row['OPEN_TUBE'] ?: 'N/A',
             'sl_vdq'           => $row['SL_VDQ'] ?: 'N/A',
-            'gray_gsm'         => $row['GRAY_GSM'] ?: 'N/A',
             'feeder_plan'      => $row['FEEDER_PLAN'] ?: 'N/A',
             'material_code'    => $row['KNIT_MATERIAL_CODE'] ?: 'N/A',
             'material_desc'    => $row['KNIT_M_DES'] ?: 'N/A',
@@ -340,7 +339,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                 $fdia        = strval($card_meta['FINISH_DIA'] ?? '');
                 $o_t         = strval($card_meta['OPEN_TUBE'] ?? '');
                 $sl          = floatval($card_meta['SL_VDQ'] ?? 0.00);
-                $ggsm        = strval($card_meta['GRAY_GSM'] ?? '');
+                $ggsm        = '';
                 $fplan       = strval($card_meta['FEEDER_PLAN'] ?? '');
                 $lotno       = strval($card_meta['LOT_NO'] ?? '');
                 $mat_code    = strval($card_meta['KNIT_MATERIAL_CODE'] ?? '');
@@ -1072,7 +1071,6 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
           <div class="data-row"><span class="label">Machine / Dia / Shift:</span><span class="value">${d.mcno} / ${d.mc_dia || 'N/A'} / ${d.shift}</span></div>
           <div class="data-row"><span class="label">Fabric / GSM:</span><span class="value">${d.fabrics_type} (${d.finish_gsm} GSM)</span></div>
           <div class="data-row"><span class="label">Finish Diameter:</span><span class="value">${d.finish_dia || 'N/A'}</span></div>
-          <div class="data-row"><span class="label">Gray GSM:</span><span class="value">${d.gray_gsm || 'N/A'}</span></div>
           <div class="data-row"><span class="label">Yarn Type / Count:</span><span class="value">${d.yarn_type || 'N/A'} / ${d.yarn_count || 'N/A'}</span></div>
           <div class="data-row"><span class="label">Open Tube / SL-VDQ:</span><span class="value">${d.open_tube || 'N/A'} / ${d.sl_vdq || 'N/A'}</span></div>
           <div class="data-row"><span class="label">Lot No / Feeder Plan:</span><span class="value">${d.lot_no || 'N/A'} / ${d.feeder_plan || 'N/A'}</span></div>

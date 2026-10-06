@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 include 'config.php';
 
 header('Content-Type: application/json');
@@ -90,7 +90,6 @@ $sl         = val($input, 'SL');
 $ftype      = val($input, 'FTYPE');
 $fgsm       = val($input, 'FGSM');
 $fdia       = val($input, 'FDIA');
-$ggsm       = val($input, 'GGSM');
 $fplan      = val($input, 'FPLAN');
 $lotno      = val($input, 'LOTNO');
 $tpoint     = val($input, 'TPOINT');
@@ -132,7 +131,7 @@ if ($curUser !== '') {
 
 $sql = "INSERT INTO knitting_store
         (BUDAT, RACKNO, RACKLOCATION, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR, MCNO, MCDIA,
-         CUSTOMER, YTYPE, YCOUNT, O_T, SL, FTYPE, FGSM, FDIA, GGSM, FEEDER_PLAN, LOT_NO,
+         CUSTOMER, YTYPE, YCOUNT, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
          TPOINT, MCODE, MDESCRIPTION, UNAME, UID)
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
@@ -147,7 +146,7 @@ try {
         "sssssssssssssssssssssssssssss",
         $budat, $rackNo, $rackLocation, $roll, $po_number, $qty, $sono, $shift, $buyer, $style, $color,
         $mcno, $mcdia, $customer, $ytype, $ycount, $o_t, $sl, $ftype, $fgsm, $fdia,
-        $ggsm, $fplan, $lotno, $tpoint, $mcode, $mdesc, $uname, $uid
+        $fplan, $lotno, $tpoint, $mcode, $mdesc, $uname, $uid
     );
 
     if (!mysqli_stmt_execute($stmt)) {

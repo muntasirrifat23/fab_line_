@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 include 'config.php';
 
 header('Content-Type: application/json');
@@ -28,7 +28,7 @@ if (count($conditions) > 0) {
 }
 
 $query = "SELECT KSTID, BUDAT, RACKNO, RACKLOCATION, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
-                  MCNO, MCDIA, CUSTOMER, YTYPE, YCOUNT, O_T, SL, FTYPE, FGSM, FDIA, GGSM,
+                  MCNO, MCDIA, CUSTOMER, YTYPE, YCOUNT, O_T, SL, FTYPE, FGSM, FDIA,
                   FEEDER_PLAN, LOT_NO, TPOINT, MCODE, MDESCRIPTION, CREATED_DATE, UNAME, UID
           FROM knitting_store
           $where

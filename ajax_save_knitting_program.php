@@ -70,10 +70,6 @@ $yarnBrand = null;
 $knitMaterialCode = isset($_POST['knit_material_code']) ? trim($_POST['knit_material_code']) : null;
 $color = isset($_POST['color']) ? trim($_POST['color']) : null;
 $slVdq = isset($_POST['sl_vdq']) ? trim($_POST['sl_vdq']) : null;
-$grayGsm = isset($_POST['gray_gsm']) ? trim($_POST['gray_gsm']) : '';
-if ($grayGsm === '') {
-    $grayGsm = null;
-}
 $feederPlan = isset($_POST['feeder_plan']) ? trim($_POST['feeder_plan']) : null;
 $remarks = isset($_POST['remarks']) ? trim($_POST['remarks']) : '';
 if ($remarks === '') {
@@ -154,7 +150,6 @@ $insertSql = "INSERT INTO knitting_program (
     YCOUNT,
     SL,
     MCDIA,
-    GGSM,
     FEEDER_PLAN,
     LOT,
     YBRAND,
@@ -163,7 +158,7 @@ $insertSql = "INSERT INTO knitting_program (
     KNIT_M_DESCRIPTION,
     REMARKS,
     UNAME
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 $stmt = mysqli_prepare($db, $insertSql);
 
@@ -194,7 +189,7 @@ foreach ($mcnoQtyData as $row) {
 
     mysqli_stmt_bind_param(
         $stmt,
-        "isssssdssssssssssssssssss",
+        "isssssdsssssssssssssssss",
         $programNo,
         $booking,
         $sono,
@@ -211,7 +206,6 @@ foreach ($mcnoQtyData as $row) {
         $rowYarnCount,
         $slVdq,
         $mcDia,
-        $grayGsm,
         $feederPlan,
         $rowLotNo,
         $rowYarnBrand,

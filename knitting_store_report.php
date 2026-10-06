@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -249,7 +249,7 @@
                             <th>FABRICS TYPE</th>
                             <th>FINISH GSM</th>
                             <th>FINISH DIA</th>
-                            <th>GRAY GSM</th>
+                            
                             <th>FEEDER PLAN</th>
                             <th>LOT NO</th>
                             <th>T POINT</th>
@@ -299,7 +299,6 @@
             { key: 'FTYPE', label: 'Fabrics Type' },
             { key: 'FGSM', label: 'Finish GSM' },
             { key: 'FDIA', label: 'Finish Dia' },
-            { key: 'GGSM', label: 'Gray GSM' },
             { key: 'FEEDER_PLAN', label: 'Feeder Plan' },
             { key: 'LOT_NO', label: 'Lot No' },
             { key: 'TPOINT', label: 'T Point' },
