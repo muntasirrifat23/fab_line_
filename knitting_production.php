@@ -1696,7 +1696,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           SL_VDQ: info.SL_VDQ,
           GRAY_GSM: info.GGSM,
           FEEDER_PLAN: info.FEEDER_PLAN,
-          LOT_NO: info.LOT_NO
+          LOT_NO: info.LOT_NO,
+          YBRAND: info.YBRAND || info.YBRAND_NAME || '',
+          YARN_LOT: info.LOT_NO || info.LOT || ''
         };
 
         // Fetch the exact saved production row (same source as Production Report page)
@@ -1715,25 +1717,21 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
         var roll = row.ROLL || window.__kpSavedRoll || '';
 
         var fieldHTML = [
-            ['Shift', row.SHIFT],
-            ['UName', row.UNAME],
-            ['SONO', row.SONO],
-          ['LOT', row.LOT_NO],
+          ['Shift', row.SHIFT],
+          ['OPNAME', row.UNAME],
+          ['SONO', row.SONO],
+          ['PO NO', row.PO_NUMBER],
           ['Style', row.STYLE],
-          ['Color', row.COLOR],
           ['MCNO', row.MCNO],
           ['MC Dia', row.MC_DIA],
           ['Customer', row.CUSTOMER],
           ['FGSM', row.FINISH_GSM],
           ['F. DIA', row.FINISH_DIA],
-          ['O/T', row.OPEN_TUBE],
-          ['SL/VDQ', row.SL_VDQ],
-          ['GGSM', row.GRAY_GSM],
-            ['Buyer', row.BUYER],
-          ['Y. TYPE', row.YARN_TYPE, , 'vertical'],
-          ['Y. COUNT', row.YARN_COUNT, 'vertical'],
+          ['Color', row.COLOR, 'vertical'],
           ['F. TYPE', row.FABRICS_TYPE, 'vertical'],
-          ['F. PLAN', row.FEEDER_PLAN, 'vertical']
+          ['Y. COUNT', row.YARN_COUNT, 'vertical'],
+          ['Y. BRAND', row.YBRAND, 'vertical'],
+          ['Y. LOT', row.YARN_LOT, 'vertical']
         ].map(function(f) {
             var val = (f[1] === null || f[1] === undefined) ? '' : f[1];
           return '<div class="pdf-item' + (f[2] ? ' pdf-' + f[2] : '') + '"><span class="pdf-label">' + f[0] + ':</span> <span class="pdf-value">' + escHtml(val) + '</span></div>';
@@ -1743,18 +1741,18 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           '<div id="rowPdfCard" style="width:700px;height:700px;padding:4px;background: white;font-family:Arial,Helvetica,sans-serif;color:#000000;box-sizing:border-box;border:2px solid #000000;font-weight:800;display:flex;flex-direction:column;">' +
           '<div style="display:flex;gap:4px;align-items:stretch;margin-bottom:4px;">' +
           '<div style="flex:1;min-height:215px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:#ffffff;border:2px solid #000000;padding:6px;box-sizing:border-box;">' +
-          '<div style="background:white;color:#000000;text-align:center;font-size:27px;font-weight:800;padding:2px 0;margin-bottom:8px;letter-spacing:0;white-space:nowrap;display:inline-block;">' +
+          '<div style="background:white;color:#000000;text-align:center;font-size:30px;font-weight:800;padding:2px 0;margin-bottom:8px;letter-spacing:0;white-space:nowrap;display:inline-block;">' +
           '<span style="text-decoration:none;">PURBANI FABRICS LTD.</span>' +
           '<span style="display:block;width:100%;height:3px;background:#000000;margin-top:2px;"></span>' +
           '</div>' +
           '<div style="font-weight:800;color:#000000;line-height:1.5;word-break:break-word;">' +
-          '<div style="font-size:27px;">ROLL: ' + escHtml(roll) + '</div>' +
-          '<div style="font-size:26px;">QTY: ' + escHtml(row.PQTY || '') + '</div>' +
-          '<div style="font-size:24px;">PO NO: ' + escHtml(row.PO_NUMBER || '') + '</div>' +
-          '<div style="font-size:23px;">Date: ' + escHtml(row.BUDAT || '') + '</div>' +
+          '<div style="font-size:30px;">ROLL: ' + escHtml(roll) + '</div>' +
+          '<div style="font-size:29px;">QTY: ' + escHtml(row.PQTY || '') + '</div>' +
+          '<div style="font-size:28px;">Buyer: ' + escHtml(row.BUYER || '') + '</div>' +
+          '<div style="font-size:25px;">Date: ' + escHtml(row.BUDAT || '') + '</div>' +
           '</div>' +
           '</div>' +
-          '<div id="rowQrBoxRight" style="flex:none;width:215px;height:215px;display:flex;align-items:center;justify-content:center;border:2px solid #000000;background:#ffffff;"></div>' +
+          '<div id="rowQrBoxRight" style="flex:none;width:215px;min-height:215px;height:auto;align-self:stretch;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:2px solid #000000;background:#ffffff;"></div>' +
           '</div>' +
             '<div class="pdf-grid">' + fieldHTML + '</div>' +
             '</div>';
@@ -1781,7 +1779,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
         var style = document.createElement('style');
         style.textContent = '' +
           '.pdf-grid{display:grid;grid-template-columns:repeat(4,1fr);column-gap:8px;row-gap:2px;background:#ffffff;}' +
-          '.pdf-item{grid-column:span 2;font-size:25px;font-weight:800;line-height:1.15;margin-left:3px; padding:3px 0;word-break:break-word;background:#ffffff;color:#000000;}' +
+          '.pdf-item{grid-column:span 2;font-size:29px;font-weight:800;line-height:1.15;margin-left:3px; padding:3px 0;word-break:break-word;background:#ffffff;color:#000000;}' +
           '.pdf-item.pdf-vertical{grid-column:1 / -1;}' +
           '.pdf-label,.pdf-value{font-weight:800;color:#000000;}';
         document.body.appendChild(style);
