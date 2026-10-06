@@ -26,10 +26,17 @@ if (count($conditions) > 0) {
 }
 
 
-$query = "SELECT * 
-          FROM knitting_production 
+$query = "SELECT p.*, 
+                 COALESCE(
+                     NULLIF(TRIM(p.YBRAND), ''),
+                     (SELECT NULLIF(TRIM(k.YBRAND), '')
+                        FROM knit_card k
+                       WHERE TRIM(k.KNITCARD) = TRIM(p.KNITCARD)
+                       LIMIT 1)
+                 ) AS YBRAND
+          FROM knitting_production p 
           $where 
-          ORDER BY PID DESC";
+          ORDER BY p.PID DESC";
 
 
 $result = mysqli_query($db, $query);
