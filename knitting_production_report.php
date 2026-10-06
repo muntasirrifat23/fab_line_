@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -124,22 +124,17 @@
                             <th>MC DIA</th>
                             <th>CUSTOMER</th>
                             <th>SHIFT</th>
-                            <th>YARN TYPE</th>
                             <th>YARN COUNT</th>
                             <th>FABRICS TYPE</th>
                             <th>FINISH GSM</th>
                             <th>FINISH DIA</th>
-                            <th>OPEN / TUBE</th>
-                            <th>SL/VDQ</th>
-                            <th>GRAY GSM</th>
-                            <th>FEEDER PLAN</th>
                             <th>LOT NO</th>
 
                         </tr>
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="25" class="text-center small-muted">Loading data...</td>
+                            <td colspan="18" class="text-center small-muted">Loading data...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -167,14 +162,9 @@
                 ['Customer', row.CUSTOMER],
                 ['FGSM', row.FINISH_GSM],
                 ['F. DIA', row.FINISH_DIA],
-                ['O/T', row.OPEN_TUBE],
-                ['SL/VDQ', row.SL_VDQ],
-                ['GGSM', row.GRAY_GSM],
                 ['Color', row.COLOR, 'vertical'],
-                ['Y. TYPE', row.YARN_TYPE, 'vertical'],
                 ['Y. COUNT', row.YARN_COUNT, 'vertical'],
-                ['F. TYPE', row.FABRICS_TYPE, 'vertical'],
-                ['F. PLAN', row.FEEDER_PLAN, 'vertical']
+                ['F. TYPE', row.FABRICS_TYPE, 'vertical']
             ];
 
             var rowsHTML = fieldHTML.map(function(f) {
@@ -268,7 +258,7 @@
             var tbody = $('#tableBody');
             tbody.empty();
             if (!data || data.length === 0) {
-                tbody.append('<tr><td colspan="25" class="text-center small-muted">No Roll Or Booking No found</td></tr>');
+                tbody.append('<tr><td colspan="18" class="text-center small-muted">No Roll Or Booking No found</td></tr>');
                 return;
             }
 
@@ -295,15 +285,10 @@
                 tr.append($('<td>').text(row.MC_DIA || ''));
                 tr.append($('<td>').text(row.CUSTOMER || ''));
                 tr.append($('<td>').text(row.SHIFT || ''));
-                tr.append($('<td>').text(row.YARN_TYPE || ''));
                 tr.append($('<td>').text(row.YARN_COUNT || ''));
                 tr.append($('<td>').text(row.FABRICS_TYPE || ''));
                 tr.append($('<td>').text(row.FINISH_GSM || ''));
                 tr.append($('<td>').text(row.FINISH_DIA || ''));
-                tr.append($('<td>').text(row.OPEN_TUBE || ''));
-                tr.append($('<td>').text(row.SL_VDQ || ''));
-                tr.append($('<td>').text(row.GRAY_GSM || ''));
-                tr.append($('<td>').text(row.FEEDER_PLAN || ''));
                 tr.append($('<td>').text(row.LOT_NO || ''));
                 tbody.append(tr);
             });
@@ -332,13 +317,13 @@
                         renderTableRows(resp.data);
                     } else {
                         $('#tableBody').html(
-                            '<tr><td colspan="25" class="text-center small-muted">No data found</td></tr>'
+                            '<tr><td colspan="18" class="text-center small-muted">No data found</td></tr>'
                         );
                     }
                 })
                 .fail(function() {
                     $('#tableBody').html(
-                        '<tr><td colspan="25" class="text-center text-danger">Error searching</td></tr>'
+                        '<tr><td colspan="18" class="text-center text-danger">Error searching</td></tr>'
                     );
                 })
                 .always(function() {
@@ -349,7 +334,7 @@
         }
 
         function loadAll() {
-            $('#tableBody').html('<tr><td colspan="25" class="text-center small-muted">Loading data...</td></tr>');
+            $('#tableBody').html('<tr><td colspan="18" class="text-center small-muted">Loading data...</td></tr>');
             $.ajax({
                     url: 'ajaxKnittingProduction_Report.php',
                     dataType: 'json',
@@ -357,10 +342,10 @@
                 })
                 .done(function(resp) {
                     if (resp && resp.success) renderTableRows(resp.data);
-                    else $('#tableBody').html('<tr><td colspan="25" class="text-center small-muted">No data returned</td></tr>');
+                    else $('#tableBody').html('<tr><td colspan="18" class="text-center small-muted">No data returned</td></tr>');
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr><td colspan="25" class="text-center text-danger">Error loading data</td></tr>');
+                    $('#tableBody').html('<tr><td colspan="18" class="text-center text-danger">Error loading data</td></tr>');
                 });
         }
 
