@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 include 'config.php';
 
 // ================= AJAX: GET STATUS DATA =================
@@ -18,7 +18,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
 
     $q = "SELECT p.KPTID, p.PROGRAM_NO, p.CREATED_DATE AS BUDAT, p.PO_NUMBER, p.SONO, p.BUYER, p.STYLE, p.COLOR,
                  p.FGSM, p.FDIA, p.O_T, p.FTYPE, p.YTYPE, p.CUSTOMER, p.YCOUNT, p.SL,
-                 p.MCDIA, p.GGSM, p.FEEDER_PLAN, p.LOT, p.SHIFT,
+                 p.MCDIA, p.FEEDER_PLAN, p.LOT, p.SHIFT,
                  CAST(p.QTY AS DECIMAL(10,2)) AS QTY,
                  (SELECT CAST(i.QTY AS DECIMAL(10,2)) FROM knitting_input i WHERE i.PO_NUMBER = p.PO_NUMBER LIMIT 1) AS INPUT_QTY,
                  (SELECT CAST(i.QTY AS DECIMAL(10,2)) FROM knitting_input i WHERE i.PO_NUMBER = p.PO_NUMBER LIMIT 1)
@@ -119,7 +119,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
                             <th>Y COUNT</th>
                             <th>SL</th>
                             <th>MC DIA</th>
-                            <th>GGSM</th>
+                            
                             <th>FEEDER PLAN</th>
                             <th>LOT</th>
                             <th>SHIFT</th>
@@ -185,8 +185,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
                         '<td>' + esc(r.YCOUNT) + '</td>' +
                         '<td>' + esc(r.SL) + '</td>' +
                         '<td>' + esc(r.MCDIA) + '</td>' +
-                        '<td>' + esc(r.GGSM) + '</td>' +
-                        '<td>' + esc(r.FEEDER_PLAN) + '</td>' +
+                                                '<td>' + esc(r.FEEDER_PLAN) + '</td>' +
                         '<td>' + esc(r.LOT) + '</td>' +
                         '<td>' + esc(r.SHIFT) + '</td>' +
                         '<td class="text-center">' + input + '</td>' +
@@ -237,8 +236,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
                 ['Y Count', r.YCOUNT],
                 ['SL', r.SL],
                 ['MC Dia', r.MCDIA],
-                ['GGSM', r.GGSM],
-                ['Feeder Plan', r.FEEDER_PLAN],
+                                ['Feeder Plan', r.FEEDER_PLAN],
                 ['Lot', r.LOT],
                 ['Shift', r.SHIFT],
                 ['Input QTY', r.INPUT_QTY],

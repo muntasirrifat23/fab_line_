@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -522,8 +522,8 @@
                 <div class="d-none d-xl-block" style="width: 190px; flex-shrink: 0;"></div>
             </div>
             <div class="banner-info-strip">
-                <span class="strip-item"><span class="strip-dot"></span><span id="stripTotal">Total Programs : —</span></span>
-                <span class="strip-item"><span class="strip-dot" style="background:#34d399;box-shadow:0 0 8px #34d399;"></span><span id="stripQty">Total QTY : —</span></span>
+                <span class="strip-item"><span class="strip-dot"></span><span id="stripTotal">Total Programs : â€”</span></span>
+                <span class="strip-item"><span class="strip-dot" style="background:#34d399;box-shadow:0 0 8px #34d399;"></span><span id="stripQty">Total QTY : â€”</span></span>
                 <span class="strip-item ms-auto hint-text" style="color:#cbd5e1;">
                     <i class="fa-regular fa-calendar me-1"></i><?php echo date('d M Y'); ?>
                 </span>
@@ -579,7 +579,7 @@
                             <th>Yarn Count</th>
                             <th>SL/VDQ</th>
                             <th>M/C Dia</th>
-                            <th>Gray GSM</th>
+                            
                             <th>Feeder Plan</th>
                             <!-- <th>Shift</th> -->
                             <th>Lot No</th>
@@ -620,7 +620,7 @@
             $('#statPrograms').text(rows.length.toLocaleString());
             $('#statQty').html(rows.length ? totalQty.toLocaleString(undefined, {
                 maximumFractionDigits: 2
-            }) + ' <span class="fs-6 text-muted">KG</span>' : '—');
+            }) + ' <span class="fs-6 text-muted">KG</span>' : 'â€”');
             $('#stripTotal').text('Total Programs : ' + rows.length.toLocaleString());
             $('#stripQty').text('Total QTY : ' + totalQty.toLocaleString(undefined, {
                 maximumFractionDigits: 2
@@ -676,7 +676,6 @@
                 tr.append($('<td>').text(row.YCOUNT || ''));
                 tr.append($('<td>').text(row.SL || ''));
                 tr.append($('<td>').text(row.MCDIA || ''));
-                tr.append($('<td>').text(row.GGSM || ''));
                 tr.append($('<td>').text(row.FEEDER_PLAN || ''));
                 // tr.append($('<td>').html(shiftChip(row.SHIFT)));
                 tr.append($('<td>').text(row.LOT || ''));
@@ -762,7 +761,6 @@
                 ['Yarn Count', row.YCOUNT],
                 ['SL/VDQ', row.SL],
                 ['MC Dia', row.MCDIA],
-                ['Gray GSM', row.GGSM],
                 ['Feeder Plan', row.FEEDER_PLAN],
                 // ['Shift', row.SHIFT],
                 ['Lot No', row.LOT],

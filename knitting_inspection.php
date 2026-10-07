@@ -203,7 +203,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'search_card') {
             'shift'            => $row['SHIFT'] ?: 'N/A',
             'open_tube'        => $row['OPEN_TUBE'] ?: 'N/A',
             'sl_vdq'           => $row['SL_VDQ'] ?: 'N/A',
-            'gray_gsm'         => ($row['GRAY_GSM'] ?? '') ?: 'N/A',
             'feeder_plan'      => $row['FEEDER_PLAN'] ?: 'N/A',
             'material_code'    => $row['KNIT_MATERIAL_CODE'] ?: 'N/A',
             'material_desc'    => $row['KNIT_M_DES'] ?: 'N/A',
@@ -359,7 +358,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                 $fdia        = strval($card_meta['FINISH_DIA'] ?? '');
                 $o_t         = strval($card_meta['OPEN_TUBE'] ?? '');
                 $sl          = floatval($card_meta['SL_VDQ'] ?? 0.00);
-                $ggsm        = strval($card_meta['GRAY_GSM'] ?? '');
+                $ggsm        = '';
                 $fplan       = strval($card_meta['FEEDER_PLAN'] ?? '');
                 $lotno       = strval($card_meta['LOT_NO'] ?? '');
                 $mat_code    = strval($card_meta['KNIT_MATERIAL_CODE'] ?? '');

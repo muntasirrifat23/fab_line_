@@ -235,8 +235,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                     throw new Exception("Failed to prepare insert query: " . $db->error);
                 }
 
-                $p_mcdia   = !empty($prog['MCDIA']) ? $prog['MCDIA'] : ($input['MCDIA'] ?? '');
-                $p_ggsm    = '';
+                $p_ggsm    = !empty($input['GGSM']) ? $input['GGSM'] : $p_finish_gsm;
                 $p_fplan   = !empty($prog['FEEDER_PLAN']) ? $prog['FEEDER_PLAN'] : ($input['FEEDER_PLAN'] ?? '');
                 $p_uname   = $prepared_by;
 

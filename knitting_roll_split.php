@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 include 'config.php';
 
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
@@ -117,7 +117,6 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
     $fFTYPE   = mysqli_real_escape_string($db, $orig['FTYPE']);
     $fFGSM    = mysqli_real_escape_string($db, $orig['FGSM']);
     $fFDIA    = mysqli_real_escape_string($db, $orig['FDIA']);
-    $fGGSM    = mysqli_real_escape_string($db, $orig['GGSM']);
     $fFEEDER  = mysqli_real_escape_string($db, $orig['FEEDER_PLAN']);
     $fLOT     = mysqli_real_escape_string($db, $orig['LOT_NO']);
     $fTPOINT  = mysqli_real_escape_string($db, $orig['TPOINT']);
@@ -131,11 +130,11 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
     // New store row becomes base-B with remaining qty
     $i2 = "INSERT INTO knitting_store
             (BUDAT, RACKNO, RACKLOCATION, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
-             MCNO, MCDIA, CUSTOMER, YTYPE, YCOUNT, O_T, SL, FTYPE, FGSM, FDIA, GGSM,
+             MCNO, MCDIA, CUSTOMER, YTYPE, YCOUNT, O_T, SL, FTYPE, FGSM, FDIA,
              FEEDER_PLAN, LOT_NO, TPOINT, MCODE, MDESCRIPTION)
            VALUES
             ('$fBUDAT', '$fRACKNO', '$fRACKLOC', '$newRollB', '$fPO', '$remainB', '$fSONO', '$fSHIFT', '$fBUYER', '$fSTYLE', '$fCOLOR',
-             '$fMCNO', '$fMCDIA', '$fCUST', '$fYTYPE', '$fYCOUNT', '$fOT', '$fSL', '$fFTYPE', '$fFGSM', '$fFDIA', '$fGGSM',
+             '$fMCNO', '$fMCDIA', '$fCUST', '$fYTYPE', '$fYCOUNT', '$fOT', '$fSL', '$fFTYPE', '$fFGSM', '$fFDIA',
              '$fFEEDER', '$fLOT', '$fTPOINT', '$fMCODE', '$fMDES')";
 
     $ok1 = mysqli_query($db, $u1);
@@ -312,7 +311,6 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
                 infoItem('Finish GSM', d.FGSM) +
                 infoItem('Finish Dia', d.FDIA) +
                 infoItem('Open / Tube', d.O_T) +
-                infoItem('Gray GSM', d.GGSM) +
                 infoItem('SL', d.SL) +
                 infoItem('Feeder Plan', d.FEEDER_PLAN) +
                 infoItem('Lot No', d.LOT_NO) +

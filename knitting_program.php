@@ -655,7 +655,6 @@
                     <div class="info-grid-6" id="infoGrid">
                         <div class="info-item"><label>MC DIA</label><input type="text" id="mc_dia" placeholder="Enter MC DIA"></div>
                         <div class="info-item"><label>SL/VQ</label><input type="text" id="sl_vdq" placeholder="Enter SL/VQ"></div>
-                        <div class="info-item"><label>Gray GSM</label><input type="text" id="gray_gsm" list="grayGsmOptions" placeholder="Enter Gray GSM"><datalist id="grayGsmOptions"></datalist></div>
                         <div class="info-item"><label>Feeder Plan</label><input type="text" id="feeder_plan" placeholder="Enter Feeder Plan"></div>
                         <div class="info-item" style="grid-column: span 6;"><label>Remarks</label><textarea id="remarks" rows="2" placeholder="Enter remarks (optional)" style="padding: 0.75rem 1rem; border: 2px solid #e2e8f0; border-radius: 16px; background: #f8fbff; width: 100%; font-weight: 500; resize: vertical;"></textarea></div>
                     </div>
@@ -785,10 +784,8 @@
                                 }
                                 var colorSelect = $('#color');
                                 var fgSelect = $('#finish_gsm');
-                                var grayGsmOptions = $('#grayGsmOptions');
                                 colorSelect.empty();
                                 fgSelect.empty();
-                                grayGsmOptions.empty();
                                 Object.keys(colorSet).sort().forEach(function(v) {
                                     colorSelect.append($('<option>', {
                                         value: v,
@@ -804,9 +801,6 @@
                                     fgSelect.append($('<option>', {
                                         value: v,
                                         text: v
-                                    }));
-                                    grayGsmOptions.append($('<option>', {
-                                        value: v
                                     }));
                                 });
                                 setAvailableFinishGsm(resp.data.FINISH_GSM);
@@ -857,9 +851,8 @@
                 $('#customer').val(data.CUSTOMER || '');
                 $('#yarn_count').val('');
                 $('#sl_vdq').val('');
-                $('#mc_dia').val('');
-                $('#gray_gsm').val('');
-                $('#lot_no').val('');
+$('#mc_dia').val('');
+                    $('#lot_no').val('');
             }
 
             function setKnitMDescription(resp) {
@@ -895,12 +888,10 @@
                         if (r.FINISH_GSM) fgSet[String(r.FINISH_GSM).trim()] = true;
                     }
                     var colorSelect = $('#color');
-                    var fgSelect = $('#finish_gsm');
-                    var grayGsmOptions = $('#grayGsmOptions');
-                    colorSelect.empty();
-                    fgSelect.empty();
-                    grayGsmOptions.empty();
-                    Object.keys(colorSet).sort().forEach(function(v) {
+var fgSelect = $('#finish_gsm');
+                                colorSelect.empty();
+                                fgSelect.empty();
+                                Object.keys(colorSet).sort().forEach(function(v) {
                         colorSelect.append($('<option>', {
                             value: v,
                             text: v
@@ -915,9 +906,6 @@
                         fgSelect.append($('<option>', {
                             value: v,
                             text: v
-                        }));
-                        grayGsmOptions.append($('<option>', {
-                            value: v
                         }));
                     });
                 }
@@ -936,9 +924,8 @@
                 $('#customer').val(rowData.CUSTOMER || '');
                 $('#yarn_count').val('');
                 $('#sl_vdq').val('');
-                $('#mc_dia').val('');
-                $('#gray_gsm').val('');
-                $('#feeder_plan').val('');
+$('#mc_dia').val('');
+                    $('#feeder_plan').val('');
                 $('#lot_no').val('');
 
                 var poTotal = parseFloat((window.bookingResponse && window.bookingResponse.po_total_qty) || rowData.KNITTING_TARGET_QTY || rowData.QTY) || 0;
@@ -1172,18 +1159,13 @@
                     method: 'GET'
                 }).done(function(resp) {
                     if (resp && resp.success) {
-                        var finishGsmSelect = $('#finish_gsm');
-                        var grayGsmOptions = $('#grayGsmOptions');
-                        finishGsmSelect.empty();
-                        grayGsmOptions.empty();
-                        resp.data.forEach(function(v) {
+var finishGsmSelect = $('#finish_gsm');
+                    finishGsmSelect.empty();
+                    resp.data.forEach(function(v) {
                             var value = String(v);
                             finishGsmSelect.append($('<option>', {
                                 value: value,
                                 text: value
-                            }));
-                            grayGsmOptions.append($('<option>', {
-                                value: value
                             }));
                         });
                         setAvailableFinishGsm(pendingFinishGsm || (bookingData && bookingData.FINISH_GSM));
@@ -1340,7 +1322,6 @@
                         yarn_count: $('#yarn_count').val(),
                         fabrics_type: $('#fabrics_type').val(),
                         finish_gsm: $('#finish_gsm').val(),
-                        gray_gsm: $('#gray_gsm').val(),
                         feeder_plan: $('#feeder_plan').val(),
                         sl_vdq: $('#sl_vdq').val(),
                         color: $('#color').val(),

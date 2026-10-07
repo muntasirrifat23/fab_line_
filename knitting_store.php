@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -799,7 +799,6 @@
         FDIA: 'FINISH DIA',
         O_T: 'OPEN/TUBE',
         SL: 'SL/VDQ',
-        GGSM: 'GRAY GSM',
         FPLAN: 'FEEDER PLAN',
         LOTNO: 'LOT NO',
         MATERIAL_CODE: 'MATERIAL CODE',
@@ -888,7 +887,7 @@
 
         let html = `
           <div class="data-row header-row" style="border-left-color:#4fc3f7;">
-            <span class="label">✓ ROLL Loaded <span class="scanned-badge">ROLL NO</span></span>
+            <span class="label">âœ“ ROLL Loaded <span class="scanned-badge">ROLL NO</span></span>
             <span class="value">${new Date().toLocaleTimeString()}</span>
           </div>
         `;
@@ -897,7 +896,7 @@
         html += buildFieldRow(['SHIFT', 'BUYER', 'STYLE', 'COLOR']);
         html += buildFieldRow(['MCNO', 'MC_DIA', 'CUSTOMER', 'YTYPE']);
         html += buildFieldRow(['YCOUNT', 'O_T', 'SL', 'FTYPE']);
-        html += buildFieldRow(['FGSM', 'FDIA', 'GGSM', 'FPLAN']);
+        html += buildFieldRow(['FGSM', 'FDIA', 'FPLAN']);
         html += buildFieldRow(['LOTNO', 'TPOINT', 'MATERIAL_CODE', 'M_DES']);
 
         html += `
@@ -1234,7 +1233,7 @@
         hasLoadedData = false;
         resultContainer.innerHTML = `
           <div class="data-row header-row" style="border-left-color:#f59e0b; background:#c8e2dd;">
-            <span class="label" style="color:#8a4a00; font-weight:800;">📌 ${msg || 'No data'}</span>
+            <span class="label" style="color:#8a4a00; font-weight:800;">ðŸ“Œ ${msg || 'No data'}</span>
             <span class="value"></span>
           </div>
           <div class="data-row" style="background:#d6e9e5; border-left-color:#6b7280; flex-wrap:wrap;">
@@ -1284,7 +1283,7 @@
           .then(function(resp) {
             scannedInfo.RACKNO = rackno.padStart(2, '0');
             scannedInfo.RACKLOCATION = racklocation;
-            showMessage('✅ ' + (resp.message || ('Saved - Rack No: ' + rackno + ', Location: ' + racklocation)) + '<br><small>Page will reload in 2 seconds...</small>', 'success');
+            showMessage('âœ… ' + (resp.message || ('Saved - Rack No: ' + rackno + ', Location: ' + racklocation)) + '<br><small>Page will reload in 2 seconds...</small>', 'success');
             saveRackBtn.innerHTML = '<i class="fas fa-save"></i> Save Rack';
             setTimeout(function() {
               window.location.reload();
@@ -1296,7 +1295,7 @@
               msg = 'Save failed. Please try again.';
             }
             if (!(err && err.messager_exist)) {
-              msg = '❌ ' + msg;
+              msg = 'âŒ ' + msg;
             }
             showMessage(msg, 'error');
             saveRackBtn.disabled = false;
