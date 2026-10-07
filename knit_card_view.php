@@ -326,7 +326,7 @@ if (!empty($card['UNAME'])) {
 
     <!-- TOP ACTION BAR (NO-PRINT) -->
     <div class="action-bar-top no-print">
-        <a href="knit_card_report.php" class="btn btn-tag btn-outline-secondary">
+        <a href="knit_card.php" class="btn btn-tag btn-outline-secondary">
             <i class="fa-solid fa-arrow-left"></i> Directory
         </a>
         <div class="d-flex gap-1">
