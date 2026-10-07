@@ -3,12 +3,12 @@ include 'config.php';
 
 header('Content-Type: application/json');
 
-$booking = isset($_GET['booking']) ? trim($_GET['booking']) : '';
+$booking = trim($_GET['booking'] ?? $_GET['po_number'] ?? $_GET['po'] ?? $_GET['sono'] ?? $_GET['search'] ?? $_POST['booking'] ?? $_POST['po_number'] ?? $_POST['po'] ?? '');
 
 $conditions = [];
 if ($booking !== '') {
     $b = mysqli_real_escape_string($db, $booking);
-    $conditions[] = "(PO_NUMBER LIKE '%$b%' OR SONO LIKE '%$b%')";
+    $conditions[] = "(PO_NUMBER LIKE '%$b%' OR SONO LIKE '%$b%' OR BUYER LIKE '%$b%' OR STYLE LIKE '%$b%')";
 }
 
 $where = '';
@@ -34,5 +34,4 @@ while ($row = mysqli_fetch_assoc($result)) {
 echo json_encode(['success' => true, 'count' => count($data), 'data' => $data]);
 
 mysqli_close($db);
-
 ?>

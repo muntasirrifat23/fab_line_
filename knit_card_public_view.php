@@ -144,7 +144,6 @@ if ($prod_result && $prod_result->num_rows > 0) {
                 <tr><td class="lbl">Date</td><td class="val">: <?php echo htmlspecialchars($card['CREATED_DATE'] ?? ''); ?></td></tr>
                 <tr><td class="lbl">M/c. No.</td><td class="val">: <?php echo htmlspecialchars($card['MCNO'] ?? ''); ?></td></tr>
                 <tr><td class="lbl">Finished Dia</td><td class="val">: <?php echo htmlspecialchars($card['FDIA'] ?? ''); ?></td></tr>
-                <tr><td class="lbl">Grey GSM</td><td class="val">: <?php echo htmlspecialchars($card['GGSM'] ?? ''); ?></td></tr>
                 <tr><td class="lbl">Finish GSM</td><td class="val">: <?php echo htmlspecialchars($card['FGSM'] ?? ''); ?></td></tr>
                 <tr><td class="lbl">Open / Tube</td><td class="val">: <?php echo htmlspecialchars($card['O_T'] ?? ''); ?></td></tr>
                 <tr><td class="lbl">SI / VDQ</td><td class="val">: <?php echo htmlspecialchars($card['SL'] ?? ''); ?></td></tr>

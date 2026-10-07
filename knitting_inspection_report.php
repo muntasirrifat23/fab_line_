@@ -323,12 +323,12 @@
                             <th>SHIFT</th>
                             <th>YTYPE</th>
                             <th>YCOUNT</th>
+                            <th>YBRAND</th>
                             <th>FTYPE</th>
                             <th>FGSM</th>
                             <th>FDIA</th>
                             <th>O_T</th>
                             <th>SL</th>
-                            <th>GGSM</th>
                             <th>FPLAN</th>
                             <th>LOTNO</th>
                             <th>MATERIAL_CODE</th>
@@ -392,12 +392,12 @@
             { key: 'SHIFT', label: 'SHIFT' },
             { key: 'YTYPE', label: 'YTYPE' },
             { key: 'YCOUNT', label: 'YCOUNT' },
+            { key: 'YBRAND', label: 'YBRAND' },
             { key: 'FTYPE', label: 'FTYPE' },
             { key: 'FGSM', label: 'FGSM' },
             { key: 'FDIA', label: 'FDIA' },
             { key: 'O_T', label: 'O_T' },
             { key: 'SL', label: 'SL' },
-            { key: 'GGSM', label: 'GGSM' },
             { key: 'FPLAN', label: 'FPLAN' },
             { key: 'LOTNO', label: 'LOTNO' },
             { key: 'MATERIAL_CODE', label: 'MATERIAL_CODE' },
@@ -487,6 +487,7 @@
                 '<td style="border:1px solid #000000;"><b>F/Name :</b> ' + esc(row.FTYPE || row.FABRICS_TYPE) + '</td>' +
                 '<td style="border:1px solid #000000;"><b>Color :</b> ' + esc(row.COLOR) + '</td>' +
                 '<td style="border:1px solid #000000;"><b>Yarn Count :</b> ' + esc(row.YCOUNT || row.YTYPE) + '</td>' +
+                '<td style="border:1.5px solid #000000;"><b>Yarn Brand :</b> ' + esc(row.YBRAND) + '</td>' +
                 '<td style="border:1px solid #000000;"><b>Yarn Lot :</b> ' + esc(row.LOTNO) + '</td>' +
                 '<td style="border:1px solid #000000;"><b>Fabric Type :</b> ' + esc(row.FTYPE) + '</td>' +
                 '<td style="border:1px solid #000000;"><b>Customer :</b> ' + esc(row.CUSTOMER) + '</td>' +
@@ -507,7 +508,6 @@
                 '<th style="width:6%;border:1px solid #000000;padding:3px 1px;">Roll No</th>' +
                 '<th style="width:4%;border:1px solid #000000;padding:3px 1px;">Wt in kg</th>' +
                 '<th style="width:4%;border:1px solid #000000;padding:3px 1px;">Roll Length</th>' +
-                '<th style="width:4%;border:1px solid #000000;padding:3px 1px;">G. GSM</th>' +
                 '<th style="width:3.5%;border:1px solid #000000;padding:3px 1px;">T&amp;T</th>' +
                 '<th style="width:3.5%;border:1px solid #000000;padding:3px 1px;">Patta</th>' +
                 '<th style="width:3.5%;border:1px solid #000000;padding:3px 1px;">Slub</th>' +
@@ -536,7 +536,6 @@
                 '<td style="border:1px solid #000000;word-break:break-all;padding:3px 1px;font-weight:bold;">' + esc(row.ROLL) + '</td>' +
                 '<td style="border:1px solid #000000;padding:3px 1px;">' + esc(row.MAIN_QTY || row.QTY) + '</td>' +
                 '<td style="border:1px solid #000000;padding:3px 1px;">' + esc(row.O_T) + '</td>' +
-                '<td style="border:1px solid #000000;padding:3px 1px;">' + esc(row.GGSM) + '</td>' +
                 '<td style="border:1px solid #000000;padding:3px 1px;">' + esc(row.TT) + '</td>' +
                 '<td style="border:1px solid #000000;padding:3px 1px;">' + esc(row.PATTA) + '</td>' +
                 '<td style="border:1px solid #000000;padding:3px 1px;">' + esc(row.SLUB) + '</td>' +

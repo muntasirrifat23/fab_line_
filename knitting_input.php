@@ -1,3 +1,11 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+require_once 'config.php';
+
+$initial_booking = trim($_REQUEST['booking'] ?? $_REQUEST['po_number'] ?? $_REQUEST['po'] ?? $_REQUEST['sono'] ?? $_POST['PO_NUMBER'] ?? $_POST['booking'] ?? '');
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -85,7 +93,7 @@
                     </label>
 
                     <div class="input-group input-group-sm d-flex align-items-center gap-2">
-                        <input type="text" id="searchInput" class="form-control" placeholder="Enter PO Number or SONO">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Enter PO Number or SONO" value="<?php echo htmlspecialchars($initial_booking); ?>">
                         <button class="btn px-4" id="searchBtn" style="margin-top:8px; background:#2563eb; border:1px solid #2563eb; color:#fff; border-radius:8px;">
                             <i class="fa-solid fa-magnifying-glass me-1" style="margin-right:6px;background:none;border:none;box-shadow:none;transform:none;"></i>
                             Search
@@ -152,10 +160,11 @@
             }
 
             $.each(data, function(index, row) {
+                var poVal = row.PO_NUMBER || row.BOOKING || row.po_number || row.po || '';
                 tbody.append(`
             <tr>
                 <td>${row.BUDAT ?? ''}</td>
-                <td><a href="knitting_program.php?booking=${encodeURIComponent(row.PO_NUMBER ?? '')}" class="po-link">${row.PO_NUMBER ?? ''}</a></td>
+                <td><a href="knitting_program.php?booking=${encodeURIComponent(poVal)}" class="po-link">${poVal}</a></td>
                 <td>${row.SONO ?? ''}</td>
                 <td>${row.BUYER ?? ''}</td>
                 <td>${row.STYLE ?? ''}</td>
@@ -239,8 +248,9 @@
                 loadAll();
             });
 
+            var initialBooking = <?php echo json_encode($initial_booking); ?>;
             var urlParams = new URLSearchParams(window.location.search);
-            var bookingParam = urlParams.get('booking');
+            var bookingParam = urlParams.get('booking') || urlParams.get('po_number') || urlParams.get('po') || urlParams.get('sono') || initialBooking;
             if (bookingParam) {
                 $('#searchInput').val(bookingParam);
                 searchBooking();

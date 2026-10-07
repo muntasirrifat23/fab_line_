@@ -3,6 +3,14 @@
 session_start();
 include 'config.php';
 
+// Auto-migration: Ensure YBRAND column exists in knitting_inspection table
+if (isset($db) && $db) {
+    $col_check = @mysqli_query($db, "SHOW COLUMNS FROM knitting_inspection LIKE 'YBRAND'");
+    if ($col_check && mysqli_num_rows($col_check) == 0) {
+        @mysqli_query($db, "ALTER TABLE knitting_inspection ADD COLUMN YBRAND varchar(100) NULL AFTER YCOUNT");
+    }
+}
+
 if (!isset($_SESSION['username'])) {
     echo "<script>alert('You must be logged in'); window.location.href='login.php';</script>";
     exit();
@@ -119,7 +127,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'search_card') {
     header('Content-Type: application/json');
 
     if (!isset($_SESSION['active_operator']) || empty($_SESSION['active_operator']['id']) || ($_SESSION['active_operator']['role'] ?? '') !== 'qc') {
-        echo json_encode(['success' => false, 'error' => 'Please scan Operator ID first!']);
+        echo json_encode(['success' => false, 'error' => 'Please scan QC Operator ID first!']);
         exit();
     }
 
@@ -129,18 +137,22 @@ if (isset($_GET['action']) && $_GET['action'] === 'search_card') {
         exit();
     }
 
-    $sql = "SELECT PID, BUDAT, ROLL, PO_NUMBER, PQTY, SONO, BUYER, STYLE, COLOR,
-             MCNO, MC_DIA, CUSTOMER, SHIFT, YARN_TYPE, YARN_COUNT,
-             FABRICS_TYPE, FINISH_GSM, FINISH_DIA, OPEN_TUBE, SL_VDQ,
-             GRAY_GSM, FEEDER_PLAN, LOT_NO, KNIT_MATERIAL_CODE,
-             KNIT_M_DES, UNAME, UID
-        FROM knitting_production
-        WHERE TRIM(ROLL) = ?
-        ORDER BY PID DESC LIMIT 1";
+    $sql = "SELECT p.PID, p.BUDAT, p.ROLL, p.KNITCARD, p.PO_NUMBER, p.PQTY, p.SONO, p.BUYER, p.STYLE, p.COLOR,
+             p.MCNO, p.MC_DIA, p.CUSTOMER, p.SHIFT, p.YARN_TYPE, p.YARN_COUNT,
+             p.FABRICS_TYPE, p.FINISH_GSM, p.FINISH_DIA, p.OPEN_TUBE, p.SL_VDQ,
+             p.FEEDER_PLAN, p.LOT_NO, p.KNIT_MATERIAL_CODE,
+             p.KNIT_M_DES, p.UNAME, p.UID,
+             COALESCE(
+                 (SELECT NULLIF(TRIM(k.YBRAND), '') FROM knit_card k WHERE TRIM(k.KNITCARD) = TRIM(p.KNITCARD) LIMIT 1),
+                 (SELECT NULLIF(TRIM(prg.YBRAND), '') FROM knitting_program prg WHERE TRIM(prg.PO_NUMBER) = TRIM(p.PO_NUMBER) LIMIT 1)
+             ) AS YARN_BRAND
+        FROM knitting_production p
+        WHERE TRIM(p.ROLL) = ?
+        ORDER BY p.PID DESC LIMIT 1";
 
     $stmt = $db->prepare($sql);
     if (!$stmt) {
-      echo json_encode(['success' => false, 'error' => 'Unable to search production rolls']);
+      echo json_encode(['success' => false, 'error' => 'Unable to search production rolls: ' . $db->error]);
       exit();
     }
     $stmt->bind_param("s", $query);
@@ -184,13 +196,14 @@ if (isset($_GET['action']) && $_GET['action'] === 'search_card') {
             'fabrics_type'     => $row['FABRICS_TYPE'] ?: 'N/A',
             'yarn_type'        => $row['YARN_TYPE'] ?: 'N/A',
             'yarn_count'       => $row['YARN_COUNT'] ?: 'N/A',
+            'yarn_brand'       => $row['YARN_BRAND'] ?: 'N/A',
             'lot_no'           => $row['LOT_NO'] ?: 'N/A',
             'color'            => $row['COLOR'] ?: 'N/A',
             'customer'         => $row['CUSTOMER'] ?: 'N/A',
             'shift'            => $row['SHIFT'] ?: 'N/A',
             'open_tube'        => $row['OPEN_TUBE'] ?: 'N/A',
             'sl_vdq'           => $row['SL_VDQ'] ?: 'N/A',
-            'gray_gsm'         => $row['GRAY_GSM'] ?: 'N/A',
+            'gray_gsm'         => ($row['GRAY_GSM'] ?? '') ?: 'N/A',
             'feeder_plan'      => $row['FEEDER_PLAN'] ?: 'N/A',
             'material_code'    => $row['KNIT_MATERIAL_CODE'] ?: 'N/A',
             'material_desc'    => $row['KNIT_M_DES'] ?: 'N/A',
@@ -222,9 +235,14 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
         
         $card_meta = [];
         if ($production_id > 0) {
-          $c_q = $db->prepare("SELECT * FROM knitting_production WHERE PID = ?");
+          $c_q = $db->prepare("SELECT p.*,
+                    COALESCE(
+                        (SELECT NULLIF(TRIM(k.YBRAND), '') FROM knit_card k WHERE TRIM(k.KNITCARD) = TRIM(p.KNITCARD) LIMIT 1),
+                        (SELECT NULLIF(TRIM(prg.YBRAND), '') FROM knitting_program prg WHERE TRIM(prg.PO_NUMBER) = TRIM(p.PO_NUMBER) LIMIT 1)
+                    ) AS YARN_BRAND
+                FROM knitting_production p WHERE p.PID = ?");
             if ($c_q) {
-            $c_q->bind_param("i", $production_id);
+                $c_q->bind_param("i", $production_id);
                 $c_q->execute();
                 $c_res = $c_q->get_result();
                 if ($c_res && $row = $c_res->fetch_assoc()) {
@@ -301,14 +319,14 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
             $stmt = $db->prepare("
                     INSERT INTO knitting_inspection (
                         `BUDAT`, `ROLL`, `OQTY`, `RQTY`, `UQTY`, `PO_NUMBER`, `QTY`, `SONO`, `BUYER`, `STYLE`, `COLOR`,
-                        `MCNO`, `MC_DIA`, `CUSTOMER`, `SHIFT`, `YTYPE`, `YCOUNT`, `FTYPE`, `FGSM`, `FDIA`, `O_T`,
+                        `MCNO`, `MC_DIA`, `CUSTOMER`, `SHIFT`, `YTYPE`, `YCOUNT`, `YBRAND`, `FTYPE`, `FGSM`, `FDIA`, `O_T`,
                         `SL`, `GGSM`, `FPLAN`, `LOTNO`, `MATERIAL_CODE`, `M_DES`,
                         `TT`, `PATTA`, `SLUB`, `YC_SPOT`, `OILSPOT`, `FF`, `SEEDS`, `MSTITCH`, `SINKERMARK`, `NEEDLEMARK`,
                         `LYCOUT`, `OILLINE`, `HOLE`, `LOOP`, `SETUP`, `CMARK`, `TPOINT`,
                         `QC_GRADE`, `QC_STATUS`, `UNAME`, `UID`
                     ) VALUES (
                         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                         ?, ?, ?, ?, ?, ?,
                         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                         ?, ?, ?, ?, ?, ?, ?,
@@ -335,6 +353,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                 $shift       = strval($card_meta['SHIFT'] ?? '');
                 $ytype       = strval($card_meta['YARN_TYPE'] ?? '');
                 $ycount      = strval($card_meta['YARN_COUNT'] ?? '');
+                $ybrand      = strval($card_meta['YARN_BRAND'] ?? ($card_meta['YBRAND'] ?? ''));
                 $ftype       = strval($card_meta['FABRICS_TYPE'] ?? '');
                 $fgsm        = strval($card_meta['FINISH_GSM'] ?? '');
                 $fdia        = strval($card_meta['FINISH_DIA'] ?? '');
@@ -368,16 +387,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                 $uid          = strval($_SESSION['active_operator']['id']);
 
                 // BUDAT(s), ROLL(s), OQTY(d), RQTY(d), UQTY(d),
-                // PO_NUMBER..O_T = 16 strings(s), SL(d), GGSM..M_DES = 5 strings(s),
+                // PO_NUMBER..O_T = 17 strings(s), SL(d), GGSM..M_DES = 5 strings(s),
                 // defects 17 strings(s), QC_GRADE..UID = 4 strings(s)
-                $types = 'ssddd' . str_repeat('s', 16) . 'd' . str_repeat('s', 5)
+                $types = 'ssddd' . str_repeat('s', 17) . 'd' . str_repeat('s', 5)
                        . str_repeat('s', 17) . str_repeat('s', 4);
 
                 $stmt->bind_param(
                     $types,
                     $budat, $roll_no, $v_main_qty, $v_reject, $v_update,
                     $po_number, $qty, $sono, $buyer, $style, $color,
-                    $mcno, $mc_dia, $supplier, $shift, $ytype, $ycount, $ftype, $fgsm, $fdia, $o_t,
+                    $mcno, $mc_dia, $supplier, $shift, $ytype, $ycount, $ybrand, $ftype, $fgsm, $fdia, $o_t,
                     $sl, $ggsm, $fplan, $lotno, $mat_code, $m_des,
                     $v_tt, $v_patta, $v_slub, $v_yc_spot, $v_oilspot, $v_ff, $v_seeds, $v_mstitch, $v_sinkermark, $v_needlemark,
                     $v_lycout, $v_oilline, $v_hole, $v_loop, $v_setup, $v_cmark, $v_tpoint,
@@ -442,16 +461,16 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 16px;
+      padding: 10px;
     }
 
     .card {
-      max-width: 650px;
+      max-width: 480px;
       width: 100%;
       background: #ffffff;
-      border-radius: 40px;
-      padding: 24px 24px 30px;
-      box-shadow: 0 20px 45px rgba(30, 60, 120, 0.2);
+      border-radius: 18px;
+      padding: 14px 16px 18px;
+      box-shadow: 0 10px 25px rgba(30, 60, 120, 0.12);
       border: 1px solid #dbe4ef;
       transition: max-width 0.3s ease;
     }
@@ -459,30 +478,30 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
     .production-header {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 20px;
-      padding: 0 4px;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding: 0 2px;
     }
 
     .production-header h2 {
       color: #083a36;
-      font-size: 1.4rem;
+      font-size: 1.15rem;
       font-weight: 800;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
       margin: 0;
     }
 
     .production-header h2 i {
       color: #0f7a6f;
-      margin-right: 8px;
+      margin-right: 6px;
     }
 
     .production-header .badge-production {
       margin-left: auto;
       background: #10b981;
       color: white;
-      font-size: 0.7rem;
-      padding: 3px 14px;
+      font-size: 0.65rem;
+      padding: 2px 10px;
       border-radius: 100px;
       font-weight: 600;
       letter-spacing: 0.3px;
@@ -491,11 +510,12 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
     .scanner-container {
       position: relative;
       background: #eef2f7;
-      border-radius: 28px;
+      border-radius: 14px;
       overflow: hidden;
-      box-shadow: inset 0 0 0 1px #d7e0ea, 0 8px 20px rgba(30, 60, 120, 0.12);
-      margin-bottom: 24px;
-      aspect-ratio: 1 / 1;
+      box-shadow: inset 0 0 0 1px #d7e0ea, 0 4px 12px rgba(30, 60, 120, 0.1);
+      margin-bottom: 10px;
+      max-height: 200px;
+      aspect-ratio: 16 / 9;
     }
 
     #qr-reader {
@@ -506,7 +526,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
     }
 
     #qr-reader video {
-      border-radius: 28px;
+      border-radius: 14px;
       width: 100%;
       height: 100%;
       object-fit: cover;
@@ -520,7 +540,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
       width: 100%;
       height: 100%;
       pointer-events: none;
-      border-radius: 28px;
+      border-radius: 14px;
       box-shadow: inset 0 0 0 2px rgba(0, 255, 200, 0.3);
     }
 
@@ -529,12 +549,12 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 70%;
-      height: 70%;
+      width: 65%;
+      height: 65%;
       transform: translate(-50%, -50%);
       border: 2px solid rgba(0, 255, 200, 0.5);
-      border-radius: 20px;
-      box-shadow: 0 0 30px rgba(0, 255, 200, 0.1);
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0, 255, 200, 0.1);
       animation: pulse-border 2.2s infinite ease-in-out;
     }
 
@@ -548,36 +568,36 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-top: 12px;
-      padding: 0 6px;
+      margin-top: 6px;
+      padding: 0 2px;
     }
 
     .status-badge {
       background: #eef2f7;
-      padding: 8px 18px;
+      padding: 4px 12px;
       border-radius: 100px;
       color: #334155;
-      font-size: 0.85rem;
+      font-size: 0.75rem;
       font-weight: 600;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       border: 1px solid #cbd5e1;
     }
 
     .status-badge i {
       color: #2563eb;
-      font-size: 0.9rem;
+      font-size: 0.8rem;
     }
 
     .btn-icon {
       background: #eef2f7;
       border: 1px solid #cbd5e1;
       color: #334155;
-      width: 44px;
-      height: 44px;
-      border-radius: 40px;
-      font-size: 1.2rem;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 0.9rem;
       cursor: pointer;
       transition: 0.2s;
       display: flex;
@@ -593,24 +613,24 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
 
     .result-panel {
       background: #f4f7fb;
-      border-radius: 28px;
-      padding: 18px 20px 16px;
-      margin-top: 20px;
+      border-radius: 14px;
+      padding: 10px 12px;
+      margin-top: 10px;
       border: 1px solid #d7e0ea;
-      box-shadow: inset 0 2px 6px rgba(30, 60, 120, 0.06);
+      box-shadow: inset 0 2px 4px rgba(30, 60, 120, 0.04);
     }
 
     .result-header {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       color: #334155;
       font-weight: 700;
-      letter-spacing: 0.3px;
-      font-size: 0.9rem;
+      letter-spacing: 0.2px;
+      font-size: 0.82rem;
       border-bottom: 1px dashed #cbd5e1;
-      padding-bottom: 10px;
-      margin-bottom: 12px;
+      padding-bottom: 6px;
+      margin-bottom: 8px;
     }
 
     .result-header i {
@@ -619,17 +639,17 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
 
     .data-row {
       background: #eef2f7;
-      padding: 8px 14px;
-      border-radius: 12px;
-      border-left: 4px solid #2563eb;
+      padding: 4px 10px;
+      border-radius: 6px;
+      border-left: 3px solid #2563eb;
       color: #1e293b;
-      font-size: 0.9rem;
-      line-height: 1.4;
-      box-shadow: 0 2px 6px rgba(30, 60, 120, 0.08);
+      font-size: 0.78rem;
+      line-height: 1.3;
+      box-shadow: 0 1px 3px rgba(30, 60, 120, 0.05);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 6px;
+      margin-bottom: 3px;
     }
 
     .data-row .label {
@@ -647,23 +667,23 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
       border-left-color: #f59e0b;
       background: #e8eef6;
       font-weight: 700;
-      font-size: 0.95rem;
+      font-size: 0.82rem;
     }
 
     .manual-entry {
       display: flex;
-      gap: 8px;
-      margin-top: 10px;
-      margin-bottom: 12px;
+      gap: 6px;
+      margin-top: 6px;
+      margin-bottom: 8px;
     }
 
     .manual-entry input {
       flex: 1;
       min-width: 0;
-      padding: 9px 14px;
+      padding: 6px 10px;
       border: 1px solid #cbd5e1;
-      border-radius: 20px;
-      font-size: 0.85rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
       outline: none;
       background: #ffffff;
       color: #0f172a;
@@ -671,17 +691,17 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
 
     .manual-entry input:focus {
       border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
     }
 
     .manual-entry button {
       background: linear-gradient(135deg, #2563eb, #1d4ed8);
       color: #ffffff;
       border: none;
-      padding: 9px 20px;
-      border-radius: 20px;
+      padding: 6px 14px;
+      border-radius: 12px;
       font-weight: 600;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       cursor: pointer;
       white-space: nowrap;
       transition: 0.2s;
@@ -693,18 +713,18 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
 
     .fault-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-      gap: 8px;
-      margin-top: 10px;
-      margin-bottom: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+      gap: 5px;
+      margin-top: 6px;
+      margin-bottom: 10px;
     }
 
     .fault-btn {
       background: #ffffff;
-      border: 1.5px solid #cbd5e1;
-      border-radius: 12px;
-      padding: 8px 10px;
-      font-size: 0.78rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 5px 6px;
+      font-size: 0.7rem;
       font-weight: 700;
       color: #334155;
       cursor: pointer;
@@ -722,7 +742,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
       background: #fee2e2;
       border-color: #ef4444;
       color: #b91c1c;
-      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+      box-shadow: 0 1px 5px rgba(239, 68, 68, 0.2);
     }
 
     .field-input {
@@ -730,9 +750,9 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
       background: #ffffff;
       border: 1px solid #cbd5e1;
       color: #0f172a;
-      border-radius: 12px;
-      padding: 10px 12px;
-      font-size: 0.95rem;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 0.85rem;
       outline: none;
     }
 
@@ -742,31 +762,31 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
     }
 
     .action-content {
-      margin-top: 18px;
+      margin-top: 10px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 8px;
     }
 
     .action-card {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 8px;
       justify-content: center;
       align-items: center;
       background: #eef2f7;
       border: 1px solid #d7e0ea;
-      border-radius: 18px;
-      padding: 14px;
+      border-radius: 12px;
+      padding: 8px;
     }
 
     .btn-action {
-      flex: 1 1 120px;
-      min-width: 120px;
+      flex: 1 1 100px;
+      min-width: 100px;
       border: none;
-      border-radius: 14px;
-      padding: 12px 16px;
-      font-size: 0.95rem;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 0.85rem;
       font-weight: 600;
       cursor: pointer;
       transition: 0.2s;
@@ -818,7 +838,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
     <div class="result-panel">
       <div class="result-header">
         <i class="fas fa-qrcode"></i>
-        <span id="step-title-text"><?php echo $active_operator ? 'Step 2: Scan Roll QR' : 'Operator ID'; ?></span>
+        <span id="step-title-text"><?php echo $active_operator ? 'Step 2: Scan Roll QR' : 'QC Operator ID'; ?></span>
         <div id="op-header-badge-container" style="margin-left: auto; display: flex; align-items: center;">
           <?php if ($active_operator): ?>
             <span style="font-size: 0.75rem; background: #10b981; padding: 2px 12px; border-radius: 40px; color: #ffffff; font-weight:700; display:inline-flex; align-items:center;">
@@ -854,9 +874,9 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
     </div>
 
     <!-- FOOTER -->
-    <div class="footer-note" style="margin-top:20px; text-align:center;">
+    <div class="footer-note" style="margin-top:10px; text-align:center;">
       <button onclick="window.location.href='initialPage.php';"
-        style="background-color:#1e3a8a; color:white; padding:12px 18px; border:none; border-radius:10px; cursor:pointer; font-weight:bold; font-size:1rem; width:100%;">
+        style="background-color:#1e3a8a; color:white; padding:8px 14px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:0.85rem; width:100%;">
         <i class="fa-solid fa-arrow-left" style="margin-right:6px;"></i>
         Back to Initial Page
       </button>
@@ -912,16 +932,16 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
       function renderStep1Operator() {
         actionContainer.innerHTML = '';
         let html = `
-          <div style="background:#eff6ff; border:1.5px solid #bfdbfe; border-radius:18px; padding:16px; margin-bottom:14px; text-align:center; color:#1e3a8a;">
-            <div style="font-size:2.2rem; margin-bottom:6px; color:#2563eb;"><i class="fa-solid fa-user-shield"></i></div>
-            <div style="font-weight:800; font-size:1.05rem; margin-bottom:4px;">Operator ID</div>
+          <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px; padding:10px; margin-bottom:10px; text-align:center; color:#1e3a8a;">
+            <div style="font-size:1.5rem; margin-bottom:2px; color:#2563eb;"><i class="fa-solid fa-user-shield"></i></div>
+            <div style="font-weight:800; font-size:0.95rem; margin-bottom:2px;">QC Operator ID</div>
           </div>
           <div class="manual-entry">
-            <input type="text" id="opInput" placeholder="" autocomplete="off" autofocus>
+            <input type="text" id="opInput" placeholder="Enter / Scan QC Operator ID" autocomplete="off" autofocus>
             <button type="button" id="opBtn">Authenticate</button>
           </div>
           <div class="data-row header-row"><span class="label">Workflow Progress</span><span class="value">Step 1 of 2</span></div>
-          <div class="data-row"><span class="label">Current Action:</span><span class="value" style="color:#2563eb; font-weight:700;">Scan Operator QR Code</span></div>
+          <div class="data-row"><span class="label">Current Action:</span><span class="value" style="color:#2563eb; font-weight:700;">Scan QC Operator QR Code</span></div>
           <div class="data-row"><span class="label">Next Action:</span><span class="value">Scan Roll QR</span></div>
           <div id="opStatusMsg" style="margin-top:8px;"></div>
         `;
@@ -955,7 +975,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
             `;
           }
         } else {
-          if (titleText) titleText.textContent = 'Operator ID';
+          if (titleText) titleText.textContent = 'QC Operator ID';
           if (headerContainer) {
             headerContainer.innerHTML = `
               <span style="font-size: 0.75rem; background: #f59e0b; padding: 2px 12px; border-radius: 40px; color: #ffffff; font-weight:700; display:inline-flex; align-items:center;">
@@ -968,10 +988,10 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
 
       function submitOperator(val) {
         val = String(val || '').trim();
-        if (!val) { alert('Please enter or scan Operator ID!'); return; }
+        if (!val) { alert('Please enter or scan QC Operator ID!'); return; }
 
         const msgDiv = document.getElementById('opStatusMsg');
-        if (msgDiv) msgDiv.innerHTML = '<div style="color:#2563eb; font-weight:700; font-size:0.85rem;"><i class="fas fa-spinner fa-spin"></i> Verifying Operator ID...</div>';
+        if (msgDiv) msgDiv.innerHTML = '<div style="color:#2563eb; font-weight:700; font-size:0.85rem;"><i class="fas fa-spinner fa-spin"></i> Verifying QC Operator ID...</div>';
 
         fetch('knitting_inspection.php?action=verify_operator&operator_id=' + encodeURIComponent(val), {
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
@@ -1072,43 +1092,43 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
           <div class="data-row"><span class="label">Machine / Dia / Shift:</span><span class="value">${d.mcno} / ${d.mc_dia || 'N/A'} / ${d.shift}</span></div>
           <div class="data-row"><span class="label">Fabric / GSM:</span><span class="value">${d.fabrics_type} (${d.finish_gsm} GSM)</span></div>
           <div class="data-row"><span class="label">Finish Diameter:</span><span class="value">${d.finish_dia || 'N/A'}</span></div>
-          <div class="data-row"><span class="label">Gray GSM:</span><span class="value">${d.gray_gsm || 'N/A'}</span></div>
           <div class="data-row"><span class="label">Yarn Type / Count:</span><span class="value">${d.yarn_type || 'N/A'} / ${d.yarn_count || 'N/A'}</span></div>
+          <div class="data-row"><span class="label">Yarn Brand:</span><span class="value" style="color:#0f7a6f; font-weight:700;">${d.yarn_brand || 'N/A'}</span></div>
           <div class="data-row"><span class="label">Open Tube / SL-VDQ:</span><span class="value">${d.open_tube || 'N/A'} / ${d.sl_vdq || 'N/A'}</span></div>
           <div class="data-row"><span class="label">Lot No / Feeder Plan:</span><span class="value">${d.lot_no || 'N/A'} / ${d.feeder_plan || 'N/A'}</span></div>
           <div class="data-row"><span class="label">Material Code / Desc:</span><span class="value">${d.material_code || 'N/A'} / ${d.material_desc || 'N/A'}</span></div>
           
-          <div style="margin-top:14px; font-weight:800; font-size:0.85rem; color:#1d4ed8;">
+          <div style="margin-top:8px; font-weight:800; font-size:0.78rem; color:#1d4ed8;">
             <i class="fa-solid fa-weight-hanging me-1"></i> MAIN QTY (KG):
           </div>
-          <div style="margin-top:4px;">
+          <div style="margin-top:2px;">
             <input type="number" step="0.01" min="0" id="mainQtyInput" class="field-input"
               value="${parseFloat(d.suggested_weight).toFixed(2)}"
-              style="font-weight:700; font-size:1.1rem; text-align:center;"
+              style="font-weight:700; font-size:0.95rem; text-align:center;"
               oninput="window.calcUpdateQty()">
           </div>
 
-          <div style="margin-top:14px; font-weight:800; font-size:0.85rem; color:#b91c1c;">
+          <div style="margin-top:8px; font-weight:800; font-size:0.78rem; color:#b91c1c;">
             <i class="fa-solid fa-ban me-1"></i> REJECT QTY (KG):
           </div>
-          <div style="margin-top:4px;">
+          <div style="margin-top:2px;">
             <input type="number" step="0.01" min="0" id="rejectQtyInput" class="field-input"
               value="0" placeholder="0.00"
-              style="font-weight:700; font-size:1.1rem; text-align:center; border-color:#fca5a5;"
+              style="font-weight:700; font-size:0.95rem; text-align:center; border-color:#fca5a5;"
               oninput="window.calcUpdateQty()">
           </div>
 
-          <div style="margin-top:14px; font-weight:800; font-size:0.85rem; color:#166534;">
+          <div style="margin-top:8px; font-weight:800; font-size:0.78rem; color:#166534;">
             <i class="fa-solid fa-circle-check me-1"></i> UPDATE QTY / NET GOOD QTY (KG):
           </div>
-          <div style="margin-top:4px;">
+          <div style="margin-top:2px;">
             <input type="number" step="0.01" id="updateQtyInput" class="field-input"
               value="${parseFloat(d.suggested_weight).toFixed(2)}"
               readonly tabindex="-1"
-              style="font-weight:800; font-size:1.1rem; text-align:center; background:#f0fdf4; border-color:#86efac; color:#166534; cursor:not-allowed;">
+              style="font-weight:800; font-size:0.95rem; text-align:center; background:#f0fdf4; border-color:#86efac; color:#166534; cursor:not-allowed;">
           </div>
 
-          <div style="margin-top:16px; font-weight:800; font-size:0.85rem; color:#334155;">
+          <div style="margin-top:10px; font-weight:800; font-size:0.78rem; color:#334155;">
             <i class="fa-solid fa-list-check me-1 text-warning"></i> FABRIC FAULTS (4-POINT MATRIX):
           </div>
           <div class="fault-grid">
@@ -1125,13 +1145,13 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         html += `</div>`;
 
         html += `
-          <div class="data-row" style="background:#eff6ff; border-left-color:#2563eb; margin-top:10px;">
+          <div class="data-row" style="background:#eff6ff; border-left-color:#2563eb; margin-top:6px;">
             <span class="label">Total Points:</span>
-            <span class="value" id="calc_points" style="font-size:1.1rem; color:#2563eb; font-weight:800;">0 pts</span>
+            <span class="value" id="calc_points" style="font-size:0.95rem; color:#2563eb; font-weight:800;">0 pts</span>
           </div>
           <div class="data-row" style="background:#f0fdf4; border-left-color:#10b981;">
             <span class="label">QC Grade / Status:</span>
-            <span class="value" id="calc_grade" style="font-size:1rem; color:#166534; font-weight:800;">Grade A (Passed)</span>
+            <span class="value" id="calc_grade" style="font-size:0.9rem; color:#166534; font-weight:800;">Grade A (Passed)</span>
           </div>
         `;
 
@@ -1324,7 +1344,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
 
         if (!isOperatorActive) {
           if (isRollCode(text)) {
-            alert('Please scan Operator ID first!\nProduction roll cannot be scanned before operator authentication.');
+            alert('Please scan QC Operator ID first!\nProduction roll cannot be scanned before operator authentication.');
             return;
           }
           if (verifying) return;

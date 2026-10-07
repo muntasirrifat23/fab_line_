@@ -14,22 +14,22 @@ $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $where = '';
 if ($search !== '') {
     $s = mysqli_real_escape_string($db, $search);
-    $where = "WHERE TRIM(ROLL) LIKE '%$s%'
-        OR TRIM(PO_NUMBER) LIKE '%$s%'
-        OR TRIM(SONO) LIKE '%$s%'
-        OR TRIM(BUYER) LIKE '%$s%'
-        OR TRIM(STYLE) LIKE '%$s%'";
+    $where = "WHERE TRIM(i.ROLL) LIKE '%$s%'
+        OR TRIM(i.PO_NUMBER) LIKE '%$s%'
+        OR TRIM(i.SONO) LIKE '%$s%'
+        OR TRIM(i.BUYER) LIKE '%$s%'
+        OR TRIM(i.STYLE) LIKE '%$s%'";
 }
 
-$sql = "SELECT `KITID`, `BUDAT`, `ROLL`, `OQTY`, `RQTY`, `UQTY`, `PO_NUMBER`, `QTY`, `SONO`, `BUYER`, `STYLE`,
-               `COLOR`, `MCNO`, `MC_DIA`, `CUSTOMER`, `SHIFT`, `YTYPE`, `YCOUNT`, `FTYPE`, `FGSM`, `FDIA`,
-               `O_T`, `SL`, `GGSM`, `FPLAN`, `LOTNO`, `MATERIAL_CODE`, `M_DES`,
-               `TT`, `PATTA`, `SLUB`, `YC_SPOT`, `OILSPOT`, `FF`, `SEEDS`, `MSTITCH`, `SINKERMARK`,
-               `NEEDLEMARK`, `LYCOUT`, `OILLINE`, `HOLE`, `LOOP`, `SETUP`, `CMARK`, `TPOINT`,
-               `QC_GRADE`, `QC_STATUS`, `UNAME`, `UID`, `P_CREATED`
-        FROM knitting_inspection
+$sql = "SELECT i.*,
+               COALESCE(
+                   NULLIF(TRIM(i.YBRAND), ''),
+                   (SELECT NULLIF(TRIM(k.YBRAND), '') FROM knit_card k WHERE TRIM(k.PO_NUMBER) = TRIM(i.PO_NUMBER) LIMIT 1),
+                   (SELECT NULLIF(TRIM(p.YBRAND), '') FROM knitting_program p WHERE TRIM(p.PO_NUMBER) = TRIM(i.PO_NUMBER) LIMIT 1)
+               ) AS YBRAND
+        FROM knitting_inspection i
         $where
-        ORDER BY KITID DESC
+        ORDER BY i.KITID DESC
         LIMIT 500";
 
 try {

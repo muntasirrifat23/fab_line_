@@ -73,7 +73,6 @@ $val_remarks      = !empty($card['REMARKS']) ? $card['REMARKS'] : ($card['prog_r
 $val_lot          = !empty($card['LOT']) ? $card['LOT'] : 'N/A';
 $val_fgsm         = !empty($card['FGSM']) ? $card['FGSM'] : 'N/A';
 $val_fdia         = !empty($card['FDIA']) ? $card['FDIA'] : 'N/A';
-$val_ggsm         = !empty($card['GGSM']) ? $card['GGSM'] : 'N/A';
 $val_sl           = !empty($card['SL']) ? $card['SL'] : 'N/A';
 $val_mcdia        = !empty($card['MCDIA']) ? $card['MCDIA'] : 'N/A';
 $val_feeder       = !empty($card['FEEDER_PLAN']) ? $card['FEEDER_PLAN'] : ($card['prog_feeder_plan'] ?? 'N/A');
@@ -428,10 +427,8 @@ if (!empty($card['UNAME'])) {
                         <td><?php echo htmlspecialchars($val_fdia); ?></td>
                     </tr>
                     <tr>
-                        <th>Gray GSM</th>
-                        <td><?php echo htmlspecialchars($val_ggsm); ?></td>
                         <th>M/C Dia</th>
-                        <td><?php echo htmlspecialchars($val_mcdia); ?></td>
+                        <td colspan="3"><?php echo htmlspecialchars($val_mcdia); ?></td>
                     </tr>
                     <tr>
                         <th>Feeder</th>

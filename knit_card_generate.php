@@ -236,7 +236,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                 }
 
                 $p_mcdia   = !empty($prog['MCDIA']) ? $prog['MCDIA'] : ($input['MCDIA'] ?? '');
-                $p_ggsm    = !empty($prog['GGSM']) ? $prog['GGSM'] : (!empty($input['GGSM']) ? $input['GGSM'] : $p_finish_gsm);
+                $p_ggsm    = '';
                 $p_fplan   = !empty($prog['FEEDER_PLAN']) ? $prog['FEEDER_PLAN'] : ($input['FEEDER_PLAN'] ?? '');
                 $p_uname   = $prepared_by;
 
@@ -364,19 +364,19 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             font-family: var(--font-main);
             color: var(--text-primary);
             -webkit-font-smoothing: antialiased;
-            padding: 16px 20px;
+            padding: 16px;
         }
 
         .main-container {
-            max-width: 1380px;
+            max-width: 1440px;
             margin: 0 auto;
         }
 
         /* ── PAGE HEADER (TOP BAR) ── */
         .top-bar {
             background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
-            border-radius: 10px;
-            padding: 12px 20px;
+            border-radius: 12px;
+            padding: 14px 20px;
             color: #ffffff;
             display: flex;
             justify-content: space-between;
@@ -396,8 +396,8 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
         .top-bar-icon {
             background: rgba(255, 255, 255, 0.12);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            width: 40px;
-            height: 40px;
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -423,16 +423,17 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
         .top-bar-right {
             display: flex;
             align-items: center;
+            flex-wrap: wrap;
             gap: 10px;
         }
 
         .pill-badge {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.22);
             color: #ffffff;
             font-size: 12px;
             font-weight: 600;
-            padding: 5px 12px;
+            padding: 6px 14px;
             border-radius: 20px;
         }
 
@@ -456,31 +457,14 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             text-decoration: none;
         }
 
-        /* ── RESPONSIVE 2-COLUMN GRID ── */
-        .workspace-grid {
-            display: grid;
-            grid-template-columns: 350px 1fr;
-            gap: 16px;
-            margin-bottom: 16px;
-            align-items: stretch;
-        }
-
-        @media (max-width: 900px) {
-            .workspace-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
         /* ── WORKSPACE CARDS ── */
         .workspace-card {
             background: var(--surface-card);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
-            padding: 14px 16px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+            padding: 10px 14px;
+            margin-bottom: 10px;
         }
 
         .card-header-custom {
@@ -488,16 +472,18 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             align-items: center;
             justify-content: space-between;
             border-bottom: 1px solid var(--border-color);
-            padding-bottom: 8px;
-            margin-bottom: 10px;
+            padding-bottom: 6px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 6px;
         }
 
         .card-header-title {
-            font-size: 13.5px;
+            font-size: 12.5px;
             font-weight: 700;
             color: var(--text-primary);
             text-transform: uppercase;
-            letter-spacing: 0.4px;
+            letter-spacing: 0.3px;
             display: flex;
             align-items: center;
             gap: 6px;
@@ -505,12 +491,12 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
         }
 
         .badge-pill-header {
-            font-size: 10.5px;
+            font-size: 9.5px;
             font-weight: 700;
-            padding: 3px 10px;
-            border-radius: 20px;
+            padding: 2px 8px;
+            border-radius: 12px;
             text-transform: uppercase;
-            letter-spacing: 0.4px;
+            letter-spacing: 0.3px;
         }
         .badge-status-blue {
             background: var(--color-blue-light);
@@ -523,35 +509,54 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             border: 1px solid var(--color-purple-border);
         }
 
-        /* ── METRICS ROW ── */
-        .metrics-row {
+        /* ── TARGET PRODUCTION METRICS (4-COLUMN RESPONSIVE COMPACT BOX GRID) ── */
+        .metrics-grid-container {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
-            margin-bottom: 8px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        @media (max-width: 992px) {
+            .metrics-grid-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .metrics-grid-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .metric-box {
             background: #f8fafc;
             border: 1px solid var(--border-color);
-            padding: 8px 10px;
             border-radius: 8px;
-        }
-        .metric-col {
+            padding: 6px 10px;
             display: flex;
             flex-direction: column;
-            align-items: flex-start;
+            gap: 2px;
+            transition: all 0.2s ease;
         }
+        .metric-box:hover {
+            border-color: #cbd5e1;
+            background: #ffffff;
+        }
+
         .metric-val-blue {
-            font-size: 15px;
-            font-weight: 700;
+            font-size: 14px;
+            font-weight: 800;
             color: var(--color-blue);
         }
         .metric-val-gray {
-            font-size: 15px;
-            font-weight: 700;
+            font-size: 14px;
+            font-weight: 800;
             color: var(--text-secondary);
         }
         .metric-val-green {
-            font-size: 15px;
-            font-weight: 700;
+            font-size: 14px;
+            font-weight: 800;
             color: var(--color-success);
         }
         .metric-lbl {
@@ -560,16 +565,15 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             color: var(--text-secondary);
             text-transform: uppercase;
             letter-spacing: 0.3px;
-            margin-top: 1px;
         }
 
         /* ── PROGRESS BAR ── */
         .progress-bar-container {
             background: #e2e8f0;
-            height: 6px;
+            height: 5px;
             border-radius: 3px;
             overflow: hidden;
-            margin-bottom: 12px;
+            margin-bottom: 2px;
             position: relative;
         }
         .progress-bar-fill {
@@ -577,16 +581,154 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             background: linear-gradient(90deg, #3b82f6 0%, #06b6d4 100%);
             width: 0%;
             border-radius: 3px;
+            transition: width 0.3s ease;
         }
 
-        /* ── FORM FIELDS ── */
+        /* ── 4-6 ITEMS PER LINE RESPONSIVE SPECIFICATION BOX GRID (COMPACT) ── */
+        .spec-grid-container {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+        }
+
+        @media (max-width: 1400px) {
+            .spec-grid-container {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 992px) {
+            .spec-grid-container {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .spec-grid-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 380px) {
+            .spec-grid-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .spec-item-box {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 5px 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 2px;
+            min-height: 44px;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
+            transition: all 0.2s ease;
+        }
+
+        .spec-item-box:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 2px 5px rgba(15, 23, 42, 0.04);
+        }
+
+        .spec-box-head {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #64748b;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .spec-box-icon {
+            font-size: 10px;
+            color: var(--color-blue);
+            width: 12px;
+            text-align: center;
+        }
+
+        .spec-box-value {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--text-primary);
+            word-break: break-word;
+            line-height: 1.25;
+        }
+
+        .value-highlight-blue {
+            color: var(--color-blue);
+        }
+        .value-muted-italic {
+            color: var(--text-muted);
+            font-style: italic;
+            font-weight: 500;
+        }
+
+        /* Badges inside Spec Boxes */
+        .badge-pill-green {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+            padding: 1px 6px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .dot-green {
+            width: 5px;
+            height: 5px;
+            background-color: #166534;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .badge-pill-color {
+            background: #e2e8f0;
+            color: #1e293b;
+            border: 1px solid #cbd5e1;
+            padding: 1px 6px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .dot-color {
+            width: 5px;
+            height: 5px;
+            background-color: #475569;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .badge-pill-amber {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fde68a;
+            padding: 1px 6px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        /* ── FORM FIELDS & ALLOCATION CARDS (COMPACT) ── */
         .form-label-custom {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 700;
             color: #475569;
             text-transform: uppercase;
-            letter-spacing: 0.4px;
-            margin-bottom: 4px;
+            letter-spacing: 0.3px;
+            margin-bottom: 2px;
             display: block;
         }
         .required-label::after {
@@ -597,19 +739,19 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
         .form-select-custom, .form-input-custom {
             background-color: #ffffff !important;
             border: 1px solid #cbd5e1 !important;
-            border-radius: 8px !important;
-            padding: 7px 10px !important;
+            border-radius: 6px !important;
+            padding: 3px 8px !important;
             font-weight: 600 !important;
-            font-size: 13px !important;
+            font-size: 11.5px !important;
             color: var(--text-primary) !important;
             transition: all 0.2s ease !important;
             width: 100%;
-            height: 36px !important;
-            line-height: 1.3 !important;
+            height: 30px !important;
+            line-height: 1.2 !important;
         }
         .form-select-custom:focus, .form-input-custom:focus {
             border-color: #3b82f6 !important;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
             outline: 0 !important;
         }
 
@@ -628,11 +770,11 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             border-left: none;
             color: #475569;
             font-weight: 700;
-            font-size: 12px;
-            padding: 0 12px;
-            height: 36px;
-            border-top-right-radius: 8px;
-            border-bottom-right-radius: 8px;
+            font-size: 11px;
+            padding: 0 8px;
+            height: 30px;
+            border-top-right-radius: 6px;
+            border-bottom-right-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -640,175 +782,114 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
         }
 
         .validation-msg {
-            font-size: 11.5px;
+            font-size: 11px;
             font-weight: 600;
             color: var(--color-success);
         }
 
-        /* ── RIGHT CARD (SPECIFICATIONS GRID) ── */
-        .specs-inner-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            height: 100%;
+        /* ── DYNAMIC ALLOCATION ROWS (COMPACT) ── */
+        .allocation-card {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 6px 10px;
+            margin-bottom: 8px;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        .allocation-card:hover {
+            border-color: #cbd5e1;
+            background: #ffffff;
+        }
+        .allocation-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            padding-bottom: 4px;
+            border-bottom: 1px dashed #cbd5e1;
+        }
+        .allocation-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
-        @media (max-width: 900px) {
-            .specs-inner-grid {
+        .allocation-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        @media (max-width: 768px) {
+            .allocation-grid {
                 grid-template-columns: 1fr;
             }
         }
 
-        .spec-box-col {
-            background: #f8fafc;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 10px 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            height: 100%;
-        }
-
-        .spec-box-title {
-            font-size: 10.5px;
-            font-weight: 800;
-            color: #0f172a;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 4px;
-            margin-bottom: 2px;
-            display: block;
-        }
-
-        .spec-row {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 2px;
-            font-size: 12.5px;
-        }
-
-        .spec-label {
-            color: #64748b;
+        .btn-remove-row {
+            background: #ffffff;
+            border: 1px solid #fecaca;
+            color: #ef4444;
             font-size: 10px;
             font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-
-        .spec-value {
-            color: var(--text-primary);
-            font-weight: 700;
-            text-align: left;
-            font-size: 12.5px;
-            word-break: break-word;
-        }
-
-        /* Highlights */
-        .value-highlight-blue {
-            color: var(--color-blue);
-            font-weight: 700;
-        }
-        .value-muted-italic {
-            color: var(--text-muted);
-            font-style: italic;
-            font-weight: 500;
-        }
-
-        /* Badges & Pills */
-        .badge-pill-green {
-            background: #dcfce7;
-            color: #166534;
-            border: 1px solid #bbf7d0;
-            padding: 3px 8px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .dot-green {
-            width: 6px;
-            height: 6px;
-            background-color: #166534;
-            border-radius: 50%;
-            display: inline-block;
-        }
-
-        .badge-pill-color {
-            background: #e2e8f0;
-            color: #1e293b;
-            border: 1px solid #cbd5e1;
-            padding: 3px 8px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .dot-color {
-            width: 6px;
-            height: 6px;
-            background-color: #475569;
-            border-radius: 50%;
-            display: inline-block;
-        }
-
-        .badge-pill-amber {
-            background: #fef3c7;
-            color: #92400e;
-            border: 1px solid #fde68a;
-            padding: 3px 8px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 700;
-            display: inline-block;
-            text-align: center;
-        }
-
-        .chip-monospace-blue {
-            font-family: monospace;
-            font-size: 11px;
-            font-weight: 700;
-            background: var(--color-blue-light);
-            color: var(--color-blue);
-            border: 1px solid var(--color-blue-border);
-            padding: 3px 8px;
+            padding: 2px 8px;
             border-radius: 4px;
-            word-break: break-all;
-            display: block;
-            margin-top: 2px;
-            text-align: left;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-remove-row:hover {
+            background: #fef2f2;
+            border-color: #f87171;
         }
 
-        .block-monospace-gray {
-            font-family: monospace;
-            font-size: 11px;
-            font-weight: 600;
-            background: #f1f5f9;
-            color: #475569;
-            border: 1px solid var(--border-color);
-            padding: 8px 12px;
-            border-radius: 6px;
-            word-break: break-all;
-            white-space: normal;
-            line-height: 1.4;
-            display: block;
-            margin-top: 4px;
-            text-align: left;
+        .btn-add-row {
+            background: #ffffff;
+            border: 1px dashed var(--color-blue);
+            color: var(--color-blue);
+            font-size: 11.5px;
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: 8px;
             width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+        }
+        .btn-add-row:hover {
+            background: var(--color-blue-light);
+            border-style: solid;
+        }
+
+        .allocation-summary-box {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            padding: 6px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 11px;
         }
 
         /* ── BOTTOM ACTION BAR ── */
         .bottom-actions {
             display: flex;
             justify-content: flex-end;
-            gap: 10px;
+            gap: 12px;
             margin-top: 16px;
+            flex-wrap: wrap;
         }
 
         .btn-cancel {
@@ -817,7 +898,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             color: #334155 !important;
             font-weight: 700 !important;
             font-size: 13px !important;
-            padding: 8px 18px !important;
+            padding: 10px 20px !important;
             border-radius: 8px !important;
             display: inline-flex !important;
             align-items: center;
@@ -837,7 +918,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             color: #ffffff !important;
             font-weight: 700 !important;
             font-size: 13px !important;
-            padding: 8px 22px !important;
+            padding: 10px 24px !important;
             border-radius: 8px !important;
             border: none !important;
             box-shadow: 0 4px 10px rgba(15, 23, 42, 0.15) !important;
@@ -856,77 +937,6 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             cursor: not-allowed !important;
             box-shadow: none !important;
             opacity: 0.7;
-        }
-
-        /* ── DYNAMIC ALLOCATION ROWS ── */
-        .allocation-card {
-            background: #f8fafc;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 10px 12px;
-            margin-bottom: 10px;
-            position: relative;
-            transition: all 0.2s ease;
-        }
-        .allocation-card:hover {
-            border-color: #cbd5e1;
-        }
-        .allocation-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 6px;
-            padding-bottom: 4px;
-            border-bottom: 1px dashed #cbd5e1;
-        }
-        .allocation-title {
-            font-size: 11.5px;
-            font-weight: 700;
-            color: var(--text-primary);
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .btn-remove-row {
-            background: #ffffff;
-            border: 1px solid #fecaca;
-            color: #ef4444;
-            font-size: 10.5px;
-            font-weight: 700;
-            padding: 2px 8px;
-            border-radius: 4px;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            cursor: pointer;
-        }
-        .btn-add-row {
-            background: #ffffff;
-            border: 1px dashed var(--color-blue);
-            color: var(--color-blue);
-            font-size: 12.5px;
-            font-weight: 600;
-            padding: 8px 14px;
-            border-radius: 8px;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            cursor: pointer;
-            margin-bottom: 10px;
-        }
-        .allocation-summary-box {
-            background: #f0f9ff;
-            border: 1px solid #bae6fd;
-            border-radius: 8px;
-            padding: 8px 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            font-size: 11.5px;
         }
     </style>
 </head>
@@ -968,183 +978,281 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             <input type="hidden" name="save_knit_card" value="1">
             <input type="hidden" name="program_id" value="<?php echo $p_kptid; ?>">
 
-            <div class="workspace-grid">
-                
-                <!-- Left Column: Target Production Settings Card -->
-                <div class="workspace-card">
-                    <div class="card-header-custom">
-                        <h4 class="card-header-title">
-                            <span style="font-size:16px;">⚙️</span> Target Production Settings
-                        </h4>
-                        <span class="badge-pill-header badge-status-blue">Summary</span>
-                    </div>
-
-                    <!-- Metrics Row -->
-                    <div class="metrics-row">
-                        <div class="metric-col">
-                            <span class="metric-val-blue"><?php echo number_format($program_qty, 2); ?></span>
-                            <span class="metric-lbl">Program Qty (KG)</span>
-                        </div>
-                        <div class="metric-col">
-                            <span class="metric-val-gray"><?php echo number_format($already_carded, 2); ?></span>
-                            <span class="metric-lbl">Already Carded (KG)</span>
-                        </div>
-                        <div class="metric-col">
-                            <span class="metric-val-green" id="metricRemainingQty"><?php echo number_format($remaining_qty, 2); ?></span>
-                            <span class="metric-lbl">Remaining (KG)</span>
-                        </div>
-                    </div>
-
-                    <!-- Completion percentage & dynamic progress bar -->
-                    <?php
-                        $completion_pct = ($program_qty > 0) ? ($already_carded / $program_qty) * 100 : 0;
-                        $completion_pct = min(100, max(0, $completion_pct));
-                    ?>
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="metric-lbl" style="font-size: 10px;">Completion Status</span>
-                        <span class="metric-lbl" style="font-size: 10px; font-weight: 800; color: var(--color-blue);" id="progressPercentText"><?php echo number_format($completion_pct, 0); ?>% Completion</span>
-                    </div>
-                    <div class="progress-bar-container mb-0">
-                        <div id="progressBarFill" class="progress-bar-fill"></div>
-                    </div>
+            <!-- 1. TARGET PRODUCTION SETTINGS (SUMMARY METRICS) -->
+            <div class="workspace-card">
+                <div class="card-header-custom">
+                    <h4 class="card-header-title">
+                        <span>⚙️</span> Target Production Settings
+                    </h4>
+                    <span class="badge-pill-header badge-status-blue">Summary Metrics</span>
                 </div>
 
-                <!-- Right Column: Program Details & Specifications Card -->
-                <div class="workspace-card">
-                    <div class="card-header-custom">
-                        <h4 class="card-header-title">
-                            <span style="font-size:16px;">📋</span> Program Details & Specifications
-                        </h4>
-                        <span class="badge-pill-header badge-status-purple">Auto-Populated</span>
+                <!-- 4 Boxed Metrics Row -->
+                <div class="metrics-grid-container">
+                    <div class="metric-box">
+                        <span class="metric-lbl">Program Qty (KG)</span>
+                        <span class="metric-val-blue"><?php echo number_format($program_qty, 2); ?></span>
                     </div>
-
-                    <div class="specs-inner-grid">
-                        
-                        <!-- Column 1 — Order & Customer -->
-                        <div class="spec-box-col">
-                            <span class="spec-box-title">Order & Customer</span>
-                            
-                            <div class="spec-row">
-                                <span class="spec-label">Buyer Name</span>
-                                <span class="spec-value <?php echo !empty($p_buyer) ? 'value-highlight-blue' : ''; ?>">
-                                    <?php echo htmlspecialchars($p_buyer ?: 'N/A'); ?>
-                                </span>
-                            </div>
-                            
-                            <div class="spec-row">
-                                <span class="spec-label">PO Number</span>
-                                <span class="spec-value <?php echo empty($p_booking) ? 'value-muted-italic' : ''; ?>">
-                                    <?php echo htmlspecialchars($p_booking ?: 'N/A'); ?>
-                                </span>
-                            </div>
-                            
-                            <div class="spec-row">
-                                <span class="spec-label">Sales Order</span>
-                                <span class="spec-value"><?php echo htmlspecialchars($p_sono ?: 'N/A'); ?></span>
-                            </div>
-                            
-                            <div class="spec-row">
-                                <span class="spec-label">Style No</span>
-                                <span class="spec-value <?php echo !empty($p_style) ? 'value-highlight-blue' : ''; ?>">
-                                    <?php echo htmlspecialchars($p_style ?: 'N/A'); ?>
-                                </span>
-                            </div>
+                    <div class="metric-box">
+                        <span class="metric-lbl">Already Carded (KG)</span>
+                        <span class="metric-val-gray"><?php echo number_format($already_carded, 2); ?></span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-lbl">Remaining (KG)</span>
+                        <span class="metric-val-green" id="metricRemainingQty"><?php echo number_format($remaining_qty, 2); ?></span>
+                    </div>
+                    <div class="metric-box">
+                        <?php
+                            $completion_pct = ($program_qty > 0) ? ($already_carded / $program_qty) * 100 : 0;
+                            $completion_pct = min(100, max(0, $completion_pct));
+                        ?>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="metric-lbl">Completion</span>
+                            <span class="metric-lbl" style="font-weight: 800; color: var(--color-blue);" id="progressPercentText"><?php echo number_format($completion_pct, 0); ?>%</span>
                         </div>
-
-                        <!-- Column 2 — Fabric Specifications -->
-                        <div class="spec-box-col">
-                            <span class="spec-box-title">Fabric Specifications</span>
-                            
-                            <div class="spec-row">
-                                <span class="spec-label">Fabric Type</span>
-                                <span class="spec-value"><?php echo htmlspecialchars($p_fabrics ?: 'N/A'); ?></span>
-                            </div>
-                            
-                            <div class="spec-row">
-                                <span class="spec-label">Finish Dia</span>
-                                <span class="spec-value"><?php echo htmlspecialchars($p_finish_dia ?: 'N/A'); ?></span>
-                            </div>
-                            
-                            <div class="spec-row">
-                                <span class="spec-label">Finish GSM</span>
-                                <span class="spec-value"><?php echo htmlspecialchars($p_finish_gsm ?: 'N/A'); ?></span>
-                            </div>
-                            
-                            <div class="spec-row">
-                                <span class="spec-label">Open/Tube</span>
-                                <span class="spec-value">
-                                    <span class="badge-pill-green">
-                                        <span class="dot-green"></span>
-                                        <?php echo ($p_open_tube === 'T') ? 'Tube (T)' : 'Open (O)'; ?>
-                                    </span>
-                                </span>
-                            </div>
-                            
-                            <div class="spec-row">
-                                <span class="spec-label">Color</span>
-                                <span class="spec-value">
-                                    <span class="badge-pill-color">
-                                        <span class="dot-color"></span>
-                                        <?php echo htmlspecialchars($p_color ?: 'N/A'); ?>
-                                    </span>
-                                </span>
-                            </div>
-                            
-                            <!-- Dynamic Extraction of Finish -->
-                            <?php
-                                $finish_name = 'N/A';
-                                if (!empty($p_knit_m_desc)) {
-                                    $parts = explode('|', $p_knit_m_desc);
-                                    if (isset($parts[4]) && trim($parts[4]) !== '') {
-                                        $finish_name = str_replace('+', ' + ', trim($parts[4]));
-                                    }
-                                }
-                            ?>
-                            <div class="spec-row">
-                                <span class="spec-label">Finish</span>
-                                <span class="spec-value mt-1">
-                                    <span class="badge-pill-amber"><?php echo htmlspecialchars($finish_name); ?></span>
-                                </span>
-                            </div>
+                        <div class="progress-bar-container mt-1">
+                            <div id="progressBarFill" class="progress-bar-fill"></div>
                         </div>
-
-                        <!-- Column 3 — Yarn & Materials -->
-                        <div class="spec-box-col">
-                            <span class="spec-box-title">Yarn & Materials</span>
-                            
-                            <div class="spec-row">
-                                <span class="spec-label">Yarn Type & Count</span>
-                                <span class="spec-value" style="font-size:12px;"><?php echo htmlspecialchars($p_yarn_type ?: 'N/A'); ?> (<?php echo htmlspecialchars($p_yarn_count ?: 'N/A'); ?>)</span>
-                            </div>
-
-                            <div class="spec-row">
-                                <span class="spec-label">Yarn Brand</span>
-                                <span class="spec-value"><?php echo htmlspecialchars($p_yarn_brand ?: 'N/A'); ?></span>
-                            </div>
-                            
-                            <div class="spec-row">
-                                <span class="spec-label">Lot No</span>
-                                <span class="spec-value"><?php echo htmlspecialchars($p_lot_no ?: 'N/A'); ?></span>
-                            </div>
-                            
-                            <?php
-                                $gen_date = !empty($prog['CREATED_DATE']) ? date('Y-m-d', strtotime($prog['CREATED_DATE'])) : date('Y-m-d');
-                            ?>
-                            <div class="spec-row">
-                                <span class="spec-label">Generation Date</span>
-                                <span class="spec-value"><?php echo htmlspecialchars($gen_date); ?></span>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
             </div>
 
-            <!-- Full-Width Section: Sub-TID Allocations & Machine Assignments -->
+            <!-- 2. PROGRAM DETAILS & SPECIFICATIONS (4-6 ITEMS PER LINE BOX GRID) -->
+            <div class="workspace-card">
+                <div class="card-header-custom">
+                    <h4 class="card-header-title">
+                        <span>📋</span> Program Details & Specifications
+                    </h4>
+                    <span class="badge-pill-header badge-status-purple">Auto-Populated</span>
+                </div>
+
+                <!-- 18 Spec Boxes in Responsive 4-6 Item Per Line Grid -->
+                <div class="spec-grid-container">
+                    
+                    <!-- Box 1: Buyer -->
+                    <div class="spec-item-box">
+                        <div class="spec-box-head">
+                            <i class="fa-solid fa-user-tie spec-box-icon"></i>
+                            <span>Buyer Name</span>
+                        </div>
+                        <div class="spec-box-value <?php echo !empty($p_buyer) ? 'value-highlight-blue' : ''; ?>">
+                            <?php echo htmlspecialchars($p_buyer ?: 'N/A'); ?>
+                        </div>
+                    </div>
+
+                    <!-- Box 2: Customer -->
+                    <div class="spec-item-box">
+                        <div class="spec-box-head">
+                            <i class="fa-solid fa-briefcase spec-box-icon"></i>
+                            <span>Customer</span>
+                        </div>
+                        <div class="spec-box-value">
+                            <?php echo htmlspecialchars($p_customer ?: 'N/A'); ?>
+                        </div>
+                    </div>
+
+                    <!-- Box 3: PO Number -->
+                    <div class="spec-item-box">
+                        <div class="spec-box-head">
+                            <i class="fa-solid fa-file-contract spec-box-icon"></i>
+                            <span>PO / Booking</span>
+                        </div>
+                        <div class="spec-box-value <?php echo empty($p_booking) ? 'value-muted-italic' : ''; ?>">
+                            <?php echo htmlspecialchars($p_booking ?: 'N/A'); ?>
+                        </div>
+                    </div>
+
+                    <!-- Box 4: Sales Order -->
+                    <div class="spec-item-box">
+                        <div class="spec-box-head">
+                            <i class="fa-solid fa-hashtag spec-box-icon"></i>
+                            <span>Sales Order (SONO)</span>
+                        </div>
+                        <div class="spec-box-value">
+                            <?php echo htmlspecialchars($p_sono ?: 'N/A'); ?>
+                        </div>
+                    </div>
+
+                    <!-- Box 5: Style No -->
+                    <div class="spec-item-box">
+                        <div class="spec-box-head">
+                            <i class="fa-solid fa-shirt spec-box-icon"></i>
+                            <span>Style No</span>
+                        </div>
+                        <div class="spec-box-value <?php echo !empty($p_style) ? 'value-highlight-blue' : ''; ?>">
+                            <?php echo htmlspecialchars($p_style ?: 'N/A'); ?>
+                        </div>
+                    </div>
+
+                    <!-- Box 6: Fabric Type -->
+                    <div class="spec-item-box">
+                        <div class="spec-box-head">
+                            <i class="fa-solid fa-layer-group spec-box-icon"></i>
+                            <span>Fabric Type</span>
+                        </div>
+                        <div class="spec-box-value">
+                            <?php echo htmlspecialchars($p_fabrics ?: 'N/A'); ?>
+                        </div>
+                    </div>
+
+                    <!-- Box 7: Finish Dia -->
+                    <div class="spec-item-box">
+                        <div class="spec-box-head">
+                            <i class="fa-solid fa-circle-dot spec-box-icon"></i>
+                            <span>Finish Dia</span>
+                        </div>
+                        <div class="spec-box-value">
+                            <?php echo htmlspecialchars($p_finish_dia ?: 'N/A'); ?>
+                        </div>
+                    </div>
+
+                    <!-- Box 8: Finish GSM -->
+                    <div class="spec-item-box">
+                        <div class="spec-box-head">
+                            <i class="fa-solid fa-weight-hanging spec-box-icon"></i>
+                            <span>Finish GSM</span>
+                        </div>
+                        <div class="spec-box-value">
+                            <?php echo htmlspecialchars($p_finish_gsm ?: 'N/A'); ?>
+                        </div>
+                    </div>
+
+                    <!-- Box 9: Open / Tube -->
+                    <div class="spec-item-box">
+                        <div class="spec-box-head">
+                            <i class="fa-solid fa-arrows-left-right spec-box-icon"></i>
+                            <span>Open / Tube</span>
+                        </div>
+                        <div class="spec-box-value">
+                            <span class="badge-pill-green">
+                                <span class="dot-green"></span>
+                                <?php echo ($p_open_tube === 'T') ? 'Tube (T)' : 'Open (O)'; ?>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Box 10: Color -->
+                    <div class="spec-item-box">
+                        <div class="spec-box-head">
+                            <i class="fa-solid fa-palette spec-box-icon"></i>
+                            <span>Color</span>
+                        </div>
+                        <div class="spec-box-value">
+                            <span class="badge-pill-color">
+                                <span class="dot-color"></span>
+                                <?php echo htmlspecialchars($p_color ?: 'N/A'); ?>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Box 11: Finish -->
+                    <?php
+                        $finish_name = 'N/A';
+                        if (!empty($p_knit_m_desc)) {
+                            $parts = explode('|', $p_knit_m_desc);
+                            if (isset($parts[4]) && trim($parts[4]) !== '') {
+                                $finish_name = str_replace('+', ' + ', trim($parts[4]));
+                            }
+                        }
+                    ?>
+                    <div class="spec-item-box">
+                        <div class="spec-box-head">
+                            <i class="fa-solid fa-wand-magic-sparkles spec-box-icon"></i>
+                            <span>Finish</span>
+                        </div>
+                        <div class="spec-box-value">
+                            <span class="badge-pill-amber"><?php echo htmlspecialchars($finish_name); ?></span>
+                        </div>
+                    </div>
+
+                    <!-- Box 12: Yarn Type & Count -->
+                    <div class="spec-item-box">
+                        <div class="spec-box-head">
+                            <i class="fa-solid fa-scroll spec-box-icon"></i>
+                            <span>Yarn Type & Count</span>
+                        </div>
+                        <div class="spec-box-value" style="font-size:12px;">
+                            <?php echo htmlspecialchars($p_yarn_type ?: 'N/A'); ?> (<?php echo htmlspecialchars($p_yarn_count ?: 'N/A'); ?>)
+                        </div>
+                    </div>
+
+                    <!-- Box 13: Yarn Brand -->
+                    <div class="spec-item-box">
+                        <div class="spec-box-head">
+                            <i class="fa-solid fa-copyright spec-box-icon"></i>
+                            <span>Yarn Brand</span>
+                        </div>
+                        <div class="spec-box-value">
+                            <?php echo htmlspecialchars($p_yarn_brand ?: 'N/A'); ?>
+                        </div>
+                    </div>
+
+                    <!-- Box 14: Lot No -->
+                    <div class="spec-item-box">
+                        <div class="spec-box-head">
+                            <i class="fa-solid fa-boxes-stacked spec-box-icon"></i>
+                            <span>Lot No</span>
+                        </div>
+                        <div class="spec-box-value">
+                            <?php echo htmlspecialchars($p_lot_no ?: 'N/A'); ?>
+                        </div>
+                    </div>
+
+                    <!-- Box 15: Machine Dia -->
+                    <div class="spec-item-box">
+                        <div class="spec-box-head">
+                            <i class="fa-solid fa-gear spec-box-icon"></i>
+                            <span>M/C Dia</span>
+                        </div>
+                        <div class="spec-box-value">
+                            <?php echo htmlspecialchars($p_mcno ?: 'N/A'); ?>
+                        </div>
+                    </div>
+
+                    <!-- Box 16: Stitch Length (SL) -->
+                    <div class="spec-item-box">
+                        <div class="spec-box-head">
+                            <i class="fa-solid fa-ruler-combined spec-box-icon"></i>
+                            <span>SL / VDQ</span>
+                        </div>
+                        <div class="spec-box-value">
+                            <?php echo htmlspecialchars($p_sl_vdq ?: 'N/A'); ?>
+                        </div>
+                    </div>
+
+                    <!-- Box 17: Knit Material Code -->
+                    <div class="spec-item-box">
+                        <div class="spec-box-head">
+                            <i class="fa-solid fa-barcode spec-box-icon"></i>
+                            <span>Material Code</span>
+                        </div>
+                        <div class="spec-box-value" style="font-family: monospace; font-size: 11px;">
+                            <?php echo htmlspecialchars($p_knit_mat_code ?: 'N/A'); ?>
+                        </div>
+                    </div>
+
+                    <!-- Box 18: Generation Date -->
+                    <?php
+                        $gen_date = !empty($prog['CREATED_DATE']) ? date('Y-m-d', strtotime($prog['CREATED_DATE'])) : date('Y-m-d');
+                    ?>
+                    <div class="spec-item-box">
+                        <div class="spec-box-head">
+                            <i class="fa-solid fa-calendar-days spec-box-icon"></i>
+                            <span>Gen Date</span>
+                        </div>
+                        <div class="spec-box-value">
+                            <?php echo htmlspecialchars($gen_date); ?>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 3. SUB-TID ALLOCATIONS & MACHINE ASSIGNMENTS -->
             <div class="workspace-card mb-3">
                 <div class="card-header-custom">
                     <h4 class="card-header-title">
-                        <span style="font-size:16px;">🏷️</span> Sub-TID Allocations & Machine Assignments
+                        <span>🏷️</span> Sub-TID Allocations & Machine Assignments
                     </h4>
                     <span class="badge-pill-header badge-status-blue">Editable</span>
                 </div>
@@ -1161,8 +1269,8 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                                 <i class="fa-solid fa-trash-can"></i> Remove
                             </button>
                         </div>
-                        <div class="row g-2">
-                            <div class="col-md-4">
+                        <div class="allocation-grid">
+                            <div>
                                 <label class="form-label-custom required-label">Machine (M/C NO)</label>
                                 <select name="machine_no[]" class="form-select-custom row-mcno" required>
                                     <option value="">-- Select M/C --</option>
@@ -1173,14 +1281,15 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-md-4">
+                            <div>
                                 <label class="form-label-custom">Shift</label>
                                 <input type="hidden" name="shift[]" value="<?php echo $shift; ?>">
                                 <div class="form-input-custom bg-light fw-bold text-primary d-flex align-items-center justify-content-between">
                                     <span>Shift <?php echo $shift; ?></span>
+                                    <span class="badge bg-primary text-white" style="font-size: 10px; font-weight:700;">Auto Real-time</span>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div>
                                 <label class="form-label-custom required-label">Card Quantity (KG)</label>
                                 <div class="quantity-input-wrapper">
                                     <input type="number" step="0.01" min="0.01" max="<?php echo htmlspecialchars($remaining_qty); ?>" name="required_qty[]" class="form-input-custom row-qty" value="" required placeholder="Enter card quantity (e.g. 100)">
@@ -1190,6 +1299,11 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                         </div>
                     </div>
                 </div>
+
+                <!-- Add Row Button -->
+                <button type="button" id="btnAddRow" class="btn-add-row">
+                    <i class="fa-solid fa-plus"></i> Add Another Sub-TID Row
+                </button>
 
                 <!-- Real-time Summary Box -->
                 <div class="allocation-summary-box">
@@ -1234,7 +1348,6 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             const liveValidationMessage = document.getElementById("liveValidationMessage");
             const progressBarFill       = document.getElementById("progressBarFill");
             const progressPercentText   = document.getElementById("progressPercentText");
-            const rowCountBadge         = document.getElementById("rowCountBadge");
             const submitBtn             = document.querySelector(".btn-submit");
 
             // Pre-built machine options HTML for newly added rows
@@ -1282,7 +1395,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                     }
                 }
                 if (progressPercentText) {
-                    progressPercentText.textContent = Math.round(progressPct) + "% Completion";
+                    progressPercentText.textContent = Math.round(progressPct) + "%";
                 }
 
                 // Validation messaging & Submit button enabling
@@ -1303,11 +1416,6 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                     liveValidationMessage.className = "validation-msg mt-1 d-flex align-items-center gap-1 text-success";
                     liveValidationMessage.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + totalAllocated.toFixed(2) + ' KG will be generated in this card (' + netRemaining.toFixed(2) + ' KG will remain in program)';
                     if (submitBtn) submitBtn.disabled = false;
-                }
-
-                // Update row count badge
-                if (rowCountBadge) {
-                    rowCountBadge.textContent = rows.length + (rows.length === 1 ? " Row" : " Rows");
                 }
 
                 // Toggle visibility of Remove button on rows
@@ -1354,27 +1462,27 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                                 <i class="fa-solid fa-trash-can"></i> Remove
                             </button>
                         </div>
-                        <div class="row g-2 mb-2">
-                            <div class="col-6">
+                        <div class="allocation-grid">
+                            <div>
                                 <label class="form-label-custom required-label">Machine (M/C NO)</label>
                                 <select name="machine_no[]" class="form-select-custom row-mcno" required>
                                     ${mcOptionsHtml}
                                 </select>
                             </div>
-                            <div class="col-6">
-                                <label class="form-label-custom">Shift (Auto Real-time)</label>
+                            <div>
+                                <label class="form-label-custom">Shift</label>
                                 <input type="hidden" name="shift[]" value="${defaultShift}">
-                                <div class="form-input-custom bg-light fw-bold text-primary d-flex align-items-center justify-content-between" style="padding: 10px 14px !important;">
+                                <div class="form-input-custom bg-light fw-bold text-primary d-flex align-items-center justify-content-between">
                                     <span>Shift ${defaultShift}</span>
                                     <span class="badge bg-primary text-white" style="font-size: 10px; font-weight:700;">Auto Real-time</span>
                                 </div>
                             </div>
-                        </div>
-                        <div>
-                            <label class="form-label-custom required-label">Required Quantity (KG)</label>
-                            <div class="quantity-input-wrapper">
-                                <input type="number" step="0.01" min="0.01" max="${initialRemaining}" name="required_qty[]" class="form-input-custom row-qty" value="${defaultNewQty}" required placeholder="Enter quantity">
-                                <span class="input-group-addon-custom">KG</span>
+                            <div>
+                                <label class="form-label-custom required-label">Card Quantity (KG)</label>
+                                <div class="quantity-input-wrapper">
+                                    <input type="number" step="0.01" min="0.01" max="${initialRemaining}" name="required_qty[]" class="form-input-custom row-qty" value="${defaultNewQty}" required placeholder="Enter quantity">
+                                    <span class="input-group-addon-custom">KG</span>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -1417,3 +1525,4 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
 
 </body>
 </html>
+

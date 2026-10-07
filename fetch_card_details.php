@@ -25,7 +25,7 @@ try {
     $sql = "
         SELECT 
             kc.KCTID, kc.{$kc_prog_col} AS prog_id, kc.MCNO, kc.FDIA, kc.FGSM, 
-            kc.GGSM, kc.SL, kc.O_T, kc.BUYER, kc.CUSTOMER, kc.PO_NUMBER, 
+            kc.SL, kc.O_T, kc.BUYER, kc.CUSTOMER, kc.PO_NUMBER, 
             kc.SONO, kc.STYLE, kc.FTYPE, kc.YTYPE, kc.YCOUNT, kc.LOT, 
             kc.KNIT_M_DESCRIPTION, kc.QTY, kc.UNAME,
             kp.PROGRAM_NO

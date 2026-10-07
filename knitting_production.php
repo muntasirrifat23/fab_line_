@@ -907,7 +907,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
         'MCARD': 'MCARD',
         'ROLL': 'ROLL',
         'CUSTOMER': 'Customer',
-        'GGSM': 'Gray GSM',
         'FEEDER_PLAN': 'Feeder Plan',
         'SHIFT': 'Shift',
         'KNIT_MATERIAL_CODE': 'Knit Material Code',
@@ -1142,7 +1141,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           MCARD: m(row.MCARD),
           ROLL: m(row.ROLL),
           CUSTOMER: m(row.CUSTOMER),
-          GGSM: m(row.GGSM),
           FEEDER_PLAN: m(row.FEEDER_PLAN),
           SHIFT: m(row.SHIFT),
           KNIT_MATERIAL_CODE: m(row.KNIT_MATERIAL_CODE),
@@ -1190,7 +1188,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           <div class="data-row default-row knit-flow">
             ${['KNITCARD', 'BOOKING', 'SONO', 'BUYER', 'STYLE', 'COLOR', 'MCNO',
               'MC_DIA', 'CUSTOMER', 'SHIFT', 'YARN_TYPE', 'YARN_COUNT', 'FABRICS_TYPE', 'FINISH_GSM',
-              'FINISH_DIA', 'OPEN_TUBE', 'SL_VDQ', 'GGSM', 'FEEDER_PLAN', 'LOT_NO', 'YARN_BRAND'].map(field => `
+              'FINISH_DIA', 'OPEN_TUBE', 'SL_VDQ', 'FEEDER_PLAN', 'LOT_NO', 'YARN_BRAND'].map(field => `
               <div class="field-block">
                 <span class="field-label">${FIELD_LABELS[field] || field}</span>
                 <span class="field-value">${scannedInfo[field] || '-'}</span>
@@ -1540,7 +1538,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           color: scannedInfo.COLOR || "",
           sl_vdq: scannedInfo.SL_VDQ || "",
           customer: scannedInfo.CUSTOMER || "",
-          gray_gsm: scannedInfo.GGSM || "",
           feeder_plan: scannedInfo.FEEDER_PLAN || "",
           lot_no: scannedInfo.LOT_NO || "",
           yarn_brand: scannedInfo.YARN_BRAND || "",
@@ -1694,7 +1691,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           FINISH_DIA: info.FINISH_DIA,
           OPEN_TUBE: info.OPEN_TUBE,
           SL_VDQ: info.SL_VDQ,
-          GRAY_GSM: info.GGSM,
           FEEDER_PLAN: info.FEEDER_PLAN,
           LOT_NO: info.LOT_NO,
           YBRAND: info.YBRAND || info.YBRAND_NAME || '',
@@ -1970,7 +1966,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
         restartScanner();
       });
 
-      window.addEventListener('beforeunload', function() {
+      window.addEventListener('pagehide', function() {
         if (html5QrCode) {
           try {
             html5QrCode.stop();

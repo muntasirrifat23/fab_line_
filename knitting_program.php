@@ -1410,7 +1410,7 @@
                 $('#submitBtn').prop('disabled', true);
 
                 var urlParams = new URLSearchParams(window.location.search);
-                 var bookingParam = urlParams.get('booking');
+                 var bookingParam = urlParams.get('booking') || urlParams.get('po_number') || urlParams.get('po');
                  if (bookingParam) {
                      $('#bookingInput').val(bookingParam);
                      loadFormData(bookingParam);

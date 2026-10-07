@@ -286,8 +286,8 @@ if ($prod_stmt) {
             <tr>
                 <th>Finish Dia</th>
                 <td><?php echo htmlspecialchars($card['FDIA'] ?? ''); ?></td>
-                <th>Grey GSM / Finish GSM</th>
-                <td><?php echo htmlspecialchars(($card['GGSM'] ?? '') . ' / ' . ($card['FGSM'] ?? '')); ?></td>
+                <th>Finish GSM</th>
+                <td><?php echo htmlspecialchars($card['FGSM'] ?? ''); ?></td>
             </tr>
             <tr>
                 <th>S.L / VDQ</th>
