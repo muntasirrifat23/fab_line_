@@ -463,7 +463,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
     }
 
     .card {
-      max-width: 480px;
+      max-width: 520px;
       width: 100%;
       background: #ffffff;
       border-radius: 18px;
@@ -471,6 +471,73 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
       box-shadow: 0 10px 25px rgba(30, 60, 120, 0.12);
       border: 1px solid #dbe4ef;
       transition: max-width 0.3s ease;
+    }
+
+    .card.card-wide {
+      max-width: 1100px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 6px;
+      margin-bottom: 12px;
+    }
+
+    @media (max-width: 992px) {
+      .info-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 576px) {
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .info-item {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-left: 3px solid #2563eb;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 48px;
+    }
+
+    .info-item .info-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+      letter-spacing: 0.2px;
+    }
+
+    .info-item .info-val {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #0f172a;
+      word-break: break-word;
+    }
+
+    .qty-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 8px;
+      margin-bottom: 12px;
+    }
+
+    @media (max-width: 600px) {
+      .qty-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     .production-header {
@@ -918,6 +985,32 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         { id: 'CMARK', name: 'Crease Mark', weight: 4 }
       ];
 
+      function hideCameraScanner() {
+        const sc = document.getElementById('scannerContainer');
+        const cc = document.getElementById('cameraControls');
+        const mc = document.getElementById('mainCard');
+        if (sc) sc.style.display = 'none';
+        if (cc) cc.style.display = 'none';
+        if (mc) mc.classList.add('card-wide');
+        if (html5QrCode && isScanning) {
+          try {
+            html5QrCode.stop().then(() => { isScanning = false; }).catch(() => {});
+          } catch(e) {}
+        }
+      }
+
+      function showCameraScanner() {
+        const sc = document.getElementById('scannerContainer');
+        const cc = document.getElementById('cameraControls');
+        const mc = document.getElementById('mainCard');
+        if (sc) sc.style.display = 'block';
+        if (cc) cc.style.display = 'flex';
+        if (mc) mc.classList.remove('card-wide');
+        if (!isScanning) {
+          startCameraScanner();
+        }
+      }
+
       function initView() {
         if (!isOperatorActive) {
           renderStep1Operator();
@@ -928,6 +1021,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
 
       // STEP 1: QC OPERATOR QR SCAN / AUTHENTICATION
       function renderStep1Operator() {
+        showCameraScanner();
         actionContainer.innerHTML = '';
         let html = `
           <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px; padding:10px; margin-bottom:10px; text-align:center; color:#1e3a8a;">
@@ -1033,6 +1127,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
 
       // STEP 2: ROLL SCAN & INSPECTION FORM
       function renderStep2RollScan() {
+        showCameraScanner();
         let html = `
           <div class="manual-entry">
             <input type="text" id="rollInput" placeholder="Roll QR / Barcode (e.g. 300099903)" autocomplete="off" autofocus>
@@ -1075,55 +1170,108 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
           });
       }
 
-      // RENDER FULL INSPECTION FORM MATRIX (knitting_production Style)
+      // RENDER FULL INSPECTION FORM MATRIX (Wide 4-Row Grid Layout with Auto-Hidden Camera)
       function renderInspectionForm(d) {
         selectedFaults = {};
+        hideCameraScanner();
         
         let html = `
-          <div class="data-row header-row"><span class="label">Production Roll Information</span><span class="value">Production #${d.production_id}</span></div>
-          <div class="data-row"><span class="label">Roll Number:</span><span class="value" style="color:#2563eb; font-weight:800;">${d.suggested_roll}</span></div>
-          <div class="data-row"><span class="label">Production Date / Quantity:</span><span class="value">${d.production_date || 'N/A'} / ${d.production_qty || 0} KG</span></div>
-          <div class="data-row"><span class="label">PO Number:</span><span class="value">${d.booking || 'N/A'}</span></div>
-          <div class="data-row"><span class="label">SO Number:</span><span class="value">${d.sono || 'N/A'}</span></div>
-          <div class="data-row"><span class="label">Buyer / Style:</span><span class="value">${d.buyer} (${d.style})</span></div>
-          <div class="data-row"><span class="label">Color / Customer:</span><span class="value">${d.color} / ${d.customer}</span></div>
-          <div class="data-row"><span class="label">Machine / Dia / Shift:</span><span class="value">${d.mcno} / ${d.mc_dia || 'N/A'} / ${d.shift}</span></div>
-          <div class="data-row"><span class="label">Fabric / GSM:</span><span class="value">${d.fabrics_type} (${d.finish_gsm} GSM)</span></div>
-          <div class="data-row"><span class="label">Finish Diameter:</span><span class="value">${d.finish_dia || 'N/A'}</span></div>
-          <div class="data-row"><span class="label">Yarn Type / Count:</span><span class="value">${d.yarn_type || 'N/A'} / ${d.yarn_count || 'N/A'}</span></div>
-          <div class="data-row"><span class="label">Yarn Brand:</span><span class="value" style="color:#0f7a6f; font-weight:700;">${d.yarn_brand || 'N/A'}</span></div>
-          <div class="data-row"><span class="label">Open Tube / SL-VDQ:</span><span class="value">${d.open_tube || 'N/A'} / ${d.sl_vdq || 'N/A'}</span></div>
-          <div class="data-row"><span class="label">Lot No / Feeder Plan:</span><span class="value">${d.lot_no || 'N/A'} / ${d.feeder_plan || 'N/A'}</span></div>
-          <div class="data-row"><span class="label">Material Code / Desc:</span><span class="value">${d.material_code || 'N/A'} / ${d.material_desc || 'N/A'}</span></div>
+          <div class="data-row header-row" style="margin-bottom:8px;"><span class="label">Production Roll Information</span><span class="value">Production #${d.production_id}</span></div>
           
-          <div style="margin-top:8px; font-weight:800; font-size:0.78rem; color:#1d4ed8;">
-            <i class="fa-solid fa-weight-hanging me-1"></i> MAIN QTY (KG):
-          </div>
-          <div style="margin-top:2px;">
-            <input type="number" step="0.01" min="0" id="mainQtyInput" class="field-input"
-              value="${parseFloat(d.suggested_weight).toFixed(2)}"
-              style="font-weight:700; font-size:0.95rem; text-align:center;"
-              oninput="window.calcUpdateQty()">
-          </div>
+          <div class="info-grid">
+            <div class="info-item" style="border-left-color:#2563eb; background:#eff6ff;">
+              <div class="info-label">Roll Number</div>
+              <div class="info-val" style="color:#2563eb; font-size:1rem; font-weight:800;">${d.suggested_roll}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Production Date</div>
+              <div class="info-val">${d.production_date || 'N/A'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Production Qty</div>
+              <div class="info-val">${d.production_qty || 0} KG</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">PO Number (Booking)</div>
+              <div class="info-val">${d.booking || 'N/A'}</div>
+            </div>
 
-          <div style="margin-top:8px; font-weight:800; font-size:0.78rem; color:#b91c1c;">
-            <i class="fa-solid fa-ban me-1"></i> REJECT QTY (KG):
-          </div>
-          <div style="margin-top:2px;">
-            <input type="number" step="0.01" min="0" id="rejectQtyInput" class="field-input"
-              value="0" placeholder="0.00"
-              style="font-weight:700; font-size:0.95rem; text-align:center; border-color:#fca5a5;"
-              oninput="window.calcUpdateQty()">
-          </div>
+            <div class="info-item">
+              <div class="info-label">SO Number</div>
+              <div class="info-val">${d.sono || 'N/A'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Buyer / Style</div>
+              <div class="info-val">${d.buyer} (${d.style})</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Color / Customer</div>
+              <div class="info-val">${d.color} / ${d.customer}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Machine / Dia / Shift</div>
+              <div class="info-val">${d.mcno} / ${d.mc_dia || 'N/A'} / ${d.shift}</div>
+            </div>
 
-          <div style="margin-top:8px; font-weight:800; font-size:0.78rem; color:#166534;">
-            <i class="fa-solid fa-circle-check me-1"></i> UPDATE QTY / NET GOOD QTY (KG):
+            <div class="info-item">
+              <div class="info-label">Fabric & GSM</div>
+              <div class="info-val">${d.fabrics_type} (${d.finish_gsm} GSM)</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Finish Dia</div>
+              <div class="info-val">${d.finish_dia || 'N/A'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Yarn Type / Count</div>
+              <div class="info-val">${d.yarn_type || 'N/A'} / ${d.yarn_count || 'N/A'}</div>
+            </div>
+            <div class="info-item" style="border-left-color:#0f7a6f;">
+              <div class="info-label">Yarn Brand</div>
+              <div class="info-val" style="color:#0f7a6f;">${d.yarn_brand || 'N/A'}</div>
+            </div>
+
+            <div class="info-item">
+              <div class="info-label">Open Tube / SL-VDQ</div>
+              <div class="info-val">${d.open_tube || 'N/A'} / ${d.sl_vdq || 'N/A'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Lot No / Feeder Plan</div>
+              <div class="info-val">${d.lot_no || 'N/A'} / ${d.feeder_plan || 'N/A'}</div>
+            </div>
+            <div class="info-item" style="grid-column: span 2;">
+              <div class="info-label">Material Code / Desc</div>
+              <div class="info-val">${d.material_code || 'N/A'} - ${d.material_desc || 'N/A'}</div>
+            </div>
           </div>
-          <div style="margin-top:2px;">
-            <input type="number" step="0.01" id="updateQtyInput" class="field-input"
-              value="${parseFloat(d.suggested_weight).toFixed(2)}"
-              readonly tabindex="-1"
-              style="font-weight:800; font-size:0.95rem; text-align:center; background:#f0fdf4; border-color:#86efac; color:#166534; cursor:not-allowed;">
+          
+          <div class="qty-grid">
+            <div>
+              <div style="font-weight:800; font-size:0.78rem; color:#1d4ed8; margin-bottom:4px;">
+                <i class="fa-solid fa-weight-hanging me-1"></i> MAIN QTY (KG):
+              </div>
+              <input type="number" step="0.01" min="0" id="mainQtyInput" class="field-input"
+                value="${parseFloat(d.suggested_weight).toFixed(2)}"
+                style="font-weight:700; font-size:0.95rem; text-align:center;"
+                oninput="window.calcUpdateQty()">
+            </div>
+            <div>
+              <div style="font-weight:800; font-size:0.78rem; color:#b91c1c; margin-bottom:4px;">
+                <i class="fa-solid fa-ban me-1"></i> REJECT QTY (KG):
+              </div>
+              <input type="number" step="0.01" min="0" id="rejectQtyInput" class="field-input"
+                value="0" placeholder="0.00"
+                style="font-weight:700; font-size:0.95rem; text-align:center; border-color:#fca5a5;"
+                oninput="window.calcUpdateQty()">
+            </div>
+            <div>
+              <div style="font-weight:800; font-size:0.78rem; color:#166534; margin-bottom:4px;">
+                <i class="fa-solid fa-circle-check me-1"></i> NET GOOD QTY (KG):
+              </div>
+              <input type="number" step="0.01" id="updateQtyInput" class="field-input"
+                value="${parseFloat(d.suggested_weight).toFixed(2)}"
+                readonly tabindex="-1"
+                style="font-weight:800; font-size:0.95rem; text-align:center; background:#f0fdf4; border-color:#86efac; color:#166534; cursor:not-allowed;">
+            </div>
           </div>
 
           <div style="margin-top:10px; font-weight:800; font-size:0.78rem; color:#334155;">
@@ -1143,13 +1291,15 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         html += `</div>`;
 
         html += `
-          <div class="data-row" style="background:#eff6ff; border-left-color:#2563eb; margin-top:6px;">
-            <span class="label">Total Points:</span>
-            <span class="value" id="calc_points" style="font-size:0.95rem; color:#2563eb; font-weight:800;">0 pts</span>
-          </div>
-          <div class="data-row" style="background:#f0fdf4; border-left-color:#10b981;">
-            <span class="label">QC Grade / Status:</span>
-            <span class="value" id="calc_grade" style="font-size:0.9rem; color:#166534; font-weight:800;">Grade A (Passed)</span>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:8px;">
+            <div class="data-row" style="background:#eff6ff; border-left-color:#2563eb; margin:0;">
+              <span class="label">Total Points:</span>
+              <span class="value" id="calc_points" style="font-size:0.95rem; color:#2563eb; font-weight:800;">0 pts</span>
+            </div>
+            <div class="data-row" style="background:#f0fdf4; border-left-color:#10b981; margin:0;">
+              <span class="label">QC Grade / Status:</span>
+              <span class="value" id="calc_grade" style="font-size:0.9rem; color:#166534; font-weight:800;">Grade A (Passed)</span>
+            </div>
           </div>
         `;
 
@@ -1161,7 +1311,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
               <i class="fa-solid fa-floppy-disk me-1"></i> Save Inspection Record
             </button>
             <button class="btn-action cancel" onclick="window.location.reload()">
-              <i class="fa-solid fa-rotate-left me-1"></i> Reset
+              <i class="fa-solid fa-rotate-left me-1"></i> Reset / Scan New Roll
             </button>
           </div>
         `;
