@@ -445,6 +445,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
   <title>Knitting | Fabric Inspection</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -920,12 +921,39 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
       </div>
 
       <?php if (!empty($msg)): ?>
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            if (typeof Swal !== 'undefined') {
+              Swal.fire({
+                icon: 'success',
+                title: 'Inspection Completed Successfully!',
+                text: <?php echo json_encode($msg); ?>,
+                confirmButtonColor: '#10b981',
+                confirmButtonText: '<i class="fa-solid fa-check me-1"></i> OK / Next Scan',
+                timer: 5000,
+                timerProgressBar: true
+              });
+            }
+          });
+        </script>
         <div style="background:#142f1f; border:1px solid #166534; color:#c7f6d1; padding:10px 14px; border-radius:12px; margin-bottom:12px; font-weight:600; font-size:0.88rem;">
           <i class="fa-solid fa-circle-check me-1"></i> <?php echo htmlspecialchars($msg); ?>
         </div>
       <?php endif; ?>
 
       <?php if (!empty($error)): ?>
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            if (typeof Swal !== 'undefined') {
+              Swal.fire({
+                icon: 'error',
+                title: 'Inspection Alert',
+                text: <?php echo json_encode($error); ?>,
+                confirmButtonColor: '#ef4444'
+              });
+            }
+          });
+        </script>
         <div style="background:#3f1d1d; border:1px solid #b91c1c; color:#fee2e2; padding:10px 14px; border-radius:12px; margin-bottom:12px; font-weight:600; font-size:0.88rem;">
           <i class="fa-solid fa-triangle-exclamation me-1"></i> <?php echo htmlspecialchars($error); ?>
         </div>
