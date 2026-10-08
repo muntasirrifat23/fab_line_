@@ -97,7 +97,6 @@ $p_style            = !empty($prog['STYLE']) ? $prog['STYLE'] : ($input['STYLE']
 $p_mcno             = !empty($prog['MCDIA']) ? $prog['MCDIA'] : ($input['MCNO'] ?? ($input['MCDIA'] ?? ''));
 $p_finish_dia       = !empty($prog['FDIA']) ? $prog['FDIA'] : ($input['FINISH_DIA'] ?? '');
 $p_finish_gsm       = !empty($prog['FGSM']) ? $prog['FGSM'] : ($input['FINISH_GSM'] ?? '');
-$p_grey_gsm         = $p_finish_gsm;
 $p_open_tube        = !empty($prog['O_T']) ? $prog['O_T'] : ($input['OPEN_TUBE'] ?? 'O');
 $p_fabrics          = !empty($prog['FTYPE']) ? $prog['FTYPE'] : ($input['FABRICS_TYPE'] ?? '');
 $p_yarn_type        = !empty($prog['YTYPE']) ? $prog['YTYPE'] : ($input['YARN_TYPE'] ?? '');
@@ -225,17 +224,16 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                 $ins = $db->prepare("
                     INSERT INTO knit_card (
                         {$kc_prog_col}, KNITCARD, MCNO, QTY, PO_NUMBER, SONO, BUYER, STYLE, COLOR,
-                        FGSM, FDIA, O_T, FTYPE, YTYPE, CUSTOMER, YCOUNT, SL, MCDIA, GGSM,
+                        FGSM, FDIA, O_T, FTYPE, YTYPE, CUSTOMER, YCOUNT, SL, MCDIA,
                         FEEDER_PLAN, LOT, SHIFT, KNIT_MATERIAL_CODE, KNIT_M_DESCRIPTION, UNAME,
                         YBRAND
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
 
                 if (!$ins) {
                     throw new Exception("Failed to prepare insert query: " . $db->error);
                 }
 
-                $p_ggsm    = !empty($input['GGSM']) ? $input['GGSM'] : $p_finish_gsm;
                 $p_fplan   = !empty($prog['FEEDER_PLAN']) ? $prog['FEEDER_PLAN'] : ($input['FEEDER_PLAN'] ?? '');
                 $p_uname   = $prepared_by;
 
@@ -249,7 +247,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                     $r_qty   = round($row_item['qty']);
 
                     $ins->bind_param(
-                        "sisdssssssssssssssssssssss",
+                        "sisdsssssssssssssssssssss",
                         $p_prog_no,
                         $current_knitcard,
                         $r_mcno,
@@ -268,7 +266,6 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                         $p_yarn_count,
                         $p_sl_vdq,
                         $p_mcdia,
-                        $p_ggsm,
                         $p_fplan,
                         $p_lot_no,
                         $r_shift,

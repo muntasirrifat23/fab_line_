@@ -319,14 +319,14 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                     INSERT INTO knitting_inspection (
                         `BUDAT`, `ROLL`, `OQTY`, `RQTY`, `UQTY`, `PO_NUMBER`, `QTY`, `SONO`, `BUYER`, `STYLE`, `COLOR`,
                         `MCNO`, `MC_DIA`, `CUSTOMER`, `SHIFT`, `YTYPE`, `YCOUNT`, `YBRAND`, `FTYPE`, `FGSM`, `FDIA`, `O_T`,
-                        `SL`, `GGSM`, `FPLAN`, `LOTNO`, `MATERIAL_CODE`, `M_DES`,
+                        `SL`, `FPLAN`, `LOTNO`, `MATERIAL_CODE`, `M_DES`,
                         `TT`, `PATTA`, `SLUB`, `YC_SPOT`, `OILSPOT`, `FF`, `SEEDS`, `MSTITCH`, `SINKERMARK`, `NEEDLEMARK`,
                         `LYCOUT`, `OILLINE`, `HOLE`, `LOOP`, `SETUP`, `CMARK`, `TPOINT`,
                         `QC_GRADE`, `QC_STATUS`, `UNAME`, `UID`
                     ) VALUES (
                         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                        ?, ?, ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?,
                         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                         ?, ?, ?, ?, ?, ?, ?,
                         ?, ?, ?, ?
@@ -358,7 +358,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                 $fdia        = strval($card_meta['FINISH_DIA'] ?? '');
                 $o_t         = strval($card_meta['OPEN_TUBE'] ?? '');
                 $sl          = floatval($card_meta['SL_VDQ'] ?? 0.00);
-                $ggsm        = '';
                 $fplan       = strval($card_meta['FEEDER_PLAN'] ?? '');
                 $lotno       = strval($card_meta['LOT_NO'] ?? '');
                 $mat_code    = strval($card_meta['KNIT_MATERIAL_CODE'] ?? '');
@@ -386,9 +385,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                 $uid          = strval($_SESSION['active_operator']['id']);
 
                 // BUDAT(s), ROLL(s), OQTY(d), RQTY(d), UQTY(d),
-                // PO_NUMBER..O_T = 17 strings(s), SL(d), GGSM..M_DES = 5 strings(s),
+                // PO_NUMBER..O_T = 17 strings(s), SL(d), FPLAN..M_DES = 4 strings(s),
                 // defects 17 strings(s), QC_GRADE..UID = 4 strings(s)
-                $types = 'ssddd' . str_repeat('s', 17) . 'd' . str_repeat('s', 5)
+                $types = 'ssddd' . str_repeat('s', 17) . 'd' . str_repeat('s', 4)
                        . str_repeat('s', 17) . str_repeat('s', 4);
 
                 $stmt->bind_param(
@@ -396,7 +395,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                     $budat, $roll_no, $v_main_qty, $v_reject, $v_update,
                     $po_number, $qty, $sono, $buyer, $style, $color,
                     $mcno, $mc_dia, $supplier, $shift, $ytype, $ycount, $ybrand, $ftype, $fgsm, $fdia, $o_t,
-                    $sl, $ggsm, $fplan, $lotno, $mat_code, $m_des,
+                    $sl, $fplan, $lotno, $mat_code, $m_des,
                     $v_tt, $v_patta, $v_slub, $v_yc_spot, $v_oilspot, $v_ff, $v_seeds, $v_mstitch, $v_sinkermark, $v_needlemark,
                     $v_lycout, $v_oilline, $v_hole, $v_loop, $v_setup, $v_cmark, $v_tpoint,
                     $qc_grade, $qc_status, $uname, $uid
