@@ -133,7 +133,7 @@ $sql = "INSERT INTO knitting_store
         (BUDAT, RACKNO, RACKLOCATION, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR, MCNO, MCDIA,
          CUSTOMER, YTYPE, YCOUNT, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
          TPOINT, MCODE, MDESCRIPTION, UNAME, UID)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 try {
     $stmt = mysqli_prepare($db, $sql);
@@ -143,7 +143,7 @@ try {
 
     mysqli_stmt_bind_param(
         $stmt,
-        "sssssssssssssssssssssssssssss",
+        "ssssssssssssssssssssssssssss",
         $budat, $rackNo, $rackLocation, $roll, $po_number, $qty, $sono, $shift, $buyer, $style, $color,
         $mcno, $mcdia, $customer, $ytype, $ycount, $o_t, $sl, $ftype, $fgsm, $fdia,
         $fplan, $lotno, $tpoint, $mcode, $mdesc, $uname, $uid

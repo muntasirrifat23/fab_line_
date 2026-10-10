@@ -800,13 +800,13 @@
         O_T: 'OPEN/TUBE',
         SL: 'SL/VDQ',
         FPLAN: 'FEEDER PLAN',
+        TPOINT: 'T.POINT',
         LOTNO: 'LOT NO',
         MATERIAL_CODE: 'MATERIAL CODE',
         M_DES: 'MATERIAL DESC',
         RACK: 'RACK',
         RACKNO: 'RACK NO',
-        RACKLOCATION: 'RACK LOCATION',
-        TPOINT: 'T.POINT'
+        RACKLOCATION: 'RACK LOCATION'
       };
 
       let scannedInfo = null;
@@ -887,7 +887,7 @@
 
         let html = `
           <div class="data-row header-row" style="border-left-color:#4fc3f7;">
-            <span class="label">âœ“ ROLL Loaded <span class="scanned-badge">ROLL NO</span></span>
+            <span class="label"> ROLL Loaded <span class="scanned-badge">ROLL NO</span></span>
             <span class="value">${new Date().toLocaleTimeString()}</span>
           </div>
         `;
@@ -896,8 +896,7 @@
         html += buildFieldRow(['SHIFT', 'BUYER', 'STYLE', 'COLOR']);
         html += buildFieldRow(['MCNO', 'MC_DIA', 'CUSTOMER', 'YTYPE']);
         html += buildFieldRow(['YCOUNT', 'O_T', 'SL', 'FTYPE']);
-        html += buildFieldRow(['FGSM', 'FDIA', 'FPLAN']);
-        html += buildFieldRow(['LOTNO', 'TPOINT', 'MATERIAL_CODE', 'M_DES']);
+        html += buildFieldRow(['FGSM', 'FDIA', 'FPLAN', 'LOTNO']);
 
         html += `
           <button class="rescan-btn" onclick="window.location.reload();">
@@ -1233,7 +1232,7 @@
         hasLoadedData = false;
         resultContainer.innerHTML = `
           <div class="data-row header-row" style="border-left-color:#f59e0b; background:#c8e2dd;">
-            <span class="label" style="color:#8a4a00; font-weight:800;">ðŸ“Œ ${msg || 'No data'}</span>
+            <span class="label" style="color:#8a4a00; font-weight:800;"> ${msg || 'No data'}</span>
             <span class="value"></span>
           </div>
           <div class="data-row" style="background:#d6e9e5; border-left-color:#6b7280; flex-wrap:wrap;">
@@ -1283,7 +1282,7 @@
           .then(function(resp) {
             scannedInfo.RACKNO = rackno.padStart(2, '0');
             scannedInfo.RACKLOCATION = racklocation;
-            showMessage('âœ… ' + (resp.message || ('Saved - Rack No: ' + rackno + ', Location: ' + racklocation)) + '<br><small>Page will reload in 2 seconds...</small>', 'success');
+            showMessage((resp.message || 'Saved - Rack No: ' + rackno + ', Location: ' + racklocation) + '<br><small>Page will reload in 2 seconds...</small>', 'success');
             saveRackBtn.innerHTML = '<i class="fas fa-save"></i> Save Rack';
             setTimeout(function() {
               window.location.reload();
@@ -1295,7 +1294,7 @@
               msg = 'Save failed. Please try again.';
             }
             if (!(err && err.messager_exist)) {
-              msg = 'âŒ ' + msg;
+              msg = msg;
             }
             showMessage(msg, 'error');
             saveRackBtn.disabled = false;
