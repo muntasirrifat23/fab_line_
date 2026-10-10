@@ -122,6 +122,32 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
     $fTPOINT  = mysqli_real_escape_string($db, $orig['TPOINT']);
     $fMCODE   = mysqli_real_escape_string($db, $orig['MCODE']);
     $fMDES    = mysqli_real_escape_string($db, $orig['MDESCRIPTION']);
+    // Copy user identity from the original row; if it is missing, fall back to
+    // the currently logged-in user so split rows never end up blank/NULL.
+    $srcUNAME = isset($orig['UNAME']) ? trim((string) $orig['UNAME']) : '';
+    $srcUID   = isset($orig['UID']) ? trim((string) $orig['UID']) : '';
+    if ($srcUNAME === '' || $srcUID === '') {
+        $sessUser = isset($_SESSION['username']) ? trim((string) $_SESSION['username']) : '';
+        if ($sessUser !== '') {
+            $esc  = mysqli_real_escape_string($db, $sessUser);
+            $uRes = mysqli_query($db, "SELECT USER_ID, USER_NAME FROM users WHERE USER_ID = '$esc' OR USER_NAME = '$esc' LIMIT 1");
+            if ($uRes && ($uRow = mysqli_fetch_assoc($uRes))) {
+                if ($srcUNAME === '') $srcUNAME = $uRow['USER_NAME'];
+                if ($srcUID === '')   $srcUID   = $uRow['USER_ID'];
+            } else {
+                $oRes = mysqli_query($db, "SELECT OPERATOR_ID, OPERATOR_NAME FROM knitting_operator WHERE OPERATOR_ID = '$esc' LIMIT 1");
+                if ($oRes && ($oRow = mysqli_fetch_assoc($oRes))) {
+                    if ($srcUNAME === '') $srcUNAME = $oRow['OPERATOR_NAME'];
+                    if ($srcUID === '')   $srcUID   = $oRow['OPERATOR_ID'];
+                } else {
+                    if ($srcUNAME === '') $srcUNAME = $sessUser;
+                    if ($srcUID === '')   $srcUID   = $sessUser;
+                }
+            }
+        }
+    }
+    $fUNAME = mysqli_real_escape_string($db, $srcUNAME);
+    $fUID   = mysqli_real_escape_string($db, $srcUID);
 
     mysqli_begin_transaction($db);
 
@@ -131,11 +157,11 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
     $i2 = "INSERT INTO knitting_store
             (BUDAT, RACKNO, RACKLOCATION, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
              MCNO, MCDIA, CUSTOMER, YTYPE, YCOUNT, O_T, SL, FTYPE, FGSM, FDIA,
-             FEEDER_PLAN, LOT_NO, TPOINT, MCODE, MDESCRIPTION)
+             FEEDER_PLAN, LOT_NO, TPOINT, MCODE, MDESCRIPTION, UNAME, UID)
            VALUES
             ('$fBUDAT', '$fRACKNO', '$fRACKLOC', '$newRollB', '$fPO', '$remainB', '$fSONO', '$fSHIFT', '$fBUYER', '$fSTYLE', '$fCOLOR',
              '$fMCNO', '$fMCDIA', '$fCUST', '$fYTYPE', '$fYCOUNT', '$fOT', '$fSL', '$fFTYPE', '$fFGSM', '$fFDIA',
-             '$fFEEDER', '$fLOT', '$fTPOINT', '$fMCODE', '$fMDES')";
+             '$fFEEDER', '$fLOT', '$fTPOINT', '$fMCODE', '$fMDES', '$fUNAME', '$fUID')";
 
     $ok1 = mysqli_query($db, $u1);
     $ok2 = $ok1 ? mysqli_query($db, $i2) : false;
