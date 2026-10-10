@@ -112,6 +112,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
     $fCUST    = mysqli_real_escape_string($db, $orig['CUSTOMER']);
     $fYTYPE   = mysqli_real_escape_string($db, $orig['YTYPE']);
     $fYCOUNT  = mysqli_real_escape_string($db, $orig['YCOUNT']);
+    $fYBRAND  = mysqli_real_escape_string($db, isset($orig['YBRAND']) ? $orig['YBRAND'] : '');
     $fOT      = mysqli_real_escape_string($db, $orig['O_T']);
     $fSL      = mysqli_real_escape_string($db, $orig['SL']);
     $fFTYPE   = mysqli_real_escape_string($db, $orig['FTYPE']);
@@ -156,11 +157,11 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
     // New store row becomes base-B with remaining qty
     $i2 = "INSERT INTO knitting_store
             (BUDAT, RACKNO, RACKLOCATION, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
-             MCNO, MCDIA, CUSTOMER, YTYPE, YCOUNT, O_T, SL, FTYPE, FGSM, FDIA,
+             MCNO, MCDIA, CUSTOMER, YTYPE, YCOUNT, YBRAND, O_T, SL, FTYPE, FGSM, FDIA,
              FEEDER_PLAN, LOT_NO, TPOINT, MCODE, MDESCRIPTION, UNAME, UID)
            VALUES
             ('$fBUDAT', '$fRACKNO', '$fRACKLOC', '$newRollB', '$fPO', '$remainB', '$fSONO', '$fSHIFT', '$fBUYER', '$fSTYLE', '$fCOLOR',
-             '$fMCNO', '$fMCDIA', '$fCUST', '$fYTYPE', '$fYCOUNT', '$fOT', '$fSL', '$fFTYPE', '$fFGSM', '$fFDIA',
+             '$fMCNO', '$fMCDIA', '$fCUST', '$fYTYPE', '$fYCOUNT', '$fYBRAND', '$fOT', '$fSL', '$fFTYPE', '$fFGSM', '$fFDIA',
              '$fFEEDER', '$fLOT', '$fTPOINT', '$fMCODE', '$fMDES', '$fUNAME', '$fUID')";
 
     $ok1 = mysqli_query($db, $u1);
@@ -330,7 +331,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
                 infoItem('Machine No', d.MCNO) +
                 infoItem('Machine Dia', d.MCDIA) +
                 infoItem('Customer', d.CUSTOMER) +
-                infoItem('Shift', d.SHIFT) +
+                infoItem('YARN BRAND', d.YBRAND) +
                 infoItem('Yarn Type', d.YTYPE) +
                 infoItem('Yarn Count', d.YCOUNT) +
                 infoItem('Fabrics Type', d.FTYPE) +

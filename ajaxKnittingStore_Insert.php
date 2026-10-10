@@ -85,6 +85,7 @@ $mcdia      = val($input, 'MC_DIA');
 $customer   = val($input, 'CUSTOMER');
 $ytype      = val($input, 'YTYPE');
 $ycount     = val($input, 'YCOUNT');
+$ybrand     = val($input, 'YBRAND');
 $o_t        = val($input, 'O_T');
 $sl         = val($input, 'SL');
 $ftype      = val($input, 'FTYPE');
@@ -109,6 +110,9 @@ if (!in_array('RACKNO', $existingColumns, true)) {
 if (!in_array('RACKLOCATION', $existingColumns, true)) {
     mysqli_query($db, "ALTER TABLE knitting_store ADD COLUMN RACKLOCATION VARCHAR(100) DEFAULT NULL");
 }
+if (!in_array('YBRAND', $existingColumns, true)) {
+    mysqli_query($db, "ALTER TABLE knitting_store ADD COLUMN YBRAND VARCHAR(100) DEFAULT NULL AFTER YCOUNT");
+}
 
 $curUser = isset($_SESSION['username']) ? trim($_SESSION['username']) : '';
 $uname   = $curUser;
@@ -131,9 +135,9 @@ if ($curUser !== '') {
 
 $sql = "INSERT INTO knitting_store
         (BUDAT, RACKNO, RACKLOCATION, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR, MCNO, MCDIA,
-         CUSTOMER, YTYPE, YCOUNT, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
+         CUSTOMER, YTYPE, YCOUNT, YBRAND, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
          TPOINT, MCODE, MDESCRIPTION, UNAME, UID)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 try {
     $stmt = mysqli_prepare($db, $sql);
@@ -143,9 +147,9 @@ try {
 
     mysqli_stmt_bind_param(
         $stmt,
-        "ssssssssssssssssssssssssssss",
+        "sssssssssssssssssssssssssssss",
         $budat, $rackNo, $rackLocation, $roll, $po_number, $qty, $sono, $shift, $buyer, $style, $color,
-        $mcno, $mcdia, $customer, $ytype, $ycount, $o_t, $sl, $ftype, $fgsm, $fdia,
+        $mcno, $mcdia, $customer, $ytype, $ycount, $ybrand, $o_t, $sl, $ftype, $fgsm, $fdia,
         $fplan, $lotno, $tpoint, $mcode, $mdesc, $uname, $uid
     );
 

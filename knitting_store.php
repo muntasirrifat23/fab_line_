@@ -794,6 +794,7 @@
         SHIFT: 'SHIFT',
         YTYPE: 'YARN TYPE',
         YCOUNT: 'YARN COUNT',
+        YBRAND: 'YARN BRAND',
         FTYPE: 'FABRICS TYPE',
         FGSM: 'FINISH GSM',
         FDIA: 'FINISH DIA',
@@ -893,7 +894,7 @@
         `;
 
         html += buildFieldRow(['ROLL', 'PO_NUMBER', 'UQTY', 'SONO']);
-        html += buildFieldRow(['SHIFT', 'BUYER', 'STYLE', 'COLOR']);
+        html += buildFieldRow(['YBRAND', 'BUYER', 'STYLE', 'COLOR']);
         html += buildFieldRow(['MCNO', 'MC_DIA', 'CUSTOMER', 'YTYPE']);
         html += buildFieldRow(['YCOUNT', 'O_T', 'SL', 'FTYPE']);
         html += buildFieldRow(['FGSM', 'FDIA', 'FPLAN', 'LOTNO']);
