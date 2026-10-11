@@ -83,9 +83,9 @@ if (empty($initialMasterRacks)) {
     }
 
     .btn-nav-dashboard {
-      background: rgba(255, 255, 255, 0.08);
-      color: #f8fafc;
-      border: 1.5px solid rgba(255, 255, 255, 0.2);
+      background: #000000;
+      color: #ffffff;
+      border: 1.5px solid #000000;
       border-radius: 12px;
       padding: 11px 22px;
       font-weight: 700;
@@ -95,16 +95,15 @@ if (empty($initialMasterRacks)) {
       display: inline-flex;
       align-items: center;
       gap: 10px;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
     }
 
     .btn-nav-dashboard:hover {
       background: #ffffff;
-      color: #0f172a;
-      border-color: #ffffff;
+      color: #000000;
+      border-color: #000000;
       transform: translateY(-2px);
-      box-shadow: 0 6px 18px rgba(255, 255, 255, 0.2);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
     }
 
     .btn-nav-dashboard i {
@@ -1296,7 +1295,7 @@ if (empty($initialMasterRacks)) {
       <div class="nav-left">
         <a href="initialPage.php" class="btn-nav-dashboard" title="Back to Dashboard">
           <i class="fa-solid fa-arrow-left"></i>
-          <span>Dashboard</span>
+          <span>Back to Dashboard</span>
         </a>
       </div>
 

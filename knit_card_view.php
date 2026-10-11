@@ -147,6 +147,19 @@ if (!empty($card['UNAME'])) {
             gap: 6px;
         }
 
+        .btn-back-dir {
+            background-color: #000000;
+            color: #ffffff;
+            border: 1.5px solid #000000;
+            transition: all 0.2s ease;
+        }
+
+        .btn-back-dir:hover {
+            background-color: #ffffff;
+            border-color: #000000;
+            color: #000000;
+        }
+
         /* ═══ HALF A4 CARD (A5 Dimensions: ~210mm x 148mm / ~660px x 430px) ═══ */
         .a4-half-card {
             width: 660px;
@@ -326,8 +339,8 @@ if (!empty($card['UNAME'])) {
 
     <!-- TOP ACTION BAR (NO-PRINT) -->
     <div class="action-bar-top no-print">
-        <a href="knit_card.php" class="btn btn-tag btn-outline-secondary">
-            <i class="fa-solid fa-arrow-left"></i> Directory
+        <a href="knit_card.php" class="btn btn-tag btn-back-dir">
+            <i class="fa-solid fa-arrow-left"></i> Back to Directory
         </a>
         <div class="d-flex gap-1">
             <button type="button" onclick="downloadCard()" class="btn btn-tag btn-primary">

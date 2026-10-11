@@ -280,7 +280,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
         $qc_grade     = trim($_POST['QC_GRADE'] ?? '');
         $qc_status    = trim($_POST['QC_STATUS'] ?? '');
 
-        if (empty($qc_grade)) {
+        if ($defect_lycra_out === 1) {
+            $qc_grade  = 'Reject';
+            $qc_status = 'Failed';
+        } elseif (empty($qc_grade)) {
             if ($total_points <= 10) {
                 $qc_grade = 'Grade A';
             } elseif ($total_points <= 25) {
@@ -1013,6 +1016,67 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         { id: 'CMARK', name: 'Crease Mark', weight: 4 }
       ];
 
+      function releaseCameraHardware() {
+        try {
+          const videos = document.querySelectorAll('#qr-reader video, video');
+          videos.forEach(vid => {
+            if (vid && vid.srcObject) {
+              const stream = vid.srcObject;
+              if (stream && typeof stream.getTracks === 'function') {
+                stream.getTracks().forEach(track => {
+                  try {
+                    track.stop();
+                  } catch (e) {}
+                });
+              }
+              vid.srcObject = null;
+            }
+          });
+        } catch (e) {
+          console.warn('Error releasing camera hardware tracks:', e);
+        }
+      }
+
+      function stopCameraScannerPromise() {
+        return new Promise((resolve) => {
+          releaseCameraHardware();
+          if (cameraStatus) cameraStatus.textContent = 'Camera Off';
+
+          if (html5QrCode) {
+            try {
+              const state = (typeof html5QrCode.getState === 'function') ? html5QrCode.getState() : 0;
+              if (state === 2 || state === 3 || isScanning) {
+                html5QrCode.stop().then(() => {
+                  isScanning = false;
+                  try { html5QrCode.clear(); } catch(e) {}
+                  html5QrCode = null;
+                  resolve();
+                }).catch(err => {
+                  console.warn('html5QrCode.stop error:', err);
+                  isScanning = false;
+                  try { html5QrCode.clear(); } catch(e) {}
+                  html5QrCode = null;
+                  resolve();
+                });
+                return;
+              } else {
+                try { html5QrCode.clear(); } catch(e) {}
+                html5QrCode = null;
+              }
+            } catch(e) {
+              try { html5QrCode.clear(); } catch(err) {}
+              html5QrCode = null;
+            }
+          }
+          isScanning = false;
+          resolve();
+        });
+      }
+
+      function stopCameraScanner() {
+        stopCameraScannerPromise();
+      }
+
       function hideCameraScanner() {
         const sc = document.getElementById('scannerContainer');
         const cc = document.getElementById('cameraControls');
@@ -1020,11 +1084,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         if (sc) sc.style.display = 'none';
         if (cc) cc.style.display = 'none';
         if (mc) mc.classList.add('card-wide');
-        if (html5QrCode && isScanning) {
-          try {
-            html5QrCode.stop().then(() => { isScanning = false; }).catch(() => {});
-          } catch(e) {}
-        }
+        stopCameraScanner();
       }
 
       function showCameraScanner() {
@@ -1034,7 +1094,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         if (sc) sc.style.display = 'block';
         if (cc) cc.style.display = 'flex';
         if (mc) mc.classList.remove('card-wide');
-        if (!isScanning) {
+        if (!isScanning && !isStartingScanner) {
           startCameraScanner();
         }
       }
@@ -1176,9 +1236,13 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         });
       }
 
+      let fetchingRoll = false;
+
       function submitRollScan(val) {
         val = String(val || '').trim();
         if (!val) { alert('Please enter or scan Roll QR!'); return; }
+        if (fetchingRoll) return;
+        fetchingRoll = true;
 
         const msgDiv = document.getElementById('rollStatusMsg');
         if (msgDiv) msgDiv.innerHTML = '<div style="color:#2563eb; font-weight:700; font-size:0.85rem;"><i class="fas fa-spinner fa-spin"></i> Fetching Roll Data...</div>';
@@ -1186,6 +1250,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         fetch('knitting_inspection.php?action=search_card&query=' + encodeURIComponent(val))
           .then(r => r.json())
           .then(res => {
+            fetchingRoll = false;
             if (res.success && res.data) {
               rollData = res.data;
               renderInspectionForm(res.data);
@@ -1194,6 +1259,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
             }
           })
           .catch(err => {
+            fetchingRoll = false;
             if (msgDiv) msgDiv.innerHTML = `<div style="color:#ef4444; font-weight:700; font-size:0.85rem;"><i class="fas fa-exclamation-triangle"></i> Network error loading roll</div>`;
           });
       }
@@ -1201,6 +1267,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
       // RENDER FULL INSPECTION FORM MATRIX (Wide 4-Row Grid Layout with Auto-Hidden Camera)
       function renderInspectionForm(d) {
         selectedFaults = {};
+        preLycraRejectQty = null;
         hideCameraScanner();
         
         let html = `
@@ -1345,14 +1412,42 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         `;
       }
 
+      let preLycraRejectQty = null;
+
       window.toggleFault = function(id, weight) {
         const btn = document.getElementById('fault_' + id);
+        const isLycra = (id === 'LYCOUT');
+
         if (selectedFaults[id]) {
           delete selectedFaults[id];
           if (btn) btn.classList.remove('active');
+
+          if (isLycra) {
+            // Restore previous reject qty before Lycra Out was selected
+            const rejInput = document.getElementById('rejectQtyInput');
+            if (rejInput) {
+              rejInput.value = (preLycraRejectQty !== null) ? preLycraRejectQty : '0.00';
+              preLycraRejectQty = null;
+            }
+            window.calcUpdateQty();
+          }
         } else {
           selectedFaults[id] = weight;
           if (btn) btn.classList.add('active');
+
+          if (isLycra) {
+            // Lycra Out selected: rest of item is rejected
+            const mainInput = document.getElementById('mainQtyInput');
+            const rejInput  = document.getElementById('rejectQtyInput');
+            if (rejInput && mainInput) {
+              if (preLycraRejectQty === null) {
+                preLycraRejectQty = rejInput.value;
+              }
+              const mainVal = parseFloat(mainInput.value) || 0;
+              rejInput.value = mainVal.toFixed(2);
+            }
+            window.calcUpdateQty();
+          }
         }
         recalcPoints();
       };
@@ -1369,7 +1464,12 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
 
         let grade = 'Grade A';
         let status = 'Passed';
-        if (total > 25) {
+        const hasLycraOut = !!selectedFaults['LYCOUT'];
+
+        if (hasLycraOut) {
+          grade = 'Reject';
+          status = 'Failed';
+        } else if (total > 25) {
           grade = 'Reject';
           status = 'Failed';
         } else if (total > 10) {
@@ -1378,17 +1478,30 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         }
 
         if (grElem) {
-          grElem.textContent = `${grade} (${status})`;
+          if (hasLycraOut) {
+            grElem.textContent = `${grade} (${status}) - Lycra Out`;
+          } else {
+            grElem.textContent = `${grade} (${status})`;
+          }
           grElem.style.color = (status === 'Passed') ? '#166534' : '#b91c1c';
         }
       }
 
       // ── Real-time UPDATE QTY calculator ──
       window.calcUpdateQty = function() {
-        const mainQty   = parseFloat(document.getElementById('mainQtyInput')?.value) || 0;
-        const rejectQty = parseFloat(document.getElementById('rejectQtyInput')?.value) || 0;
-        const updateQty = Math.max(0, mainQty - rejectQty);
+        const mainInput = document.getElementById('mainQtyInput');
+        const rejInput  = document.getElementById('rejectQtyInput');
         const updateEl  = document.getElementById('updateQtyInput');
+
+        const mainQty = parseFloat(mainInput?.value) || 0;
+
+        if (selectedFaults['LYCOUT'] && rejInput) {
+          // If Lycra Out is selected, rest of item remains rejected
+          rejInput.value = mainQty.toFixed(2);
+        }
+
+        const rejectQty = parseFloat(rejInput?.value) || 0;
+        const updateQty = Math.max(0, mainQty - rejectQty);
         if (updateEl) updateEl.value = updateQty.toFixed(2);
       };
 
@@ -1428,6 +1541,12 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         addField('REJECT_QTY', rejectQty.toFixed(2));
         addField('UPDATE_QTY', updateQty.toFixed(2));
 
+        const isLycra = !!selectedFaults['LYCOUT'];
+        const gradeText = document.getElementById('calc_grade')?.textContent || '';
+        const isReject = isLycra || gradeText.includes('Reject') || gradeText.includes('Failed');
+        addField('QC_GRADE', isReject ? 'Reject' : (gradeText.includes('Grade B') ? 'Grade B' : 'Grade A'));
+        addField('QC_STATUS', isReject ? 'Failed' : 'Passed');
+
         FAULTS.forEach(f => {
           if (selectedFaults[f.id]) {
             addField('DEFECT_' + f.id, '1');
@@ -1465,36 +1584,49 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         }, 150);
       }
 
+      let isStartingScanner = false;
+
       function startCameraScanner() {
-        try {
-          if (html5QrCode && isScanning) {
-            html5QrCode.stop().then(() => {
-              isScanning = false;
-              initScannerObject();
-            }).catch(() => initScannerObject());
-          } else {
-            initScannerObject();
-          }
-        } catch (e) {
-          console.warn(e);
-        }
+        if (isStartingScanner) return;
+        isStartingScanner = true;
+
+        if (cameraStatus) cameraStatus.textContent = 'Starting camera...';
+
+        stopCameraScannerPromise().then(() => {
+          initScannerObject();
+        }).catch(() => {
+          initScannerObject();
+        });
       }
 
       function initScannerObject() {
-        html5QrCode = new Html5Qrcode("qr-reader");
-        html5QrCode.start(
-          { facingMode: currentFacingMode },
-          { fps: 10, qrbox: { width: 180, height: 180 } },
-          onScanSuccess,
-          onScanFailure
-        ).then(() => {
-          isScanning = true;
-          if (cameraStatus) cameraStatus.textContent = 'Scanning (' + (currentFacingMode === 'environment' ? 'Rear' : 'Front') + ')';
-          applyVideoRotation();
-        }).catch(err => {
-          console.warn("Camera start failed:", err);
+        const qrContainer = document.getElementById('qr-reader');
+        if (qrContainer) qrContainer.innerHTML = '';
+
+        try {
+          html5QrCode = new Html5Qrcode("qr-reader");
+          html5QrCode.start(
+            { facingMode: currentFacingMode },
+            { fps: 10, qrbox: { width: 180, height: 180 } },
+            onScanSuccess,
+            onScanFailure
+          ).then(() => {
+            isScanning = true;
+            isStartingScanner = false;
+            if (cameraStatus) cameraStatus.textContent = 'Scanning (' + (currentFacingMode === 'environment' ? 'Rear' : 'Front') + ')';
+            applyVideoRotation();
+          }).catch(err => {
+            console.warn("Camera start failed:", err);
+            isScanning = false;
+            isStartingScanner = false;
+            if (cameraStatus) cameraStatus.textContent = 'Camera Unavailable';
+          });
+        } catch (e) {
+          console.warn("Html5Qrcode init error:", e);
+          isScanning = false;
+          isStartingScanner = false;
           if (cameraStatus) cameraStatus.textContent = 'Camera Unavailable';
-        });
+        }
       }
 
       function isRollCode(text) {
@@ -1551,9 +1683,12 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         });
       }
 
-      // Initialize
+      // Turn off camera tracks when leaving or closing page
+      window.addEventListener('pagehide', stopCameraScanner);
+      window.addEventListener('beforeunload', stopCameraScanner);
+
+      // Initialize (initView triggers showCameraScanner -> startCameraScanner once)
       initView();
-      startCameraScanner();
 
     })();
   </script>
