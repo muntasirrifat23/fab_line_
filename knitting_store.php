@@ -7,6 +7,7 @@
   <title>Knitting | Store</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -1297,8 +1298,25 @@
           .then(function(resp) {
             scannedInfo.RACKNO = rackno.padStart(2, '0');
             scannedInfo.RACKLOCATION = racklocation;
-            showMessage((resp.message || 'Saved - Rack No: ' + rackno + ', Location: ' + racklocation) + '<br><small>Page will reload in 2 seconds...</small>', 'success');
             saveRackBtn.innerHTML = '<i class="fas fa-save"></i> Save Rack';
+
+            if (typeof Swal !== "undefined") {
+              Swal.fire({
+                icon: "success",
+                title: "Successfully Saved!",
+                text: "Roll No: " + roll + "  |  Rack: " + rackno.padStart(2, '0') + racklocation,
+                timer: 3000,
+                timerProgressBar: true,
+                showConfirmButton: false,
+                allowOutsideClick: false,
+                allowEscapeKey: false
+              }).then(function() {
+                window.location.reload();
+              });
+              return;
+            }
+
+            showMessage((resp.message || 'Saved - Rack No: ' + rackno + ', Location: ' + racklocation) + '<br><small>Page will reload in 2 seconds...</small>', 'success');
             setTimeout(function() {
               window.location.reload();
             }, 2000);
