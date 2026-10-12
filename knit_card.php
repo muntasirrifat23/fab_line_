@@ -18,7 +18,8 @@ $kc_prog_col = get_knit_card_program_col($db);
 $query = "SELECT kp.*, 
                  MAX(kc.KCTID) AS card_id, 
                  COALESCE(SUM(kc.QTY), 0) AS total_carded_qty, 
-                 MAX(kc.MCNO) AS card_mcno
+                 MAX(kc.MCNO) AS card_mcno,
+                 MAX(kc.MCDIA) AS card_mcdia
           FROM knitting_program kp
           LEFT JOIN knit_card kc ON (kp.PROGRAM_NO = kc.{$kc_prog_col} OR kp.KPTID = kc.{$kc_prog_col})
           WHERE 1=1";
@@ -621,7 +622,8 @@ $end_entry   = min($offset + $limit, $total_records);
                             <th class="text-nowrap">Brand</th>
                             <th class="text-nowrap">Lot No</th>
                             <th class="text-nowrap">O/T</th>
-                            <th class="text-nowrap">Dia</th>
+                            <th class="text-nowrap">M/C Dia</th>
+                            <th class="text-nowrap">Finish Dia</th>
                             <th class="text-nowrap">GSM</th>
                             <th class="text-nowrap">SL/VDQ</th>
                             <th class="text-nowrap">Feeder Plan</th>
@@ -648,7 +650,8 @@ $end_entry   = min($offset + $limit, $total_records);
                                 $p_ybrand      = $row['YBRAND']      ?? '';
                                 $p_lot         = $row['LOT']         ?? '';
                                 $p_ot          = $row['O_T']         ?? '';
-                                $p_dia         = !empty($row['MCDIA']) ? $row['MCDIA'] : ($row['FDIA'] ?? '');
+                                $p_mcdia       = !empty($row['MCDIA']) ? $row['MCDIA'] : (!empty($row['card_mcdia']) ? $row['card_mcdia'] : '');
+                                $p_fdia        = $row['FDIA']        ?? '';
                                 $p_sl          = $row['SL']          ?? '';
                                 $p_fgsm        = $row['FGSM']        ?? '';
                                 $p_feeder_plan = $row['FEEDER_PLAN'] ?? '';
@@ -673,7 +676,8 @@ $end_entry   = min($offset + $limit, $total_records);
                                     <td class="text-nowrap"><?php echo htmlspecialchars($p_ybrand ?: 'N/A'); ?></td>
                                     <td class="text-nowrap"><?php echo htmlspecialchars($p_lot ?: 'N/A'); ?></td>
                                     <td class="text-nowrap"><?php echo htmlspecialchars($p_ot ?: 'N/A'); ?></td>
-                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_dia ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_mcdia ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_fdia ?: 'N/A'); ?></td>
                                     <td class="text-nowrap"><?php echo htmlspecialchars($p_fgsm ?: 'N/A'); ?></td>
                                     <td class="text-nowrap"><?php echo htmlspecialchars($p_sl ?: 'N/A'); ?></td>
                                     <td class="text-nowrap"><?php echo htmlspecialchars($p_feeder_plan ?: 'N/A'); ?></td>
@@ -734,7 +738,7 @@ $end_entry   = min($offset + $limit, $total_records);
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="22" class="text-center py-5 text-muted">
+                                <td colspan="23" class="text-center py-5 text-muted">
                                     <i class="fa-solid fa-folder-open fa-3x mb-3 text-secondary d-block"></i>
                                     <h6 class="fw-bold">No Knitting Programs Found</h6>
                                     <p class="small mb-0">Try adjusting your filters or click "New Program" to add an entry.</p>

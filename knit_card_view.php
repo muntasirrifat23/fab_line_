@@ -27,7 +27,10 @@ $sql = "SELECT kc.*,
                kp.SHIFT AS prog_shift,
                kp.PO_NUMBER AS prog_po,
                kp.YBRAND AS prog_ybrand,
-               kp.REMARKS AS prog_remarks
+               kp.REMARKS AS prog_remarks,
+               kp.MCDIA AS prog_mcdia,
+               kp.FDIA AS prog_fdia,
+               kp.FGSM AS prog_fgsm
          FROM knit_card kc
          LEFT JOIN knitting_program kp ON (kc." . get_knit_card_program_col($db) . " = kp.PROGRAM_NO OR kc." . get_knit_card_program_col($db) . " = kp.KPTID)
          WHERE kc.KCTID = ?";
@@ -71,10 +74,10 @@ $val_ycount       = !empty($card['YCOUNT']) ? $card['YCOUNT'] : ($card['prog_yco
 $val_ybrand       = !empty($card['YBRAND']) ? $card['YBRAND'] : ($card['prog_ybrand'] ?? 'N/A');
 $val_remarks      = !empty($card['REMARKS']) ? $card['REMARKS'] : ($card['prog_remarks'] ?? 'N/A');
 $val_lot          = !empty($card['LOT']) ? $card['LOT'] : 'N/A';
-$val_fgsm         = !empty($card['FGSM']) ? $card['FGSM'] : 'N/A';
-$val_fdia         = !empty($card['FDIA']) ? $card['FDIA'] : 'N/A';
+$val_fgsm         = !empty($card['FGSM']) ? $card['FGSM'] : (!empty($card['prog_fgsm']) ? $card['prog_fgsm'] : 'N/A');
+$val_fdia         = !empty($card['FDIA']) ? $card['FDIA'] : (!empty($card['prog_fdia']) ? $card['prog_fdia'] : 'N/A');
 $val_sl           = !empty($card['SL']) ? $card['SL'] : 'N/A';
-$val_mcdia        = !empty($card['MCDIA']) ? $card['MCDIA'] : 'N/A';
+$val_mcdia        = !empty($card['MCDIA']) ? $card['MCDIA'] : (!empty($card['prog_mcdia']) ? $card['prog_mcdia'] : 'N/A');
 $val_feeder       = !empty($card['FEEDER_PLAN']) ? $card['FEEDER_PLAN'] : ($card['prog_feeder_plan'] ?? 'N/A');
 $val_qty          = number_format(floatval($card['QTY'] ?? 0), 2) . ' KG';
 $val_uname        = !empty($card['UNAME']) ? $card['UNAME'] : 'System';
@@ -434,14 +437,16 @@ if (!empty($card['UNAME'])) {
                         <td><?php echo htmlspecialchars($val_lot); ?></td>
                     </tr>
                     <tr>
-                        <th>SL/VDQ</th>
-                        <td><?php echo htmlspecialchars($val_sl); ?></td>
+                        <th>M/C Dia</th>
+                        <td><?php echo htmlspecialchars($val_mcdia); ?></td>
                         <th>Finish Dia</th>
                         <td><?php echo htmlspecialchars($val_fdia); ?></td>
                     </tr>
                     <tr>
-                        <th>M/C Dia</th>
-                        <td colspan="3"><?php echo htmlspecialchars($val_mcdia); ?></td>
+                        <th>SL/VDQ</th>
+                        <td><?php echo htmlspecialchars($val_sl); ?></td>
+                        <th>Finish GSM</th>
+                        <td><?php echo htmlspecialchars($val_fgsm); ?></td>
                     </tr>
                     <tr>
                         <th>Feeder</th>

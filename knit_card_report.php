@@ -14,7 +14,7 @@ $end_date      = isset($_GET['end_date'])   ? trim($_GET['end_date'])   : '';
 
 // Build query using real column names dynamically
 $kc_prog_col = get_knit_card_program_col($db);
-$query  = "SELECT kc.*, kp.PO_NUMBER AS kp_booking, kp.REMARKS AS prog_remarks
+$query  = "SELECT kc.*, kp.PO_NUMBER AS kp_booking, kp.REMARKS AS prog_remarks, kp.MCDIA AS prog_mcdia
            FROM knit_card kc
            LEFT JOIN knitting_program kp ON (kc.{$kc_prog_col} = kp.PROGRAM_NO OR kc.{$kc_prog_col} = kp.KPTID)
            WHERE 1=1";
@@ -440,6 +440,7 @@ if ($result && $result->num_rows > 0) {
                             <th>Knit Card Number</th>
                             <th>PO</th>
                             <th>M/C No</th>
+                            <th>M/C Dia</th>
                             <th>Buyer</th>
                             <th>Style</th>
                             <th>Fabric Type</th>
@@ -458,6 +459,7 @@ if ($result && $result->num_rows > 0) {
                                     <td><span class="badge-kc"><?php echo htmlspecialchars(!empty($row['KNITCARD']) ? $row['KNITCARD'] : ('KC-' . $row['KCTID'])); ?></span></td>
                                     <td><strong><?php echo htmlspecialchars($row['PO_NUMBER'] ?? ''); ?></strong></td>
                                     <td><span class="badge-mc">M/C <?php echo htmlspecialchars($row['MCNO'] ?? ''); ?></span></td>
+                                    <td><strong><?php echo htmlspecialchars(!empty($row['MCDIA']) ? $row['MCDIA'] : ($row['prog_mcdia'] ?? 'N/A')); ?></strong></td>
                                     <td><span class="badge-buyer"><?php echo htmlspecialchars($row['BUYER'] ?? ''); ?></span></td>
                                     <td><?php echo htmlspecialchars($row['STYLE'] ?? ''); ?></td>
                                     <td><?php echo htmlspecialchars($row['FTYPE'] ?? ''); ?></td>
@@ -485,7 +487,7 @@ if ($result && $result->num_rows > 0) {
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="12" class="text-center py-5 text-muted">
+                                <td colspan="13" class="text-center py-5 text-muted">
                                     <i class="fa-solid fa-folder-open fa-3x mb-3 text-secondary d-block"></i>
                                     <h6 class="fw-bold">No Knit Cards Found</h6>
                                     <p class="small mb-0">Try clearing your search filters or generate a new card from the Knitting Programs page.</p>

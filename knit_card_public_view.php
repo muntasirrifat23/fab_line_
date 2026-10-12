@@ -11,7 +11,8 @@ if ($card_id <= 0) {
 }
 
 // Fetch Knit Card Header using real column names
-$stmt = $db->prepare("SELECT * FROM knit_card WHERE KCTID = ?");
+$kc_prog_col = get_knit_card_program_col($db);
+$stmt = $db->prepare("SELECT kc.*, kp.MCDIA AS prog_mcdia FROM knit_card kc LEFT JOIN knitting_program kp ON (kc.{$kc_prog_col} = kp.PROGRAM_NO OR kc.{$kc_prog_col} = kp.KPTID) WHERE kc.KCTID = ?");
 if ($stmt) {
     $stmt->bind_param("i", $card_id);
     $stmt->execute();
@@ -143,6 +144,7 @@ if ($prod_result && $prod_result->num_rows > 0) {
             <table class="spec-table">
                 <tr><td class="lbl">Date</td><td class="val">: <?php echo htmlspecialchars($card['CREATED_DATE'] ?? ''); ?></td></tr>
                 <tr><td class="lbl">M/c. No.</td><td class="val">: <?php echo htmlspecialchars($card['MCNO'] ?? ''); ?></td></tr>
+                <tr><td class="lbl">M/C Dia</td><td class="val">: <?php echo htmlspecialchars(!empty($card['MCDIA']) ? $card['MCDIA'] : ($card['prog_mcdia'] ?? 'N/A')); ?></td></tr>
                 <tr><td class="lbl">Finished Dia</td><td class="val">: <?php echo htmlspecialchars($card['FDIA'] ?? ''); ?></td></tr>
                 <tr><td class="lbl">Finish GSM</td><td class="val">: <?php echo htmlspecialchars($card['FGSM'] ?? ''); ?></td></tr>
                 <tr><td class="lbl">Open / Tube</td><td class="val">: <?php echo htmlspecialchars($card['O_T'] ?? ''); ?></td></tr>

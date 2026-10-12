@@ -17,8 +17,9 @@ if ($card_id <= 0) {
 // Build simplified QR Code payload (e.g., KC-12) for less dense QR codes
 $qr_payload = "KC-" . $card_id;
 
-// Fetch Card Header using real KCID column
-$stmt = $db->prepare("SELECT * FROM knit_card WHERE KCTID = ?");
+// Fetch Card Header joined with knitting program for MCDIA fallback
+$kc_prog_col = get_knit_card_program_col($db);
+$stmt = $db->prepare("SELECT kc.*, kp.MCDIA AS prog_mcdia FROM knit_card kc LEFT JOIN knitting_program kp ON (kc.{$kc_prog_col} = kp.PROGRAM_NO OR kc.{$kc_prog_col} = kp.KPTID) WHERE kc.KCTID = ?");
 if ($stmt) {
     $stmt->bind_param("i", $card_id);
     $stmt->execute();
@@ -301,7 +302,9 @@ if ($prod_stmt) {
             </tr>
             <tr>
                 <th>Yarn Brand</th>
-                <td colspan="3"><?php echo htmlspecialchars($card['YBRAND'] ?? ''); ?></td>
+                <td><?php echo htmlspecialchars($card['YBRAND'] ?? ''); ?></td>
+                <th>M/C Dia</th>
+                <td><strong><?php echo htmlspecialchars(!empty($card['MCDIA']) ? $card['MCDIA'] : ($card['prog_mcdia'] ?? 'N/A')); ?></strong></td>
             </tr>
             <tr>
                 <th>Finish Dia</th>

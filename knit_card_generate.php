@@ -94,7 +94,8 @@ $p_customer         = !empty($prog['CUSTOMER']) ? $prog['CUSTOMER'] : ($input['C
 $p_booking          = !empty($prog['PO_NUMBER']) ? $prog['PO_NUMBER'] : ($input['BOOKING'] ?? '');
 $p_sono             = !empty($prog['SONO']) ? $prog['SONO'] : ($input['SONO'] ?? '');
 $p_style            = !empty($prog['STYLE']) ? $prog['STYLE'] : ($input['STYLE'] ?? '');
-$p_mcno             = !empty($prog['MCDIA']) ? $prog['MCDIA'] : ($input['MCNO'] ?? ($input['MCDIA'] ?? ''));
+$p_mcno             = !empty($prog['MCNO']) ? $prog['MCNO'] : ($input['MCNO'] ?? '');
+$p_mcdia            = !empty($prog['MCDIA']) ? $prog['MCDIA'] : ($input['MCDIA'] ?? ($input['MC_DIA'] ?? ''));
 $p_finish_dia       = !empty($prog['FDIA']) ? $prog['FDIA'] : ($input['FINISH_DIA'] ?? '');
 $p_finish_gsm       = !empty($prog['FGSM']) ? $prog['FGSM'] : ($input['FINISH_GSM'] ?? '');
 $p_open_tube        = !empty($prog['O_T']) ? $prog['O_T'] : ($input['OPEN_TUBE'] ?? 'O');
@@ -1202,7 +1203,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                             <span>M/C Dia</span>
                         </div>
                         <div class="spec-box-value">
-                            <?php echo htmlspecialchars($p_mcno ?: 'N/A'); ?>
+                            <?php echo htmlspecialchars($p_mcdia ?: 'N/A'); ?>
                         </div>
                     </div>
 
