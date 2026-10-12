@@ -490,7 +490,7 @@ $end_entry   = min($offset + $limit, $total_records);
 
 <body>
 
-    <div class="container-fluid" style="max-width: 1600px;">
+    <div class="container-fluid w-100 px-3">
 
         <!-- ═══ HEADER BANNER ═══ -->
         <div class="top-banner">
@@ -508,7 +508,7 @@ $end_entry   = min($offset + $limit, $total_records);
                 <!-- Right: action buttons -->
                 <div class="d-flex gap-2 flex-wrap align-items-center">
                     <a href="initialPage.php" class="btn nav-btn btn-back">
-                        <i class="fa-solid fa-arrow-left"></i> Dashboard
+                        <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
                     </a>
                     <!--
                     <a href="knitting_program_form.php" class="btn nav-btn btn-blue-solid">
