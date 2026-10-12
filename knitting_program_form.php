@@ -345,6 +345,18 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
             border-color: rgba(255, 255, 255, 0.3);
         }
 
+        .btn-back {
+            background: #000000;
+            color: #ffffff;
+            border: 2px solid #000000;
+            transition: all 0.2s ease;
+        }
+        .btn-back:hover {
+            background: #ffffff;
+            border-color: #000000;
+            color: #000000;
+        }
+
         /* ═══════════════════════════════════════════
            FORM CARDS & FIELDS
         ═══════════════════════════════════════════ */
@@ -525,7 +537,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                 </div>
                 <!-- Right: action buttons -->
                 <div>
-                    <a href="knit_card.php" class="btn nav-btn btn-glass">
+                    <a href="knit_card.php" class="btn nav-btn btn-back">
                         <i class="fa-solid fa-arrow-left"></i> Back to Knit Card
                     </a>
                 </div>

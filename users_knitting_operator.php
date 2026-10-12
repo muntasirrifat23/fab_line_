@@ -72,6 +72,7 @@ if ($res2) {
         .back-btn:hover {
             background: #ffffff;
             color: #000000;
+            border-color: #000000;
             text-decoration: none;
         }
 

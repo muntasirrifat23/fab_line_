@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -108,17 +108,18 @@
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
         }
 
-        .btn-glass {
-            background: black;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: white;
+        .btn-glass, #backBtn {
+            background: #000000;
+            border: 2px solid #000000;
+            color: #ffffff;
             backdrop-filter: blur(10px);
+            transition: all 0.2s ease;
         }
 
-        .btn-glass:hover {
-            background: white;
-            color: black;
-            border-color: rgba(255, 255, 255, 0.3);
+        .btn-glass:hover, #backBtn:hover {
+            background: #ffffff;
+            color: #000000;
+            border-color: #000000;
         }
 
         /* bottom strip inside banner */

@@ -434,22 +434,23 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
         }
 
         .btn-back {
-            background: #ffffff;
-            color: #1e293b;
+            background: #000000;
+            color: #ffffff;
             font-weight: 600;
             font-size: 12px;
             padding: 6px 14px;
-            border-radius: 20px;
+            border-radius: 8px;
+            border: 2px solid #000000;
             transition: all 0.2s ease;
             text-decoration: none;
-            border: none;
             display: inline-flex;
             align-items: center;
             gap: 6px;
         }
         .btn-back:hover {
-            background: #f1f5f9;
-            color: #0f172a;
+            background: #ffffff;
+            border-color: #000000;
+            color: #000000;
             text-decoration: none;
         }
 

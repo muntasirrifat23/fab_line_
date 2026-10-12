@@ -347,6 +347,7 @@ unset($_SESSION['dyeing_batch']['saved']);
         .back-btn:hover {
             background: white;
             color: black;
+            border-color: black;
             text-decoration: none;
         }
     </style>

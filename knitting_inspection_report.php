@@ -91,13 +91,19 @@
         }
 
         #backBtn {
-            border: 1px solid transparent;
+            background: #000000 !important;
+            color: #ffffff !important;
+            border: 2px solid #000000 !important;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.2s ease;
         }
 
         #backBtn:hover {
             background: #ffffff !important;
-            border: 1px solid #000000;
-            color: #000000;
+            border-color: #000000 !important;
+            color: #000000 !important;
         }
 
         .table-card {
@@ -285,7 +291,7 @@
     <div class="container-fluid p-0">
 
         <div class="head-row">
-            <button class="btn" id="backBtn" style="background:#1e293b; padding:8px 14px; ">
+            <button class="btn" id="backBtn">
                 <i class="fa-solid fa-arrow-left"></i> Back to Report
             </button>
             <h1 style="font-size:xx-large;">Knitting Inspection Report</h1>

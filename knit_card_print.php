@@ -176,6 +176,26 @@ if ($prod_stmt) {
             align-items: center;
         }
 
+        .back-btn {
+            background: #000000;
+            color: #ffffff;
+            border: 2px solid #000000;
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+        .back-btn:hover {
+            background: #ffffff;
+            border-color: #000000;
+            color: #000000;
+            text-decoration: none;
+        }
+
         @media print {
             body {
                 background-color: #fff;
@@ -219,7 +239,7 @@ if ($prod_stmt) {
 
     <!-- Non-printable top action bar -->
     <div class="no-print-bar">
-        <a href="knit_card_view.php?id=<?php echo $card['KCTID']; ?>" class="btn btn-secondary btn-sm">
+        <a href="knit_card_view.php?id=<?php echo $card['KCTID']; ?>" class="back-btn">
             <i class="fa-solid fa-arrow-left me-1"></i> Back to Card View
         </a>
         <div>

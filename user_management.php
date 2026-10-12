@@ -204,6 +204,7 @@ session_start();
     .back-btn:hover {
       background: white;
       color: black;
+      border-color: black;
     }
 
     .row {

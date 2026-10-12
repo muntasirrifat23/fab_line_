@@ -70,20 +70,26 @@
         }
 
         .btn-back {
-            background: #1e293b;
-            color: #fff;
-            border: none;
+            background: #000000;
+            color: #ffffff;
+            border: 2px solid #000000;
             padding: 0.6rem 1.6rem;
-            border-radius: 50px;
+            border-radius: 8px;
             font-weight: 600;
             font-size: 0.9rem;
             transition: 0.2s;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .btn-back:hover {
-            background: #0f172a;
+            background: #ffffff;
+            border-color: #000000;
+            color: #000000;
             transform: translateY(-2px);
-            color: #fff;
         }
 
         /* search panel */

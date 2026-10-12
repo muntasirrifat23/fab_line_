@@ -222,6 +222,18 @@ $end_entry   = min($offset + $limit, $total_records);
             color: #ffffff;
         }
 
+        .btn-back {
+            background: #000000;
+            color: #ffffff;
+            border: 2px solid #000000;
+            transition: all 0.2s ease;
+        }
+        .btn-back:hover {
+            background: #ffffff;
+            border-color: #000000;
+            color: #000000;
+        }
+
         /* ═══════════════════════════════════════════
            STAT CARDS
         ═══════════════════════════════════════════ */
@@ -495,7 +507,7 @@ $end_entry   = min($offset + $limit, $total_records);
                 </div>
                 <!-- Right: action buttons -->
                 <div class="d-flex gap-2 flex-wrap align-items-center">
-                    <a href="initialPage.php" class="btn nav-btn btn-glass">
+                    <a href="initialPage.php" class="btn nav-btn btn-back">
                         <i class="fa-solid fa-arrow-left"></i> Dashboard
                     </a>
                     <!--

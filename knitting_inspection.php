@@ -477,6 +477,30 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
       transition: max-width 0.3s ease;
     }
 
+    .back-btn {
+      background: #000000 !important;
+      color: #ffffff !important;
+      border: 2px solid #000000 !important;
+      border-radius: 8px;
+      padding: 10px 18px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.95rem;
+      width: 100%;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+    }
+
+    .back-btn:hover {
+      background: #ffffff !important;
+      border-color: #000000 !important;
+      color: #000000 !important;
+      transform: translateY(-2px);
+    }
+
     .card.card-wide {
       max-width: 1100px;
     }
@@ -971,8 +995,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
 
     <!-- FOOTER -->
     <div class="footer-note" style="margin-top:10px; text-align:center;">
-      <button onclick="window.location.href='initialPage.php';"
-        style="background-color:#1e3a8a; color:white; padding:8px 14px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:0.85rem; width:100%;">
+      <button class="back-btn" onclick="window.location.href='initialPage.php';">
         <i class="fa-solid fa-arrow-left" style="margin-right:6px;"></i>
         Back to Initial Page
       </button>

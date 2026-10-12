@@ -189,6 +189,7 @@ $user = strtolower($_SESSION['username'] ?? '');
     .back-btn:hover {
       background: white;
       color: black;
+      border-color: black;
     }
 
     .card-bg {

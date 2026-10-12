@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -33,6 +33,29 @@
       box-shadow: 0 20px 45px rgba(10, 60, 55, 0.3);
       border: 1px solid #b5d8d2;
       transition: 0.2s;
+    }
+
+    .back-btn {
+      background: #000000 !important;
+      color: #ffffff !important;
+      border: 2px solid #000000 !important;
+      border-radius: 10px;
+      padding: 12px 24px;
+      cursor: pointer;
+      transition: all .2s ease;
+      font-weight: bold;
+      font-size: 1rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .back-btn:hover {
+      background: #ffffff !important;
+      border-color: #000000 !important;
+      color: #000000 !important;
+      transform: translateY(-2px);
     }
 
     .store-header {
@@ -744,17 +767,8 @@
 
     <!-- FOOTER -->
     <div class="footer-note" style="margin-top:16px; text-align:center; color:#115e59; letter-spacing:0.5px;">
-      <button class="btn btn-dark"
-        onclick="window.location.href='initialPage.php';"
-        style="background-color:#083a36;
-               color:white;
-               padding:12px 18px;
-               border:none;
-               border-radius:10px;
-               cursor:pointer;
-               transition:all .2s ease;
-               font-weight:bold;
-               font-size:1rem;">
+      <button class="back-btn"
+        onclick="window.location.href='initialPage.php';">
         <i class="fa-solid fa-arrow-left" style="margin-right:6px;"></i>
         Back to Initial Page
       </button>

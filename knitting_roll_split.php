@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 include 'config.php';
 
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
@@ -260,6 +260,27 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
             font-family: Consolas, monospace;
             font-size: 17px;
         }
+
+        .back-btn, #backBtn {
+            background: #000000 !important;
+            color: #ffffff !important;
+            border: 2px solid #000000 !important;
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .back-btn:hover, #backBtn:hover {
+            background: #ffffff !important;
+            border-color: #000000 !important;
+            color: #000000 !important;
+            text-decoration: none;
+        }
     </style>
 </head>
 
@@ -267,7 +288,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
 
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <button class="btn btn-dark" id="backBtn" style="background-color:#1f2937;color:#fff;padding:12px;border-radius:8px;">
+            <button class="back-btn" id="backBtn">
                 <i class="fa-solid fa-arrow-left" style="margin-right:6px;"></i>
                 Back to Initial Page
             </button>

@@ -112,6 +112,29 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
       transition: max-width 0.3s ease;
     }
 
+    .back-btn {
+      background: #000000 !important;
+      color: #ffffff !important;
+      border: 2px solid #000000 !important;
+      border-radius: 10px;
+      padding: 12px 24px;
+      cursor: pointer;
+      transition: all .2s ease;
+      font-weight: bold;
+      font-size: 1rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .back-btn:hover {
+      background: #ffffff !important;
+      border-color: #000000 !important;
+      color: #000000 !important;
+      transform: translateY(-2px);
+    }
+
     .card.expanded {
       max-width: 650px;
     }
@@ -800,17 +823,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
     </div>
     <!-- FOOTER -->
     <div class="footer-note" style="margin-top:6px; text-align:center; color:#334155; letter-spacing:0.5px;">
-      <button class="btn btn-dark"
-        onclick="window.location.href='initialPage.php';"
-        style="background-color:#1e3a8a;
-               color:white;
-               padding:12px 18px;
-               border:none;
-               border-radius:10px;
-               cursor:pointer;
-               transition:all .2s ease;
-               font-weight:bold;
-               font-size:1rem;">
+      <button class="back-btn"
+        onclick="window.location.href='initialPage.php';">
         <i class="fa-solid fa-arrow-left" style="margin-right:6px;"></i>
         Back to Initial Page
       </button>

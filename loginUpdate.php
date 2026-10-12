@@ -284,10 +284,10 @@ if (isset($_POST['submit'])) {
         }
 
         .back-btn {
-            background: linear-gradient(135deg, #6a11cb, #2575fc);
-            color: white;
+            background: #000000;
+            color: #ffffff;
             font-weight: bold;
-            border: none;
+            border: 2px solid #000000;
             border-radius: 10px;
             padding: 8px;
             transition: 0.3s;
@@ -300,8 +300,11 @@ if (isset($_POST['submit'])) {
         }
 
         .back-btn:hover {
+            background: #ffffff;
+            border-color: #000000;
+            color: #000000;
             transform: scale(1.03);
-            box-shadow: 0 0 15px rgba(37, 117, 252, 0.5);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
         }
 
         /* glass card */
@@ -365,10 +368,10 @@ if (isset($_POST['submit'])) {
         }
 
         .back-btn-create {
-            background: linear-gradient(135deg, #00c9a7, #92fe9d);
-            color: #0f2d2e;
+            background: #000000;
+            color: #ffffff;
             font-weight: bold;
-            border: none;
+            border: 2px solid #000000;
             border-radius: 10px;
             padding: 8px;
             transition: 0.3s;
@@ -381,8 +384,11 @@ if (isset($_POST['submit'])) {
         }
 
         .back-btn-create:hover {
+            background: #ffffff;
+            border-color: #000000;
+            color: #000000;
             transform: scale(1.03);
-            box-shadow: 0 0 15px rgba(0, 201, 167, 0.5);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
         }
 
         /* tabs */

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 include 'config.php';
 
 // ================= AJAX: GET STATUS DATA =================
@@ -70,12 +70,31 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
         .stat-card.gray  .stat-value { color: #475569; }
         .pdf-btn { display: inline-flex; align-items: center; gap: 5px; background: #16a34a; color: #fff; border: none; border-radius: 6px; padding: 5px 10px; font-size: 13px; font-weight: 600; cursor: pointer; }
         .pdf-btn:hover { background: #15803d; }
+        #backBtn, .back-btn {
+            background: #000000 !important;
+            color: #ffffff !important;
+            border: 2px solid #000000 !important;
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        #backBtn:hover, .back-btn:hover {
+            background: #ffffff !important;
+            border-color: #000000 !important;
+            color: #000000 !important;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <button class="btn btn-dark" id="backBtn" style="background:#1f2937;color:#fff;padding:12px;border-radius:8px;">
+            <button class="back-btn" id="backBtn">
                 <i class="fa-solid fa-arrow-left" style="margin-right:6px;"></i> Back to Initial Page
             </button>
             <h1 class="title">Knitting Program Status</h1>
