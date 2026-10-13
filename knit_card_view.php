@@ -343,7 +343,7 @@ if (!empty($card['UNAME'])) {
     <!-- TOP ACTION BAR (NO-PRINT) -->
     <div class="action-bar-top no-print">
         <a href="knit_card.php" class="btn btn-tag btn-back-dir">
-            <i class="fa-solid fa-arrow-left"></i> Back to Directory
+            <i class="fa-solid fa-arrow-left"></i> Back to Knit Card
         </a>
         <div class="d-flex gap-1">
             <button type="button" onclick="downloadCard()" class="btn btn-tag btn-primary">

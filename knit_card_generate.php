@@ -108,7 +108,7 @@ $p_yarn_brand       = !empty($prog['YBRAND']) ? $prog['YBRAND'] : ($input['YBRAN
 $p_remarks          = !empty($prog['REMARKS']) ? $prog['REMARKS'] : ($input['REMARKS'] ?? '');
 $p_knit_m_desc      = !empty($prog['KNIT_M_DESCRIPTION']) ? $prog['KNIT_M_DESCRIPTION'] : ($input['KNIT_M_DESCRIPTION'] ?? '');
 $p_knit_mat_code    = !empty($prog['KNIT_MATERIAL_CODE']) ? $prog['KNIT_MATERIAL_CODE'] : ($input['KNIT_MATERIAL_CODE'] ?? '');
-$p_sl_vdq           = floatval(!empty($prog['SL']) ? $prog['SL'] : ($input['SL'] ?? 0));
+$p_sl_vdq           = (isset($prog['SL']) && trim((string)$prog['SL']) !== '') ? trim((string)$prog['SL']) : (isset($input['SL']) && trim((string)$input['SL']) !== '' ? trim((string)$input['SL']) : '');
 
 $default_qty        = $remaining_qty;
 $prepared_by        = $_SESSION['username'] ?? '';
@@ -1214,7 +1214,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                             <span>SL / VDQ</span>
                         </div>
                         <div class="spec-box-value">
-                            <?php echo htmlspecialchars($p_sl_vdq ?: 'N/A'); ?>
+                            <?php echo htmlspecialchars($p_sl_vdq !== '' ? $p_sl_vdq : 'N/A'); ?>
                         </div>
                     </div>
 
