@@ -578,6 +578,7 @@
                             <th>Fabrics Type</th>
                             <th>Yarn Type</th>
                             <th>Yarn Count</th>
+                            <th>Yarn Brand</th>
                             <th>SL/VDQ</th>
                             <th>M/C Dia</th>
                             
@@ -590,10 +591,10 @@
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="25" class="state-cell">
-                                <span class="loading-spinner"></span>
-                                <div class="state-text mt-2">Loading data...</div>
-                            </td>
+                             <td colspan="26" class="state-cell">
+                                 <span class="loading-spinner"></span>
+                                 <div class="state-text mt-2">Loading data...</div>
+                             </td>
                         </tr>
                     </tbody>
                 </table>
@@ -643,7 +644,7 @@
             updateStats(data);
 
             if (!data || data.length === 0) {
-                tbody.append('<tr><td colspan="25" class="state-cell">' +
+                tbody.append('<tr><td colspan="26" class="state-cell">' +
                     '<i class="fa-regular fa-folder-open state-icon"></i>' +
                     '<div class="state-text">No data found</div></td></tr>');
                 return;
@@ -675,6 +676,7 @@
                 tr.append($('<td>').text(row.FTYPE || ''));
                 tr.append($('<td>').text(row.YTYPE || ''));
                 tr.append($('<td>').text(row.YCOUNT || ''));
+                tr.append($('<td>').text(row.YBRAND || ''));
                 tr.append($('<td>').text(row.SL || ''));
                 tr.append($('<td>').text(row.MCDIA || ''));
                 tr.append($('<td>').text(row.FEEDER_PLAN || ''));
@@ -688,7 +690,7 @@
 
         function showState(icon, text) {
             updateStats([]);
-            $('#tableBody').html('<tr><td colspan="25" class="state-cell">' +
+            $('#tableBody').html('<tr><td colspan="26" class="state-cell">' +
                 '<i class="' + icon + ' state-icon"></i>' +
                 '<div class="state-text">' + text + '</div></td></tr>');
         }
@@ -760,6 +762,7 @@
                 ['Fabrics Type', row.FTYPE],
                 ['Yarn Type', row.YTYPE],
                 ['Yarn Count', row.YCOUNT],
+                ['Yarn Brand', row.YBRAND],
                 ['SL/VDQ', row.SL],
                 ['MC Dia', row.MCDIA],
                 ['Feeder Plan', row.FEEDER_PLAN],

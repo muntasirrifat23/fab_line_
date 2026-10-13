@@ -17,15 +17,15 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
     $where = count($conditions) > 0 ? 'WHERE ' . implode(' AND ', $conditions) : '';
 
     $q = "SELECT p.KPTID, p.PROGRAM_NO, p.CREATED_DATE AS BUDAT, p.PO_NUMBER, p.SONO, p.BUYER, p.STYLE, p.COLOR,
-                 p.FGSM, p.FDIA, p.O_T, p.FTYPE, p.YTYPE, p.CUSTOMER, p.YCOUNT, p.SL,
+                 p.FGSM, p.FDIA, p.O_T, p.FTYPE, p.YTYPE, p.CUSTOMER, p.YCOUNT, p.YBRAND, p.SL,
                  p.MCDIA, p.FEEDER_PLAN, p.LOT, p.SHIFT,
                  CAST(p.QTY AS DECIMAL(10,2)) AS QTY,
                  (SELECT CAST(i.QTY AS DECIMAL(10,2)) FROM knitting_input i WHERE i.PO_NUMBER = p.PO_NUMBER LIMIT 1) AS INPUT_QTY,
                  (SELECT CAST(i.QTY AS DECIMAL(10,2)) FROM knitting_input i WHERE i.PO_NUMBER = p.PO_NUMBER LIMIT 1)
                  - (SELECT COALESCE(SUM(CAST(p2.QTY AS DECIMAL(10,2))), 0) FROM knitting_program p2 WHERE p2.PO_NUMBER = p.PO_NUMBER) AS REMAINING_QTY
-          FROM knitting_program p
-          $where
-          ORDER BY p.KPTID DESC";
+           FROM knitting_program p
+           $where
+           ORDER BY p.KPTID DESC";
 
     $res = mysqli_query($db, $q);
 
@@ -136,6 +136,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
                             <th>Y TYPE</th>
                             <th>CUSTOMER</th>
                             <th>Y COUNT</th>
+                            <th>Y BRAND</th>
                             <th>SL</th>
                             <th>MC DIA</th>
                             
@@ -148,7 +149,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
                         </tr>
                     </thead>
                     <tbody id="tableBody">
-                        <tr><td colspan="24" class="text-center small-muted">Loading...</td></tr>
+                        <tr><td colspan="25" class="text-center small-muted">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -166,7 +167,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
 
             $.get(url, function(resp) {
                 if (!resp || !resp.success || !resp.data || resp.data.length === 0) {
-                    $('#tableBody').html('<tr><td colspan="24" class="text-center small-muted">No data found</td></tr>');
+                    $('#tableBody').html('<tr><td colspan="25" class="text-center small-muted">No data found</td></tr>');
                     renderStats(0, 0, 0);
                     return;
                 }
@@ -202,6 +203,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
                         '<td>' + esc(r.YTYPE) + '</td>' +
                         '<td>' + esc(r.CUSTOMER) + '</td>' +
                         '<td>' + esc(r.YCOUNT) + '</td>' +
+                        '<td>' + esc(r.YBRAND) + '</td>' +
                         '<td>' + esc(r.SL) + '</td>' +
                         '<td>' + esc(r.MCDIA) + '</td>' +
                                                 '<td>' + esc(r.FEEDER_PLAN) + '</td>' +
@@ -221,7 +223,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
                     downloadRowPdf(rows[idx]);
                 });
             }, 'json').fail(function() {
-                $('#tableBody').html('<tr><td colspan="24" class="text-center text-danger small-muted">Error loading data</td></tr>');
+                    $('#tableBody').html('<tr><td colspan="25" class="text-center text-danger small-muted">Error loading data</td></tr>');
             });
         }
 
@@ -253,6 +255,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
                 ['Y Type', r.YTYPE],
                 ['Customer', r.CUSTOMER],
                 ['Y Count', r.YCOUNT],
+                ['Y Brand', r.YBRAND],
                 ['SL', r.SL],
                 ['MC Dia', r.MCDIA],
                                 ['Feeder Plan', r.FEEDER_PLAN],

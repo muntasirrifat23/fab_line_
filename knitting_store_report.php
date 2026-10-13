@@ -250,6 +250,7 @@
                             <th>CUSTOMER</th>
                             <th>YARN TYPE</th>
                             <th>YARN COUNT</th>
+                            <th>YARN BRAND</th>
                             <th>OPEN / TUBE</th>
                             <th>SL/VQ</th>
                             <th>FABRICS TYPE</th>
@@ -268,7 +269,7 @@
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="32" class="loading-cell">Loading data...</td>
+                            <td colspan="33" class="loading-cell">Loading data...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -300,6 +301,7 @@
             { key: 'CUSTOMER', label: 'Customer' },
             { key: 'YTYPE', label: 'Yarn Type' },
             { key: 'YCOUNT', label: 'Yarn Count' },
+            { key: 'YBRAND', label: 'Yarn Brand' },
             { key: 'O_T', label: 'Open / Tube' },
             { key: 'SL', label: 'SL/VQ' },
             { key: 'FTYPE', label: 'Fabrics Type' },
@@ -452,7 +454,7 @@
             tbody.empty();
             currentData = data || [];
             if (!currentData.length) {
-                tbody.append('<tr class="empty-row"><td colspan="32">No data found</td></tr>');
+                tbody.append('<tr class="empty-row"><td colspan="33">No data found</td></tr>');
                 return;
             }
             currentData.forEach(function(row) {
@@ -480,11 +482,11 @@
                     if (resp && resp.success) {
                         renderTableRows(resp.data);
                     } else {
-                        $('#tableBody').html('<tr class="empty-row"><td colspan="32">No data found</td></tr>');
+                        $('#tableBody').html('<tr class="empty-row"><td colspan="33">No data found</td></tr>');
                     }
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr class="empty-row"><td colspan="32" style="color:#dc2626;">Error searching</td></tr>');
+                    $('#tableBody').html('<tr class="empty-row"><td colspan="33" style="color:#dc2626;">Error searching</td></tr>');
                 })
                 .always(function() {
                     $('#searchBtn').prop('disabled', false).html('<i class="fa-solid fa-magnifying-glass"></i> Search');
@@ -492,7 +494,7 @@
         }
 
         function loadAll() {
-            $('#tableBody').html('<tr><td colspan="32" class="loading-cell">Loading data...</td></tr>');
+            $('#tableBody').html('<tr><td colspan="33" class="loading-cell">Loading data...</td></tr>');
             $.ajax({
                     url: 'ajaxKnittingStore_Report.php',
                     dataType: 'json',
@@ -502,11 +504,11 @@
                     if (resp && resp.success) {
                         renderTableRows(resp.data);
                     } else {
-                        $('#tableBody').html('<tr class="empty-row"><td colspan="32">No data returned</td></tr>');
+                        $('#tableBody').html('<tr class="empty-row"><td colspan="33">No data returned</td></tr>');
                     }
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr class="empty-row"><td colspan="32" style="color:#dc2626;">Error loading data</td></tr>');
+                    $('#tableBody').html('<tr class="empty-row"><td colspan="33" style="color:#dc2626;">Error loading data</td></tr>');
                 });
         }
 
