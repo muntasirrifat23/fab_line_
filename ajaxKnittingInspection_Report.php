@@ -1,5 +1,5 @@
 <?php
-// ajaxKnittingInspection_Report.php
+// ajaxKnittingInspection_Report.php - Server-side data provider with multi-parameter filtering & roll suffixing
 include 'config.php';
 
 header('Content-Type: application/json');
@@ -9,17 +9,71 @@ if (!isset($db) || !$db) {
     exit;
 }
 
-$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$search    = isset($_GET['search']) ? trim($_GET['search']) : '';
+$category  = isset($_GET['category']) ? strtolower(trim($_GET['category'])) : 'all';
+$from_date = isset($_GET['from_date']) ? trim($_GET['from_date']) : '';
+$to_date   = isset($_GET['to_date']) ? trim($_GET['to_date']) : '';
+$shift     = isset($_GET['shift']) ? trim($_GET['shift']) : '';
+$qc_grade  = isset($_GET['qc_grade']) ? trim($_GET['qc_grade']) : '';
+$buyer     = isset($_GET['buyer']) ? trim($_GET['buyer']) : '';
+$mcno      = isset($_GET['mcno']) ? trim($_GET['mcno']) : '';
 
-$where = '';
+$whereClauses = [];
+
 if ($search !== '') {
     $s = mysqli_real_escape_string($db, $search);
-    $where = "WHERE TRIM(i.ROLL) LIKE '%$s%'
+    $cleanRoll = mysqli_real_escape_string($db, preg_replace('/-(R|P)$/i', '', $search));
+    $whereClauses[] = "(
+        TRIM(i.ROLL) LIKE '%$s%'
+        OR TRIM(i.ROLL) LIKE '%$cleanRoll%'
         OR TRIM(i.PO_NUMBER) LIKE '%$s%'
         OR TRIM(i.SONO) LIKE '%$s%'
         OR TRIM(i.BUYER) LIKE '%$s%'
-        OR TRIM(i.STYLE) LIKE '%$s%'";
+        OR TRIM(i.STYLE) LIKE '%$s%'
+        OR TRIM(i.CUSTOMER) LIKE '%$s%'
+    )";
 }
+
+// Category filter based on Rejection Quantity:
+// Rejection: rejection quantity > 0
+// Pass: rejection quantity <= 0 (or 0 / NULL / empty)
+if ($category === 'pass') {
+    $whereClauses[] = "(CAST(COALESCE(i.RQTY, 0) AS DECIMAL(10,2)) <= 0)";
+} elseif ($category === 'rejection') {
+    $whereClauses[] = "(CAST(COALESCE(i.RQTY, 0) AS DECIMAL(10,2)) > 0)";
+}
+
+if ($from_date !== '') {
+    $fd = mysqli_real_escape_string($db, $from_date);
+    $whereClauses[] = "i.BUDAT >= '$fd'";
+}
+
+if ($to_date !== '') {
+    $td = mysqli_real_escape_string($db, $to_date);
+    $whereClauses[] = "i.BUDAT <= '$td'";
+}
+
+if ($shift !== '' && strtolower($shift) !== 'all') {
+    $sh = mysqli_real_escape_string($db, $shift);
+    $whereClauses[] = "TRIM(i.SHIFT) = '$sh'";
+}
+
+if ($qc_grade !== '' && strtolower($qc_grade) !== 'all') {
+    $qcg = mysqli_real_escape_string($db, $qc_grade);
+    $whereClauses[] = "TRIM(i.QC_GRADE) = '$qcg'";
+}
+
+if ($buyer !== '' && strtolower($buyer) !== 'all') {
+    $by = mysqli_real_escape_string($db, $buyer);
+    $whereClauses[] = "TRIM(i.BUYER) = '$by'";
+}
+
+if ($mcno !== '' && strtolower($mcno) !== 'all') {
+    $mc = mysqli_real_escape_string($db, $mcno);
+    $whereClauses[] = "TRIM(i.MCNO) = '$mc'";
+}
+
+$where = count($whereClauses) > 0 ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
 
 $sql = "SELECT i.*,
                COALESCE(
@@ -30,7 +84,7 @@ $sql = "SELECT i.*,
         FROM knitting_inspection i
         $where
         ORDER BY i.KITID DESC
-        LIMIT 500";
+        LIMIT 1000";
 
 try {
     $result = mysqli_query($db, $sql);
@@ -49,17 +103,61 @@ if (!$result) {
 }
 
 $data = [];
+$total_rolls = 0;
+$pass_rolls = 0;
+$reject_rolls = 0;
+$sum_main_qty = 0.0;
+$sum_reject_qty = 0.0;
+$sum_update_qty = 0.0;
+
 while ($row = mysqli_fetch_assoc($result)) {
-    if (isset($row['ROLL'])) {
-        $row['ROLL'] = trim($row['ROLL']);
+    $rawRoll = isset($row['ROLL']) ? trim($row['ROLL']) : '';
+    // Strip trailing -R or -P if already present to prevent duplicate appending
+    $baseRoll = preg_replace('/-(R|P)$/i', '', $rawRoll);
+
+    $rqty = floatval($row['RQTY'] ?? 0);
+    $oqty = floatval($row['OQTY'] ?? ($row['QTY'] ?? 0));
+    $uqty = floatval($row['UQTY'] ?? 0);
+
+    // Any roll number with a rejection quantity must have “-R” appended.
+    // Any roll number that passes the test must have “-P” appended.
+    if ($rqty > 0) {
+        $cat = 'Rejection';
+        $displayRoll = $baseRoll . '-R';
+        $reject_rolls++;
+    } else {
+        $cat = 'Pass';
+        $displayRoll = $baseRoll . '-P';
+        $pass_rolls++;
     }
-    $row['MAIN_QTY']   = $row['OQTY'] ?? '';
-    $row['REJECT_QTY'] = $row['RQTY'] ?? '';
-    $row['UPDATE_QTY'] = $row['UQTY'] ?? '';
+
+    $total_rolls++;
+    $sum_main_qty += $oqty;
+    $sum_reject_qty += $rqty;
+    $sum_update_qty += $uqty;
+
+    $row['RAW_ROLL']            = $baseRoll;
+    $row['ROLL']                = $displayRoll;
+    $row['INSPECTION_CATEGORY'] = $cat;
+    $row['MAIN_QTY']            = $row['OQTY'] ?? '';
+    $row['REJECT_QTY']          = $row['RQTY'] ?? '';
+    $row['UPDATE_QTY']          = $row['UQTY'] ?? '';
     $data[] = $row;
 }
 
-echo json_encode(['success' => true, 'count' => count($data), 'data' => $data]);
+echo json_encode([
+    'success' => true,
+    'count'   => count($data),
+    'stats'   => [
+        'total_rolls'      => $total_rolls,
+        'pass_rolls'       => $pass_rolls,
+        'reject_rolls'     => $reject_rolls,
+        'total_main_qty'   => round($sum_main_qty, 2),
+        'total_reject_qty' => round($sum_reject_qty, 2),
+        'total_update_qty' => round($sum_update_qty, 2)
+    ],
+    'data'    => $data
+]);
 
 mysqli_close($db);
 ?>

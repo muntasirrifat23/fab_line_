@@ -1,3 +1,33 @@
+<?php
+// knitting_inspection_report.php - Comprehensive Inspection Report with Category (Pass/Rejection) & Multi-Parameter Filters
+session_start();
+include 'config.php';
+
+// Fetch distinct filter values from database
+$filter_buyers = [];
+if (isset($db) && $db) {
+    $res_b = @mysqli_query($db, "SELECT DISTINCT TRIM(BUYER) AS b FROM knitting_inspection WHERE BUYER IS NOT NULL AND TRIM(BUYER) != '' ORDER BY b ASC");
+    if ($res_b) { while ($r = mysqli_fetch_assoc($res_b)) { $filter_buyers[] = $r['b']; } }
+}
+
+$filter_machines = [];
+if (isset($db) && $db) {
+    $res_m = @mysqli_query($db, "SELECT DISTINCT TRIM(MCNO) AS m FROM knitting_inspection WHERE MCNO IS NOT NULL AND TRIM(MCNO) != '' ORDER BY m ASC");
+    if ($res_m) { while ($r = mysqli_fetch_assoc($res_m)) { $filter_machines[] = $r['m']; } }
+}
+
+$filter_shifts = [];
+if (isset($db) && $db) {
+    $res_s = @mysqli_query($db, "SELECT DISTINCT TRIM(SHIFT) AS s FROM knitting_inspection WHERE SHIFT IS NOT NULL AND TRIM(SHIFT) != '' ORDER BY s ASC");
+    if ($res_s) { while ($r = mysqli_fetch_assoc($res_s)) { $filter_shifts[] = $r['s']; } }
+}
+
+$filter_grades = [];
+if (isset($db) && $db) {
+    $res_g = @mysqli_query($db, "SELECT DISTINCT TRIM(QC_GRADE) AS g FROM knitting_inspection WHERE QC_GRADE IS NOT NULL AND TRIM(QC_GRADE) != '' ORDER BY g ASC");
+    if ($res_g) { while ($r = mysqli_fetch_assoc($res_g)) { $filter_grades[] = $r['g']; } }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -10,10 +40,20 @@
     <link rel="stylesheet" href="css/bootstrap.min.css">
 
     <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --slate-800: #1e293b;
+            --slate-100: #f1f5f9;
+        }
+
         body {
             padding: 16px;
             background: #f1f5f9;
             font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            color: #1e293b;
         }
 
         .head-row {
@@ -26,68 +66,11 @@
         h1 {
             flex: 1;
             text-align: center;
-            font-size: 1.9rem;
+            font-size: 1.85rem;
             font-weight: 800;
             color: #1e293b;
             margin: 0;
-        }
-
-        .search-panel {
-            background: #fff;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 14px;
-            margin-bottom: 16px;
-        }
-
-        .search-row {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .search-panel input {
-            flex: 1;
-            min-width: 220px;
-            padding: 12px 14px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 1.05rem;
-            outline: none;
-        }
-
-        .search-panel input:focus {
-            border-color: #2563eb;
-        }
-
-        .btn {
-            border: none;
-            border-radius: 8px;
-            padding: 10px 18px;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            color: #fff;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: background .15s;
-        }
-
-        .btn-search {
-            background: #2563eb;
-        }
-
-        .btn-search:hover {
-            background: #1d4ed8;
-        }
-
-        .btn-clear {
-            background: #64748b;
-        }
-
-        .btn-clear:hover {
-            background: #475569;
+            letter-spacing: -0.5px;
         }
 
         #backBtn {
@@ -98,6 +81,11 @@
             border-radius: 8px;
             font-weight: 600;
             transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
         }
 
         #backBtn:hover {
@@ -106,36 +94,241 @@
             color: #000000 !important;
         }
 
+        /* ─── Filter Panel ─── */
+        .filter-panel {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        /* Category Toggle Pills */
+        .category-pill-group {
+            display: inline-flex;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 4px;
+            gap: 4px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
+        .cat-pill {
+            border: none;
+            background: transparent;
+            padding: 7px 16px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            border-radius: 7px;
+            cursor: pointer;
+            color: #475569;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.18s ease;
+        }
+
+        .cat-pill:hover {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+
+        .cat-pill.active[data-cat="all"] {
+            background: #1e293b;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(30, 41, 59, 0.25);
+        }
+
+        .cat-pill.active[data-cat="pass"] {
+            background: #16a34a;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(22, 163, 74, 0.3);
+        }
+
+        .cat-pill.active[data-cat="rejection"] {
+            background: #dc2626;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3);
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr 1fr auto;
+            gap: 10px;
+            align-items: end;
+        }
+
+        @media (max-width: 1200px) {
+            .filter-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .filter-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #64748b;
+            letter-spacing: 0.4px;
+        }
+
+        .form-control, .form-select {
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            height: 40px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
+        .btn-action-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-weight: 600;
+            font-size: 0.92rem;
+            cursor: pointer;
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            height: 40px;
+            transition: all .15s;
+        }
+
+        .btn-search {
+            background: #2563eb;
+            color: #fff;
+        }
+
+        .btn-search:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-clear {
+            background: #64748b;
+            color: #fff;
+        }
+
+        .btn-clear:hover {
+            background: #475569;
+        }
+
+        /* ─── Summary KPI Bar ─── */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+        }
+
+        .stat-card-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .stat-card-icon.blue   { background: #eff6ff; color: #2563eb; }
+        .stat-card-icon.green  { background: #ecfdf5; color: #16a34a; }
+        .stat-card-icon.red    { background: #fef2f2; color: #dc2626; }
+        .stat-card-icon.amber  { background: #fffbeb; color: #d97706; }
+        .stat-card-icon.purple { background: #faf5ff; color: #7c3aed; }
+
+        .stat-card-info {
+            line-height: 1.2;
+        }
+
+        .stat-card-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #64748b;
+            margin-bottom: 3px;
+        }
+
+        .stat-card-val {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        /* ─── Table ─── */
         .table-card {
             background: #fff;
             border: 1px solid #e2e8f0;
             border-radius: 10px;
             overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
 
         .table-scroll {
             overflow-x: auto;
-            max-height: calc(100vh - 180px);
+            max-height: calc(100vh - 270px);
             overflow-y: auto;
         }
 
         .table-scroll table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.95rem;
-            min-width: 3400px;
+            font-size: 0.93rem;
+            min-width: 3500px;
         }
 
         .table-scroll thead th {
             background: #1e293b !important;
             color: #fff !important;
-            padding: 14px 12px;
+            padding: 13px 12px;
             text-align: left;
             font-weight: 700;
             white-space: nowrap;
             position: sticky;
             top: 0;
             z-index: 5;
+            font-size: 0.85rem;
+            letter-spacing: 0.3px;
         }
 
         .table-scroll thead th:first-child {
@@ -144,7 +337,7 @@
         }
 
         .table-scroll tbody td {
-            padding: 12px;
+            padding: 11px 12px;
             border-bottom: 1px solid #eef2f7;
             white-space: nowrap;
             color: #1e293b;
@@ -173,18 +366,73 @@
             background: #eff6ff;
         }
 
+        /* Badges */
+        .badge-roll-pass {
+            background: #dcfce7;
+            color: #15803d;
+            border: 1px solid #86efac;
+            font-weight: 800;
+            font-size: 0.88rem;
+            padding: 4px 9px;
+            border-radius: 6px;
+            display: inline-block;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-roll-reject {
+            background: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fca5a5;
+            font-weight: 800;
+            font-size: 0.88rem;
+            padding: 4px 9px;
+            border-radius: 6px;
+            display: inline-block;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-cat-pass {
+            background: #10b981;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 0.78rem;
+            padding: 4px 10px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .badge-cat-reject {
+            background: #ef4444;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 0.78rem;
+            padding: 4px 10px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .text-reject-qty {
+            color: #dc2626;
+            font-weight: 700;
+        }
+
         .btn-print-row {
             background: #2563eb;
             border: none;
             color: #fff;
             border-radius: 6px;
-            padding: 7px 13px;
-            font-size: 1rem;
+            padding: 6px 12px;
+            font-size: 0.88rem;
             font-weight: 600;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
             gap: 5px;
+            transition: background 0.15s;
         }
 
         .btn-print-row:hover {
@@ -194,33 +442,17 @@
         .empty-row td,
         .loading-cell {
             text-align: center;
-            padding: 28px;
+            padding: 32px;
             color: #94a3b8;
             font-weight: 600;
         }
 
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-
-            .search-row {
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
-                justify-content: center;
         @page {
             size: A4 landscape;
             margin: 8mm;
         }
 
         @media print {
-            @page {
-                size: A4 landscape;
-                margin: 8mm;
-            }
             body {
                 background: #ffffff !important;
                 padding: 0 !important;
@@ -290,21 +522,163 @@
 
     <div class="container-fluid p-0">
 
+        <!-- Top Header Row -->
         <div class="head-row">
             <button class="btn" id="backBtn">
                 <i class="fa-solid fa-arrow-left"></i> Back to Report
             </button>
-            <h1 style="font-size:xx-large;">Knitting Inspection Report</h1>
+            <h1>Knitting Inspection Report</h1>
         </div>
 
-        <div class="search-panel">
-            <div class="search-row">
-                <input type="text" id="bookingInput" placeholder="Search Roll / PO Number / SONO / Buyer / Style">
-                <button class="btn btn-search" id="searchBtn"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-                <button class="btn btn-clear" id="clearBtn"><i class="fa-solid fa-rotate-left"></i> Clear</button>
+        <!-- ═══ FILTER PANEL ═══ -->
+        <div class="filter-panel">
+
+            <!-- Category Quick Filter Pills -->
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                <div>
+                    <span style="font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-right: 8px;">Inspection Category:</span>
+                    <div class="category-pill-group" id="categoryPillGroup">
+                        <button type="button" class="cat-pill active" data-cat="all">
+                            <i class="fa-solid fa-layer-group"></i> All Records
+                        </button>
+                        <button type="button" class="cat-pill" data-cat="pass">
+                            <i class="fa-solid fa-circle-check" style="color: #16a34a;"></i> Pass (-P)
+                        </button>
+                        <button type="button" class="cat-pill" data-cat="rejection">
+                            <i class="fa-solid fa-circle-xmark" style="color: #dc2626;"></i> Rejection (-R)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Multi-Parameter Filter Grid -->
+            <div class="filter-grid">
+
+                <!-- Search Input -->
+                <div class="filter-item">
+                    <label class="filter-label" for="bookingInput"><i class="fa-solid fa-magnifying-glass me-1"></i>Search Keyword</label>
+                    <input type="text" id="bookingInput" class="form-control" placeholder="Search Roll (-R/-P), PO, SONO, Buyer, Style...">
+                </div>
+
+                <!-- Category Dropdown -->
+                <div class="filter-item">
+                    <label class="filter-label" for="categorySelect"><i class="fa-solid fa-filter me-1"></i>Category</label>
+                    <select id="categorySelect" class="form-select">
+                        <option value="all">All Categories</option>
+                        <option value="pass">Pass (-P)</option>
+                        <option value="rejection">Rejection (-R)</option>
+                    </select>
+                </div>
+
+                <!-- From Date -->
+                <div class="filter-item">
+                    <label class="filter-label" for="fromDateInput"><i class="fa-regular fa-calendar me-1"></i>From Date</label>
+                    <input type="date" id="fromDateInput" class="form-control">
+                </div>
+
+                <!-- To Date -->
+                <div class="filter-item">
+                    <label class="filter-label" for="toDateInput"><i class="fa-regular fa-calendar me-1"></i>To Date</label>
+                    <input type="date" id="toDateInput" class="form-control">
+                </div>
+
+                <!-- Shift -->
+                <div class="filter-item">
+                    <label class="filter-label" for="shiftSelect"><i class="fa-solid fa-clock me-1"></i>Shift</label>
+                    <select id="shiftSelect" class="form-select">
+                        <option value="all">All Shifts</option>
+                        <option value="A">Shift A</option>
+                        <option value="B">Shift B</option>
+                        <option value="C">Shift C</option>
+                    </select>
+                </div>
+
+                <!-- Machine (MCNO) -->
+                <div class="filter-item">
+                    <label class="filter-label" for="mcnoSelect"><i class="fa-solid fa-industry me-1"></i>Machine</label>
+                    <select id="mcnoSelect" class="form-select">
+                        <option value="all">All Machines</option>
+                        <?php foreach ($filter_machines as $m): ?>
+                            <option value="<?php echo htmlspecialchars($m); ?>"><?php echo htmlspecialchars($m); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <!-- Buyer -->
+                <div class="filter-item">
+                    <label class="filter-label" for="buyerSelect"><i class="fa-solid fa-user-tag me-1"></i>Buyer</label>
+                    <select id="buyerSelect" class="form-select">
+                        <option value="all">All Buyers</option>
+                        <?php foreach ($filter_buyers as $b): ?>
+                            <option value="<?php echo htmlspecialchars($b); ?>"><?php echo htmlspecialchars($b); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="filter-item">
+                    <label class="filter-label">&nbsp;</label>
+                    <div class="btn-action-group">
+                        <button class="btn btn-search" id="searchBtn" title="Apply Filters">
+                            <i class="fa-solid fa-filter"></i> Apply
+                        </button>
+                        <button class="btn btn-clear" id="clearBtn" title="Reset Filters to Default">
+                            <i class="fa-solid fa-rotate-left"></i> Reset
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ═══ SUMMARY STATS KPI STRIP ═══ -->
+        <div class="stats-bar" id="statsBar">
+            <div class="stat-card">
+                <div class="stat-card-icon blue"><i class="fa-solid fa-list-check"></i></div>
+                <div class="stat-card-info">
+                    <div class="stat-card-label">Total Rolls</div>
+                    <div class="stat-card-val" id="statTotalRolls">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-icon green"><i class="fa-solid fa-circle-check"></i></div>
+                <div class="stat-card-info">
+                    <div class="stat-card-label">Pass Rolls (-P)</div>
+                    <div class="stat-card-val" id="statPassRolls" style="color: #16a34a;">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-icon red"><i class="fa-solid fa-circle-xmark"></i></div>
+                <div class="stat-card-info">
+                    <div class="stat-card-label">Rejection Rolls (-R)</div>
+                    <div class="stat-card-val" id="statRejectRolls" style="color: #dc2626;">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-icon purple"><i class="fa-solid fa-weight-hanging"></i></div>
+                <div class="stat-card-info">
+                    <div class="stat-card-label">Main Qty (KG)</div>
+                    <div class="stat-card-val" id="statMainQty">0.00</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-icon amber"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div class="stat-card-info">
+                    <div class="stat-card-label">Reject Qty (KG)</div>
+                    <div class="stat-card-val" id="statRejectQty" style="color: #d97706;">0.00</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-icon green"><i class="fa-solid fa-boxes-stacked"></i></div>
+                <div class="stat-card-info">
+                    <div class="stat-card-label">Usable Qty (KG)</div>
+                    <div class="stat-card-val" id="statUpdateQty" style="color: #16a34a;">0.00</div>
+                </div>
             </div>
         </div>
 
+        <!-- ═══ INSPECTION DATA TABLE ═══ -->
         <div class="table-card">
             <div class="table-scroll">
                 <table>
@@ -314,6 +688,7 @@
                             <th>KITID</th>
                             <th>BUDAT</th>
                             <th>ROLL</th>
+                            <th>CATEGORY</th>
                             <th>MAIN QTY</th>
                             <th>REJECT QTY</th>
                             <th>UPDATE QTY</th>
@@ -365,7 +740,7 @@
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="51" class="loading-cell">Loading data...</td>
+                            <td colspan="52" class="loading-cell">Loading inspection data...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -383,6 +758,7 @@
             { key: 'KITID', label: 'KITID' },
             { key: 'BUDAT', label: 'BUDAT' },
             { key: 'ROLL', label: 'ROLL' },
+            { key: 'INSPECTION_CATEGORY', label: 'CATEGORY' },
             { key: 'OQTY',   label: 'MAIN QTY'   },
             { key: 'RQTY', label: 'REJECT QTY'  },
             { key: 'UQTY', label: 'UPDATE QTY'  },
@@ -433,18 +809,17 @@
         ];
 
         var currentData = [];
+        var activeReportRow = null;
 
         function esc(v) {
             if (v === null || v === undefined) return '';
             return String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
 
-        var activeReportRow = null;
-
         function renderReportHTML(row) {
-            var isPass = (String(row.QC_STATUS || '').toLowerCase() === 'passed');
-            var isFail = (String(row.QC_STATUS || '').toLowerCase() === 'failed');
-            var isReject = (String(row.QC_GRADE || '').toLowerCase() === 'reject' || String(row.QC_STATUS || '').toLowerCase() === 'rejected');
+            var isPass = (String(row.INSPECTION_CATEGORY || '').toLowerCase() === 'pass');
+            var isReject = (String(row.INSPECTION_CATEGORY || '').toLowerCase() === 'rejection');
+            var isFail = (String(row.QC_STATUS || '').toLowerCase() === 'failed' || isReject);
 
             return '' +
                 '<div id="rowPdfCard" style="position:relative;width:1100px;margin:0 auto;padding:18px 20px 16px 20px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#000000;font-size:9.5px;box-sizing:border-box;">' +
@@ -511,7 +886,7 @@
                 '<table style="width:100%;border-collapse:collapse;font-size:7.5px;text-align:center;border:1px solid #000000;background:#ffffff;table-layout:fixed;" border="1" cellpadding="2">' +
                 '<thead>' +
                 '<tr style="background:#ffffff;color:#000000;font-weight:bold;font-size:7.5px;">' +
-                '<th style="width:6%;border:1px solid #000000;padding:3px 1px;">Roll No</th>' +
+                '<th style="width:7%;border:1px solid #000000;padding:3px 1px;">Roll No</th>' +
                 '<th style="width:4%;border:1px solid #000000;padding:3px 1px;">Wt in kg</th>' +
                 '<th style="width:4%;border:1px solid #000000;padding:3px 1px;">Roll Length</th>' +
                 '<th style="width:3.5%;border:1px solid #000000;padding:3px 1px;">T&amp;T</th>' +
@@ -689,10 +1064,15 @@
                 '</div>';
         }
 
-        function openReportModal(roll) {
+        function openReportModal(idOrRoll) {
             var row = null;
             for (var i = 0; i < currentData.length; i++) {
-                if (String(currentData[i].ROLL) === String(roll)) { row = currentData[i]; break; }
+                if (String(currentData[i].KITID) === String(idOrRoll) || 
+                    String(currentData[i].ROLL) === String(idOrRoll) || 
+                    String(currentData[i].RAW_ROLL) === String(idOrRoll)) { 
+                    row = currentData[i]; 
+                    break; 
+                }
             }
             if (!row) { alert('Data not found for this roll.'); return; }
             activeReportRow = row;
@@ -702,6 +1082,7 @@
 
         function closeReportModal() {
             $('#reportModal').css('display', 'none');
+            activeReportRow = null;
         }
 
         function printModalReport() {
@@ -713,8 +1094,8 @@
             downloadPDFByRow(activeReportRow);
         }
 
-        function downloadPDF(roll) {
-            openReportModal(roll);
+        function downloadPDF(idOrRoll) {
+            openReportModal(idOrRoll);
         }
 
         function downloadPDFByRow(row) {
@@ -737,7 +1118,7 @@
                 var pdf = new jsPDFLib.jsPDF('l', 'mm', 'a4');
                 var pdfWidth = pdf.internal.pageSize.getWidth();
                 var pageHeight = pdf.internal.pageSize.getHeight();
-                var margin = 6; // 6mm breathing room on PDF export
+                var margin = 6;
                 var printW = pdfWidth - (margin * 2);
                 var printH = pageHeight - (margin * 2);
                 var pdfHeight = (canvas.height * printW) / canvas.width;
@@ -780,94 +1161,169 @@
             tbody.empty();
             currentData = data || [];
             if (!currentData.length) {
-                tbody.append('<tr class="empty-row"><td colspan="51">No data found</td></tr>');
+                tbody.append('<tr class="empty-row"><td colspan="52"><i class="fa-regular fa-folder-open me-2"></i>No inspection records found for the selected filters</td></tr>');
                 return;
             }
             currentData.forEach(function(row) {
                 var tr = $('<tr>');
-                var rollEsc = esc(row.ROLL).replace(/'/g, '&#39;');
+                var isReject = (row.INSPECTION_CATEGORY === 'Rejection');
+                var kitIdEsc = esc(row.KITID);
+
+                // Action Column
                 tr.append($('<td>').html(
-                    '<button class="btn-print-row" onclick="openReportModal(\'' + rollEsc + '\')"><i class="fa-solid fa-file-invoice"></i> View / Print Report</button>'
+                    '<button class="btn-print-row" onclick="openReportModal(\'' + kitIdEsc + '\')"><i class="fa-solid fa-file-invoice"></i> View / Print Report</button>'
                 ));
+
+                // Loop through columns
                 COLS.forEach(function(c) {
-                    tr.append($('<td>').text(row[c.key] === null || row[c.key] === undefined ? '' : row[c.key]));
+                    var val = (row[c.key] === null || row[c.key] === undefined) ? '' : row[c.key];
+
+                    if (c.key === 'ROLL') {
+                        // Any roll number with a rejection quantity has "-R" appended, passed has "-P" appended
+                        var rollBadge = isReject 
+                            ? '<span class="badge-roll-reject">' + esc(val) + '</span>'
+                            : '<span class="badge-roll-pass">' + esc(val) + '</span>';
+                        tr.append($('<td>').html(rollBadge));
+                    } else if (c.key === 'INSPECTION_CATEGORY') {
+                        // Category Badge
+                        var catBadge = isReject
+                            ? '<span class="badge-cat-reject"><i class="fa-solid fa-circle-xmark"></i> Rejection (-R)</span>'
+                            : '<span class="badge-cat-pass"><i class="fa-solid fa-circle-check"></i> Pass (-P)</span>';
+                        tr.append($('<td>').html(catBadge));
+                    } else if (c.key === 'RQTY' || c.key === 'REJECT_QTY') {
+                        // Highlight non-zero rejection qty
+                        var numRqty = parseFloat(val) || 0;
+                        if (numRqty > 0) {
+                            tr.append($('<td>').html('<span class="text-reject-qty">' + esc(val) + '</span>'));
+                        } else {
+                            tr.append($('<td>').text(val));
+                        }
+                    } else {
+                        tr.append($('<td>').text(val));
+                    }
                 });
                 tbody.append(tr);
             });
         }
 
-        var isSearching = false;
-
-        function searchBooking() {
-            var search = $('#bookingInput').val().trim();
-            isSearching = (search !== '');
-            $('#searchBtn').prop('disabled', true).html('Searching...');
-            $.ajax({
-                    url: 'ajaxKnittingInspection_Report.php',
-                    data: { search: search },
-                    dataType: 'json',
-                    method: 'GET'
-                })
-                .done(function(resp) {
-                    if (resp && resp.success) {
-                        renderTableRows(resp.data);
-                    } else {
-                        $('#tableBody').html('<tr class="empty-row"><td colspan="51">No data found</td></tr>');
-                    }
-                })
-                .fail(function() {
-                    $('#tableBody').html('<tr class="empty-row"><td colspan="51" style="color:#dc2626;">Error searching</td></tr>');
-                })
-                .always(function() {
-                    $('#searchBtn').prop('disabled', false).html('<i class="fa-solid fa-magnifying-glass"></i> Search');
-                });
+        function updateStatsBar(stats) {
+            if (!stats) return;
+            $('#statTotalRolls').text(stats.total_rolls || 0);
+            $('#statPassRolls').text(stats.pass_rolls || 0);
+            $('#statRejectRolls').text(stats.reject_rolls || 0);
+            $('#statMainQty').text((parseFloat(stats.total_main_qty) || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+            $('#statRejectQty').text((parseFloat(stats.total_reject_qty) || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+            $('#statUpdateQty').text((parseFloat(stats.total_update_qty) || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}));
         }
 
-        function loadAll(silent) {
+        function getFilterPayload() {
+            return {
+                search:    $('#bookingInput').val().trim(),
+                category:  $('#categorySelect').val(),
+                from_date: $('#fromDateInput').val(),
+                to_date:   $('#toDateInput').val(),
+                shift:     $('#shiftSelect').val(),
+                mcno:      $('#mcnoSelect').val(),
+                buyer:     $('#buyerSelect').val()
+            };
+        }
+
+        function loadInspectionData(silent) {
             if (!silent) {
-                $('#tableBody').html('<tr><td colspan="51" class="loading-cell">Loading data...</td></tr>');
+                $('#tableBody').html('<tr><td colspan="52" class="loading-cell"><i class="fa-solid fa-spinner fa-spin me-2"></i>Loading inspection report data...</td></tr>');
             }
-            var search = $('#bookingInput').val().trim();
+            var payload = getFilterPayload();
             $.ajax({
-                    url: 'ajaxKnittingInspection_Report.php',
-                    data: search !== '' ? { search: search } : {},
-                    dataType: 'json',
-                    method: 'GET'
-                })
-                .done(function(resp) {
-                    if (resp && resp.success) {
-                        renderTableRows(resp.data);
-                    } else if (!silent) {
-                        $('#tableBody').html('<tr class="empty-row"><td colspan="51">No data returned</td></tr>');
-                    }
-                })
-                .fail(function() {
-                    if (!silent) {
-                        $('#tableBody').html('<tr class="empty-row"><td colspan="51" style="color:#dc2626;">Error loading data</td></tr>');
-                    }
-                });
+                url: 'ajaxKnittingInspection_Report.php',
+                data: payload,
+                dataType: 'json',
+                method: 'GET'
+            })
+            .done(function(resp) {
+                if (resp && resp.success) {
+                    renderTableRows(resp.data);
+                    updateStatsBar(resp.stats);
+                } else if (!silent) {
+                    $('#tableBody').html('<tr class="empty-row"><td colspan="52">No data returned from server</td></tr>');
+                }
+            })
+            .fail(function() {
+                if (!silent) {
+                    $('#tableBody').html('<tr class="empty-row"><td colspan="52" style="color:#dc2626;"><i class="fa-solid fa-triangle-exclamation me-2"></i>Error loading inspection data</td></tr>');
+                }
+            })
+            .always(function() {
+                $('#searchBtn').prop('disabled', false).html('<i class="fa-solid fa-filter"></i> Apply');
+            });
         }
 
         $(function() {
+            // Back button
             $('#backBtn').on('click', function() {
                 window.location.href = 'report.php';
             });
-            $('#searchBtn').on('click', searchBooking);
+
+            // Category Quick Filter Pills
+            $('#categoryPillGroup').on('click', '.cat-pill', function() {
+                var selectedCat = $(this).data('cat');
+                $('.cat-pill').removeClass('active');
+                $(this).addClass('active');
+
+                $('#categorySelect').val(selectedCat);
+                loadInspectionData(false);
+            });
+
+            // Category Select change syncs pill
+            $('#categorySelect').on('change', function() {
+                var cat = $(this).val();
+                $('.cat-pill').removeClass('active');
+                $('.cat-pill[data-cat="' + cat + '"]').addClass('active');
+                loadInspectionData(false);
+            });
+
+            // Apply Filters button
+            $('#searchBtn').on('click', function() {
+                $(this).prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Filtering...');
+                loadInspectionData(false);
+            });
+
+            // Enter key on search input triggers filter
+            $('#bookingInput').on('keypress', function(e) {
+                if (e.which === 13) {
+                    loadInspectionData(false);
+                }
+            });
+
+            // Clear / Reset Filters
             $('#clearBtn').on('click', function() {
                 $('#bookingInput').val('');
-                isSearching = false;
-                loadAll(false);
-            });
-            $('#bookingInput').on('keypress', function(e) {
-                if (e.which === 13) searchBooking();
+                $('#categorySelect').val('all');
+                $('#fromDateInput').val('');
+                $('#toDateInput').val('');
+                $('#shiftSelect').val('all');
+                $('#mcnoSelect').val('all');
+                $('#buyerSelect').val('all');
+
+                $('.cat-pill').removeClass('active');
+                $('.cat-pill[data-cat="all"]').addClass('active');
+
+                loadInspectionData(false);
             });
 
-            loadAll(false);
+            // Auto-filter on change of dropdowns
+            $('#shiftSelect, #mcnoSelect, #buyerSelect, #fromDateInput, #toDateInput').on('change', function() {
+                loadInspectionData(false);
+            });
 
-            // Real-time polling every 5 seconds
+            // Initial load (default view: all records available)
+            loadInspectionData(false);
+
+            // Real-time polling every 6 seconds (if modal is not open)
             setInterval(function() {
-                loadAll(true);
-            }, 5000);
+                if ($('#reportModal').css('display') === 'none') {
+                    loadInspectionData(true);
+                }
+            }, 6000);
         });
     </script>
 
