@@ -296,7 +296,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                     ? count($inserted_ids) . " Knit Cards (Sub-TIDs) generated successfully!" 
                     : "Knit Card generated successfully!";
 
-                header("Location: knit_card_view.php?id=" . $redirect_id . "&msg=" . urlencode($success_msg));
+                header("Location: knit_card_view.php?id=" . $redirect_id . "&from=card&msg=" . urlencode($success_msg));
                 exit();
 
             } catch (Exception $e) {

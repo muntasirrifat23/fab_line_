@@ -12,8 +12,52 @@ $card_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $msg     = isset($_GET['msg'])   ? trim($_GET['msg'])   : '';
 $error   = isset($_GET['error']) ? trim($_GET['error']) : '';
 
+// Dynamic Back Navigation based on user footprint (Knit Card vs Report)
+$back_url   = 'knit_card.php';
+$back_label = 'Back to Knit Card';
+
+if (isset($_GET['from'])) {
+    $from = strtolower(trim($_GET['from']));
+    if ($from === 'report' || $from === 'knit_card_report') {
+        $back_url   = 'knit_card_report.php';
+        $back_label = 'Back to Report';
+    } elseif ($from === 'card' || $from === 'knit_card') {
+        $back_url   = 'knit_card.php';
+        $back_label = 'Back to Knit Card';
+    }
+    $_SESSION['knit_card_back_target'] = $back_url;
+    $_SESSION['knit_card_back_label']  = $back_label;
+} elseif (!empty($_SERVER['HTTP_REFERER'])) {
+    $ref_path = parse_url($_SERVER['HTTP_REFERER'], PHP_URL_PATH);
+    $ref_file = strtolower(basename($ref_path ?? ''));
+    if ($ref_file === 'knit_card_report.php') {
+        $back_url   = 'knit_card_report.php';
+        $back_label = 'Back to Report';
+        $_SESSION['knit_card_back_target'] = $back_url;
+        $_SESSION['knit_card_back_label']  = $back_label;
+    } elseif ($ref_file === 'knit_card.php' || $ref_file === 'knit_card_generate.php' || $ref_file === 'initialpage.php') {
+        $back_url   = 'knit_card.php';
+        $back_label = 'Back to Knit Card';
+        $_SESSION['knit_card_back_target'] = $back_url;
+        $_SESSION['knit_card_back_label']  = $back_label;
+    } elseif ($ref_file !== 'knit_card_print.php' && $ref_file !== 'knit_card_view.php') {
+        if (!empty($_SESSION['knit_card_back_target'])) {
+            $back_url   = $_SESSION['knit_card_back_target'];
+            $back_label = $_SESSION['knit_card_back_label'] ?? ($back_url === 'knit_card_report.php' ? 'Back to Report' : 'Back to Knit Card');
+        }
+    } else {
+        if (!empty($_SESSION['knit_card_back_target'])) {
+            $back_url   = $_SESSION['knit_card_back_target'];
+            $back_label = $_SESSION['knit_card_back_label'] ?? ($back_url === 'knit_card_report.php' ? 'Back to Report' : 'Back to Knit Card');
+        }
+    }
+} elseif (!empty($_SESSION['knit_card_back_target'])) {
+    $back_url   = $_SESSION['knit_card_back_target'];
+    $back_label = $_SESSION['knit_card_back_label'] ?? ($back_url === 'knit_card_report.php' ? 'Back to Report' : 'Back to Knit Card');
+}
+
 if ($card_id <= 0) {
-    header("Location: knit_card_report.php?error=Invalid+Card+ID");
+    header("Location: " . $back_url . "?error=Invalid+Card+ID");
     exit();
 }
 
@@ -44,7 +88,7 @@ if ($stmt) {
 }
 
 if (!$card_res || $card_res->num_rows == 0) {
-    header("Location: knit_card_report.php?error=Card+not+found");
+    header("Location: " . $back_url . "?error=Card+not+found");
     exit();
 }
 $card = $card_res->fetch_assoc();
@@ -342,8 +386,8 @@ if (!empty($card['UNAME'])) {
 
     <!-- TOP ACTION BAR (NO-PRINT) -->
     <div class="action-bar-top no-print">
-        <a href="knit_card.php" class="btn btn-tag btn-back-dir">
-            <i class="fa-solid fa-arrow-left"></i> Back to Knit Card
+        <a href="<?php echo htmlspecialchars($back_url); ?>" class="btn btn-tag btn-back-dir">
+            <i class="fa-solid fa-arrow-left"></i> <?php echo htmlspecialchars($back_label); ?>
         </a>
         <div class="d-flex gap-1">
             <button type="button" onclick="downloadCard()" class="btn btn-tag btn-primary">

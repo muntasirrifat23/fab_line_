@@ -715,12 +715,12 @@ $end_entry   = min($offset + $limit, $total_records);
                                             <?php endif; ?>
 
                                             <?php if (!empty($p_card_id)): ?>
-                                                <a href="knit_card_view.php?id=<?php echo intval($p_card_id); ?>"
+                                                <a href="knit_card_view.php?id=<?php echo intval($p_card_id); ?>&from=card"
                                                    class="btn btn-sm btn-action-view"
                                                    title="View Latest Generated Card">
                                                     <i class="fa-solid fa-eye me-1"></i> View Card
                                                 </a>
-                                                <a href="knit_card_view.php?id=<?php echo intval($p_card_id); ?>&download=1"
+                                                <a href="knit_card_view.php?id=<?php echo intval($p_card_id); ?>&download=1&from=card"
                                                    class="btn btn-sm btn-action-download"
                                                    title="Download PDF Card">
                                                     <i class="fa-solid fa-download me-1"></i> Download
