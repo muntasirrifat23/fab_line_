@@ -464,17 +464,21 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
       justify-content: center;
       align-items: center;
       padding: 10px;
+      margin: 0;
     }
 
     .card {
       max-width: 520px;
       width: 100%;
+      min-height: 90vh;
       background: #ffffff;
       border-radius: 18px;
       padding: 14px 16px 18px;
       box-shadow: 0 10px 25px rgba(30, 60, 120, 0.12);
       border: 1px solid #dbe4ef;
       transition: max-width 0.3s ease;
+      display: flex;
+      flex-direction: column;
     }
 
     .back-btn {
