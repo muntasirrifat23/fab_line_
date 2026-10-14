@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -523,8 +523,8 @@
                 <div class="d-none d-xl-block" style="width: 190px; flex-shrink: 0;"></div>
             </div>
             <div class="banner-info-strip">
-                <span class="strip-item"><span class="strip-dot"></span><span id="stripTotal">Total Programs : â€”</span></span>
-                <span class="strip-item"><span class="strip-dot" style="background:#34d399;box-shadow:0 0 8px #34d399;"></span><span id="stripQty">Total QTY : â€”</span></span>
+                <span class="strip-item"><span class="strip-dot"></span><span id="stripTotal">Total Programs :</span></span>
+                <span class="strip-item"><span class="strip-dot" style="background:#34d399;box-shadow:0 0 8px #34d399;"></span><span id="stripQty">Total QTY :</span></span>
                 <span class="strip-item ms-auto hint-text" style="color:#cbd5e1;">
                     <i class="fa-regular fa-calendar me-1"></i><?php echo date('d M Y'); ?>
                 </span>
@@ -622,7 +622,7 @@
             $('#statPrograms').text(rows.length.toLocaleString());
             $('#statQty').html(rows.length ? totalQty.toLocaleString(undefined, {
                 maximumFractionDigits: 2
-            }) + ' <span class="fs-6 text-muted">KG</span>' : 'â€”');
+            }) + ' <span class="fs-6 text-muted">KG</span>' : '');
             $('#stripTotal').text('Total Programs : ' + rows.length.toLocaleString());
             $('#stripQty').text('Total QTY : ' + totalQty.toLocaleString(undefined, {
                 maximumFractionDigits: 2
