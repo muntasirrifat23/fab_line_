@@ -399,7 +399,7 @@
             color: #5b21b6;
         }
 
-        .btn-pdf {
+        .btn-print {
             background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
             border: none;
             color: white;
@@ -415,7 +415,7 @@
             white-space: nowrap;
         }
 
-        .btn-pdf:hover {
+        .btn-print:hover {
             background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
             color: white;
             transform: translateY(-1px);
@@ -562,9 +562,8 @@
                 <table class="custom-table">
                     <thead>
                         <tr>
-                            <th>PDF</th>
+                            <th>Print</th>
                             <th>Date</th>
-                            <th>Program No</th>
                             <th>PO No</th>
                             <th>SONO</th>
                             <th>Buyer</th>
@@ -585,13 +584,15 @@
                             <th>Feeder Plan</th>
                             <!-- <th>Shift</th> -->
                             <th>Lot No</th>
+                            <th>OP Name</th>
+                            <th>Remarks</th>
                             <!-- <th>Knit M Description</th> -->
                             <!-- <th>Knit Material Code</th> -->
                         </tr>
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                             <td colspan="26" class="state-cell">
+                             <td colspan="22" class="state-cell">
                                  <span class="loading-spinner"></span>
                                  <div class="state-text mt-2">Loading data...</div>
                              </td>
@@ -604,9 +605,6 @@
     </div>
 
     <script src="jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
     <script>
         function esc(v) {
             return $('<div>').text(v === null || v === undefined ? '' : v).html();
@@ -644,7 +642,7 @@
             updateStats(data);
 
             if (!data || data.length === 0) {
-                tbody.append('<tr><td colspan="26" class="state-cell">' +
+                tbody.append('<tr><td colspan="22" class="state-cell">' +
                     '<i class="fa-regular fa-folder-open state-icon"></i>' +
                     '<div class="state-text">No data found</div></td></tr>');
                 return;
@@ -652,17 +650,16 @@
 
             data.forEach(function(row) {
                 var tr = $('<tr>');
-                var pdfBtn = $('<button>')
+                var printBtn = $('<button>')
                     .attr('type', 'button')
-                    .addClass('btn-pdf')
-                    .attr('title', 'Download PDF')
-                    .html('<i class="fa-solid fa-file-pdf"></i> PDF')
+                    .addClass('btn-print')
+                    .attr('title', 'Print')
+                    .html('<i class="fa-solid fa-print"></i> PRINT')
                     .on('click', function() {
-                        downloadRowPdf(row);
+                        printRow(row);
                     });
-                tr.append($('<td class="text-center">').append(pdfBtn));
+                tr.append($('<td class="text-center">').append(printBtn));
                 tr.append($('<td>').text(row.CREATED_DATE || ''));
-                tr.append($('<td>').html('<span class="prog-no-badge">' + esc(row.PROGRAM_NO || '') + '</span>'));
                 tr.append($('<td class="fw-bold">').text(row.PO_NUMBER || row.BOOKING || ''));
                 tr.append($('<td>').text(row.SONO || ''));
                 tr.append($('<td>').text(row.BUYER || ''));
@@ -682,6 +679,8 @@
                 tr.append($('<td>').text(row.FEEDER_PLAN || ''));
                 // tr.append($('<td>').html(shiftChip(row.SHIFT)));
                 tr.append($('<td>').text(row.LOT || ''));
+                tr.append($('<td>').text(row.UNAME || ''));
+                tr.append($('<td>').text(row.REMARKS || ''));
                 // tr.append($('<td>').text(row.KNIT_M_DESCRIPTION || ''));
                 // tr.append($('<td>').text(row.KNIT_MATERIAL_CODE || ''));
                 tbody.append(tr);
@@ -690,7 +689,7 @@
 
         function showState(icon, text) {
             updateStats([]);
-            $('#tableBody').html('<tr><td colspan="26" class="state-cell">' +
+            $('#tableBody').html('<tr><td colspan="22" class="state-cell">' +
                 '<i class="' + icon + ' state-icon"></i>' +
                 '<div class="state-text">' + text + '</div></td></tr>');
         }
@@ -744,11 +743,16 @@
                 });
         }
 
-        // ---------- ROW PDF DOWNLOAD (image-style card) ----------
-        function downloadRowPdf(row) {
+        // ---------- ROW PRINT ----------
+        function printRow(row) {
+            var printWindow = window.open('', '_blank');
+            if (!printWindow) {
+                alert('Please allow popups to print this program.');
+                return;
+            }
+
             var fieldHTML = [
                 ['Date', row.CREATED_DATE],
-                ['Program No', row.PROGRAM_NO],
                 ['PO No', row.PO_NUMBER || row.BOOKING || ''],
                 ['SONO', row.SONO],
                 ['Buyer', row.BUYER],
@@ -768,24 +772,43 @@
                 ['Feeder Plan', row.FEEDER_PLAN],
                 // ['Shift', row.SHIFT],
                 ['Lot No', row.LOT],
+                ['Remarks', row.REMARKS, true],
                 // ['KNIT M DESCRIPTION', row.KNIT_M_DESCRIPTION, true],
                 // ['KNIT MATERIAL CODE', row.KNIT_MATERIAL_CODE, true]
             ];
 
-            var rowsHTML = fieldHTML.map(function(f) {
-                var val = (f[1] === null || f[1] === undefined) ? '' : f[1];
-                var cls = f[2] ? 'pdf-item pdf-item-full' : 'pdf-item';
-                return '<div class="' + cls + '"><span class="pdf-label">' + f[0] + ' :</span><span class="pdf-value">' + val + '</span></div>';
-            }).join('');
+            var rowsHTML = '';
+            for (var i = 0; i < fieldHTML.length; i += 2) {
+                var left = fieldHTML[i];
+                var right = fieldHTML[i + 1];
+                var leftValue = (left[1] === null || left[1] === undefined) ? '' : left[1];
+                if (left[2]) {
+                    rowsHTML += '<tr><td colspan="2"><span class="pdf-label">' +
+                        esc(left[0]) + ' :</span><span class="pdf-value">' + esc(leftValue) +
+                        '</span></td></tr>';
+                    continue;
+                }
+                rowsHTML += '<tr><td><span class="pdf-label">' + esc(left[0]) +
+                    ' :</span><span class="pdf-value">' + esc(leftValue) + '</span></td>';
+                if (right) {
+                    var rightValue = (right[1] === null || right[1] === undefined) ? '' : right[1];
+                    rowsHTML += '<td><span class="pdf-label">' + esc(right[0]) +
+                        ' :</span><span class="pdf-value">' + esc(rightValue) + '</span></td>';
+                } else {
+                    rowsHTML += '<td></td>';
+                }
+                rowsHTML += '</tr>';
+            }
 
             var content = '' +
-                '<div id="rowPdfCard" style="position:relative;width:760px;min-height:1050px;padding:24px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">' + '<div style="text-align:center;font-size:20px;font-weight:bold;color:#1e3a8a;border-bottom:3px solid #2563eb;padding-bottom:10px;margin-bottom:16px;">' +
+                '<div id="rowPrintCard" style="position:relative;width:760px;min-height:1050px;padding:24px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">' + '<div style="text-align:center;font-size:20px;font-weight:bold;color:#1e3a8a;border-bottom:3px solid #2563eb;padding-bottom:10px;margin-bottom:16px;">' +
                 'Knitting Program Report' +
                 '</div>' +
-                '<div style="display:flex;justify-content:space-between;align-items:center;width:100%;font-size:14px;font-weight:bold;margin-bottom:10px; margin-left:10px;">' +
-                '<span>Program No : ' + (row.PROGRAM_NO || '') + '</span>' +
+                '<div class="print-heading">' +
+                '<span>Program No : ' + esc(row.PROGRAM_NO || '') + '</span>' +
+                '<span class="print-operator-name">Operator Name : ' + esc(row.UNAME || '') + '</span>' +
                 '</div>' +
-                '<div class="pdf-grid">' + rowsHTML + '</div>' +
+                '<table class="pdf-table"><tbody>' + rowsHTML + '</tbody></table>' +
                 '<div style="text-align:center;font-size:11px;color: black; margin-top:16px;border-top:1px solid #e5e7eb;padding-top:8px;">' +
                 'Generated from Knitting Program Report - ' + new Date().toLocaleString() +
                 '</div>' +
@@ -799,19 +822,15 @@
 
                 '</div>';
 
-            var tempDiv = document.createElement('div');
-            tempDiv.innerHTML = content;
-            tempDiv.style.position = 'absolute';
-            tempDiv.style.left = '-9999px';
-            tempDiv.style.top = '0';
-            document.body.appendChild(tempDiv);
-
-            var style = document.createElement('style');
-            style.textContent = '' +
-                '.pdf-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:2px solid #d1d5db;border-radius:6px;padding:0;background:#ffffff;}' +
-                '.pdf-item{font-size:13px;line-height:1.7;border-bottom:1px solid #d1d5db;border-right:1px solid #d1d5db;padding:7px 12px;word-break:break-word;background:#ffffff;color:#000000;}' +
-                '.pdf-item:nth-child(2n){border-right:none;}' +
-                '.pdf-item-full{grid-column:1 / -1;border-right:none;border-top:2px solid #d1d5db;}' +
+            var style = '' +
+                '@page{size:A4;margin:0;}' +
+                'body{margin:0;padding:25.4mm 12mm 12mm;font-family:Arial,Helvetica,sans-serif;color:#1f2937;}' +
+                '#rowPrintCard{width:100%!important;min-height:250mm!important;padding:0!important;box-sizing:border-box;break-inside:avoid;page-break-inside:avoid;}' +
+                '.print-heading{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;gap:12px;width:100%;box-sizing:border-box;font-size:14px;font-weight:bold;margin-bottom:10px;padding:0 8mm 0 2mm;}' +
+                '.print-operator-name{text-align:right;white-space:normal;overflow-wrap:anywhere;word-break:break-word;padding-right:4mm;}' +
+                '.pdf-table{width:100%;border-collapse:collapse;table-layout:fixed;border:1px solid #374151;background:#ffffff;}' +
+                '.pdf-table td{width:50%;font-size:16px;line-height:1.6;border:1px solid #374151;padding:9px 12px;vertical-align:top;overflow-wrap:anywhere;word-break:break-word;background:#ffffff;color:#000000;box-sizing:border-box;}' +
+                '.pdf-table td[colspan="2"]{width:100%;}' +
                 '.pdf-label{font-weight:bold;color:#000000;}' +
                 '.pdf-value{margin-left:8px;color:#000000;}' +
                 '.pdf-sign{' +
@@ -824,7 +843,7 @@
                 'gap:20px;' +
                 'padding:0 10px;' +
                 'text-align:center;' +
-                'font-size:13px;' +
+                'font-size:15px;' +
                 'font-weight:bold;' +
                 'color:#000000;' +
                 '}' +
@@ -842,30 +861,16 @@
                 'border-top:1px solid #000000;' +
                 'margin-top:0;' +
                 '}' +
-                '</style>';
-            document.body.appendChild(style);
+                '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}';
 
-            html2canvas(tempDiv, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                logging: false
-            }).then(function(canvas) {
-                var imgData = canvas.toDataURL('image/png');
-                var jsPDFLib = window.jspdf;
-                var pdf = new jsPDFLib.jsPDF('p', 'mm', 'a4');
-                var pdfWidth = pdf.internal.pageSize.getWidth();
-                var pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                pdf.save('Program_' + (row.PROGRAM_NO || row.PO_NUMBER || 'Row') + '.pdf');
-                document.body.removeChild(tempDiv);
-                document.body.removeChild(style);
-            }).catch(function(err) {
-                console.error('PDF generation error:', err);
-                alert('Error generating PDF. Please try again.');
-                document.body.removeChild(tempDiv);
-                document.body.removeChild(style);
-            });
+            printWindow.document.open();
+            printWindow.document.write(
+                '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Knitting Program Print</title>' +
+                '<style>' + style + '</style></head><body>' + content +
+                '<script>window.onload=function(){window.focus();window.print();};' +
+                'window.onafterprint=function(){window.close();};<\/script></body></html>'
+            );
+            printWindow.document.close();
         }
 
         $(function() {
