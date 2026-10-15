@@ -64,7 +64,8 @@
             color: #6b7280;
         }
 
-        #backBtn, .back-btn {
+        #backBtn,
+        .back-btn {
             background: #000000 !important;
             color: #ffffff !important;
             border: 2px solid #000000 !important;
@@ -78,11 +79,169 @@
             cursor: pointer;
         }
 
-        #backBtn:hover, .back-btn:hover {
+        #backBtn:hover,
+        .back-btn:hover {
             background: #ffffff !important;
             border-color: #000000 !important;
             color: #000000 !important;
             text-decoration: none;
+        }
+
+        /* ---- Action buttons ---- */
+        .action-cell {
+            white-space: nowrap;
+        }
+
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin: 2px;
+            font-weight: 600;
+            font-size: 12px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-print-row {
+            background: #16a34a;
+            color: #fff;
+        }
+
+        .btn-print-row:hover {
+            background: #15803d;
+            color: #fff;
+        }
+
+        .btn-view-row {
+            background: #2563eb;
+            color: #fff;
+        }
+
+        .btn-view-row:hover {
+            background: #1d4ed8;
+            color: #fff;
+        }
+
+        /* ---- Printable label styles (shared by preview & print) ---- */
+        .pdf-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            column-gap: 8px;
+            row-gap: 2px;
+            background: #ffffff;
+        }
+
+        .pdf-item {
+            grid-column: span 2;
+            font-size: 29px;
+            font-weight: 800;
+            line-height: 1.15;
+            margin-left: 3px;
+            padding: 3px 0;
+            word-break: break-word;
+            background: #ffffff;
+            color: #000000;
+        }
+
+        .pdf-item.pdf-vertical {
+            grid-column: 1 / -1;
+        }
+
+        .pdf-label,
+        .pdf-value {
+            font-weight: 800;
+            color: #000000;
+        }
+
+        /* ---- Preview modal ---- */
+        .preview-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1050;
+            padding: 20px;
+        }
+
+        .preview-overlay.show {
+            display: flex;
+        }
+
+        .preview-box {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 820px;
+            max-height: 92vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .preview-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: #1f2937;
+            color: #fff;
+        }
+
+        .preview-head h5 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .preview-close {
+            background: #ef4444;
+            color: #fff;
+            border: none;
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-close:hover {
+            background: #dc2626;
+        }
+
+        .preview-body {
+            overflow: auto;
+            background: #eef1f5;
+            padding: 16px;
+        }
+
+        .preview-loading {
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+            padding: 40px 0;
+        }
+
+        .preview-foot {
+            padding: 12px 16px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .preview-foot .btn-print-row {
+            padding: 8px 18px;
+            font-size: 14px;
         }
     </style>
 </head>
@@ -132,11 +291,11 @@
                 <table class="table table-bordered table-striped table-hover table-sm">
                     <thead class="table-dark">
                         <tr>
-                            <th>PDF</th>
+                            <th>ACTION</th>
                             <th>DATE</th>
                             <th>ROLL NO</th>
                             <th>PO NUMBER</th>
-                            <th>PQTY</th>
+                            <th>QTY</th>
                             <th>SONO</th>
                             <th>BUYER</th>
                             <th>STYLE</th>
@@ -145,13 +304,13 @@
                             <th>MC DIA</th>
                             <th>CUSTOMER</th>
                             <th>SHIFT</th>
-                            <th>YARN COUNT</th>
                             <th>FABRICS TYPE</th>
                             <th>FINISH GSM</th>
                             <th>FINISH DIA</th>
+                            <th>YARN COUNT</th>
                             <th>YARN BRAND</th>
                             <th>YARN LOT</th>
-
+                            <th>OP NAME</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -165,16 +324,32 @@
 
     </div>
 
+    <div class="preview-overlay" id="previewOverlay">
+        <div class="preview-box">
+            <div class="preview-head">
+                <h5><i class="fa-solid fa-eye" style="margin-right:8px;background:none;border:none;box-shadow:none;transform:none;"></i>Print Preview</h5>
+                <button type="button" class="preview-close" id="previewClose" title="Close">
+                    <i class="fa-solid fa-xmark" style="background:none;border:none;box-shadow:none;transform:none;"></i>
+                </button>
+            </div>
+            <div class="preview-body" id="previewBody"></div>
+            <div class="preview-foot">
+                <button type="button" class="action-btn btn-print-row" id="previewPrint">
+                    <i class="fa-solid fa-print" style="background:none;border:none;box-shadow:none;transform:none;"></i> Print
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <script>
-        function downloadRowPdf(row) {
+        function buildRowCardElement(row) {
             var fieldHTML = [
                 ['Shift', row.SHIFT],
-                ['OPNAME', row.UNAME],
+                ['OP NAME', row.UNAME],
                 ['SONO', row.SONO],
                 ['PO NO', row.PO_NUMBER],
                 ['Style', row.STYLE],
@@ -223,57 +398,132 @@
             document.body.appendChild(tempDiv);
 
             // Generate QR code - contains ONLY the ROLL number (knitting_production.ROLL)
-            var qrBoxes = [tempDiv.querySelector('#rowQrBoxRight')];
-            if (typeof QRCode !== 'undefined') {
-                qrBoxes.forEach(function(qrBox) {
-                    if (qrBox) {
-                        new QRCode(qrBox, {
-                            text: String(row.ROLL || ''),
-                            width: 208,
-                            height: 208,
-                            colorDark: "#000000",
-                            colorLight: "#ffffff",
-                            correctLevel: QRCode.CorrectLevel.H
-                        });
-                    }
+            var qrBox = tempDiv.querySelector('#rowQrBoxRight');
+            if (typeof QRCode !== 'undefined' && qrBox) {
+                new QRCode(qrBox, {
+                    text: String(row.ROLL || ''),
+                    width: 208,
+                    height: 208,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
                 });
+
+                // Convert the QR canvas to an image so it survives being copied into
+                // the print iframe / preview (canvas pixels are not serializable).
+                var canvas = qrBox.querySelector('canvas');
+                if (canvas) {
+                    var img = document.createElement('img');
+                    img.src = canvas.toDataURL('image/png');
+                    img.width = 208;
+                    img.height = 208;
+                    qrBox.innerHTML = '';
+                    qrBox.appendChild(img);
+                }
             }
 
-            var style = document.createElement('style');
-            style.textContent = '' +
-                '.pdf-grid{display:grid;grid-template-columns:repeat(4,1fr);column-gap:8px;row-gap:2px;background:#ffffff;}' +
-                '.pdf-item{grid-column:span 2;font-size:29px;font-weight:800;line-height:1.15;margin-left:3px; padding:3px 0;word-break:break-word;background:#ffffff;color:#000000;}' +
-                '.pdf-item.pdf-vertical{grid-column:1 / -1;}' +
-                '.pdf-label,.pdf-value{font-weight:800;color:#000000;}';
-            document.body.appendChild(style);
+            return tempDiv;
+        }
+
+        function renderCardImage(row, done, fail) {
+            var card = buildRowCardElement(row);
 
             setTimeout(function() {
-                html2canvas(tempDiv, {
+                html2canvas(card, {
                     scale: 3,
                     useCORS: true,
                     backgroundColor: '#ffffff',
                     logging: false
                 }).then(function(canvas) {
-                    var imgData = canvas.toDataURL('image/png');
-                    var jsPDFLib = window.jspdf;
-                    // Keep the printed label proportional to its actual content height.
-                    var pdf = new jsPDFLib.jsPDF({
-                        orientation: 'portrait',
-                        unit: 'cm',
-                        format: 'a4'
-                    });
-                    // Leave a printer-safe margin on the A4 page.
-                    pdf.addImage(imgData, 'PNG', 1, 1, 6, 6);
-                    pdf.save('Knitting_Production_' + (row.ROLL || 'Roll') + '.pdf');
-                    document.body.removeChild(tempDiv);
-                    document.body.removeChild(style);
+                    if (card.parentNode) card.parentNode.removeChild(card);
+                    done(canvas.toDataURL('image/png'));
                 }).catch(function(err) {
-                    console.error('PDF generation error:', err);
-                    alert('Error generating PDF. Please try again.');
-                    document.body.removeChild(tempDiv);
-                    document.body.removeChild(style);
+                    console.error('Render error:', err);
+                    if (card.parentNode) card.parentNode.removeChild(card);
+                    if (fail) fail(err);
                 });
             }, 400);
+        }
+
+        function printRow(row) {
+            renderCardImage(row, function(imgData) {
+                var iframe = document.createElement('iframe');
+                iframe.setAttribute('aria-hidden', 'true');
+                iframe.style.position = 'fixed';
+                iframe.style.right = '0';
+                iframe.style.bottom = '0';
+                iframe.style.width = '0';
+                iframe.style.height = '0';
+                iframe.style.border = '0';
+                document.body.appendChild(iframe);
+
+                // Identical to the old PDF: A4 portrait, card image 6cm x 6cm at 1cm/1cm.
+                var doc = iframe.contentWindow.document;
+                doc.open();
+                doc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Knitting Production</title><style>' +
+                    '@page{size:A4 portrait;margin:0;}' +
+                    'html,body{margin:0;padding:0;background:#fff;}' +
+                    'img{position:absolute;left:1cm;top:1cm;width:6cm;height:6cm;}' +
+                    '</style></head><body>' +
+                    '<img src="' + imgData + '">' +
+                    '</body></html>');
+                doc.close();
+
+                var doPrint = function() {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                };
+
+                var printImg = doc.querySelector('img');
+                if (printImg && !printImg.complete) {
+                    printImg.onload = function() {
+                        setTimeout(doPrint, 150);
+                    };
+                } else {
+                    setTimeout(doPrint, 300);
+                }
+
+                setTimeout(function() {
+                    if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+                }, 60000);
+            }, function() {
+                alert('Error preparing print. Please try again.');
+            });
+        }
+
+        function viewRow(row) {
+            var body = $('#previewBody');
+            body.empty();
+            body.html('<div class="preview-loading">Preparing preview...</div>');
+            $('#previewOverlay').addClass('show');
+
+            renderCardImage(row, function(imgData) {
+                body.empty();
+                var availWidth = body.width() - 40;
+                var maxW = Math.min(availWidth, 520);
+                if (!(maxW > 0)) maxW = 520;
+
+                var img = $('<img>').attr('src', imgData).css({
+                    width: maxW + 'px',
+                    height: maxW + 'px',
+                    display: 'block',
+                    margin: '0 auto',
+                    border: '1px solid #cbd5e1',
+                    background: '#fff'
+                });
+                body.append(img);
+
+                $('#previewPrint').off('click').on('click', function() {
+                    printRow(row);
+                });
+            }, function() {
+                body.html('<div class="preview-loading">Failed to render preview.</div>');
+            });
+        }
+
+        function closePreview() {
+            $('#previewOverlay').removeClass('show');
+            $('#previewBody').empty();
         }
 
         function renderTableRows(data) {
@@ -286,15 +536,23 @@
 
             data.forEach(function(row) {
                 var tr = $('<tr>');
-                var pdfBtn = $('<button>')
+                var printBtn = $('<button>')
                     .attr('type', 'button')
-                    .addClass('btn btn-primary btn-sm pdf-row-btn')
-                    .html('<i class="fa-solid fa-file-pdf" style="background:none;border:none;box-shadow:none;transform:none;"></i> PDF')
-                    .attr('title', 'Download PDF')
+                    .addClass('action-btn btn-print-row')
+                    .html('<i class="fa-solid fa-print" style="background:none;border:none;box-shadow:none;transform:none;"></i> PRINT')
+                    .attr('title', 'Print label')
                     .on('click', function() {
-                        downloadRowPdf(row);
+                        printRow(row);
                     });
-                tr.append($('<td class="text-center">').append(pdfBtn));
+                var viewBtn = $('<button>')
+                    .attr('type', 'button')
+                    .addClass('action-btn btn-view-row')
+                    .html('<i class="fa-solid fa-eye" style="background:none;border:none;box-shadow:none;transform:none;"></i> VIEW')
+                    .attr('title', 'Preview label')
+                    .on('click', function() {
+                        viewRow(row);
+                    });
+                tr.append($('<td class="text-center action-cell">').append(printBtn).append(viewBtn));
                 tr.append($('<td>').text(row.BUDAT || ''));
                 tr.append($('<td>').text(row.ROLL || ''));
                 tr.append($('<td>').text(row.PO_NUMBER || ''));
@@ -307,12 +565,13 @@
                 tr.append($('<td>').text(row.MC_DIA || ''));
                 tr.append($('<td>').text(row.CUSTOMER || ''));
                 tr.append($('<td>').text(row.SHIFT || ''));
-                tr.append($('<td>').text(row.YARN_COUNT || ''));
                 tr.append($('<td>').text(row.FABRICS_TYPE || ''));
                 tr.append($('<td>').text(row.FINISH_GSM || ''));
                 tr.append($('<td>').text(row.FINISH_DIA || ''));
+                tr.append($('<td>').text(row.YARN_COUNT || ''));
                 tr.append($('<td>').text(row.YBRAND || ''));
                 tr.append($('<td>').text(row.YARN_LOT || ''));
+                tr.append($('<td>').text(row.UNAME || ''));
                 tbody.append(tr);
             });
         }
@@ -380,6 +639,15 @@
             $('#clearBtn').on('click', function() {
                 $('#bookingInput').val('');
                 loadAll();
+            });
+
+            // Preview modal close handlers
+            $('#previewClose').on('click', closePreview);
+            $('#previewOverlay').on('click', function(e) {
+                if (e.target === this) closePreview();
+            });
+            $(document).on('keydown', function(e) {
+                if (e.key === 'Escape') closePreview();
             });
 
             // initial load: show all data
