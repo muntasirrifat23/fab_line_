@@ -400,10 +400,8 @@
                     <thead>
                         <tr>
                             <th>ACTION</th>
-                            <th>KSTID</th>
                             <th>DATE</th>
-                            <th>RACK NO</th>
-                            <th>LOCATION</th>
+                            <th>RACK</th>
                             <th>ROLL NO</th>
                             <th>PO NUMBER</th>
                             <th>QTY</th>
@@ -431,7 +429,7 @@
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="28" class="loading-cell">Loading data...</td>
+                            <td colspan="26" class="loading-cell">Loading data...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -462,10 +460,8 @@
 
     <script>
         var COLS = [
-            { key: 'KSTID', label: 'KSTID' },
             { key: 'BUDAT', label: 'Date' },
-            { key: 'RACKNO', label: 'Rack No' },
-            { key: 'RACKLOCATION', label: 'Location' },
+            { key: 'RACK', label: 'Rack' },
             { key: 'ROLL', label: 'Roll No' },
             { key: 'PO_NUMBER', label: 'PO Number' },
             { key: 'QTY', label: 'QTY' },
@@ -492,12 +488,24 @@
         ];
 
         // PDF/print excludes these fields (per requirement)
-        var PDF_EXCLUDE = ['KSTID', 'UNAME'];
+        var PDF_EXCLUDE = ['UNAME'];
         var PDF_COLS = COLS.filter(function(c) {
             return PDF_EXCLUDE.indexOf(c.key) === -1;
         });
 
         var currentData = [];
+
+        // RACK is a computed field: RackLocation + RackNo (e.g. A1 + 18 => A118)
+        function colValue(row, c) {
+            if (c.key === 'RACK') {
+                var loc = row.RACKLOCATION;
+                var no = row.RACKNO;
+                loc = (loc === null || loc === undefined) ? '' : String(loc);
+                no = (no === null || no === undefined) ? '' : String(no);
+                return loc + no;
+            }
+            return row[c.key];
+        }
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -506,7 +514,7 @@
 
         function buildRowCardElement(row) {
             var rowsHTML = PDF_COLS.map(function(c) {
-                var val = row[c.key];
+                var val = colValue(row, c);
                 if (val === null || val === undefined) val = '';
                 return '<div class="pdf-item"><span class="pdf-label">' + c.label + ' :</span><span class="pdf-value">' + val + '</span></div>';
             }).join('');
@@ -657,7 +665,7 @@
             tbody.empty();
             currentData = data || [];
             if (!currentData.length) {
-                tbody.append('<tr class="empty-row"><td colspan="28">No data found</td></tr>');
+                tbody.append('<tr class="empty-row"><td colspan="26">No data found</td></tr>');
                 return;
             }
             currentData.forEach(function(row) {
@@ -680,7 +688,8 @@
                     });
                 tr.append($('<td>').append(printBtn).append(viewBtn));
                 COLS.forEach(function(c) {
-                    tr.append($('<td>').text(row[c.key] || ''));
+                    var val = colValue(row, c);
+                    tr.append($('<td>').text(val === null || val === undefined ? '' : val));
                 });
                 tbody.append(tr);
             });
@@ -699,11 +708,11 @@
                     if (resp && resp.success) {
                         renderTableRows(resp.data);
                     } else {
-                        $('#tableBody').html('<tr class="empty-row"><td colspan="28">No data found</td></tr>');
+                        $('#tableBody').html('<tr class="empty-row"><td colspan="26">No data found</td></tr>');
                     }
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr class="empty-row"><td colspan="28" style="color:#dc2626;">Error searching</td></tr>');
+                    $('#tableBody').html('<tr class="empty-row"><td colspan="26" style="color:#dc2626;">Error searching</td></tr>');
                 })
                 .always(function() {
                     $('#searchBtn').prop('disabled', false).html('<i class="fa-solid fa-magnifying-glass"></i> Search');
@@ -711,7 +720,7 @@
         }
 
         function loadAll() {
-            $('#tableBody').html('<tr><td colspan="28" class="loading-cell">Loading data...</td></tr>');
+            $('#tableBody').html('<tr><td colspan="26" class="loading-cell">Loading data...</td></tr>');
             $.ajax({
                     url: 'ajaxKnittingStore_Report.php',
                     dataType: 'json',
@@ -721,11 +730,11 @@
                     if (resp && resp.success) {
                         renderTableRows(resp.data);
                     } else {
-                        $('#tableBody').html('<tr class="empty-row"><td colspan="28">No data returned</td></tr>');
+                        $('#tableBody').html('<tr class="empty-row"><td colspan="26">No data returned</td></tr>');
                     }
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr class="empty-row"><td colspan="28" style="color:#dc2626;">Error loading data</td></tr>');
+                    $('#tableBody').html('<tr class="empty-row"><td colspan="26" style="color:#dc2626;">Error loading data</td></tr>');
                 });
         }
 
