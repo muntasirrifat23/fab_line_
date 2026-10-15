@@ -875,7 +875,7 @@
         let m = text.match(/ROLL:\s*([^\n\r]+)/i);
         if (m && m[1]) return m[1].trim();
 
-        if (/^\d+$/.test(text) && text.length >= 2) return text;
+        if (/^[a-zA-Z0-9\-_]+$/.test(text) && text.length >= 2) return text;
 
         return null;
       }

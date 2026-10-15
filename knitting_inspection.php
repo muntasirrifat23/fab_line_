@@ -162,15 +162,16 @@ if (isset($_GET['action']) && $_GET['action'] === 'search_card') {
     if ($res && $row = $res->fetch_assoc()) {
         // ── DUPLICATE ROLL GUARD: one roll can be inspected only once ──
         $roll_val = trim($row['ROLL']);
-        $dup_stmt = $db->prepare("SELECT KITID, BUDAT, UNAME FROM knitting_inspection WHERE TRIM(ROLL) = ? LIMIT 1");
+        $clean_base = preg_replace('/-(R|P)$/i', '', $roll_val);
+        $dup_stmt = $db->prepare("SELECT KITID, BUDAT, UNAME, ROLL FROM knitting_inspection WHERE TRIM(ROLL) = ? OR TRIM(ROLL) = CONCAT(?, '-P') OR TRIM(ROLL) = CONCAT(?, '-R') LIMIT 1");
         if ($dup_stmt) {
-            $dup_stmt->bind_param("s", $roll_val);
+            $dup_stmt->bind_param("sss", $roll_val, $clean_base, $clean_base);
             $dup_stmt->execute();
             $dup_res = $dup_stmt->get_result();
             if ($dup_res && $dup_row = $dup_res->fetch_assoc()) {
                 echo json_encode([
                     'success' => false,
-                    'error'   => 'Roll "' . htmlspecialchars($roll_val) . '" is already inspected! One roll cannot be inspected twice. (Inspected on: ' . htmlspecialchars($dup_row['BUDAT']) . ' by ' . htmlspecialchars($dup_row['UNAME']) . ')',
+                    'error'   => 'Roll "' . htmlspecialchars($roll_val) . '" is already inspected' . (trim($dup_row['ROLL']) !== $roll_val ? ' (as ' . htmlspecialchars($dup_row['ROLL']) . ')' : '') . '! One roll cannot be inspected twice. (Inspected on: ' . htmlspecialchars($dup_row['BUDAT']) . ' by ' . htmlspecialchars($dup_row['UNAME']) . ')',
                     'duplicate' => true
                 ]);
                 $dup_stmt->close();
@@ -220,6 +221,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'search_card') {
 
 $error = '';
 $msg = '';
+$saved_rejection_data = null;
+$saved_inspection_data = null;
 
 // ── SAVE INSPECTION RECORD ──
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspection'])) {
@@ -231,6 +234,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
         $main_qty            = floatval($_POST['MAIN_QTY'] ?? 0);
         $reject_qty          = floatval($_POST['REJECT_QTY'] ?? 0);
         $update_qty          = max(0, $main_qty - $reject_qty);
+        $do_split            = isset($_POST['DO_SPLIT']) && ($_POST['DO_SPLIT'] === '1' || $_POST['DO_SPLIT'] === 'true');
         
         $card_meta = [];
         if ($production_id > 0) {
@@ -304,47 +308,24 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
             $error = "Main Quantity must be greater than 0.";
         } else {
             // ── DUPLICATE ROLL GUARD (server-side safety net) ──
-            $dup2_stmt = $db->prepare("SELECT KITID FROM knitting_inspection WHERE TRIM(ROLL) = ? LIMIT 1");
+            $clean_base = preg_replace('/-(R|P)$/i', '', $roll_no);
+            $dup2_stmt = $db->prepare("SELECT KITID, ROLL FROM knitting_inspection WHERE TRIM(ROLL) = ? OR TRIM(ROLL) = CONCAT(?, '-P') OR TRIM(ROLL) = CONCAT(?, '-R') LIMIT 1");
             if ($dup2_stmt) {
-                $dup2_stmt->bind_param("s", $roll_no);
+                $dup2_stmt->bind_param("sss", $roll_no, $clean_base, $clean_base);
                 $dup2_stmt->execute();
                 $dup2_res = $dup2_stmt->get_result();
                 if ($dup2_res && $dup2_res->num_rows > 0) {
-                    $error = "Roll #$roll_no is already inspected! One roll cannot be inspected twice.";
+                    $dup_rec = $dup2_res->fetch_assoc();
+                    $error = "Roll #$roll_no is already inspected" . (trim($dup_rec['ROLL']) !== $roll_no ? " (as " . $dup_rec['ROLL'] . ")" : "") . "! One roll cannot be inspected twice.";
                 }
                 $dup2_stmt->close();
             }
         }
 
         if (empty($error)) {
-          try {
-            $stmt = $db->prepare("
-                    INSERT INTO knitting_inspection (
-                        `BUDAT`, `ROLL`, `OQTY`, `RQTY`, `UQTY`, `PO_NUMBER`, `QTY`, `SONO`, `BUYER`, `STYLE`, `COLOR`,
-                        `MCNO`, `MC_DIA`, `CUSTOMER`, `SHIFT`, `YTYPE`, `YCOUNT`, `YBRAND`, `FTYPE`, `FGSM`, `FDIA`, `O_T`,
-                        `SL`, `FPLAN`, `LOTNO`, `MATERIAL_CODE`, `M_DES`,
-                        `TT`, `PATTA`, `SLUB`, `YC_SPOT`, `OILSPOT`, `FF`, `SEEDS`, `MSTITCH`, `SINKERMARK`, `NEEDLEMARK`,
-                        `LYCOUT`, `OILLINE`, `HOLE`, `LOOP`, `SETUP`, `CMARK`, `TPOINT`,
-                        `QC_GRADE`, `QC_STATUS`, `UNAME`, `UID`
-                    ) VALUES (
-                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                        ?, ?, ?, ?, ?,
-                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                        ?, ?, ?, ?, ?, ?, ?,
-                        ?, ?, ?, ?
-                    )
-                ");
-                if (!$stmt) {
-                    throw new Exception("Prepare statement failed: " . $db->error);
-                }
-                
+            try {
                 $budat       = date('Y-m-d');
-                $v_main_qty  = $main_qty;
-                $v_reject    = $reject_qty;
-                $v_update    = $update_qty;
                 $po_number   = strval($card_meta['PO_NUMBER'] ?? '');
-                $qty         = strval($main_qty);
                 $sono        = strval($card_meta['SONO'] ?? '');
                 $buyer       = strval($card_meta['BUYER'] ?? '');
                 $style       = strval($card_meta['STYLE'] ?? '');
@@ -387,28 +368,212 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                 $uname        = strval($_SESSION['active_operator']['name']);
                 $uid          = strval($_SESSION['active_operator']['id']);
 
-                // BUDAT(s), ROLL(s), OQTY(d), RQTY(d), UQTY(d),
-                // PO_NUMBER..O_T = 17 strings(s), SL(d), FPLAN..M_DES = 4 strings(s),
-                // defects 17 strings(s), QC_GRADE..UID = 4 strings(s)
+                $clean_base   = preg_replace('/-(R|P)$/i', '', $roll_no);
+                $is_split_eligible = $do_split && ($reject_qty > 0) && ($update_qty > 0);
+
+                // Common insert statement and parameter types
+                $insert_sql = "
+                    INSERT INTO knitting_inspection (
+                        `BUDAT`, `ROLL`, `OQTY`, `RQTY`, `UQTY`, `PO_NUMBER`, `QTY`, `SONO`, `BUYER`, `STYLE`, `COLOR`,
+                        `MCNO`, `MC_DIA`, `CUSTOMER`, `SHIFT`, `YTYPE`, `YCOUNT`, `YBRAND`, `FTYPE`, `FGSM`, `FDIA`, `O_T`,
+                        `SL`, `FPLAN`, `LOTNO`, `MATERIAL_CODE`, `M_DES`,
+                        `TT`, `PATTA`, `SLUB`, `YC_SPOT`, `OILSPOT`, `FF`, `SEEDS`, `MSTITCH`, `SINKERMARK`, `NEEDLEMARK`,
+                        `LYCOUT`, `OILLINE`, `HOLE`, `LOOP`, `SETUP`, `CMARK`, `TPOINT`,
+                        `QC_GRADE`, `QC_STATUS`, `UNAME`, `UID`
+                    ) VALUES (
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?, ?, ?,
+                        ?, ?, ?, ?
+                    )
+                ";
+
                 $types = 'ssddd' . str_repeat('s', 17) . 'd' . str_repeat('s', 4)
                        . str_repeat('s', 17) . str_repeat('s', 4);
 
-                $stmt->bind_param(
-                    $types,
-                    $budat, $roll_no, $v_main_qty, $v_reject, $v_update,
-                    $po_number, $qty, $sono, $buyer, $style, $color,
-                    $mcno, $mc_dia, $supplier, $shift, $ytype, $ycount, $ybrand, $ftype, $fgsm, $fdia, $o_t,
-                    $sl, $fplan, $lotno, $mat_code, $m_des,
-                    $v_tt, $v_patta, $v_slub, $v_yc_spot, $v_oilspot, $v_ff, $v_seeds, $v_mstitch, $v_sinkermark, $v_needlemark,
-                    $v_lycout, $v_oilline, $v_hole, $v_loop, $v_setup, $v_cmark, $v_tpoint,
-                    $qc_grade, $qc_status, $uname, $uid
-                );
+                $active_defects = [];
+                if ($defect_tt)          $active_defects[] = 'T&T (+1p)';
+                if ($defect_patta)       $active_defects[] = 'Patta (+1p)';
+                if ($defect_slub)        $active_defects[] = 'Slub (+1p)';
+                if ($defect_yc)          $active_defects[] = 'Y/C Spot (+1p)';
+                if ($defect_oil_spot)    $active_defects[] = 'Oil Spot (+2p)';
+                if ($defect_ff)          $active_defects[] = 'F/F (+2p)';
+                if ($defect_seeds)       $active_defects[] = 'Seeds (+2p)';
+                if ($defect_m_stitch)    $active_defects[] = 'Miss Stitch (+2p)';
+                if ($defect_sinker_mark) $active_defects[] = 'Sinker Mark (+3p)';
+                if ($defect_needle_mark) $active_defects[] = 'Needle Mark (+3p)';
+                if ($defect_lycra_out)   $active_defects[] = 'Lycra Out (+3p)';
+                if ($defect_oil_line)    $active_defects[] = 'Oil Line (+3p)';
+                if ($defect_hole)        $active_defects[] = 'Hole (+4p)';
+                if ($defect_loop)        $active_defects[] = 'Loop (+4p)';
+                if ($defect_setup)       $active_defects[] = 'Set Up (+4p)';
+                if ($defect_crease_mark) $active_defects[] = 'Crease Mark (+4p)';
 
-                if (!$stmt->execute()) {
-                    throw new Exception("Execute failed: " . $stmt->error);
+                if ($is_split_eligible) {
+                    // Split roll into Pass (-P) and Reject (-R) in a single transaction
+                    $db->begin_transaction();
+                    try {
+                        $pass_roll = $clean_base . '-P';
+                        $rej_roll  = $clean_base . '-R';
+
+                        // 1. Insert Pass Roll (-P)
+                        $stmt_pass = $db->prepare($insert_sql);
+                        if (!$stmt_pass) throw new Exception("Prepare Pass statement failed: " . $db->error);
+
+                        $v_zero_str     = '0';
+                        $v_zero_float   = 0.0;
+                        $v_pass_grade   = 'Grade A';
+                        $v_pass_status  = 'Passed';
+                        $v_pass_qty_str = strval($update_qty);
+
+                        $stmt_pass->bind_param(
+                            $types,
+                            $budat, $pass_roll, $update_qty, $v_zero_float, $update_qty,
+                            $po_number, $v_pass_qty_str, $sono, $buyer, $style, $color,
+                            $mcno, $mc_dia, $supplier, $shift, $ytype, $ycount, $ybrand, $ftype, $fgsm, $fdia, $o_t,
+                            $sl, $fplan, $lotno, $mat_code, $m_des,
+                            $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str,
+                            $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str,
+                            $v_pass_grade, $v_pass_status, $uname, $uid
+                        );
+                        if (!$stmt_pass->execute()) throw new Exception("Execute Pass roll failed: " . $stmt_pass->error);
+                        $stmt_pass->close();
+
+                        // 2. Insert Reject Roll (-R)
+                        $stmt_rej = $db->prepare($insert_sql);
+                        if (!$stmt_rej) throw new Exception("Prepare Reject statement failed: " . $db->error);
+
+                        $v_rej_grade   = 'Reject';
+                        $v_rej_status  = 'Failed';
+                        $v_rej_qty_str = strval($reject_qty);
+
+                        $stmt_rej->bind_param(
+                            $types,
+                            $budat, $rej_roll, $reject_qty, $reject_qty, $v_zero_float,
+                            $po_number, $v_rej_qty_str, $sono, $buyer, $style, $color,
+                            $mcno, $mc_dia, $supplier, $shift, $ytype, $ycount, $ybrand, $ftype, $fgsm, $fdia, $o_t,
+                            $sl, $fplan, $lotno, $mat_code, $m_des,
+                            $v_tt, $v_patta, $v_slub, $v_yc_spot, $v_oilspot, $v_ff, $v_seeds, $v_mstitch, $v_sinkermark, $v_needlemark,
+                            $v_lycout, $v_oilline, $v_hole, $v_loop, $v_setup, $v_cmark, $v_tpoint,
+                            $v_rej_grade, $v_rej_status, $uname, $uid
+                        );
+                        if (!$stmt_rej->execute()) throw new Exception("Execute Reject roll failed: " . $stmt_rej->error);
+                        $stmt_rej->close();
+
+                        $db->commit();
+
+                        $msg = "Roll #$clean_base successfully split into Pass Roll #$pass_roll (" . number_format($update_qty, 2) . " KG) and Reject Roll #$rej_roll (" . number_format($reject_qty, 2) . " KG)!";
+                        $saved_inspection_data = [
+                            'is_split'        => true,
+                            'has_rejection'   => true,
+                            'base_roll'       => $clean_base,
+                            'pass_roll'       => $pass_roll,
+                            'reject_roll'     => $rej_roll,
+                            'single_roll'     => $clean_base,
+                            'pass_qty'        => number_format($update_qty, 2, '.', ''),
+                            'reject_qty'      => number_format($reject_qty, 2, '.', ''),
+                            'main_qty'        => number_format($main_qty, 2, '.', ''),
+                            'update_qty'      => number_format($update_qty, 2, '.', ''),
+                            'active_defects'  => $active_defects,
+                            'total_points'    => $total_points,
+                            'qc_grade'        => $qc_grade,
+                            'qc_status'       => $qc_status,
+                            'po_number'       => $po_number,
+                            'sono'            => $sono,
+                            'buyer'           => $buyer,
+                            'style'           => $style,
+                            'color'           => $color,
+                            'customer'        => $supplier,
+                            'mcno'            => $mcno,
+                            'mc_dia'          => $mc_dia,
+                            'shift'           => $shift,
+                            'fabrics_type'    => $ftype,
+                            'finish_gsm'      => $fgsm,
+                            'finish_dia'      => $fdia,
+                            'yarn_brand'      => $ybrand,
+                            'yarn_count'      => $ycount,
+                            'yarn_lot'        => $lotno,
+                            'operator_name'   => $uname,
+                            'operator_id'     => $uid,
+                            'date'            => $budat
+                        ];
+                        $saved_rejection_data = $saved_inspection_data;
+                    } catch (Exception $e) {
+                        $db->rollback();
+                        throw $e;
+                    }
+                } else {
+                    // Single roll insert (unsplit standard workflow)
+                    $stmt = $db->prepare($insert_sql);
+                    if (!$stmt) throw new Exception("Prepare statement failed: " . $db->error);
+
+                    $v_main_qty  = $main_qty;
+                    $v_reject    = $reject_qty;
+                    $v_update    = $update_qty;
+                    $qty         = strval($main_qty);
+
+                    $stmt->bind_param(
+                        $types,
+                        $budat, $roll_no, $v_main_qty, $v_reject, $v_update,
+                        $po_number, $qty, $sono, $buyer, $style, $color,
+                        $mcno, $mc_dia, $supplier, $shift, $ytype, $ycount, $ybrand, $ftype, $fgsm, $fdia, $o_t,
+                        $sl, $fplan, $lotno, $mat_code, $m_des,
+                        $v_tt, $v_patta, $v_slub, $v_yc_spot, $v_oilspot, $v_ff, $v_seeds, $v_mstitch, $v_sinkermark, $v_needlemark,
+                        $v_lycout, $v_oilline, $v_hole, $v_loop, $v_setup, $v_cmark, $v_tpoint,
+                        $qc_grade, $qc_status, $uname, $uid
+                    );
+
+                    if (!$stmt->execute()) {
+                        throw new Exception("Execute failed: " . $stmt->error);
+                    }
+                    $stmt->close();
+
+                    $single_qty = ($update_qty > 0) ? $update_qty : $main_qty;
+                    $saved_inspection_data = [
+                        'is_split'        => false,
+                        'has_rejection'   => ($reject_qty > 0),
+                        'base_roll'       => $clean_base,
+                        'pass_roll'       => $clean_base . '-P',
+                        'reject_roll'     => $clean_base . '-R',
+                        'single_roll'     => $roll_no,
+                        'single_qty'      => number_format($single_qty, 2, '.', ''),
+                        'pass_qty'        => number_format($update_qty, 2, '.', ''),
+                        'reject_qty'      => number_format($reject_qty, 2, '.', ''),
+                        'main_qty'        => number_format($main_qty, 2, '.', ''),
+                        'update_qty'      => number_format($update_qty, 2, '.', ''),
+                        'active_defects'  => $active_defects,
+                        'total_points'    => $total_points,
+                        'qc_grade'        => $qc_grade,
+                        'qc_status'       => $qc_status,
+                        'po_number'       => $po_number,
+                        'sono'            => $sono,
+                        'buyer'           => $buyer,
+                        'style'           => $style,
+                        'color'           => $color,
+                        'customer'        => $supplier,
+                        'mcno'            => $mcno,
+                        'mc_dia'          => $mc_dia,
+                        'shift'           => $shift,
+                        'fabrics_type'    => $ftype,
+                        'finish_gsm'      => $fgsm,
+                        'finish_dia'      => $fdia,
+                        'yarn_brand'      => $ybrand,
+                        'yarn_count'      => $ycount,
+                        'yarn_lot'        => $lotno,
+                        'operator_name'   => $uname,
+                        'operator_id'     => $uid,
+                        'date'            => $budat
+                    ];
+                    $saved_rejection_data = $saved_inspection_data;
+
+                    if ($reject_qty > 0) {
+                        $msg = "Inspection record for Roll #$roll_no saved successfully (Single Roll with " . number_format($reject_qty, 2) . " KG rejection)!";
+                    } else {
+                        $msg = "Inspection record for Roll #$roll_no saved successfully (100% Pass)!";
+                    }
                 }
-                $stmt->close();
-                $msg = "Inspection record for Roll #$roll_no saved successfully!";
             } catch (Exception $e) {
                 if (strpos($e->getMessage(), 'Duplicate entry') !== false || strpos($e->getMessage(), 'uniq_roll') !== false) {
                     $error = "Roll #$roll_no is already inspected! One roll cannot be inspected twice.";
@@ -449,11 +614,49 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="js/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+    }
+
+    .qr-print-area {
+      display: none;
+    }
+
+    @media print {
+      body > *:not(.qr-print-area) {
+        display: none !important;
+      }
+      .qr-print-area {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      .qr-print-area > img {
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+      .qr-print-area .kp-print-card {
+        width: 700px !important;
+        height: 700px !important;
+        margin: 0 auto !important;
+      }
+      .qr-print-area .kp-qr-target img {
+        width: 208px !important;
+        height: 208px !important;
+        max-width: 208px !important;
+        max-height: 208px !important;
+      }
     }
 
     body {
@@ -951,7 +1154,547 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         </div>
       </div>
 
-      <?php if (!empty($msg)): ?>
+      <?php if (!empty($msg) && !empty($saved_inspection_data)): ?>
+        <?php
+        if (!function_exists('renderKnittingInspectionProductionCardBox')) {
+            function renderKnittingInspectionProductionCardBox($cardData, $roll, $qty, $qrTargetId, $cardBoxId) {
+                ?>
+                <div id="<?php echo htmlspecialchars($cardBoxId); ?>" class="kp-print-card knitting-production-card-wrap" style="width:700px; height:700px; min-width:700px; max-width:700px; min-height:700px; max-height:700px; padding:4px; background:#ffffff; font-family:Arial,Helvetica,sans-serif; color:#000000; box-sizing:border-box; border:2px solid #000000; font-weight:800; display:flex; flex-direction:column; margin:0 auto;">
+                  <div class="kp-top-row" style="display:flex; gap:4px; align-items:stretch; margin-bottom:4px; height:215px; min-height:215px; max-height:215px; box-sizing:border-box;">
+                    <div class="kp-info-box" style="flex:1; min-height:215px; height:215px; max-height:215px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; background:#ffffff; border:2px solid #000000; padding:6px; box-sizing:border-box;">
+                      <div style="background:#ffffff; color:#000000; text-align:center; font-size:30px; font-weight:800; padding:2px 0; margin-bottom:8px; letter-spacing:0; white-space:nowrap; display:inline-block;">
+                        <span style="text-decoration:none;">PURBANI FABRICS LTD.</span>
+                        <span style="display:block; width:100%; height:3px; background:#000000; margin-top:2px;"></span>
+                      </div>
+                      <div style="font-weight:800; color:#000000; line-height:1.5; word-break:break-word;">
+                        <div style="font-size:30px;">ROLL: <?php echo htmlspecialchars($roll); ?></div>
+                        <div style="font-size:29px;">QTY: <?php echo htmlspecialchars($qty); ?></div>
+                        <div style="font-size:28px;">Buyer: <?php echo htmlspecialchars($cardData['buyer'] ?: ''); ?></div>
+                        <div style="font-size:25px;">Date: <?php echo htmlspecialchars($cardData['date'] ?: ''); ?></div>
+                      </div>
+                    </div>
+                    <div id="<?php echo htmlspecialchars($qrTargetId); ?>" class="kp-qr-target" style="flex:none; width:215px; height:215px; min-width:215px; max-width:215px; min-height:215px; max-height:215px; box-sizing:border-box; display:flex; align-items:center; justify-content:center; border:2px solid #000000; background:#ffffff; padding:0; margin:0; overflow:hidden;"></div>
+                  </div>
+                  <div class="pdf-grid" style="display:grid; grid-template-columns:repeat(4,1fr); column-gap:8px; row-gap:2px; background:#ffffff;">
+                    <div class="pdf-item" style="grid-column:span 2; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">Shift:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['shift'] ?: ''); ?></span></div>
+                    <div class="pdf-item" style="grid-column:span 2; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">OPNAME:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['operator_name'] ?: ''); ?></span></div>
+                    <div class="pdf-item" style="grid-column:span 2; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">SONO:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['sono'] ?: ''); ?></span></div>
+                    <div class="pdf-item" style="grid-column:span 2; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">PO NO:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['po_number'] ?: ''); ?></span></div>
+                    <div class="pdf-item" style="grid-column:span 2; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">Style:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['style'] ?: ''); ?></span></div>
+                    <div class="pdf-item" style="grid-column:span 2; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">MCNO:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['mcno'] ?: ''); ?></span></div>
+                    <div class="pdf-item" style="grid-column:span 2; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">MC Dia:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['mc_dia'] ?: ''); ?></span></div>
+                    <div class="pdf-item" style="grid-column:span 2; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">Customer:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['customer'] ?: ''); ?></span></div>
+                    <div class="pdf-item" style="grid-column:span 2; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">FGSM:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['finish_gsm'] ?: ''); ?></span></div>
+                    <div class="pdf-item" style="grid-column:span 2; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">F. DIA:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['finish_dia'] ?: ''); ?></span></div>
+                    <div class="pdf-item pdf-vertical" style="grid-column:1 / -1; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">Color:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['color'] ?: ''); ?></span></div>
+                    <div class="pdf-item pdf-vertical" style="grid-column:1 / -1; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">F. TYPE:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['fabrics_type'] ?: ''); ?></span></div>
+                    <div class="pdf-item pdf-vertical" style="grid-column:1 / -1; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">Y. COUNT:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['yarn_count'] ?: ''); ?></span></div>
+                    <div class="pdf-item pdf-vertical" style="grid-column:1 / -1; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">Y. BRAND:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['yarn_brand'] ?: ''); ?></span></div>
+                    <div class="pdf-item pdf-vertical" style="grid-column:1 / -1; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">Y. LOT:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['yarn_lot'] ?: ''); ?></span></div>
+                  </div>
+                </div>
+                <?php
+            }
+        }
+        ?>
+
+        <!-- Inspection Roll QR Modal (Knitting Production QR Format) -->
+        <style>
+          #inspectionQrModal {
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            animation: qrModalFadeIn 0.2s ease-out;
+          }
+          @keyframes qrModalFadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+          }
+          .split-pill-tab {
+            transition: all 0.2s ease;
+          }
+          .split-pill-tab:hover {
+            filter: brightness(0.96);
+          }
+          .modal-action-btn {
+            transition: all 0.18s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          }
+          .modal-action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+          }
+          .modal-action-btn:active {
+            transform: translateY(0);
+          }
+          .card-preview-viewport {
+            width: 455px;
+            height: 455px;
+            max-width: 100%;
+            position: relative;
+            overflow: hidden;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+            border: 1px solid #cbd5e1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+          }
+          .card-preview-scaler {
+            width: 700px;
+            height: 700px;
+            min-width: 700px;
+            min-height: 700px;
+            flex-shrink: 0;
+            transform: scale(0.65);
+            transform-origin: top center;
+            margin: 0;
+          }
+          @media (max-width: 500px) {
+            .card-preview-viewport {
+              width: 350px;
+              height: 350px;
+            }
+            .card-preview-scaler {
+              transform: scale(0.5);
+              transform-origin: top center;
+            }
+          }
+          .kp-print-card {
+            width: 700px !important;
+            height: 700px !important;
+            min-width: 700px !important;
+            max-width: 700px !important;
+            min-height: 700px !important;
+            max-height: 700px !important;
+            box-sizing: border-box !important;
+          }
+          .kp-qr-target {
+            width: 215px !important;
+            height: 215px !important;
+            min-width: 215px !important;
+            max-width: 215px !important;
+            min-height: 215px !important;
+            max-height: 215px !important;
+            box-sizing: border-box !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            overflow: hidden !important;
+          }
+          .kp-qr-target img, .kp-qr-target canvas {
+            width: 208px !important;
+            height: 208px !important;
+            max-width: 208px !important;
+            max-height: 208px !important;
+            display: block !important;
+            margin: 0 auto !important;
+          }
+        </style>
+
+        <div id="inspectionQrModal" onclick="if(event.target === this) closeInspectionModal();" style="display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.72); z-index:999999; overflow-y:auto; padding:16px; align-items:center; justify-content:center;">
+          <div style="background:#ffffff; max-width:820px; width:100%; border-radius:20px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.1); padding:20px 24px; position:relative; max-height:94vh; display:flex; flex-direction:column; overflow:hidden; margin:auto;">
+            
+            <!-- Modal Header -->
+            <div class="no-print" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:12px; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <?php if ($saved_inspection_data['is_split']): ?>
+                  <div style="width:40px; height:40px; border-radius:10px; background:linear-gradient(135deg, #f97316 0%, #ea580c 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:1.15rem; box-shadow:0 4px 10px rgba(234,88,12,0.25);">
+                    <i class="fa-solid fa-scissors"></i>
+                  </div>
+                  <div>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                      <span style="font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; background:#ffedd5; color:#c2410c; padding:2px 8px; border-radius:6px;">Split Inspection</span>
+                      <span style="font-size:0.7rem; font-weight:700; color:#64748b;">Knitting Production Label</span>
+                    </div>
+                    <h4 style="margin:2px 0 0 0; font-size:1.05rem; font-weight:800; color:#0f172a;">
+                      Pass: <span style="color:#16a34a;">#<?php echo htmlspecialchars($saved_inspection_data['pass_roll']); ?></span> (<?php echo htmlspecialchars($saved_inspection_data['pass_qty']); ?> KG)
+                      <span style="color:#cbd5e1; margin:0 4px;">&bull;</span>
+                      Reject: <span style="color:#dc2626;">#<?php echo htmlspecialchars($saved_inspection_data['reject_roll']); ?></span> (<?php echo htmlspecialchars($saved_inspection_data['reject_qty']); ?> KG)
+                    </h4>
+                  </div>
+                <?php else: ?>
+                  <div style="width:40px; height:40px; border-radius:10px; background:linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:1.15rem; box-shadow:0 4px 10px rgba(37,99,235,0.25);">
+                    <i class="fa-solid fa-qrcode"></i>
+                  </div>
+                  <div>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                      <span style="font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; background:#eff6ff; color:#1d4ed8; padding:2px 8px; border-radius:6px;">Inspection Completed</span>
+                      <span style="font-size:0.7rem; font-weight:700; color:#64748b;">Knitting Production Label</span>
+                    </div>
+                    <h4 style="margin:2px 0 0 0; font-size:1.05rem; font-weight:800; color:#0f172a;">
+                      Roll: <span style="color:#2563eb;">#<?php echo htmlspecialchars($saved_inspection_data['single_roll']); ?></span> (<?php echo htmlspecialchars($saved_inspection_data['single_qty']); ?> KG)
+                    </h4>
+                  </div>
+                <?php endif; ?>
+              </div>
+
+              <!-- Close button in top-right -->
+              <button type="button" onclick="closeInspectionModal()" style="background:#f1f5f9; border:none; width:34px; height:34px; border-radius:50%; color:#64748b; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s ease;" title="Close Modal (Esc)">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <?php if ($saved_inspection_data['is_split']): ?>
+              <!-- Sleek Pill Tab Switcher for Split View -->
+              <div class="no-print" style="display:flex; justify-content:center; margin-bottom:12px;">
+                <div style="background:#f1f5f9; padding:4px; border-radius:9999px; display:inline-flex; gap:4px; border:1px solid #e2e8f0;">
+                  <button type="button" id="tabBtnPass" class="split-pill-tab active" onclick="switchCardTab('pass')" style="background:#16a34a; color:#ffffff; font-weight:700; font-size:0.82rem; padding:6px 16px; border-radius:9999px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 8px rgba(22,163,74,0.35);">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>Pass Roll (<b>#<?php echo htmlspecialchars($saved_inspection_data['pass_roll']); ?></b> &bull; <?php echo htmlspecialchars($saved_inspection_data['pass_qty']); ?> KG)</span>
+                  </button>
+                  <button type="button" id="tabBtnRej" class="split-pill-tab" onclick="switchCardTab('rej')" style="background:transparent; color:#64748b; font-weight:600; font-size:0.82rem; padding:6px 16px; border-radius:9999px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>Reject Roll (<b>#<?php echo htmlspecialchars($saved_inspection_data['reject_roll']); ?></b> &bull; <?php echo htmlspecialchars($saved_inspection_data['reject_qty']); ?> KG)</span>
+                  </button>
+                </div>
+              </div>
+            <?php endif; ?>
+
+            <!-- Preview Card Viewport (65% Scaled 700x700 Label) -->
+            <div style="background:#f8fafc; border-radius:14px; border:1px solid #e2e8f0; padding:12px; display:flex; justify-content:center; align-items:center; flex:1 1 auto; overflow:hidden;">
+              <?php if ($saved_inspection_data['is_split']): ?>
+                <!-- Pass Card Preview Container -->
+                <div id="passCardContainer" style="width:100%; display:flex; justify-content:center;">
+                  <div class="card-preview-viewport">
+                    <div class="card-preview-scaler">
+                      <?php renderKnittingInspectionProductionCardBox($saved_inspection_data, $saved_inspection_data['pass_roll'], $saved_inspection_data['pass_qty'], 'passQrTarget', 'passCardBox'); ?>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Reject Card Preview Container -->
+                <div id="rejCardContainer" style="width:100%; display:none; justify-content:center;">
+                  <div class="card-preview-viewport">
+                    <div class="card-preview-scaler">
+                      <?php renderKnittingInspectionProductionCardBox($saved_inspection_data, $saved_inspection_data['reject_roll'], $saved_inspection_data['reject_qty'], 'rejQrTarget', 'rejCardBox'); ?>
+                    </div>
+                  </div>
+                </div>
+              <?php else: ?>
+                <!-- Single Card Preview Container -->
+                <div id="singleCardContainer" style="width:100%; display:flex; justify-content:center;">
+                  <div class="card-preview-viewport">
+                    <div class="card-preview-scaler">
+                      <?php renderKnittingInspectionProductionCardBox($saved_inspection_data, $saved_inspection_data['single_roll'], $saved_inspection_data['single_qty'], 'singleQrTarget', 'singleCardBox'); ?>
+                    </div>
+                  </div>
+                </div>
+              <?php endif; ?>
+            </div>
+
+            <!-- Action Toolbar Footer -->
+            <div class="no-print" style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; padding-top:12px; border-top:1px solid #e2e8f0; flex-wrap:wrap; gap:10px;">
+              <div style="color:#64748b; font-size:0.8rem; font-weight:600; display:flex; align-items:center; gap:6px;">
+                <i class="fa-solid fa-circle-info" style="color:#3b82f6;"></i>
+                <span>Knitting Production 700&times;700 Label &bull; Scaled Preview (65%)</span>
+              </div>
+              <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                <?php if ($saved_inspection_data['is_split']): ?>
+                  <button type="button" class="modal-action-btn" onclick="printPassLabel()" style="background:#16a34a; color:#ffffff;" title="Print Pass Roll QR Label">
+                    <i class="fa-solid fa-print"></i> Print Pass QR
+                  </button>
+                  <button type="button" class="modal-action-btn" onclick="printRejectionLabel()" style="background:#dc2626; color:#ffffff;" title="Print Reject Roll QR Label">
+                    <i class="fa-solid fa-print"></i> Print Reject QR
+                  </button>
+                  <button type="button" class="modal-action-btn" onclick="printBothLabels()" style="background:#ea580c; color:#ffffff;" title="Print Both QR Labels (Pass & Reject)">
+                    <i class="fa-solid fa-copy"></i> Print Both QR
+                  </button>
+                <?php else: ?>
+                  <button type="button" class="modal-action-btn" onclick="printSingleLabel()" style="background:#2563eb; color:#ffffff;" title="Print Roll QR Label">
+                    <i class="fa-solid fa-print"></i> Print Roll QR
+                  </button>
+                <?php endif; ?>
+                <button type="button" class="modal-action-btn" onclick="closeInspectionModal()" style="background:#475569; color:#ffffff;" title="Done and return to inspection">
+                  <i class="fa-solid fa-check"></i> Done
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            <?php if ($saved_inspection_data['is_split']): ?>
+              var pBox = document.getElementById('passQrTarget');
+              if (pBox && typeof QRCode !== 'undefined') {
+                new QRCode(pBox, {
+                  text: <?php echo json_encode($saved_inspection_data['pass_roll']); ?>,
+                  width: 208,
+                  height: 208,
+                  colorDark: '#000000',
+                  colorLight: '#ffffff',
+                  correctLevel: QRCode.CorrectLevel.H
+                });
+              }
+              var rBox = document.getElementById('rejQrTarget');
+              if (rBox && typeof QRCode !== 'undefined') {
+                new QRCode(rBox, {
+                  text: <?php echo json_encode($saved_inspection_data['reject_roll']); ?>,
+                  width: 208,
+                  height: 208,
+                  colorDark: '#000000',
+                  colorLight: '#ffffff',
+                  correctLevel: QRCode.CorrectLevel.H
+                });
+              }
+            <?php else: ?>
+              var sBox = document.getElementById('singleQrTarget');
+              if (sBox && typeof QRCode !== 'undefined') {
+                new QRCode(sBox, {
+                  text: <?php echo json_encode($saved_inspection_data['single_roll']); ?>,
+                  width: 208,
+                  height: 208,
+                  colorDark: '#000000',
+                  colorLight: '#ffffff',
+                  correctLevel: QRCode.CorrectLevel.H
+                });
+              }
+            <?php endif; ?>
+
+            document.addEventListener('keydown', function(e) {
+              if (e.key === 'Escape' || e.keyCode === 27) {
+                closeInspectionModal();
+              }
+            });
+          });
+
+          function switchCardTab(tab) {
+            var pBox = document.getElementById('passCardContainer');
+            var rBox = document.getElementById('rejCardContainer');
+            var pBtn = document.getElementById('tabBtnPass');
+            var rBtn = document.getElementById('tabBtnRej');
+            if (tab === 'pass') {
+              if (pBox) pBox.style.display = 'flex';
+              if (rBox) rBox.style.display = 'none';
+              if (pBtn) {
+                pBtn.style.background = '#16a34a';
+                pBtn.style.color = '#ffffff';
+                pBtn.style.boxShadow = '0 2px 8px rgba(22, 163, 74, 0.35)';
+              }
+              if (rBtn) {
+                rBtn.style.background = 'transparent';
+                rBtn.style.color = '#64748b';
+                rBtn.style.boxShadow = 'none';
+              }
+            } else {
+              if (pBox) pBox.style.display = 'none';
+              if (rBox) rBox.style.display = 'flex';
+              if (pBtn) {
+                pBtn.style.background = 'transparent';
+                pBtn.style.color = '#64748b';
+                pBtn.style.boxShadow = 'none';
+              }
+              if (rBtn) {
+                rBtn.style.background = '#dc2626';
+                rBtn.style.color = '#ffffff';
+                rBtn.style.boxShadow = '0 2px 8px rgba(220, 38, 38, 0.35)';
+              }
+            }
+          }
+
+          function prepareCardCloneForPrint(cardElement) {
+            if (!cardElement) return null;
+            var clone = cardElement.cloneNode(true);
+            clone.style.display = 'block';
+            clone.style.transform = 'none';
+            clone.style.margin = '0 auto';
+            clone.style.position = 'static';
+
+            var origQrTargets = cardElement.querySelectorAll('.kp-qr-target');
+            var cloneQrTargets = clone.querySelectorAll('.kp-qr-target');
+
+            for (var i = 0; i < origQrTargets.length; i++) {
+              var origTarget = origQrTargets[i];
+              var cloneTarget = cloneQrTargets[i];
+              if (!cloneTarget) continue;
+
+              var dataUrl = '';
+              var origImg = origTarget.querySelector('img');
+              if (origImg && origImg.src && origImg.src.indexOf('data:image') === 0) {
+                dataUrl = origImg.src;
+              } else {
+                var origCanvas = origTarget.querySelector('canvas');
+                if (origCanvas) {
+                  try {
+                    dataUrl = origCanvas.toDataURL('image/png');
+                  } catch (e) {
+                    console.warn('Canvas toDataURL failed:', e);
+                  }
+                }
+              }
+
+              cloneTarget.innerHTML = '';
+              if (dataUrl) {
+                var img = document.createElement('img');
+                img.src = dataUrl;
+                img.alt = 'QR Code';
+                img.style.width = '208px';
+                img.style.height = '208px';
+                img.style.maxWidth = '208px';
+                img.style.maxHeight = '208px';
+                img.style.display = 'block';
+                img.style.margin = '0 auto';
+                cloneTarget.appendChild(img);
+              }
+            }
+
+            return clone;
+          }
+
+          // Same output as Knitting Production: render the 700x700 card to an image
+          // with html2canvas, then print it at exactly 6cm x 6cm (1cm from top-left of A4).
+          function renderCardToImage(cardElement) {
+            return new Promise(function(resolve, reject) {
+              var clone = prepareCardCloneForPrint(cardElement);
+              if (!clone) { reject(new Error('No card')); return; }
+              clone.style.display = 'flex';
+              clone.style.flexDirection = 'column';
+              clone.style.margin = '0';
+
+              var holder = document.createElement('div');
+              holder.style.position = 'absolute';
+              holder.style.left = '-9999px';
+              holder.style.top = '0';
+              holder.style.background = '#ffffff';
+              holder.appendChild(clone);
+              document.body.appendChild(holder);
+
+              if (typeof html2canvas === 'undefined') {
+                document.body.removeChild(holder);
+                reject(new Error('html2canvas not loaded'));
+                return;
+              }
+
+              setTimeout(function() {
+                html2canvas(clone, {
+                  scale: 3,
+                  useCORS: true,
+                  backgroundColor: '#ffffff',
+                  logging: false
+                }).then(function(canvas) {
+                  document.body.removeChild(holder);
+                  resolve(canvas.toDataURL('image/png'));
+                }).catch(function(err) {
+                  if (holder.parentNode) document.body.removeChild(holder);
+                  reject(err);
+                });
+              }, 150);
+            });
+          }
+
+          function printCardImages(cardElements, title) {
+            var cards = Array.prototype.filter.call(cardElements || [], function(c) { return !!c; });
+            if (!cards.length) return;
+
+            Promise.all(cards.map(renderCardToImage)).then(function(images) {
+              var iframe = document.getElementById('print_card_iframe');
+              if (iframe && iframe.parentNode) iframe.parentNode.removeChild(iframe);
+              iframe = document.createElement('iframe');
+              iframe.id = 'print_card_iframe';
+              iframe.style.position = 'fixed';
+              iframe.style.right = '0';
+              iframe.style.bottom = '0';
+              iframe.style.width = '0';
+              iframe.style.height = '0';
+              iframe.style.border = '0';
+              document.body.appendChild(iframe);
+
+              var pages = images.map(function(src, i) {
+                var brk = (i < images.length - 1) ? 'page-break-after:always;break-after:page;' : '';
+                return '<div class="lbl-page" style="' + brk + '"><img src="' + src + '" alt="QR Label" /></div>';
+              }).join('');
+
+              var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + (title || 'QR Card Print') + '</title>' +
+                '<style>' +
+                '@page { size: A4 portrait; margin: 0; }' +
+                'html, body { margin: 0 !important; padding: 0 !important; background: #ffffff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }' +
+                '.lbl-page { position: relative; width: 210mm; height: 296mm; overflow: hidden; }' +
+                '.lbl-page img { position: absolute; left: 1cm; top: 1cm; width: 6cm; height: 6cm; display: block; margin: 0; padding: 0; }' +
+                '</style></head><body>' + pages + '<\/body><\/html>';
+
+              var doc = iframe.contentWindow.document;
+              doc.open();
+              doc.write(html);
+              doc.close();
+
+              var imgs = doc.images;
+              var pending = imgs.length;
+              var fired = false;
+              function go() {
+                if (fired) return;
+                fired = true;
+                setTimeout(function() {
+                  try {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                  } catch (e) {
+                    console.error('Iframe print error:', e);
+                  }
+                }, 200);
+              }
+              if (!pending) { go(); return; }
+              for (var i = 0; i < imgs.length; i++) {
+                if (imgs[i].complete) { if (--pending === 0) go(); }
+                else imgs[i].onload = imgs[i].onerror = function() { if (--pending === 0) go(); };
+              }
+              setTimeout(go, 1500);
+            }).catch(function(err) {
+              console.error('Render error:', err);
+              alert('Error preparing print. Please try again.');
+            });
+          }
+
+          function printCardDirectly(cardElement, title) {
+            if (!cardElement) return;
+            var cards = (cardElement.classList && cardElement.classList.contains('kp-print-card'))
+              ? [cardElement]
+              : cardElement.querySelectorAll('.kp-print-card');
+            printCardImages(cards, title);
+          }
+
+          function printPassLabel() {
+            var card = document.getElementById('passCardBox');
+            if (!card) return;
+            printCardDirectly(card, 'Good Pass Roll QR Card');
+          }
+
+          function printRejectionLabel() {
+            var card = document.getElementById('rejCardBox');
+            if (!card) return;
+            printCardDirectly(card, 'Rejection Roll QR Card');
+          }
+
+          function printSingleLabel() {
+            var card = document.getElementById('singleCardBox');
+            if (!card) return;
+            printCardDirectly(card, 'Knitting Production Roll QR Card');
+          }
+
+          function printBothLabels() {
+            var passCard = document.getElementById('passCardBox');
+            var rejCard  = document.getElementById('rejCardBox');
+            if (!passCard || !rejCard) return;
+            printCardImages([passCard, rejCard], 'Split Roll QR Cards (Pass & Reject)');
+          }
+
+          function closeInspectionModal() {
+            var m = document.getElementById('inspectionQrModal');
+            if (m) m.style.display = 'none';
+          }
+        </script>
+      <?php elseif (!empty($msg)): ?>
         <script>
           document.addEventListener('DOMContentLoaded', function() {
             if (typeof Swal !== 'undefined') {
@@ -1396,6 +2139,29 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
             </div>
           </div>
 
+          <!-- SPLIT ROLL OPTION (Visible when rejection quantity > 0) -->
+          <div id="splitOptionContainer" style="display:none; margin-top:12px; background:#fff7ed; border:1.5px solid #fb923c; border-radius:10px; padding:12px; box-shadow:0 2px 6px rgba(249,115,22,0.08);">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:36px; height:36px; border-radius:8px; background:#ea580c; color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;">
+                  <i class="fa-solid fa-scissors"></i>
+                </div>
+                <div>
+                  <div style="font-weight:800; font-size:0.92rem; color:#9a3412;">
+                    Split Roll Option (Pass &amp; Reject)
+                  </div>
+                  <div style="font-size:0.78rem; color:#c2410c; margin-top:2px;">
+                    Split into: <b id="splitPassRollLabel" style="color:#166534; font-weight:800;">${d.suggested_roll}-P</b> (<span id="splitPassQtyLabel" style="font-weight:800;">0.00</span> KG) &amp; <b id="splitRejRollLabel" style="color:#b91c1c; font-weight:800;">${d.suggested_roll}-R</b> (<span id="splitRejQtyLabel" style="font-weight:800;">0.00</span> KG)
+                  </div>
+                </div>
+              </div>
+              <label style="display:inline-flex; align-items:center; cursor:pointer; gap:8px; user-select:none; font-weight:800; font-size:0.88rem; color:#9a3412; background:#ffedd5; padding:6px 14px; border-radius:20px; border:1.5px solid #fdba74;">
+                <input type="checkbox" id="splitRollCheckbox" style="width:18px; height:18px; cursor:pointer; accent-color:#ea580c;" onchange="window.onSplitToggleChange()">
+                <span>Split this Roll</span>
+              </label>
+            </div>
+          </div>
+
           <div style="margin-top:10px; font-weight:800; font-size:0.78rem; color:#334155;">
             <i class="fa-solid fa-list-check me-1 text-warning"></i> FABRIC FAULTS (4-POINT MATRIX):
           </div>
@@ -1426,17 +2192,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         `;
 
         resultContainer.innerHTML = html;
-
-        actionContainer.innerHTML = `
-          <div class="action-card">
-            <button class="btn-action production" id="saveBtn" onclick="window.saveInspectionRecord()">
-              <i class="fa-solid fa-floppy-disk me-1"></i> Save Inspection Record
-            </button>
-            <button class="btn-action cancel" onclick="window.location.reload()">
-              <i class="fa-solid fa-rotate-left me-1"></i> Reset / Scan New Roll
-            </button>
-          </div>
-        `;
+        window.updateActionButtons();
       }
 
       let preLycraRejectQty = null;
@@ -1514,6 +2270,64 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         }
       }
 
+      // ── Dynamic Action Buttons (Split vs Single Roll) ──
+      window.updateActionButtons = function() {
+        const rejInput  = document.getElementById('rejectQtyInput');
+        const updateEl  = document.getElementById('updateQtyInput');
+        const splitChk  = document.getElementById('splitRollCheckbox');
+
+        const rejectQty = parseFloat(rejInput?.value) || 0;
+        const updateQty = parseFloat(updateEl?.value) || 0;
+        const isSplitChecked = !!(splitChk && splitChk.checked);
+
+        if (rejectQty > 0 && updateQty > 0) {
+          if (isSplitChecked) {
+            actionContainer.innerHTML = `
+              <div class="action-card">
+                <button class="btn-action" style="background:linear-gradient(135deg, #ea580c, #c2410c); color:#ffffff; font-weight:800;" onclick="window.saveInspectionRecord(true)">
+                  <i class="fa-solid fa-scissors me-1"></i> Split Roll (-P / -R)
+                </button>
+                <button class="btn-action production" onclick="window.saveInspectionRecord(false)">
+                  <i class="fa-solid fa-floppy-disk me-1"></i> Save (Single Roll)
+                </button>
+                <button class="btn-action cancel" onclick="window.location.reload()">
+                  <i class="fa-solid fa-rotate-left me-1"></i> Reset
+                </button>
+              </div>
+            `;
+          } else {
+            actionContainer.innerHTML = `
+              <div class="action-card">
+                <button class="btn-action production" id="saveBtn" onclick="window.saveInspectionRecord(false)">
+                  <i class="fa-solid fa-floppy-disk me-1"></i> Save (Single Roll)
+                </button>
+                <button class="btn-action" style="background:linear-gradient(135deg, #ea580c, #c2410c); color:#ffffff; font-weight:800;" onclick="window.saveInspectionRecord(true)">
+                  <i class="fa-solid fa-scissors me-1"></i> Split Roll (-P / -R)
+                </button>
+                <button class="btn-action cancel" onclick="window.location.reload()">
+                  <i class="fa-solid fa-rotate-left me-1"></i> Reset
+                </button>
+              </div>
+            `;
+          }
+        } else {
+          actionContainer.innerHTML = `
+            <div class="action-card">
+              <button class="btn-action production" id="saveBtn" onclick="window.saveInspectionRecord(false)">
+                <i class="fa-solid fa-floppy-disk me-1"></i> Save Inspection Record
+              </button>
+              <button class="btn-action cancel" onclick="window.location.reload()">
+                <i class="fa-solid fa-rotate-left me-1"></i> Reset / Scan New Roll
+              </button>
+            </div>
+          `;
+        }
+      };
+
+      window.onSplitToggleChange = function() {
+        window.updateActionButtons();
+      };
+
       // ── Real-time UPDATE QTY calculator ──
       window.calcUpdateQty = function() {
         const mainInput = document.getElementById('mainQtyInput');
@@ -1530,13 +2344,36 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         const rejectQty = parseFloat(rejInput?.value) || 0;
         const updateQty = Math.max(0, mainQty - rejectQty);
         if (updateEl) updateEl.value = updateQty.toFixed(2);
+
+        // Update split preview container
+        const splitBox = document.getElementById('splitOptionContainer');
+        const passLbl  = document.getElementById('splitPassRollLabel');
+        const passQtyL = document.getElementById('splitPassQtyLabel');
+        const rejLbl   = document.getElementById('splitRejRollLabel');
+        const rejQtyL  = document.getElementById('splitRejQtyLabel');
+        const splitChk = document.getElementById('splitRollCheckbox');
+
+        if (rollData && rejectQty > 0 && updateQty > 0) {
+          const cleanBase = String(rollData.suggested_roll || '').replace(/-(R|P)$/i, '');
+          if (splitBox) splitBox.style.display = 'block';
+          if (passLbl)  passLbl.textContent  = cleanBase + '-P';
+          if (passQtyL) passQtyL.textContent = updateQty.toFixed(2);
+          if (rejLbl)   rejLbl.textContent   = cleanBase + '-R';
+          if (rejQtyL)  rejQtyL.textContent  = rejectQty.toFixed(2);
+        } else {
+          if (splitBox) splitBox.style.display = 'none';
+          if (splitChk) splitChk.checked = false;
+        }
+
+        window.updateActionButtons();
       };
 
-      window.saveInspectionRecord = function() {
+      window.saveInspectionRecord = function(doSplit) {
         if (!rollData) return;
         const mainQty   = parseFloat(document.getElementById('mainQtyInput')?.value)   || 0;
         const rejectQty = parseFloat(document.getElementById('rejectQtyInput')?.value) || 0;
         const updateQty = Math.max(0, mainQty - rejectQty);
+        const splitChk  = document.getElementById('splitRollCheckbox');
 
         if (mainQty <= 0) {
           alert('Please enter a valid Main Quantity (must be > 0).');
@@ -1547,6 +2384,24 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
           alert('Reject QTY cannot exceed Main QTY.');
           document.getElementById('rejectQtyInput')?.focus();
           return;
+        }
+
+        let shouldSplit = false;
+        if (typeof doSplit === 'boolean') {
+          shouldSplit = doSplit;
+        } else if (splitChk && splitChk.checked) {
+          shouldSplit = true;
+        }
+
+        if (shouldSplit) {
+          if (rejectQty <= 0) {
+            alert('Cannot split roll: Rejection quantity is 0 KG.');
+            return;
+          }
+          if (updateQty <= 0) {
+            alert('Cannot split roll: Good (Pass) quantity is 0 KG because the entire roll is rejected.');
+            return;
+          }
         }
 
         const form = document.createElement('form');
@@ -1562,6 +2417,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         };
 
         addField('save_inspection', '1');
+        addField('DO_SPLIT', shouldSplit ? '1' : '0');
         addField('PRODUCTION_ID', rollData.production_id || 0);
         addField('ROLL_NO', rollData.suggested_roll);
         addField('MAIN_QTY',   mainQty.toFixed(2));
@@ -1719,6 +2575,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
 
     })();
   </script>
+  <div id="knitCardPrintArea" class="qr-print-area"></div>
 </body>
 
 </html>

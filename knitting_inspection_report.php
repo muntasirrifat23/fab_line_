@@ -426,17 +426,51 @@ if (isset($db) && $db) {
             color: #fff;
             border-radius: 6px;
             padding: 6px 12px;
-            font-size: 0.88rem;
+            font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
             gap: 5px;
             transition: background 0.15s;
+            white-space: nowrap;
         }
 
         .btn-print-row:hover {
             background: #1d4ed8;
+        }
+
+        .btn-qr-action {
+            background: #dc2626;
+            border: none;
+            color: #fff;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: 5px;
+            transition: background 0.15s;
+            white-space: nowrap;
+        }
+
+        .btn-qr-action:hover {
+            background: #b91c1c;
+        }
+
+        .btn-qr-pass {
+            background: #16a34a;
+        }
+
+        .btn-qr-pass:hover {
+            background: #15803d;
+        }
+
+        .qr-print-area {
+            display: none;
         }
 
         .empty-row td,
@@ -461,6 +495,8 @@ if (isset($db) && $db) {
             body * {
                 visibility: hidden !important;
             }
+
+            /* Scenario 1: ASTM Inspection Report Modal */
             #reportModal, #reportModal *, #modalReportContent, #modalReportContent * {
                 visibility: visible !important;
             }
@@ -473,6 +509,7 @@ if (isset($db) && $db) {
                 background: transparent !important;
                 padding: 0 !important;
                 margin: 0 !important;
+                display: block !important;
             }
             #reportModal > div {
                 box-shadow: none !important;
@@ -488,6 +525,58 @@ if (isset($db) && $db) {
                 max-width: 100% !important;
                 box-sizing: border-box !important;
             }
+
+            /* Scenario 2: Rejection / Good QR Card Modal */
+            #rejectionLabelModal, #rejectionLabelModal *, 
+            #rejectionCardReportContent, #rejectionCardReportContent *, 
+            #reportRejectionCardBox, #reportRejectionCardBox * {
+                visibility: visible !important;
+            }
+            #rejectionLabelModal {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                height: auto !important;
+                background: transparent !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+            #rejectionLabelModal > div {
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            #reportRejectionCardBox {
+                margin: 0 auto !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            /* Scenario 3: QR Print Area */
+            .qr-print-area, .qr-print-area * {
+                visibility: visible !important;
+                display: block !important;
+            }
+            .qr-print-area {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 8px !important;
+            }
+            .qr-print-area img {
+                max-width: 100% !important;
+                height: auto !important;
+                display: block !important;
+                margin: 0 auto !important;
+            }
+
             .no-print {
                 display: none !important;
             }
@@ -519,6 +608,32 @@ if (isset($db) && $db) {
             </div>
         </div>
     </div>
+
+    <!-- Rejection Roll QR Card Modal for Report -->
+    <div id="rejectionLabelModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:999999; overflow-y:auto; padding:20px; align-items:center; justify-content:center;">
+        <div style="background:#ffffff; max-width:820px; width:100%; border-radius:14px; box-shadow:0 15px 35px rgba(0,0,0,0.4); padding:20px; position:relative; max-height:95vh; overflow-y:auto; margin: auto;">
+            <div class="no-print" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:2px solid #ef4444; padding-bottom:10px;">
+                <div>
+                    <span id="repModalBadge" style="background:#fee2e2; color:#b91c1c; font-weight:800; font-size:0.75rem; padding:3px 10px; border-radius:20px; display:inline-flex; align-items:center;">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i> 4-POINT QC REJECTION QR CARD
+                    </span>
+                    <h4 id="repRejModalTitle" style="margin:4px 0 0 0; font-weight:800; color:#0f172a; font-size:1.15rem;">
+                        Rejection Roll
+                    </h4>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" class="btn" onclick="printRejectionCardFromReport()" style="background:#dc2626; color:#ffffff; font-weight:700; border:none; padding:7px 16px; border-radius:6px; cursor:pointer; font-size:0.85rem;">
+                        <i class="fa-solid fa-print me-1"></i> Print QR Card
+                    </button>
+                    <button type="button" class="btn" onclick="closeRejectionLabelModal()" style="background:#64748b; color:#ffffff; font-weight:700; border:none; padding:7px 14px; border-radius:6px; cursor:pointer; font-size:0.85rem;">
+                        <i class="fa-solid fa-xmark me-1"></i> Close
+                    </button>
+                </div>
+            </div>
+            <div id="rejectionCardReportContent"></div>
+        </div>
+    </div>
+    <div id="knitCardPrintArea" class="qr-print-area"></div>
 
     <div class="container-fluid p-0">
 
@@ -750,6 +865,7 @@ if (isset($db) && $db) {
     </div>
 
     <script src="jquery.min.js"></script>
+    <script src="js/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -849,8 +965,9 @@ if (isset($db) && $db) {
                 '<div style="font-size:15px;font-weight:bold;text-align:center;flex:1;">' +
                 'Knit Fabric Inspection (4 point System)' +
                 '</div>' +
-                '<div style="font-size:16px;font-weight:bold;font-style:italic;letter-spacing:1px;color:#1e3a8a;width:120px;text-align:right;">' +
-                'PURBANI' +
+                '<div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;min-width:150px;">' +
+                '<span style="font-size:16px;font-weight:bold;font-style:italic;letter-spacing:1px;color:#1e3a8a;">PURBANI</span>' +
+                '<div id="modalReportQrBox" style="width:40px;height:40px;border:1px solid #000;background:#ffffff;display:inline-flex;align-items:center;justify-content:center;"></div>' +
                 '</div>' +
                 '</div>' +
 
@@ -1077,12 +1194,287 @@ if (isset($db) && $db) {
             if (!row) { alert('Data not found for this roll.'); return; }
             activeReportRow = row;
             $('#modalReportContent').html(renderReportHTML(row));
+            var qBox = document.getElementById('modalReportQrBox');
+            if (qBox && typeof QRCode !== 'undefined') {
+                new QRCode(qBox, {
+                    text: String(row.ROLL || ''),
+                    width: 38,
+                    height: 38,
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+            }
             $('#reportModal').css('display', 'block');
         }
 
         function closeReportModal() {
             $('#reportModal').css('display', 'none');
             activeReportRow = null;
+        }
+
+        function getRowDefectsList(row) {
+            var defects = [];
+            var faultWeights = [
+                { k: 'TT', l: 'T&T (+1p)' },
+                { k: 'PATTA', l: 'Patta (+1p)' },
+                { k: 'SLUB', l: 'Slub (+1p)' },
+                { k: 'YC_SPOT', l: 'Y/C Spot (+1p)' },
+                { k: 'OILSPOT', l: 'Oil Spot (+2p)' },
+                { k: 'FF', l: 'F/F (+2p)' },
+                { k: 'SEEDS', l: 'Seeds (+2p)' },
+                { k: 'MSTITCH', l: 'Miss Stitch (+2p)' },
+                { k: 'SINKERMARK', l: 'Sinker Mark (+3p)' },
+                { k: 'NEEDLEMARK', l: 'Needle Mark (+3p)' },
+                { k: 'LYCOUT', l: 'Lycra Out (+3p)' },
+                { k: 'OILLINE', l: 'Oil Line (+3p)' },
+                { k: 'HOLE', l: 'Hole (+4p)' },
+                { k: 'LOOP', l: 'Loop (+4p)' },
+                { k: 'SETUP', l: 'Set Up (+4p)' },
+                { k: 'CMARK', l: 'Crease Mark (+4p)' }
+            ];
+            faultWeights.forEach(function(fw) {
+                var v = parseInt(row[fw.k]) || 0;
+                if (v > 0) defects.push(fw.l);
+            });
+            return defects.length > 0 ? defects.join(', ') : 'ASTM 4-Point Criteria';
+        }
+
+        var activeRejectionCardRow = null;
+
+        function renderKnittingProductionCardHTML(row, rollCode, qty) {
+            var fieldHTML = [
+                ['Shift', row.SHIFT],
+                ['OPNAME', row.UNAME || row.UID],
+                ['SONO', row.SONO],
+                ['PO NO', row.PO_NUMBER],
+                ['Style', row.STYLE],
+                ['MCNO', row.MCNO],
+                ['MC Dia', row.MC_DIA],
+                ['Customer', row.CUSTOMER],
+                ['FGSM', row.FGSM || row.FINISH_GSM],
+                ['F. DIA', row.FDIA || row.FINISH_DIA],
+                ['Color', row.COLOR, 'vertical'],
+                ['F. TYPE', row.FTYPE || row.FABRICS_TYPE, 'vertical'],
+                ['Y. COUNT', row.YCOUNT || row.YARN_COUNT, 'vertical'],
+                ['Y. BRAND', row.YBRAND, 'vertical'],
+                ['Y. LOT', row.LOTNO || row.YARN_LOT, 'vertical']
+            ].map(function(f) {
+                var val = (f[1] === null || f[1] === undefined) ? '' : f[1];
+                return '<div class="pdf-item' + (f[2] ? ' pdf-' + f[2] : '') + '" style="font-size:29px;font-weight:800;line-height:1.15;margin-left:3px;padding:3px 0;word-break:break-word;background:#ffffff;color:#000000;' + (f[2] ? 'grid-column:1 / -1;' : 'grid-column:span 2;') + '"><span style="font-weight:800;color:#000000;">' + f[0] + ':</span> <span style="font-weight:800;color:#000000;">' + esc(val) + '</span></div>';
+            }).join('');
+
+            return '' +
+                '<div id="reportCardPrintBox" style="width:700px;height:700px;padding:4px;background:white;font-family:Arial,Helvetica,sans-serif;color:#000000;box-sizing:border-box;border:2px solid #000000;font-weight:800;display:flex;flex-direction:column;margin:0 auto;">' +
+                '<div style="display:flex;gap:4px;align-items:stretch;margin-bottom:4px;">' +
+                '<div style="flex:1;min-height:215px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:#ffffff;border:2px solid #000000;padding:6px;box-sizing:border-box;">' +
+                '<div style="background:white;color:#000000;text-align:center;font-size:30px;font-weight:800;padding:2px 0;margin-bottom:8px;letter-spacing:0;white-space:nowrap;display:inline-block;">' +
+                '<span style="text-decoration:none;">PURBANI FABRICS LTD.</span>' +
+                '<span style="display:block;width:100%;height:3px;background:#000000;margin-top:2px;"></span>' +
+                '</div>' +
+                '<div style="font-weight:800;color:#000000;line-height:1.5;word-break:break-word;">' +
+                '<div style="font-size:30px;">ROLL: ' + esc(rollCode) + '</div>' +
+                '<div style="font-size:29px;">QTY: ' + esc(qty) + '</div>' +
+                '<div style="font-size:28px;">Buyer: ' + esc(row.BUYER || '') + '</div>' +
+                '<div style="font-size:25px;">Date: ' + esc(row.BUDAT || row.P_CREATED || '') + '</div>' +
+                '</div>' +
+                '</div>' +
+                '<div id="reportRejQrTarget" style="flex:none;width:215px;min-height:215px;height:auto;align-self:stretch;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:2px solid #000000;background:#ffffff;"></div>' +
+                '</div>' +
+                '<div style="display:grid;grid-template-columns:repeat(4,1fr);column-gap:8px;row-gap:2px;background:#ffffff;">' + fieldHTML + '</div>' +
+                '</div>';
+        }
+
+        function openRejectionQrFromReport(idOrRoll) {
+            var row = null;
+            for (var i = 0; i < currentData.length; i++) {
+                if (String(currentData[i].KITID) === String(idOrRoll) || 
+                    String(currentData[i].ROLL) === String(idOrRoll) || 
+                    String(currentData[i].RAW_ROLL) === String(idOrRoll)) { 
+                    row = currentData[i]; 
+                    break; 
+                }
+            }
+            if (!row) { alert('Data not found for this roll.'); return; }
+            activeRejectionCardRow = row;
+
+            var rollCode = row.ROLL || row.RAW_ROLL || '';
+            var rejectQty = row.REJECT_QTY || row.RQTY || row.QTY || '0.00';
+
+            $('#repModalBadge').html('<i class="fa-solid fa-triangle-exclamation me-1"></i> KNITTING REJECTION QR LABEL (KNITTING PRODUCTION FORMAT)').css('background', '#fee2e2').css('color', '#b91c1c');
+            $('#repRejModalTitle').text('Roll #' + rollCode + ' (' + rejectQty + ' KG)');
+
+            var html = renderKnittingProductionCardHTML(row, rollCode, rejectQty);
+
+            $('#rejectionCardReportContent').html(html);
+            var qTarget = document.getElementById('reportRejQrTarget');
+            if (qTarget && typeof QRCode !== 'undefined') {
+                new QRCode(qTarget, {
+                    text: String(rollCode),
+                    width: 208,
+                    height: 208,
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            }
+            $('#rejectionLabelModal').css('display', 'flex');
+        }
+
+        function openPassQrFromReport(idOrRoll) {
+            var row = null;
+            for (var i = 0; i < currentData.length; i++) {
+                if (String(currentData[i].KITID) === String(idOrRoll) || 
+                    String(currentData[i].ROLL) === String(idOrRoll) || 
+                    String(currentData[i].RAW_ROLL) === String(idOrRoll)) { 
+                    row = currentData[i]; 
+                    break; 
+                }
+            }
+            if (!row) { alert('Data not found for this roll.'); return; }
+            activeRejectionCardRow = row;
+
+            var rollCode = row.ROLL || row.RAW_ROLL || '';
+            var goodQty = row.UPDATE_QTY || row.UQTY || row.MAIN_QTY || row.QTY || '0.00';
+
+            $('#repModalBadge').html('<i class="fa-solid fa-circle-check me-1"></i> KNITTING PASS QR LABEL (KNITTING PRODUCTION FORMAT)').css('background', '#dcfce7').css('color', '#166534');
+            $('#repRejModalTitle').text('Roll #' + rollCode + ' (' + goodQty + ' KG)');
+
+            var html = renderKnittingProductionCardHTML(row, rollCode, goodQty);
+
+            $('#rejectionCardReportContent').html(html);
+            var qTarget = document.getElementById('reportRejQrTarget');
+            if (qTarget && typeof QRCode !== 'undefined') {
+                new QRCode(qTarget, {
+                    text: String(rollCode),
+                    width: 208,
+                    height: 208,
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            }
+            $('#rejectionLabelModal').css('display', 'flex');
+        }
+
+        function closeRejectionLabelModal() {
+            $('#rejectionLabelModal').css('display', 'none');
+            activeRejectionCardRow = null;
+        }
+
+        // Same output as Knitting Production: render the 700x700 card to an image
+        // with html2canvas, then print it at exactly 6cm x 6cm (1cm from top-left of A4).
+        function printCardDirectly(cardElement, title) {
+            if (!cardElement) return;
+
+            var clone = cardElement.cloneNode(true);
+            clone.removeAttribute('id');
+            clone.style.display = 'flex';
+            clone.style.flexDirection = 'column';
+            clone.style.margin = '0';
+            clone.style.transform = 'none';
+
+            // qrcode.js puts both a <canvas> and an <img> in the box -> keep exactly one 208px QR image
+            var origQr = cardElement.querySelector('#reportRejQrTarget');
+            var cloneQr = clone.querySelector('#reportRejQrTarget');
+            if (origQr && cloneQr) {
+                cloneQr.removeAttribute('id');
+                var dataUrl = '';
+                var oImg = origQr.querySelector('img');
+                if (oImg && oImg.src && oImg.src.indexOf('data:image') === 0) {
+                    dataUrl = oImg.src;
+                } else {
+                    var oCanvas = origQr.querySelector('canvas');
+                    if (oCanvas) { try { dataUrl = oCanvas.toDataURL('image/png'); } catch (e) {} }
+                }
+                cloneQr.innerHTML = '';
+                if (dataUrl) {
+                    var qImg = document.createElement('img');
+                    qImg.src = dataUrl;
+                    qImg.alt = 'QR Code';
+                    qImg.style.cssText = 'width:208px;height:208px;display:block;margin:0 auto;';
+                    cloneQr.appendChild(qImg);
+                }
+            }
+
+            var holder = document.createElement('div');
+            holder.style.position = 'absolute';
+            holder.style.left = '-9999px';
+            holder.style.top = '0';
+            holder.style.background = '#ffffff';
+            holder.appendChild(clone);
+            document.body.appendChild(holder);
+
+            if (typeof html2canvas === 'undefined') {
+                document.body.removeChild(holder);
+                alert('Print library (html2canvas) not loaded. Please check internet connection.');
+                return;
+            }
+
+            setTimeout(function() {
+                html2canvas(clone, {
+                    scale: 3,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    logging: false
+                }).then(function(canvas) {
+                    document.body.removeChild(holder);
+                    var imgData = canvas.toDataURL('image/png');
+
+                    var old = document.getElementById('print_card_iframe');
+                    if (old && old.parentNode) old.parentNode.removeChild(old);
+                    var iframe = document.createElement('iframe');
+                    iframe.id = 'print_card_iframe';
+                    iframe.style.position = 'fixed';
+                    iframe.style.right = '0';
+                    iframe.style.bottom = '0';
+                    iframe.style.width = '0';
+                    iframe.style.height = '0';
+                    iframe.style.border = '0';
+                    document.body.appendChild(iframe);
+
+                    var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + (title || 'QR Card Print') + '</title>' +
+                        '<style>' +
+                        '@page { size: A4 portrait; margin: 0; }' +
+                        'html, body { margin: 0 !important; padding: 0 !important; background: #ffffff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }' +
+                        '.lbl-page { position: relative; width: 210mm; height: 296mm; overflow: hidden; }' +
+                        '.lbl-page img { position: absolute; left: 1cm; top: 1cm; width: 6cm; height: 6cm; display: block; margin: 0; padding: 0; }' +
+                        '</style></head><body><div class="lbl-page"><img src="' + imgData + '" alt="QR Label" /></div><\/body><\/html>';
+
+                    var doc = iframe.contentWindow.document;
+                    doc.open();
+                    doc.write(html);
+                    doc.close();
+
+                    var fired = false;
+                    function go() {
+                        if (fired) return;
+                        fired = true;
+                        setTimeout(function() {
+                            try {
+                                iframe.contentWindow.focus();
+                                iframe.contentWindow.print();
+                            } catch (e) {
+                                console.error('Iframe print error:', e);
+                            }
+                        }, 200);
+                    }
+                    var lbl = doc.images[0];
+                    if (!lbl || lbl.complete) { go(); }
+                    else { lbl.onload = lbl.onerror = go; }
+                    setTimeout(go, 1500);
+                }).catch(function(err) {
+                    console.error('Render error:', err);
+                    if (holder.parentNode) document.body.removeChild(holder);
+                    alert('Error preparing print. Please try again.');
+                });
+            }, 150);
+        }
+
+        function printRejectionCardFromReport() {
+            var card = document.getElementById('reportCardPrintBox');
+            if (!card) return;
+            printCardDirectly(card, 'Knitting Production QR Card');
         }
 
         function printModalReport() {
@@ -1170,9 +1562,15 @@ if (isset($db) && $db) {
                 var kitIdEsc = esc(row.KITID);
 
                 // Action Column
-                tr.append($('<td>').html(
-                    '<button class="btn-print-row" onclick="openReportModal(\'' + kitIdEsc + '\')"><i class="fa-solid fa-file-invoice"></i> View / Print Report</button>'
-                ));
+                var actHtml = '<div style="display:flex;gap:4px;align-items:center;">';
+                actHtml += '<button class="btn-print-row" onclick="openReportModal(\'' + kitIdEsc + '\')"><i class="fa-solid fa-file-invoice"></i> Report</button>';
+                if (isReject || parseFloat(row.RQTY || row.REJECT_QTY || 0) > 0) {
+                    actHtml += '<button class="btn-qr-action" onclick="openRejectionQrFromReport(\'' + kitIdEsc + '\')" title="Generate & Print Rejection QR Code"><i class="fa-solid fa-qrcode"></i> Rejection QR</button>';
+                } else {
+                    actHtml += '<button class="btn-qr-action btn-qr-pass" onclick="openPassQrFromReport(\'' + kitIdEsc + '\')" title="Generate & Print Pass QR Code"><i class="fa-solid fa-qrcode"></i> QR</button>';
+                }
+                actHtml += '</div>';
+                tr.append($('<td>').html(actHtml));
 
                 // Loop through columns
                 COLS.forEach(function(c) {

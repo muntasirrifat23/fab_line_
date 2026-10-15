@@ -38,9 +38,9 @@ if ($search !== '') {
 // Rejection: rejection quantity > 0
 // Pass: rejection quantity <= 0 (or 0 / NULL / empty)
 if ($category === 'pass') {
-    $whereClauses[] = "(CAST(COALESCE(i.RQTY, 0) AS DECIMAL(10,2)) <= 0)";
+    $whereClauses[] = "(CAST(COALESCE(i.RQTY, 0) AS DECIMAL(10,2)) <= 0 OR TRIM(i.ROLL) LIKE '%-P')";
 } elseif ($category === 'rejection') {
-    $whereClauses[] = "(CAST(COALESCE(i.RQTY, 0) AS DECIMAL(10,2)) > 0)";
+    $whereClauses[] = "(CAST(COALESCE(i.RQTY, 0) AS DECIMAL(10,2)) > 0 OR TRIM(i.ROLL) LIKE '%-R')";
 }
 
 if ($from_date !== '') {
@@ -119,16 +119,25 @@ while ($row = mysqli_fetch_assoc($result)) {
     $oqty = floatval($row['OQTY'] ?? ($row['QTY'] ?? 0));
     $uqty = floatval($row['UQTY'] ?? 0);
 
-    // Any roll number with a rejection quantity must have “-R” appended.
-    // Any roll number that passes the test must have “-P” appended.
-    if ($rqty > 0) {
+    // If roll was split into -P or -R, respect the split roll identity.
+    // If user chose NOT to split, keep the original roll number as-is.
+    if (preg_match('/-R$/i', $rawRoll)) {
         $cat = 'Rejection';
-        $displayRoll = $baseRoll . '-R';
+        $displayRoll = $rawRoll;
         $reject_rolls++;
-    } else {
+    } elseif (preg_match('/-P$/i', $rawRoll)) {
         $cat = 'Pass';
-        $displayRoll = $baseRoll . '-P';
+        $displayRoll = $rawRoll;
         $pass_rolls++;
+    } else {
+        $displayRoll = $rawRoll;
+        if ($rqty > 0) {
+            $cat = 'Rejection';
+            $reject_rolls++;
+        } else {
+            $cat = 'Pass';
+            $pass_rolls++;
+        }
     }
 
     $total_rolls++;

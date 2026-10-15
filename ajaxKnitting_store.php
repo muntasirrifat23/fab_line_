@@ -49,21 +49,46 @@ if ($action === 'search') {
         exit;
     }
 
-    $roll = mysqli_real_escape_string($db, $roll);
+    $rollEsc = mysqli_real_escape_string($db, $roll);
+    $cleanRoll = preg_replace('/-(R|P)$/i', '', $roll);
+    $cleanRollEsc = mysqli_real_escape_string($db, $cleanRoll);
 
     // If the roll is already stored in knitting_store, do NOT show data again
-    $storeRes = mysqli_query($db, "SELECT ROLL FROM knitting_store WHERE TRIM(ROLL) = '$roll' LIMIT 1");
+    $storeRes = mysqli_query($db, "SELECT ROLL FROM knitting_store WHERE TRIM(ROLL) = '$rollEsc' LIMIT 1");
     if ($storeRes && mysqli_num_rows($storeRes) > 0) {
         echo json_encode(['success' => false, 'error' => "Data already stored in Knitting Store for Roll: $roll"]);
         exit;
     }
 
-    $sql = "SELECT * FROM $TABLE WHERE TRIM(ROLL) = '$roll' LIMIT 1";
+    // Search exact roll first, then fallback to clean base roll
+    $sql = "SELECT * FROM $TABLE WHERE TRIM(ROLL) = '$rollEsc' LIMIT 1";
     $result = mysqli_query($db, $sql);
+    if (!$result || mysqli_num_rows($result) == 0) {
+        $sql = "SELECT * FROM $TABLE WHERE TRIM(ROLL) = '$cleanRollEsc' ORDER BY KITID DESC LIMIT 1";
+        $result = mysqli_query($db, $sql);
+    }
 
-    if ($result) {
+    if ($result && mysqli_num_rows($result) > 0) {
         $data = mysqli_fetch_assoc($result);
         if ($data) {
+            // If scanned roll has -R suffix, adapt roll and weight to Rejection
+            if (preg_match('/-R$/i', $roll)) {
+                $data['ROLL'] = $cleanRoll . '-R';
+                $data['QTY']  = (isset($data['RQTY']) && floatval($data['RQTY']) > 0) ? $data['RQTY'] : (isset($data['OQTY']) && floatval($data['OQTY']) > 0 ? $data['OQTY'] : $data['QTY']);
+                $data['UQTY'] = $data['QTY'];
+                $data['REJECTION_TAG'] = true;
+            } elseif (preg_match('/-P$/i', $roll)) {
+                $data['ROLL'] = $cleanRoll . '-P';
+                $data['QTY']  = (isset($data['UQTY']) && floatval($data['UQTY']) > 0) ? $data['UQTY'] : (isset($data['OQTY']) && floatval($data['OQTY']) > 0 ? $data['OQTY'] : $data['QTY']);
+                $data['UQTY'] = $data['QTY'];
+            } else {
+                $data['ROLL'] = $roll;
+                if (isset($data['UQTY']) && floatval($data['UQTY']) > 0) {
+                    $data['QTY'] = $data['UQTY'];
+                } elseif (isset($data['OQTY']) && floatval($data['OQTY']) > 0) {
+                    $data['QTY'] = $data['OQTY'];
+                }
+            }
             echo json_encode(['success' => true, 'data' => $data]);
         } else {
             echo json_encode(['success' => false, 'error' => 'No data found for this Roll number']);
