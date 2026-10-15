@@ -11,7 +11,7 @@
 
     <style>
         body {
-            padding: 16px;
+            padding: clamp(8px, 2vw, 16px);
             background: #f1f5f9;
             font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
         }
@@ -19,24 +19,27 @@
         .head-row {
             display: flex;
             align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
             margin-bottom: 16px;
             position: relative;
         }
 
         h1 {
-            flex: 1;
+            flex: 1 1 240px;
             text-align: center;
-            font-size: 1.9rem;
+            font-size: clamp(1.15rem, 3.2vw, 1.9rem);
             font-weight: 800;
             color: #1e293b;
             margin: 0;
+            word-break: break-word;
         }
 
         .search-panel {
             background: #fff;
             border: 1px solid #e2e8f0;
             border-radius: 10px;
-            padding: 14px;
+            padding: clamp(10px, 2vw, 14px);
             margin-bottom: 16px;
         }
 
@@ -47,8 +50,8 @@
         }
 
         .search-panel input {
-            flex: 1;
-            min-width: 220px;
+            flex: 1 1 220px;
+            min-width: 0;
             padding: 12px 14px;
             border: 1px solid #cbd5e1;
             border-radius: 8px;
@@ -115,21 +118,22 @@
 
         .table-scroll {
             overflow-x: auto;
-            max-height: calc(100vh - 180px);
+            -webkit-overflow-scrolling: touch;
+            max-height: calc(100vh - 200px);
             overflow-y: auto;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 1.12rem;
+            font-size: clamp(0.95rem, 1.2vw, 1.12rem);
             min-width: 2400px;
         }
 
         thead th {
             background: #1e293b;
             color: #fff;
-            padding: 14px 12px;
+            padding: clamp(9px, 1.4vw, 14px) clamp(8px, 1.2vw, 12px);
             text-align: left;
             font-weight: 700;
             white-space: nowrap;
@@ -144,7 +148,7 @@
         }
 
         tbody td {
-            padding: 12px;
+            padding: clamp(8px, 1.2vw, 12px);
             border-bottom: 1px solid #eef2f7;
             white-space: nowrap;
             color: #1e293b;
@@ -269,7 +273,7 @@
             align-items: center;
             justify-content: center;
             z-index: 1050;
-            padding: 20px;
+            padding: clamp(8px, 3vw, 20px);
         }
 
         .preview-overlay.show {
@@ -358,18 +362,86 @@
             font-weight: 600;
         }
 
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
+        /* ---- Dynamic viewport height (mobile browsers) ---- */
+        @supports (height: 100dvh) {
+            .table-scroll {
+                max-height: calc(100dvh - 200px);
             }
 
+            .preview-box {
+                max-height: 92dvh;
+            }
+        }
+
+        /* ---- Tablet ---- */
+        @media (max-width: 992px) {
+            table {
+                min-width: 2000px;
+            }
+        }
+
+        /* ---- Small tablet / large phone ---- */
+        @media (max-width: 768px) {
             .search-row {
                 flex-direction: column;
             }
 
-            .btn {
+            .search-panel input {
+                flex: 1 1 auto;
+                width: 100%;
+            }
+
+            .search-row .btn {
                 width: 100%;
                 justify-content: center;
+            }
+
+            table {
+                min-width: 1500px;
+            }
+
+            .preview-body {
+                padding: 10px;
+            }
+        }
+
+        /* ---- Phone ---- */
+        @media (max-width: 576px) {
+            .head-row {
+                justify-content: center;
+            }
+
+            #backBtn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            thead th:first-child,
+            tbody td:first-child {
+                padding-left: 6px;
+                padding-right: 6px;
+            }
+
+            tbody td:first-child .action-btn {
+                display: flex;
+                width: 100%;
+                justify-content: center;
+                margin: 2px 0;
+                font-size: 0.85rem;
+                padding: 6px 8px;
+            }
+
+            table {
+                min-width: 1200px;
+            }
+
+            .preview-body {
+                padding: 8px;
+            }
+
+            .preview-head,
+            .preview-foot {
+                padding: 10px 12px;
             }
         }
     </style>
