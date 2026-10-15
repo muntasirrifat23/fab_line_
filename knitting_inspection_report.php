@@ -648,23 +648,6 @@ if (isset($db) && $db) {
         <!-- ═══ FILTER PANEL ═══ -->
         <div class="filter-panel">
 
-            <!-- Category Quick Filter Pills -->
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-                <div>
-                    <span style="font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-right: 8px;">Inspection Category:</span>
-                    <div class="category-pill-group" id="categoryPillGroup">
-                        <button type="button" class="cat-pill active" data-cat="all">
-                            <i class="fa-solid fa-layer-group"></i> All Records
-                        </button>
-                        <button type="button" class="cat-pill" data-cat="pass">
-                            <i class="fa-solid fa-circle-check" style="color: #16a34a;"></i> Pass (-P)
-                        </button>
-                        <button type="button" class="cat-pill" data-cat="rejection">
-                            <i class="fa-solid fa-circle-xmark" style="color: #dc2626;"></i> Rejection (-R)
-                        </button>
-                    </div>
-                </div>
-            </div>
 
             <!-- Multi-Parameter Filter Grid -->
             <div class="filter-grid">
@@ -1661,21 +1644,8 @@ if (isset($db) && $db) {
                 window.location.href = 'report.php';
             });
 
-            // Category Quick Filter Pills
-            $('#categoryPillGroup').on('click', '.cat-pill', function() {
-                var selectedCat = $(this).data('cat');
-                $('.cat-pill').removeClass('active');
-                $(this).addClass('active');
-
-                $('#categorySelect').val(selectedCat);
-                loadInspectionData(false);
-            });
-
-            // Category Select change syncs pill
+            // Category Select change
             $('#categorySelect').on('change', function() {
-                var cat = $(this).val();
-                $('.cat-pill').removeClass('active');
-                $('.cat-pill[data-cat="' + cat + '"]').addClass('active');
                 loadInspectionData(false);
             });
 
@@ -1701,9 +1671,6 @@ if (isset($db) && $db) {
                 $('#shiftSelect').val('all');
                 $('#mcnoSelect').val('all');
                 $('#buyerSelect').val('all');
-
-                $('.cat-pill').removeClass('active');
-                $('.cat-pill[data-cat="all"]').addClass('active');
 
                 loadInspectionData(false);
             });
