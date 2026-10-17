@@ -17,18 +17,30 @@
         }
 
         .head-row {
-            display: flex;
-            align-items: center;
+            display: grid;
+            grid-template-columns: 1fr minmax(0, 2fr) 1fr;
+            align-items: start;
             gap: 12px;
-            flex-wrap: wrap;
             margin-bottom: 10px;
             position: relative;
         }
 
+        #backBtn {
+            justify-self: start;
+        }
+
+        .title-tabs {
+            grid-column: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+
         h1 {
-            flex: 1 1 240px;
             text-align: center;
-            font-size: clamp(1.15rem, 3.2vw, 1.9rem);
+            font-size: clamp(1.5rem, 3.8vw, 2.25rem);
             font-weight: 800;
             color: #1e293b;
             margin: 0;
@@ -37,30 +49,80 @@
 
         .tab-bar {
             display: flex;
-            gap: 8px;
+            gap: 12px;
             flex-wrap: wrap;
             justify-content: center;
-            margin-bottom: 14px;
+            margin-bottom: 8px;
         }
 
         .tab-btn {
-            border: 1px solid #cbd5e1;
-            background: #fff;
-            color: #1e293b;
-            border-radius: 8px;
-            padding: 8px 16px;
+            border: 1px solid transparent;
+            border-radius: 11px;
+            padding: 11px 21px;
             font-weight: 700;
-            font-size: 0.95rem;
+            font-size: 1.05rem;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
             gap: 6px;
+            box-shadow: 0 3px 8px rgba(15, 23, 42, 0.1);
+            transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease;
         }
 
-        .tab-btn.active {
+        .tab-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 14px rgba(15, 23, 42, 0.17);
+        }
+
+        .tab-btn:active {
+            transform: translateY(0) scale(.97);
+        }
+
+        .tab-btn[data-tab="receive"] {
+            background: #ecfdf5;
+            border-color: #86efac;
+            color: #166534;
+        }
+
+        .tab-btn[data-tab="receive"].active {
+            background: #16a34a;
+            border-color: #16a34a;
+            color: #fff;
+        }
+
+        .tab-btn[data-tab="hold"] {
+            background: #fffbeb;
+            border-color: #fcd34d;
+            color: #92400e;
+        }
+
+        .tab-btn[data-tab="hold"].active {
+            background: #d97706;
+            border-color: #d97706;
+            color: #fff;
+        }
+
+        .tab-btn[data-tab="pending"] {
+            background: #eff6ff;
+            border-color: #93c5fd;
+            color: #1e40af;
+        }
+
+        .tab-btn[data-tab="pending"].active {
             background: #2563eb;
             border-color: #2563eb;
             color: #fff;
+        }
+
+        @media (prefers-reduced-motion: no-preference) {
+            .tab-btn.active {
+                animation: active-tab-enter .28s ease-out;
+            }
+
+            @keyframes active-tab-enter {
+                from { transform: translateY(3px) scale(.97); }
+                to { transform: translateY(0) scale(1); }
+            }
         }
 
         .search-panel {
@@ -239,11 +301,11 @@
         }
 
         .pdf-item {
-            font-size: 13px;
-            line-height: 1.7;
+            font-size: 17px;
+            line-height: 1.6;
             border-bottom: 1px solid #d1d5db;
             border-right: 1px solid #d1d5db;
-            padding: 7px 12px;
+            padding: 9px 12px;
             word-break: break-word;
             background: #ffffff;
             color: #000000;
@@ -259,7 +321,7 @@
         }
 
         .pdf-value {
-            margin-left: 8px;
+            margin-left: 10px;
             color: #000000;
         }
 
@@ -273,7 +335,7 @@
             gap: 20px;
             padding: 0 10px;
             text-align: center;
-            font-size: 13px;
+            font-size: 16px;
             font-weight: bold;
             color: #000000;
         }
@@ -436,12 +498,31 @@
         /* ---- Phone ---- */
         @media (max-width: 576px) {
             .head-row {
-                justify-content: center;
+                grid-template-columns: 1fr;
+                justify-items: center;
+            }
+
+            .title-tabs {
+                grid-column: 1;
+                grid-row: 2;
+            }
+
+            h1 {
+                font-size: 1.55rem;
             }
 
             #backBtn {
                 width: 100%;
                 justify-content: center;
+            }
+
+            .tab-bar {
+                gap: 8px;
+            }
+
+            .tab-btn {
+                padding: 9px 14px;
+                font-size: .95rem;
             }
 
             thead th:first-child,
@@ -483,13 +564,15 @@
             <button class="btn" id="backBtn">
                 <i class="fa-solid fa-arrow-left" ></i> Back to Report
             </button>
-            <h1>Knitting Store Report</h1>
-        </div>
-
-        <div class="tab-bar" id="tabBar">
-            <button type="button" class="tab-btn active" data-tab="receive"><i class="fa-solid fa-inbox"></i> Receive</button>
-            <button type="button" class="tab-btn" data-tab="hold"><i class="fa-solid fa-pause-circle"></i> Hold</button>
-            <button type="button" class="tab-btn" data-tab="pending"><i class="fa-solid fa-hourglass-half"></i> Pending</button>
+            <div class="title-tabs">
+                <h1>Knitting Store Report</h1>
+                <div class="tab-bar" id="tabBar">
+                    <button type="button" class="tab-btn active" data-tab="receive"><i class="fa-solid fa-inbox"></i> Receive</button>
+                    <button type="button" class="tab-btn" data-tab="hold"><i class="fa-solid fa-pause-circle"></i> Hold</button>
+                    <button type="button" class="tab-btn" data-tab="pending"><i class="fa-solid fa-hourglass-half"></i> Pending</button>
+                </div>
+            </div>
+            <div aria-hidden="true"></div>
         </div>
 
         <div class="search-panel">
@@ -579,7 +662,7 @@
                 cols: REPORT_COLS,
                 fields: {
                     RACK: [],
-                    QTY: ['OQTY', 'MAIN_QTY', 'QTY'],
+                    QTY: ['UQTY'],
                     MCDIA: ['MC_DIA'],
                     YTYPE: ['YTYPE'],
                     YCOUNT: ['YCOUNT'],
@@ -671,11 +754,11 @@
 
             var content = '' +
                 '<div id="rowPdfCard" style="position:relative;width:760px;min-height:1050px;padding:24px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">' +
-                '<div style="text-align:center;font-size:20px;font-weight:bold;color:#1e3a8a;border-bottom:3px solid #2563eb;padding-bottom:10px;margin-bottom:16px;">' +
+                '<div style="text-align:center;font-size:27px;font-weight:bold;color:#1e3a8a;border-bottom:3px solid #2563eb;padding-bottom:12px;margin-bottom:18px;">' +
                 'Knitting Store Report' +
                 '</div>' +
                 '<div class="pdf-grid">' + rowsHTML + '</div>' +
-                '<div style="text-align:center;font-size:11px;color: black; margin-top:16px;border-top:1px solid #e5e7eb;padding-top:8px;">' +
+                '<div style="text-align:center;font-size:14px;color: black; margin-top:18px;border-top:1px solid #e5e7eb;padding-top:10px;">' +
                 'Generated from Knitting Store Report - ' + new Date().toLocaleString() +
                 '</div>' +
 
