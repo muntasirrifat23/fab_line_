@@ -1,7 +1,7 @@
-﻿<?php
+<?php
 include 'config.php';
 
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 

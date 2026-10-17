@@ -21,7 +21,7 @@
             align-items: center;
             gap: 12px;
             flex-wrap: wrap;
-            margin-bottom: 16px;
+            margin-bottom: 10px;
             position: relative;
         }
 
@@ -33,6 +33,34 @@
             color: #1e293b;
             margin: 0;
             word-break: break-word;
+        }
+
+        .tab-bar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 14px;
+        }
+
+        .tab-btn {
+            border: 1px solid #cbd5e1;
+            background: #fff;
+            color: #1e293b;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tab-btn.active {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: #fff;
         }
 
         .search-panel {
@@ -455,7 +483,13 @@
             <button class="btn" id="backBtn">
                 <i class="fa-solid fa-arrow-left" ></i> Back to Report
             </button>
-            <h1 style="font-size:xx-large;">Knitting Store Report</h1>
+            <h1>Knitting Store Report</h1>
+        </div>
+
+        <div class="tab-bar" id="tabBar">
+            <button type="button" class="tab-btn active" data-tab="receive"><i class="fa-solid fa-inbox"></i> Receive</button>
+            <button type="button" class="tab-btn" data-tab="hold"><i class="fa-solid fa-pause-circle"></i> Hold</button>
+            <button type="button" class="tab-btn" data-tab="pending"><i class="fa-solid fa-hourglass-half"></i> Pending</button>
         </div>
 
         <div class="search-panel">
@@ -470,33 +504,8 @@
             <div class="table-scroll">
                 <table>
                     <thead>
-                        <tr>
+                        <tr id="tableHead">
                             <th>ACTION</th>
-                            <th>DATE</th>
-                            <th>RACK</th>
-                            <th>ROLL NO</th>
-                            <th>PO NUMBER</th>
-                            <th>QTY</th>
-                            <th>SONO</th>
-                            <th>SHIFT</th>
-                            <th>BUYER</th>
-                            <th>STYLE</th>
-                            <th>COLOR</th>
-                            <th>MACHINE NO</th>
-                            <th>MC DIA</th>
-                            <th>CUSTOMER</th>
-                            <th>YARN TYPE</th>
-                            <th>YARN COUNT</th>
-                            <th>YARN BRAND</th>
-                            <th>OPEN / TUBE</th>
-                            <th>SL/VQ</th>
-                            <th>FABRICS TYPE</th>
-                            <th>FINISH GSM</th>
-                            <th>FINISH DIA</th>
-                            <th>FEEDER PLAN</th>
-                            <th>LOT NO</th>
-                            <th>T POINT</th>
-                            <th>UNAME</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -531,41 +540,100 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <script>
-        var COLS = [
-            { key: 'BUDAT', label: 'Date' },
-            { key: 'RACK', label: 'Rack' },
-            { key: 'ROLL', label: 'Roll No' },
-            { key: 'PO_NUMBER', label: 'PO Number' },
-            { key: 'QTY', label: 'QTY' },
-            { key: 'SONO', label: 'SONO' },
-            { key: 'SHIFT', label: 'Shift' },
-            { key: 'BUYER', label: 'Buyer' },
-            { key: 'STYLE', label: 'Style' },
-            { key: 'COLOR', label: 'Color' },
-            { key: 'MCNO', label: 'Machine No' },
-            { key: 'MCDIA', label: 'MC Dia' },
-            { key: 'CUSTOMER', label: 'Customer' },
-            { key: 'YTYPE', label: 'Yarn Type' },
-            { key: 'YCOUNT', label: 'Yarn Count' },
-            { key: 'YBRAND', label: 'Yarn Brand' },
-            { key: 'O_T', label: 'Open / Tube' },
-            { key: 'SL', label: 'SL/VQ' },
-            { key: 'FTYPE', label: 'Fabrics Type' },
-            { key: 'FGSM', label: 'Finish GSM' },
-            { key: 'FDIA', label: 'Finish Dia' },
-            { key: 'FEEDER_PLAN', label: 'Feeder Plan' },
-            { key: 'LOT_NO', label: 'Lot No' },
-            { key: 'TPOINT', label: 'T Point' },
-            { key: 'UNAME', label: 'Uname' }
-        ];
+        var TAB_CONFIG = {
+            receive: {
+                title: 'Knitting Store Report',
+                endpoint: 'ajaxKnittingStore_Report.php',
+                cols: [
+                    { key: 'BUDAT', label: 'Date' },
+                    { key: 'RACK', label: 'Rack' },
+                    { key: 'ROLL', label: 'Roll No' },
+                    { key: 'PO_NUMBER', label: 'PO Number' },
+                    { key: 'QTY', label: 'QTY' },
+                    { key: 'SONO', label: 'SONO' },
+                    { key: 'SHIFT', label: 'Shift' },
+                    { key: 'BUYER', label: 'Buyer' },
+                    { key: 'STYLE', label: 'Style' },
+                    { key: 'COLOR', label: 'Color' },
+                    { key: 'MCNO', label: 'Machine No' },
+                    { key: 'MCDIA', label: 'MC Dia' },
+                    { key: 'CUSTOMER', label: 'Customer' },
+                    { key: 'YTYPE', label: 'Yarn Type' },
+                    { key: 'YCOUNT', label: 'Yarn Count' },
+                    { key: 'YBRAND', label: 'Yarn Brand' },
+                    { key: 'O_T', label: 'Open / Tube' },
+                    { key: 'SL', label: 'SL/VQ' },
+                    { key: 'FTYPE', label: 'Fabrics Type' },
+                    { key: 'FGSM', label: 'Finish GSM' },
+                    { key: 'FDIA', label: 'Finish Dia' },
+                    { key: 'FEEDER_PLAN', label: 'Feeder Plan' },
+                    { key: 'LOT_NO', label: 'Lot No' },
+                    { key: 'TPOINT', label: 'T Point' },
+                    { key: 'UNAME', label: 'Uname' }
+                ],
+                exclude: ['UNAME'],
+                useRackCombined: true
+            },
+            hold: {
+                title: 'Knitting Inspection Report (Hold)',
+                endpoint: 'ajaxKnittingInspection_Report.php',
+                cols: [
+                    { key: 'BUDAT', label: 'Date' },
+                    { key: 'ROLL', label: 'Roll No' },
+                    { key: 'PO_NUMBER', label: 'PO Number' },
+                    { key: 'SONO', label: 'SONO' },
+                    { key: 'SHIFT', label: 'Shift' },
+                    { key: 'BUYER', label: 'Buyer' },
+                    { key: 'STYLE', label: 'Style' },
+                    { key: 'COLOR', label: 'Color' },
+                    { key: 'MCNO', label: 'Machine No' },
+                    { key: 'MCDIA', label: 'MC Dia' },
+                    { key: 'CUSTOMER', label: 'Customer' },
+                    { key: 'YCOUNT', label: 'Yarn Count' },
+                    { key: 'YBRAND', label: 'Yarn Brand' },
+                    { key: 'FTYPE', label: 'Fabrics Type' },
+                    { key: 'FGSM', label: 'Finish GSM' },
+                    { key: 'FDIA', label: 'Finish Dia' },
+                    { key: 'TOTALMTR', label: 'Total MTR' },
+                    { key: 'ACCEPT', label: 'Accept' },
+                    { key: 'RQTY', label: 'Reject' },
+                    { key: 'QC_GRADE', label: 'QC Grade' },
+                    { key: 'UNAME', label: 'Uname' }
+                ],
+                exclude: ['UNAME']
+            },
+            pending: {
+                title: 'Knitting Production Report (Pending)',
+                endpoint: 'ajaxKnittingProduction_Report.php',
+                cols: [
+                    { key: 'BUDAT', label: 'Date' },
+                    { key: 'ROLL', label: 'Roll No' },
+                    { key: 'PO_NUMBER', label: 'PO Number' },
+                    { key: 'PQTY', label: 'Qty' },
+                    { key: 'SONO', label: 'SONO' },
+                    { key: 'SHIFT', label: 'Shift' },
+                    { key: 'BUYER', label: 'Buyer' },
+                    { key: 'STYLE', label: 'Style' },
+                    { key: 'COLOR', label: 'Color' },
+                    { key: 'MCNO', label: 'Machine No' },
+                    { key: 'MC_DIA', label: 'MC Dia' },
+                    { key: 'CUSTOMER', label: 'Customer' },
+                    { key: 'YARN_COUNT', label: 'Yarn Count' },
+                    { key: 'YBRAND', label: 'Yarn Brand' },
+                    { key: 'FABRICS_TYPE', label: 'Fabrics Type' },
+                    { key: 'FINISH_GSM', label: 'Finish GSM' },
+                    { key: 'FINISH_DIA', label: 'Finish Dia' },
+                    { key: 'UNAME', label: 'Uname' }
+                ],
+                exclude: ['UNAME']
+            }
+        };
 
-        // PDF/print excludes these fields (per requirement)
-        var PDF_EXCLUDE = ['UNAME'];
-        var PDF_COLS = COLS.filter(function(c) {
-            return PDF_EXCLUDE.indexOf(c.key) === -1;
-        });
-
+        var currentTab = 'receive';
         var currentData = [];
+        var COLS = [];
+        var PDF_COLS = [];
+        var PDF_EXCLUDE = [];
 
         // RACK is a computed field: RackLocation + RackNo (e.g. A1 + 18 => A118)
         function colValue(row, c) {
@@ -577,6 +645,32 @@
                 return loc + no;
             }
             return row[c.key];
+        }
+
+        function renderTableHeaders() {
+            var head = $('#tableHead').empty();
+            head.append($('<th>').text('ACTION'));
+            COLS.forEach(function(col) {
+                head.append($('<th>').text(col.label));
+            });
+            $('#tableBody').empty();
+        }
+
+        function setActiveTab(tab) {
+            currentTab = tab;
+            $('.tab-btn').removeClass('active');
+            $('.tab-btn[data-tab="' + tab + '"]').addClass('active');
+
+            var cfg = TAB_CONFIG[tab];
+
+            COLS = (cfg.cols || []).slice();
+            PDF_EXCLUDE = (cfg.exclude || []).slice();
+            PDF_COLS = COLS.filter(function(c) {
+                return PDF_EXCLUDE.indexOf(c.key) === -1;
+            });
+
+            renderTableHeaders();
+            loadAll();
         }
 
         function esc(v) {
@@ -736,8 +830,10 @@
             var tbody = $('#tableBody');
             tbody.empty();
             currentData = data || [];
+            var colspan = 1 + COLS.length;
             if (!currentData.length) {
-                tbody.append('<tr class="empty-row"><td colspan="26">No data found</td></tr>');
+                var colspan = 1 + COLS.length;
+                tbody.append('<tr class="empty-row"><td colspan="' + colspan + '">No data found</td></tr>');
                 return;
             }
             currentData.forEach(function(row) {
@@ -771,7 +867,7 @@
             var search = $('#bookingInput').val().trim();
             $('#searchBtn').prop('disabled', true).html('Searching...');
             $.ajax({
-                    url: 'ajaxKnittingStore_Report.php',
+                    url: TAB_CONFIG[currentTab].endpoint,
                     data: { search: search },
                     dataType: 'json',
                     method: 'GET'
@@ -780,11 +876,13 @@
                     if (resp && resp.success) {
                         renderTableRows(resp.data);
                     } else {
-                        $('#tableBody').html('<tr class="empty-row"><td colspan="26">No data found</td></tr>');
+                        var colspan = 1 + COLS.length;
+                        $('#tableBody').html('<tr class="empty-row"><td colspan="' + colspan + '">No data found</td></tr>');
                     }
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr class="empty-row"><td colspan="26" style="color:#dc2626;">Error searching</td></tr>');
+                    var colspan = 1 + COLS.length;
+                    $('#tableBody').html('<tr class="empty-row"><td colspan="' + colspan + '" style="color:#dc2626;">Error searching</td></tr>');
                 })
                 .always(function() {
                     $('#searchBtn').prop('disabled', false).html('<i class="fa-solid fa-magnifying-glass"></i> Search');
@@ -792,9 +890,9 @@
         }
 
         function loadAll() {
-            $('#tableBody').html('<tr><td colspan="26" class="loading-cell">Loading data...</td></tr>');
+            $('#tableBody').html('<tr><td colspan="' + (1 + COLS.length) + '" class="loading-cell">Loading data...</td></tr>');
             $.ajax({
-                    url: 'ajaxKnittingStore_Report.php',
+                    url: TAB_CONFIG[currentTab].endpoint,
                     dataType: 'json',
                     method: 'GET'
                 })
@@ -802,11 +900,13 @@
                     if (resp && resp.success) {
                         renderTableRows(resp.data);
                     } else {
-                        $('#tableBody').html('<tr class="empty-row"><td colspan="26">No data returned</td></tr>');
+                        var colspan = 1 + COLS.length;
+                        $('#tableBody').html('<tr class="empty-row"><td colspan="' + colspan + '">No data returned</td></tr>');
                     }
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr class="empty-row"><td colspan="26" style="color:#dc2626;">Error loading data</td></tr>');
+                    var colspan = 1 + COLS.length;
+                    $('#tableBody').html('<tr class="empty-row"><td colspan="' + colspan + '" style="color:#dc2626;">Error loading data. Check the data endpoint or database connection.</td></tr>');
                 });
         }
 
@@ -832,7 +932,14 @@
                 if (e.key === 'Escape') closePreview();
             });
 
-            loadAll();
+            $('.tab-btn').on('click', function() {
+                var tab = $(this).data('tab');
+                if (tab !== currentTab) {
+                    setActiveTab(tab);
+                }
+            });
+
+            setActiveTab('receive');
         });
     </script>
 
