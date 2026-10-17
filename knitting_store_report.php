@@ -540,111 +540,96 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <script>
+        var REPORT_COLS = [
+            { key: 'BUDAT', label: 'Date' },
+            { key: 'ROLL', label: 'Roll No' },
+            { key: 'RACK', label: 'Rack' },
+            { key: 'QTY', label: 'QTY' },
+            { key: 'PO_NUMBER', label: 'PO Number' },
+            { key: 'SONO', label: 'SONO' },
+            { key: 'SHIFT', label: 'Shift' },
+            { key: 'BUYER', label: 'Buyer' },
+            { key: 'STYLE', label: 'Style' },
+            { key: 'COLOR', label: 'Color' },
+            { key: 'MCNO', label: 'Machine No' },
+            { key: 'MCDIA', label: 'MC Dia' },
+            { key: 'CUSTOMER', label: 'Customer' },
+            { key: 'YTYPE', label: 'Yarn Type' },
+            { key: 'YCOUNT', label: 'Yarn Count' },
+            { key: 'YBRAND', label: 'Yarn Brand' },
+            { key: 'O_T', label: 'Open / Tube' },
+            { key: 'SL', label: 'SL/VQ' },
+            { key: 'FTYPE', label: 'Fabrics Type' },
+            { key: 'FGSM', label: 'Finish GSM' },
+            { key: 'FDIA', label: 'Finish Dia' },
+            { key: 'FEEDER_PLAN', label: 'Feeder Plan' },
+            { key: 'LOT_NO', label: 'Lot No' },
+            { key: 'TPOINT', label: 'T Point' },
+            { key: 'UNAME', label: 'Uname' }
+        ];
+
         var TAB_CONFIG = {
             receive: {
-                title: 'Knitting Store Report',
                 endpoint: 'ajaxKnittingStore_Report.php',
-                cols: [
-                    { key: 'BUDAT', label: 'Date' },
-                    { key: 'RACK', label: 'Rack' },
-                    { key: 'ROLL', label: 'Roll No' },
-                    { key: 'PO_NUMBER', label: 'PO Number' },
-                    { key: 'QTY', label: 'QTY' },
-                    { key: 'SONO', label: 'SONO' },
-                    { key: 'SHIFT', label: 'Shift' },
-                    { key: 'BUYER', label: 'Buyer' },
-                    { key: 'STYLE', label: 'Style' },
-                    { key: 'COLOR', label: 'Color' },
-                    { key: 'MCNO', label: 'Machine No' },
-                    { key: 'MCDIA', label: 'MC Dia' },
-                    { key: 'CUSTOMER', label: 'Customer' },
-                    { key: 'YTYPE', label: 'Yarn Type' },
-                    { key: 'YCOUNT', label: 'Yarn Count' },
-                    { key: 'YBRAND', label: 'Yarn Brand' },
-                    { key: 'O_T', label: 'Open / Tube' },
-                    { key: 'SL', label: 'SL/VQ' },
-                    { key: 'FTYPE', label: 'Fabrics Type' },
-                    { key: 'FGSM', label: 'Finish GSM' },
-                    { key: 'FDIA', label: 'Finish Dia' },
-                    { key: 'FEEDER_PLAN', label: 'Feeder Plan' },
-                    { key: 'LOT_NO', label: 'Lot No' },
-                    { key: 'TPOINT', label: 'T Point' },
-                    { key: 'UNAME', label: 'Uname' }
-                ],
-                exclude: ['UNAME'],
-                useRackCombined: true
+                cols: REPORT_COLS,
+                fields: {}
             },
             hold: {
-                title: 'Knitting Inspection Report (Hold)',
                 endpoint: 'ajaxKnittingInspection_Report.php',
-                cols: [
-                    { key: 'BUDAT', label: 'Date' },
-                    { key: 'ROLL', label: 'Roll No' },
-                    { key: 'PO_NUMBER', label: 'PO Number' },
-                    { key: 'SONO', label: 'SONO' },
-                    { key: 'SHIFT', label: 'Shift' },
-                    { key: 'BUYER', label: 'Buyer' },
-                    { key: 'STYLE', label: 'Style' },
-                    { key: 'COLOR', label: 'Color' },
-                    { key: 'MCNO', label: 'Machine No' },
-                    { key: 'MCDIA', label: 'MC Dia' },
-                    { key: 'CUSTOMER', label: 'Customer' },
-                    { key: 'YCOUNT', label: 'Yarn Count' },
-                    { key: 'YBRAND', label: 'Yarn Brand' },
-                    { key: 'FTYPE', label: 'Fabrics Type' },
-                    { key: 'FGSM', label: 'Finish GSM' },
-                    { key: 'FDIA', label: 'Finish Dia' },
-                    { key: 'TOTALMTR', label: 'Total MTR' },
-                    { key: 'ACCEPT', label: 'Accept' },
-                    { key: 'RQTY', label: 'Reject' },
-                    { key: 'QC_GRADE', label: 'QC Grade' },
-                    { key: 'UNAME', label: 'Uname' }
-                ],
-                exclude: ['UNAME']
+                cols: REPORT_COLS,
+                fields: {
+                    RACK: [],
+                    QTY: ['OQTY', 'MAIN_QTY', 'QTY'],
+                    MCDIA: ['MC_DIA'],
+                    YTYPE: ['YTYPE'],
+                    YCOUNT: ['YCOUNT'],
+                    O_T: ['O_T'],
+                    SL: ['SL'],
+                    FEEDER_PLAN: ['FPLAN'],
+                    LOT_NO: ['LOTNO'],
+                    TPOINT: ['TPOINT']
+                }
             },
             pending: {
-                title: 'Knitting Production Report (Pending)',
                 endpoint: 'ajaxKnittingProduction_Report.php',
-                cols: [
-                    { key: 'BUDAT', label: 'Date' },
-                    { key: 'ROLL', label: 'Roll No' },
-                    { key: 'PO_NUMBER', label: 'PO Number' },
-                    { key: 'PQTY', label: 'Qty' },
-                    { key: 'SONO', label: 'SONO' },
-                    { key: 'SHIFT', label: 'Shift' },
-                    { key: 'BUYER', label: 'Buyer' },
-                    { key: 'STYLE', label: 'Style' },
-                    { key: 'COLOR', label: 'Color' },
-                    { key: 'MCNO', label: 'Machine No' },
-                    { key: 'MC_DIA', label: 'MC Dia' },
-                    { key: 'CUSTOMER', label: 'Customer' },
-                    { key: 'YARN_COUNT', label: 'Yarn Count' },
-                    { key: 'YBRAND', label: 'Yarn Brand' },
-                    { key: 'FABRICS_TYPE', label: 'Fabrics Type' },
-                    { key: 'FINISH_GSM', label: 'Finish GSM' },
-                    { key: 'FINISH_DIA', label: 'Finish Dia' },
-                    { key: 'UNAME', label: 'Uname' }
-                ],
-                exclude: ['UNAME']
+                cols: REPORT_COLS,
+                fields: {
+                    RACK: [],
+                    QTY: ['PQTY'],
+                    MCDIA: ['MC_DIA'],
+                    YTYPE: ['YARN_TYPE'],
+                    YCOUNT: ['YARN_COUNT'],
+                    O_T: ['OPEN_TUBE'],
+                    SL: ['SL_VDQ'],
+                    FTYPE: ['FABRICS_TYPE'],
+                    FGSM: ['FINISH_GSM'],
+                    FDIA: ['FINISH_DIA'],
+                    FEEDER_PLAN: ['FEEDER_PLAN'],
+                    LOT_NO: ['YARN_LOT', 'LOT_NO']
+                }
             }
         };
 
         var currentTab = 'receive';
         var currentData = [];
         var COLS = [];
-        var PDF_COLS = [];
-        var PDF_EXCLUDE = [];
 
-        // RACK is a computed field: RackLocation + RackNo (e.g. A1 + 18 => A118)
         function colValue(row, c) {
             if (c.key === 'RACK') {
+                if (currentTab !== 'receive') return '';
                 var loc = row.RACKLOCATION;
                 var no = row.RACKNO;
                 loc = (loc === null || loc === undefined) ? '' : String(loc);
                 no = (no === null || no === undefined) ? '' : String(no);
                 return loc + no;
             }
-            return row[c.key];
+            var fields = TAB_CONFIG[currentTab].fields[c.key] || [c.key];
+            for (var i = 0; i < fields.length; i++) {
+                if (row[fields[i]] !== null && row[fields[i]] !== undefined) {
+                    return row[fields[i]];
+                }
+            }
+            return '';
         }
 
         function renderTableHeaders() {
@@ -663,10 +648,9 @@
 
             var cfg = TAB_CONFIG[tab];
 
-            COLS = (cfg.cols || []).slice();
-            PDF_EXCLUDE = (cfg.exclude || []).slice();
-            PDF_COLS = COLS.filter(function(c) {
-                return PDF_EXCLUDE.indexOf(c.key) === -1;
+            COLS = REPORT_COLS.filter(function(col) {
+                return (col.key !== 'RACK' || tab === 'receive') &&
+                    (col.key !== 'TPOINT' || tab !== 'pending');
             });
 
             renderTableHeaders();
@@ -679,19 +663,16 @@
         }
 
         function buildRowCardElement(row) {
-            var rowsHTML = PDF_COLS.map(function(c) {
+            var rowsHTML = COLS.map(function(c) {
                 var val = colValue(row, c);
                 if (val === null || val === undefined) val = '';
-                return '<div class="pdf-item"><span class="pdf-label">' + c.label + ' :</span><span class="pdf-value">' + val + '</span></div>';
+                return '<div class="pdf-item"><span class="pdf-label">' + esc(c.label) + ' :</span><span class="pdf-value">' + esc(val) + '</span></div>';
             }).join('');
 
             var content = '' +
                 '<div id="rowPdfCard" style="position:relative;width:760px;min-height:1050px;padding:24px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">' +
                 '<div style="text-align:center;font-size:20px;font-weight:bold;color:#1e3a8a;border-bottom:3px solid #2563eb;padding-bottom:10px;margin-bottom:16px;">' +
                 'Knitting Store Report' +
-                '</div>' +
-                '<div style="display:flex;justify-content:space-between;align-items:center;width:100%;font-size:14px;font-weight:bold;margin-bottom:10px; margin-left:10px;">' +
-                '<span>Roll : ' + (row.ROLL || '') + '</span>' +
                 '</div>' +
                 '<div class="pdf-grid">' + rowsHTML + '</div>' +
                 '<div style="text-align:center;font-size:11px;color: black; margin-top:16px;border-top:1px solid #e5e7eb;padding-top:8px;">' +
