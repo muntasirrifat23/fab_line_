@@ -739,7 +739,7 @@
 
             COLS = REPORT_COLS.filter(function(col) {
                 return (col.key !== 'RACK' || tab === 'receive') &&
-                    (col.key !== 'QC_STATUS' || tab === 'receive') &&
+                    (col.key !== 'QC_STATUS' || tab === 'receive' || tab === 'hold') &&
                     (col.key !== 'TPOINT' || tab !== 'pending');
             });
 
