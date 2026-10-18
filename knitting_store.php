@@ -861,6 +861,20 @@
         messageContainer.innerHTML = '';
       }
 
+      function showQrError(message) {
+        if (typeof Swal !== 'undefined') {
+          Swal.fire({
+            icon: 'error',
+            title: message,
+            confirmButtonText: 'OK',
+            timer: 3000,
+            timerProgressBar: true
+          });
+          return;
+        }
+        alert(message);
+      }
+
       function extractRollFromQR(qrText) {
         const text = String(qrText || '').trim();
         if (!text) return null;
@@ -1209,9 +1223,9 @@
           .catch(function(err) {
             cameraStatus.innerText = 'Not found';
             cameraStatus.style.color = '#f7a1a1';
-            var msg = String((err && err.message) || err || 'No data found for ROLL: ' + roll);
-            renderBareData(roll, msg);
-            showMessage(msg, 'error');
+            renderBareData(roll, 'Wrong QR Code! Please scan a valid knitting production QR.');
+            showQrError('Wrong QR Code! Please scan a valid knitting production QR.');
+            restartScanner();
           });
       }
 
@@ -1219,8 +1233,9 @@
         const roll = extractRollFromQR(decodedText);
 
         if (!roll) {
-          renderBareData(decodedText, 'Unrecognized QR data');
-          showMessage('Invalid QR code. Please scan a valid knitting QR.', 'error');
+          renderBareData(decodedText, 'Wrong QR Code! Please scan a valid knitting production QR.');
+          showQrError('Wrong QR Code! Please scan a valid knitting production QR.');
+          restartScanner();
           return;
         }
 
@@ -1237,9 +1252,9 @@
           .catch(function(err) {
             cameraStatus.innerText = 'Not found';
             cameraStatus.style.color = '#f7a1a1';
-            var msg = String((err && err.message) || err || 'No data found for ROLL: ' + roll);
-            renderBareData(decodedText, msg);
-            showMessage(msg, 'error');
+            renderBareData(decodedText, 'Wrong QR Code! Please scan a valid knitting production QR.');
+            showQrError('Wrong QR Code! Please scan a valid knitting production QR.');
+            restartScanner();
           });
       }
 
@@ -1402,41 +1417,58 @@
         console.log('QR Scanned:', decodedText);
         if (navigator.vibrate) navigator.vibrate(20);
 
-        if (html5QrCode) {
-          html5QrCode.stop().then(function() {
-            isScanning = false;
-            cameraStatus.innerText = 'Scan complete';
-            cameraStatus.style.color = '#7dd3fc';
-            scannerContainer.style.display = 'none';
-            cameraControls.style.display = 'none';
-            processScannedData(decodedText);
-          }).catch(function() {
-            processScannedData(decodedText);
-          });
-        } else {
+        var finish = function() {
+          isScanning = false;
+          cameraStatus.innerText = 'Scan complete';
+          cameraStatus.style.color = '#7dd3fc';
+          scannerContainer.style.display = 'none';
+          cameraControls.style.display = 'none';
           processScannedData(decodedText);
+        };
+
+        if (html5QrCode) {
+          try {
+            html5QrCode.stop().then(function() {
+              try { html5QrCode.clear(); } catch (e) {}
+              finish();
+            }).catch(function() {
+              finish();
+            });
+          } catch (e) {
+            finish();
+          }
+        } else {
+          finish();
         }
       }
 
       function restartScanner() {
         scannerContainer.style.display = 'block';
         cameraControls.style.display = 'flex';
-        if (html5QrCode) {
-          html5QrCode.stop().then(function() {
-            html5QrCode.clear();
-            startNewScanner();
-          }).catch(function() {
-            startNewScanner();
-          });
-        } else {
-          startNewScanner();
-        }
         cameraStatus.innerText = 'Restarting...';
-        setTimeout(function() {
-          if (isScanning) {
-            cameraStatus.innerText = 'Scanning';
+        cameraStatus.style.color = '#fbbf24';
+
+        var proceed = function() {
+          startNewScanner();
+        };
+
+        if (html5QrCode && isScanning) {
+          try {
+            html5QrCode.stop().then(function() {
+              try { html5QrCode.clear(); } catch (e) {}
+              proceed();
+            }).catch(function() {
+              proceed();
+            });
+          } catch (e) {
+            proceed();
           }
-        }, 400);
+        } else {
+          if (html5QrCode) {
+            try { html5QrCode.clear(); } catch (e) {}
+          }
+          proceed();
+        }
       }
 
       document.getElementById('toggle-camera-btn').addEventListener('click', function(e) {
