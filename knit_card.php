@@ -75,6 +75,18 @@ if (isset($_GET['action']) && $_GET['action'] === 'logout_operator') {
     exit();
 }
 
+// ── Require a fresh operator scan on every new entry to the Knit Card section ──
+// The verified operator is kept only for in-page navigation (search / pagination)
+// and the immediate post-verification reload. Arriving from any other page
+// (e.g. the Dashboard) clears it, forcing another scan / ID entry.
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' && !isset($_GET['action'])) {
+    $ref_path = parse_url($_SERVER['HTTP_REFERER'] ?? '', PHP_URL_PATH) ?: '';
+    $arrived_from_self = (strcasecmp(basename($ref_path), 'knit_card.php') === 0);
+    if (!$arrived_from_self) {
+        unset($_SESSION['knit_card_operator']);
+    }
+}
+
 $knit_card_operator = $_SESSION['knit_card_operator'] ?? null;
 
 // ── ACCESS GATE: require a scanned / typed Knitting Production Operator ID ──
