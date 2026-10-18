@@ -628,6 +628,7 @@
             { key: 'ROLL', label: 'Roll No' },
             { key: 'RACK', label: 'Rack' },
             { key: 'QTY', label: 'QTY' },
+            { key: 'QC_STATUS', label: 'QC Pass' },
             { key: 'PO_NUMBER', label: 'PO Number' },
             { key: 'SONO', label: 'SONO' },
             { key: 'SHIFT', label: 'Shift' },
@@ -733,6 +734,7 @@
 
             COLS = REPORT_COLS.filter(function(col) {
                 return (col.key !== 'RACK' || tab === 'receive') &&
+                    (col.key !== 'QC_STATUS' || tab === 'receive') &&
                     (col.key !== 'TPOINT' || tab !== 'pending');
             });
 
