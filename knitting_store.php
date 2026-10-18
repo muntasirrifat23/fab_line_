@@ -806,7 +806,6 @@
         MCNO: 'MACHINE NO',
         MC_DIA: 'MC DIA',
         CUSTOMER: 'CUSTOMER',
-        SHIFT: 'SHIFT',
         YTYPE: 'YARN TYPE',
         YCOUNT: 'YARN COUNT',
         YBRAND: 'YARN BRAND',
@@ -818,8 +817,7 @@
         FPLAN: 'FEEDER PLAN',
         TPOINT: 'T.POINT',
         LOTNO: 'LOT NO',
-        MATERIAL_CODE: 'MATERIAL CODE',
-        M_DES: 'MATERIAL DESC',
+        UNAME: 'OP NAME',
         RACK: 'RACK',
         RACKNO: 'RACK NO',
         RACKLOCATION: 'RACK LOCATION'
@@ -908,11 +906,12 @@
           </div>
         `;
 
-        html += buildFieldRow(['ROLL', 'PO_NUMBER', 'UQTY', 'SONO']);
-        html += buildFieldRow(['YBRAND', 'BUYER', 'STYLE', 'COLOR']);
-        html += buildFieldRow(['MCNO', 'MC_DIA', 'CUSTOMER', 'YTYPE']);
-        html += buildFieldRow(['YCOUNT', 'O_T', 'SL', 'FTYPE']);
-        html += buildFieldRow(['FGSM', 'FDIA', 'FPLAN', 'LOTNO']);
+        html += buildFieldRow(['ROLL', 'UQTY', 'UNAME', 'BUDAT']);
+        html += buildFieldRow(['TPOINT', 'PO_NUMBER', 'SONO', 'BUYER']);
+        html += buildFieldRow(['STYLE', 'COLOR', 'MCNO', 'MC_DIA']);
+        html += buildFieldRow(['CUSTOMER', 'FGSM', 'FDIA', 'FTYPE']);
+        html += buildFieldRow(['FPLAN', 'O_T', 'SL', 'LOTNO']);
+        html += buildFieldRow(['YCOUNT', 'YBRAND', 'YTYPE', 'QC_STATUS']);
 
         html += `
           <button class="rescan-btn" onclick="window.location.reload();">

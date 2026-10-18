@@ -71,6 +71,8 @@ if ($action === 'search') {
     if ($result && mysqli_num_rows($result) > 0) {
         $data = mysqli_fetch_assoc($result);
         if ($data) {
+            unset($data['QC_PASSES']);
+
             // If scanned roll has -R suffix, adapt roll and weight to Rejection
             if (preg_match('/-R$/i', $roll)) {
                 $data['ROLL'] = $cleanRoll . '-R';
