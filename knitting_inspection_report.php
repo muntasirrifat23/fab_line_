@@ -524,6 +524,15 @@ if (isset($db) && $db) {
                 width: 100% !important;
                 max-width: 100% !important;
                 box-sizing: border-box !important;
+                display: flex !important;
+                flex-direction: column !important;
+                min-height: 190mm !important;
+            }
+
+            /* Pin the QA signatures to the bottom of the printed page */
+            #reportSignatures {
+                margin-top: auto !important;
+                page-break-inside: avoid;
             }
 
             /* Scenario 2: Rejection / Good QR Card Modal */
@@ -783,7 +792,6 @@ if (isset($db) && $db) {
                     <thead>
                         <tr>
                             <th>ACTION</th>
-                            <th>KITID</th>
                             <th>BUDAT</th>
                             <th>ROLL</th>
                             <th>CATEGORY</th>
@@ -810,8 +818,6 @@ if (isset($db) && $db) {
                             <th>SL</th>
                             <th>FPLAN</th>
                             <th>LOTNO</th>
-                            <th>MATERIAL_CODE</th>
-                            <th>M_DES</th>
                             <th>TT</th>
                             <th>PATTA</th>
                             <th>SLUB</th>
@@ -838,7 +844,7 @@ if (isset($db) && $db) {
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="52" class="loading-cell">Loading inspection data...</td>
+                            <td colspan="49" class="loading-cell">Loading inspection data...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -854,7 +860,6 @@ if (isset($db) && $db) {
 
     <script>
         var COLS = [
-            { key: 'KITID', label: 'KITID' },
             { key: 'BUDAT', label: 'BUDAT' },
             { key: 'ROLL', label: 'ROLL' },
             { key: 'INSPECTION_CATEGORY', label: 'CATEGORY' },
@@ -881,8 +886,6 @@ if (isset($db) && $db) {
             { key: 'SL', label: 'SL' },
             { key: 'FPLAN', label: 'FPLAN' },
             { key: 'LOTNO', label: 'LOTNO' },
-            { key: 'MATERIAL_CODE', label: 'MATERIAL_CODE' },
-            { key: 'M_DES', label: 'M_DES' },
             { key: 'TT', label: 'TT' },
             { key: 'PATTA', label: 'PATTA' },
             { key: 'SLUB', label: 'SLUB' },
@@ -1142,7 +1145,7 @@ if (isset($db) && $db) {
                 '</div> <!-- End Main Outer Box -->' +
 
                 '<!-- Signatures Section -->' +
-                '<div style="display:flex;justify-content:space-between;margin-top:25px;text-align:center;font-size:9px;font-weight:bold;">' +
+                '<div id="reportSignatures" style="display:flex;justify-content:space-between;margin-top:25px;text-align:center;font-size:9px;font-weight:bold;">' +
                 '<div style="width:22%;">' +
                 '<div style="border-top:1.5px solid #000000;margin-bottom:3px;"></div>' +
                 'Shift-In-Charge QA (PFL)' +
@@ -1536,7 +1539,7 @@ if (isset($db) && $db) {
             tbody.empty();
             currentData = data || [];
             if (!currentData.length) {
-                tbody.append('<tr class="empty-row"><td colspan="52"><i class="fa-regular fa-folder-open me-2"></i>No inspection records found for the selected filters</td></tr>');
+                tbody.append('<tr class="empty-row"><td colspan="49"><i class="fa-regular fa-folder-open me-2"></i>No inspection records found for the selected filters</td></tr>');
                 return;
             }
             currentData.forEach(function(row) {
@@ -1611,7 +1614,7 @@ if (isset($db) && $db) {
 
         function loadInspectionData(silent) {
             if (!silent) {
-                $('#tableBody').html('<tr><td colspan="52" class="loading-cell"><i class="fa-solid fa-spinner fa-spin me-2"></i>Loading inspection report data...</td></tr>');
+                $('#tableBody').html('<tr><td colspan="49" class="loading-cell"><i class="fa-solid fa-spinner fa-spin me-2"></i>Loading inspection report data...</td></tr>');
             }
             var payload = getFilterPayload();
             $.ajax({
@@ -1625,12 +1628,12 @@ if (isset($db) && $db) {
                     renderTableRows(resp.data);
                     updateStatsBar(resp.stats);
                 } else if (!silent) {
-                    $('#tableBody').html('<tr class="empty-row"><td colspan="52">No data returned from server</td></tr>');
+                    $('#tableBody').html('<tr class="empty-row"><td colspan="49">No data returned from server</td></tr>');
                 }
             })
             .fail(function() {
                 if (!silent) {
-                    $('#tableBody').html('<tr class="empty-row"><td colspan="52" style="color:#dc2626;"><i class="fa-solid fa-triangle-exclamation me-2"></i>Error loading inspection data</td></tr>');
+                    $('#tableBody').html('<tr class="empty-row"><td colspan="49" style="color:#dc2626;"><i class="fa-solid fa-triangle-exclamation me-2"></i>Error loading inspection data</td></tr>');
                 }
             })
             .always(function() {
