@@ -707,6 +707,11 @@
                 no = (no === null || no === undefined) ? '' : String(no);
                 return loc + no;
             }
+            if (currentTab === 'hold' && c.key === 'QTY') {
+                var qcStatus = String(row.QC_STATUS || '').trim().toUpperCase();
+                var qtyField = qcStatus === 'PASSES' || qcStatus === 'PASSED' ? 'UQTY' : 'RQTY';
+                return row[qtyField] === null || row[qtyField] === undefined ? '' : row[qtyField];
+            }
             var fields = TAB_CONFIG[currentTab].fields[c.key] || [c.key];
             for (var i = 0; i < fields.length; i++) {
                 if (row[fields[i]] !== null && row[fields[i]] !== undefined) {
