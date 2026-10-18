@@ -7,6 +7,242 @@ if (!isset($_SESSION['username'])) {
     exit();
 }
 
+// ── AJAX: VERIFY KNITTING PRODUCTION OPERATOR (QR / ID) ──
+if (isset($_GET['action']) && $_GET['action'] === 'verify_operator') {
+    header('Content-Type: application/json');
+    $op_input = trim($_GET['operator_id'] ?? $_GET['query'] ?? '');
+
+    if ($op_input === '') {
+        echo json_encode(['success' => false, 'error' => 'Operator ID is required']);
+        exit();
+    }
+
+    // Only registered Knitting Production Operators may access the Knit Card section
+    $op_stmt = $db->prepare("SELECT OPERATOR_ID, OPERATOR_NAME FROM knitting_operator
+                             WHERE LOWER(TRIM(OPERATOR_ID)) = LOWER(TRIM(?))
+                                OR LOWER(TRIM(OPERATOR_NAME)) = LOWER(TRIM(?))
+                             LIMIT 1");
+    if ($op_stmt) {
+        $op_stmt->bind_param("ss", $op_input, $op_input);
+        if ($op_stmt->execute()) {
+            $op_res = $op_stmt->get_result();
+            if ($op_res && $op_row = $op_res->fetch_assoc()) {
+                $_SESSION['knit_card_operator'] = [
+                    'id'   => $op_row['OPERATOR_ID'],
+                    'name' => $op_row['OPERATOR_NAME'],
+                    'role' => 'production'
+                ];
+                echo json_encode([
+                    'success' => true,
+                    'data'    => [
+                        'OPERATOR_ID'   => $op_row['OPERATOR_ID'],
+                        'OPERATOR_NAME' => $op_row['OPERATOR_NAME'],
+                        'ROLE'          => 'Knitting Production Operator'
+                    ]
+                ]);
+                $op_stmt->close();
+                exit();
+            }
+        }
+        $op_stmt->close();
+    }
+
+    // Informative denial when a QC operator tries to use this page
+    $qc_stmt = $db->prepare("SELECT KNITTING_QC_ID, KNITTING_QC_NAME FROM knitting_operator_qc
+                             WHERE LOWER(TRIM(KNITTING_QC_ID)) = LOWER(TRIM(?))
+                                OR LOWER(TRIM(KNITTING_QC_NAME)) = LOWER(TRIM(?))
+                             LIMIT 1");
+    if ($qc_stmt) {
+        $qc_stmt->bind_param("ss", $op_input, $op_input);
+        $qc_stmt->execute();
+        $qc_res = $qc_stmt->get_result();
+        if ($qc_res && $qc_row = $qc_res->fetch_assoc()) {
+            $qc_stmt->close();
+            echo json_encode(['success' => false, 'error' => 'Access Denied: "' . htmlspecialchars($qc_row['KNITTING_QC_NAME']) . ' (' . htmlspecialchars($qc_row['KNITTING_QC_ID']) . ')" is a QC Operator. Only Knitting Production Operators can access the Knit Card section.']);
+            exit();
+        }
+        $qc_stmt->close();
+    }
+
+    echo json_encode(['success' => false, 'error' => 'Invalid Operator ID: "' . htmlspecialchars($op_input) . '". Only registered Knitting Production Operators can access this page.']);
+    exit();
+}
+
+if (isset($_GET['action']) && $_GET['action'] === 'logout_operator') {
+    header('Content-Type: application/json');
+    unset($_SESSION['knit_card_operator']);
+    echo json_encode(['success' => true]);
+    exit();
+}
+
+$knit_card_operator = $_SESSION['knit_card_operator'] ?? null;
+
+// ── ACCESS GATE: require a scanned / typed Knitting Production Operator ID ──
+if (empty($knit_card_operator) || empty($knit_card_operator['id'])) {
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Knit Card | Operator Login</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+        <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+        <style>
+            * { box-sizing: border-box; }
+            body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px;
+                   background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+                   font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif; }
+            .gate-card { width: 100%; max-width: 420px; background: #ffffff; border-radius: 18px; padding: 22px 22px 20px;
+                         box-shadow: 0 24px 60px rgba(0,0,0,0.35); }
+            .gate-head { text-align: center; margin-bottom: 14px; }
+            .gate-icon { width: 54px; height: 54px; border-radius: 14px; background: #eff6ff; color: #2563eb;
+                         display: flex; align-items: center; justify-content: center; font-size: 22px; margin: 0 auto 10px; }
+            .gate-title { font-size: 1.1rem; font-weight: 800; color: #0f172a; margin: 0; }
+            .gate-sub { font-size: 12px; color: #64748b; margin: 4px 0 0; }
+            #qr-reader { width: 100%; border-radius: 12px; overflow: hidden; background: #0f172a; min-height: 220px; }
+            #qr-reader video { width: 100% !important; height: auto !important; }
+            .cam-status { text-align: center; font-size: 12px; font-weight: 600; color: #0369a1; margin: 8px 0 12px; }
+            .manual { display: flex; gap: 8px; }
+            .manual input { flex: 1; height: 42px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 0 12px; font-size: 14px; outline: none; }
+            .manual input:focus { border-color: #2563eb; }
+            .manual button { height: 42px; padding: 0 16px; border: none; border-radius: 10px; background: linear-gradient(135deg,#10b981,#059669);
+                             color: #ffffff; font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap; }
+            .manual button:active { transform: scale(0.98); }
+            .cam-switch { margin-top: 8px; text-align: center; }
+            .cam-switch button { background: #eef2f7; border: 1px solid #cbd5e1; color: #334155; border-radius: 20px;
+                                 padding: 5px 14px; font-size: 12px; font-weight: 600; cursor: pointer; }
+            .cam-switch button:hover { background: #e2e8f0; border-color: #2563eb; color: #1e3a8a; }
+            #opStatusMsg { margin-top: 12px; font-size: 12.5px; text-align: center; }
+            .gate-back { display: block; text-align: center; margin-top: 16px; font-size: 12.5px; font-weight: 600; color: #475569; text-decoration: none; }
+            .gate-back:hover { color: #0f172a; }
+        </style>
+    </head>
+    <body>
+        <div class="gate-card">
+            <div class="gate-head">
+                <div class="gate-icon"><i class="fa-solid fa-user-gear"></i></div>
+                <h1 class="gate-title">Knitting Production Operator</h1>
+                <p class="gate-sub">Scan your operator QR code or type your ID to open the Knit Card section</p>
+            </div>
+            <div id="qr-reader"></div>
+            <div class="cam-status" id="camera-status">Starting camera&hellip;</div>
+            <div class="manual">
+                <input type="text" id="opInput" placeholder="Enter / Scan Operator ID" autocomplete="off" autocapitalize="off">
+                <button type="button" id="opBtn">Authenticate</button>
+            </div>
+            <div class="cam-switch"><button type="button" id="camSwitchBtn"><i class="fa-solid fa-sync-alt"></i> Switch Camera</button></div>
+            <div id="opStatusMsg"></div>
+            <a class="gate-back" href="initialPage.php"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</a>
+        </div>
+        <script>
+        (function () {
+            var html5QrCode = null, verifying = false, facingMode = 'environment';
+            var lastText = '', lastTime = 0;
+            var statusEl = document.getElementById('camera-status');
+            var msgDiv   = document.getElementById('opStatusMsg');
+            var input    = document.getElementById('opInput');
+
+            function setMsg(html, ok) {
+                if (msgDiv) msgDiv.innerHTML = '<div style="color:' + (ok ? '#0369a1' : '#dc2626') + ';font-weight:700;">' + html + '</div>';
+            }
+
+            function startScanner() {
+                if (statusEl) statusEl.textContent = 'Starting camera\u2026';
+                var box = document.getElementById('qr-reader');
+                if (!box) return;
+                if (html5QrCode) {
+                    try {
+                        html5QrCode.stop().then(function () { try { html5QrCode.clear(); } catch (e) {} html5QrCode = null; initScanner(); })
+                                          .catch(function () { html5QrCode = null; initScanner(); });
+                        return;
+                    } catch (e) { html5QrCode = null; }
+                }
+                initScanner();
+            }
+
+            function initScanner() {
+                var box = document.getElementById('qr-reader');
+                box.innerHTML = '';
+                try {
+                    html5QrCode = new Html5Qrcode('qr-reader');
+                    html5QrCode.start(
+                        { facingMode: facingMode },
+                        { fps: 30, qrbox: function (vw, vh) { var e = Math.min(240, Math.floor(Math.min(vw, vh) * 0.7)); return { width: e, height: e }; }, aspectRatio: 1.0 },
+                        onScan,
+                        function () {}
+                    ).then(function () {
+                        if (statusEl) statusEl.textContent = 'Scanning (' + (facingMode === 'environment' ? 'Rear' : 'Front') + ')';
+                    }).catch(function (err) {
+                        console.warn('Camera start failed:', err);
+                        if (statusEl) statusEl.textContent = 'Camera unavailable \u2014 type your ID below';
+                    });
+                } catch (e) {
+                    if (statusEl) statusEl.textContent = 'Camera unavailable \u2014 type your ID below';
+                }
+            }
+
+            function onScan(text) {
+                var now = Date.now();
+                text = String(text || '').trim().replace(/[\r\n]+/g, '');
+                if (!text || (text === lastText && now - lastTime < 1500)) return;
+                lastText = text; lastTime = now;
+                if (verifying) return;
+                submitOperator(text);
+            }
+
+            function submitOperator(val) {
+                val = String(val || '').trim();
+                if (!val) { setMsg('Please enter or scan your Operator ID.', false); return; }
+                verifying = true;
+                setMsg('<i class="fa-solid fa-spinner fa-spin"></i> Verifying Operator ID\u2026', true);
+                fetch('knit_card.php?action=verify_operator&operator_id=' + encodeURIComponent(val), {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin'
+                })
+                .then(function (r) { return r.text(); })
+                .then(function (t) {
+                    var json;
+                    try { json = JSON.parse(t.replace(/^\uFEFF/, '').trim()); } catch (e) { throw new Error('Invalid server response'); }
+                    if (json.success) {
+                        setMsg('<i class="fa-solid fa-circle-check"></i> Welcome ' + ((json.data && json.data.OPERATOR_NAME) || '') + '! Opening Knit Card\u2026', true);
+                        stopAndGo();
+                    } else {
+                        verifying = false;
+                        setMsg('<i class="fa-solid fa-triangle-exclamation"></i> ' + (json.error || 'Invalid Operator ID'), false);
+                    }
+                })
+                .catch(function (err) { verifying = false; setMsg('<i class="fa-solid fa-triangle-exclamation"></i> ' + err.message, false); });
+            }
+
+            function stopAndGo() {
+                if (html5QrCode) {
+                    try {
+                        html5QrCode.stop().then(function () { window.location.href = 'knit_card.php'; })
+                                          .catch(function () { window.location.href = 'knit_card.php'; });
+                        return;
+                    } catch (e) {}
+                }
+                window.location.href = 'knit_card.php';
+            }
+
+            document.getElementById('opBtn').addEventListener('click', function () { submitOperator(input.value); });
+            input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); submitOperator(input.value); } });
+            document.getElementById('camSwitchBtn').addEventListener('click', function () {
+                facingMode = (facingMode === 'environment') ? 'user' : 'environment';
+                startScanner();
+            });
+            window.addEventListener('pagehide', function () { if (html5QrCode) { try { html5QrCode.stop(); } catch (e) {} } });
+
+            startScanner();
+        })();
+        </script>
+    </body>
+    </html>
+    <?php
+    exit();
+}
+
 $uname = $_SESSION['username'];
 
 // Search filter - single Knitting Program search
@@ -221,6 +457,20 @@ $end_entry   = min($offset + $limit, $total_records);
         .btn-glass:hover {
             background: rgba(255, 255, 255, 0.2);
             color: #ffffff;
+        }
+
+        .operator-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(16, 185, 129, 0.18);
+            border: 1px solid rgba(16, 185, 129, 0.5);
+            color: #d1fae5;
+            border-radius: 100px;
+            padding: 5px 14px;
+            font-size: 11.5px;
+            font-weight: 700;
+            white-space: nowrap;
         }
 
         .btn-back {
@@ -548,6 +798,12 @@ $end_entry   = min($offset + $limit, $total_records);
                 </div>
                 <!-- Right: action buttons -->
                 <div class="d-flex gap-2 flex-wrap align-items-center">
+                    <span class="operator-badge">
+                        <i class="fa-solid fa-user-gear"></i> <?php echo htmlspecialchars($knit_card_operator['name']); ?> (<?php echo htmlspecialchars($knit_card_operator['id']); ?>)
+                    </span>
+                    <button type="button" class="btn nav-btn btn-glass" onclick="logoutOperator()">
+                        <i class="fa-solid fa-right-from-bracket"></i> Switch Operator
+                    </button>
                     <a href="initialPage.php" class="btn nav-btn btn-back">
                         <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
                     </a>
@@ -855,6 +1111,14 @@ $end_entry   = min($offset + $limit, $total_records);
 
     <script src="jquery.min.js"></script>
     <script src="js/bootstrap.bundle.min.js"></script>
+    <script>
+        function logoutOperator() {
+            if (!confirm('Switch operator? You will need to scan your ID again to open this page.')) return;
+            fetch('knit_card.php?action=logout_operator', { credentials: 'same-origin' })
+                .then(function () { window.location.href = 'knit_card.php'; })
+                .catch(function () { window.location.href = 'knit_card.php'; });
+        }
+    </script>
 </body>
 
 </html>
