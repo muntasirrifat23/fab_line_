@@ -807,6 +807,27 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
       letter-spacing: 0.3px;
     }
 
+    .page-refresh-btn {
+      margin-left: 8px;
+      background: #0f7a6f;
+      color: #ffffff;
+      border: 1px solid #0b5c53;
+      border-radius: 8px;
+      padding: 5px 14px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.1s ease;
+    }
+
+    .page-refresh-btn:hover {
+      background: #0b5c53;
+    }
+
+    .page-refresh-btn:active {
+      transform: scale(0.97);
+    }
+
     .scanner-container {
       position: relative;
       background: #eef2f7;
@@ -814,8 +835,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
       overflow: hidden;
       box-shadow: inset 0 0 0 1px #d7e0ea, 0 4px 12px rgba(30, 60, 120, 0.1);
       margin-bottom: 10px;
-      max-height: 200px;
-      aspect-ratio: 16 / 9;
+      aspect-ratio: 1 / 1;
     }
 
     #qr-reader {
@@ -1110,6 +1130,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
     <div class="production-header">
       <h2><i class="fa-solid fa-list-check"></i>Knitting Inspection</h2>
       <span class="badge-production">INSPECTION</span>
+      <button type="button" class="page-refresh-btn" id="pageRefreshBtn" title="Refresh page">Refresh</button>
     </div>
 
     <!-- SCANNER CONTAINER (LIVE QR CAMERA) -->
@@ -1125,9 +1146,6 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         <span id="camera-status">Ready</span>
       </div>
       <div style="display: flex; gap: 8px;">
-        <button class="btn-icon" id="rotate-camera-btn" title="Rotate camera 90°">
-          <i class="fa-solid fa-rotate-right"></i>
-        </button>
         <button class="btn-icon" id="toggle-camera-btn" title="Switch Front/Back camera">
           <i class="fas fa-sync-alt"></i>
         </button>
@@ -1753,6 +1771,13 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
     (function() {
       "use strict";
 
+      // Prevent the browser from restoring the previous scroll position on refresh/reload
+      if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+      }
+      window.scrollTo(0, 0);
+      window.addEventListener('load', function () { window.scrollTo(0, 0); });
+
       const resultContainer = document.getElementById('result-content');
       const actionContainer = document.getElementById('action-content');
       const cameraStatus    = document.getElementById('camera-status');
@@ -1887,7 +1912,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
             <div style="font-weight:800; font-size:0.95rem; margin-bottom:2px;">QC Operator ID</div>
           </div>
           <div class="manual-entry">
-            <input type="text" id="opInput" placeholder="Enter / Scan QC Operator ID" autocomplete="off" autofocus>
+            <input type="text" id="opInput" placeholder="Enter / Scan QC Operator ID" autocomplete="off">
             <button type="button" id="opBtn">Authenticate</button>
           </div>
           <div class="data-row header-row"><span class="label">Workflow Progress</span><span class="value">Step 1 of 2</span></div>
@@ -1903,6 +1928,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         if (inp) inp.addEventListener('keydown', (e) => {
           if (e.key === 'Enter') { e.preventDefault(); submitOperator(inp.value); }
         });
+        if (inp) inp.focus({ preventScroll: true });
       }
 
       function esc(v) {
@@ -1988,7 +2014,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         showCameraScanner();
         let html = `
           <div class="manual-entry">
-            <input type="text" id="rollInput" placeholder="Roll QR / Barcode (e.g. 300099903)" autocomplete="off" autofocus>
+            <input type="text" id="rollInput" placeholder="Roll QR / Barcode (e.g. 300099903)" autocomplete="off">
             <button type="button" id="rollBtn">Load</button>
           </div>
           <div class="data-row header-row"><span class="label">Step 2: Roll Selection</span><span class="value"></span></div>
@@ -2004,6 +2030,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         if (inp) inp.addEventListener('keydown', (e) => {
           if (e.key === 'Enter') { e.preventDefault(); submitRollScan(inp.value); }
         });
+        if (inp) inp.focus({ preventScroll: true });
       }
 
       let fetchingRoll = false;
@@ -2452,20 +2479,8 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
           });
       };
 
-      // QR CAMERA SCANNER INITIALIZATION WITH ROTATION & FLIP
-      const rotateCameraBtn = document.getElementById('rotate-camera-btn');
-      let currentRotation   = 0;
+      // QR CAMERA SCANNER INITIALIZATION
       let currentFacingMode = "environment";
-
-      function applyVideoRotation() {
-        setTimeout(() => {
-          const videoElem = document.querySelector('#qr-reader video');
-          if (videoElem) {
-            videoElem.style.transform = `rotate(${currentRotation}deg)`;
-            videoElem.style.transition = 'transform 0.3s ease';
-          }
-        }, 150);
-      }
 
       let isStartingScanner = false;
 
@@ -2490,14 +2505,20 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
           html5QrCode = new Html5Qrcode("qr-reader");
           html5QrCode.start(
             { facingMode: currentFacingMode },
-            { fps: 10, qrbox: { width: 180, height: 180 } },
+            {
+              fps: 30,
+              qrbox: function (vw, vh) {
+                const edge = Math.min(240, Math.floor(Math.min(vw, vh) * 0.7));
+                return { width: edge, height: edge };
+              },
+              aspectRatio: 1.0
+            },
             onScanSuccess,
             onScanFailure
           ).then(() => {
             isScanning = true;
             isStartingScanner = false;
             if (cameraStatus) cameraStatus.textContent = 'Scanning (' + (currentFacingMode === 'environment' ? 'Rear' : 'Front') + ')';
-            applyVideoRotation();
           }).catch(err => {
             console.warn("Camera start failed:", err);
             isScanning = false;
@@ -2549,13 +2570,14 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
 
       function onScanFailure(err) {}
 
-      if (rotateCameraBtn) {
-        rotateCameraBtn.addEventListener('click', () => {
-          currentRotation = (currentRotation + 90) % 360;
-          applyVideoRotation();
-          if (cameraStatus) {
-            cameraStatus.textContent = 'Rotated ' + currentRotation + '°';
-          }
+      const pageRefreshBtn = document.getElementById('pageRefreshBtn');
+      if (pageRefreshBtn) {
+        pageRefreshBtn.addEventListener('click', () => {
+          stopCameraScannerPromise().then(() => {
+            window.location.reload();
+          }).catch(() => {
+            window.location.reload();
+          });
         });
       }
 
