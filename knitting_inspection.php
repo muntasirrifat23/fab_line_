@@ -224,6 +224,15 @@ $msg = '';
 $saved_rejection_data = null;
 $saved_inspection_data = null;
 
+// Post/Redirect/Get: restore the success result after a redirect so that
+// reloading the page does not resubmit the inspection POST.
+if (isset($_SESSION['inspection_flash'])) {
+    $msg = $_SESSION['inspection_flash']['msg'] ?? '';
+    $saved_inspection_data = $_SESSION['inspection_flash']['saved'] ?? null;
+    $saved_rejection_data = $_SESSION['inspection_flash']['saved_rejection'] ?? null;
+    unset($_SESSION['inspection_flash']);
+}
+
 // ── SAVE INSPECTION RECORD ──
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspection'])) {
     if (!isset($_SESSION['active_operator']) || empty($_SESSION['active_operator']['id']) || ($_SESSION['active_operator']['role'] ?? '') !== 'qc') {
@@ -582,6 +591,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                 }
             }
         }
+
+        // After a successful save, redirect with GET so pressing Refresh
+        // re-loads the page instead of resubmitting the inspection POST.
+        if ($error === '' && $saved_inspection_data !== null) {
+            $_SESSION['inspection_flash'] = [
+                'msg'             => $msg,
+                'saved'           => $saved_inspection_data,
+                'saved_rejection' => $saved_rejection_data,
+            ];
+            header('Location: knitting_inspection.php');
+            exit;
+        }
     }
 }
 
@@ -809,6 +830,9 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
 
     .page-refresh-btn {
       margin-left: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       background: #0f7a6f;
       color: #ffffff;
       border: 1px solid #0b5c53;
@@ -1130,7 +1154,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
     <div class="production-header">
       <h2><i class="fa-solid fa-list-check"></i>Knitting Inspection</h2>
       <span class="badge-production">INSPECTION</span>
-      <button type="button" class="page-refresh-btn" id="pageRefreshBtn" title="Refresh page">Refresh</button>
+      <button type="button" class="page-refresh-btn" id="pageRefreshBtn" title="Refresh page"><i class="fa-solid fa-rotate-right"></i>Refresh</button>
     </div>
 
     <!-- SCANNER CONTAINER (LIVE QR CAMERA) -->
@@ -1146,8 +1170,8 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         <span id="camera-status">Ready</span>
       </div>
       <div style="display: flex; gap: 8px;">
-        <button class="btn-icon" id="toggle-camera-btn" title="Switch Front/Back camera">
-          <i class="fas fa-sync-alt"></i>
+        <button type="button" class="page-refresh-btn" id="toggle-camera-btn" title="Switch Front/Back camera">
+          <i class="fas fa-sync-alt"></i>Switch Camera
         </button>
       </div>
     </div>
@@ -1178,8 +1202,8 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
             function renderKnittingInspectionProductionCardBox($cardData, $roll, $qty, $qrTargetId, $cardBoxId) {
                 ?>
                 <div id="<?php echo htmlspecialchars($cardBoxId); ?>" class="kp-print-card knitting-production-card-wrap" style="width:700px; height:700px; min-width:700px; max-width:700px; min-height:700px; max-height:700px; padding:4px; background:#ffffff; font-family:Arial,Helvetica,sans-serif; color:#000000; box-sizing:border-box; border:2px solid #000000; font-weight:800; display:flex; flex-direction:column; margin:0 auto;">
-                  <div class="kp-top-row" style="display:flex; gap:4px; align-items:stretch; margin-bottom:4px; height:215px; min-height:215px; max-height:215px; box-sizing:border-box;">
-                    <div class="kp-info-box" style="flex:1; min-height:215px; height:215px; max-height:215px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; background:#ffffff; border:2px solid #000000; padding:6px; box-sizing:border-box;">
+                  <div class="kp-top-row" style="display:flex; gap:4px; align-items:stretch; margin-bottom:4px; box-sizing:border-box;">
+                    <div class="kp-info-box" style="flex:1; min-height:215px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; background:#ffffff; border:2px solid #000000; padding:6px; box-sizing:border-box;">
                       <div style="background:#ffffff; color:#000000; text-align:center; font-size:30px; font-weight:800; padding:2px 0; margin-bottom:8px; letter-spacing:0; white-space:nowrap; display:inline-block;">
                         <span style="text-decoration:none;">PURBANI FABRICS LTD.</span>
                         <span style="display:block; width:100%; height:3px; background:#000000; margin-top:2px;"></span>
@@ -1191,7 +1215,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
                         <div style="font-size:25px;">Date: <?php echo htmlspecialchars($cardData['date'] ?: ''); ?></div>
                       </div>
                     </div>
-                    <div id="<?php echo htmlspecialchars($qrTargetId); ?>" class="kp-qr-target" style="flex:none; width:215px; height:215px; min-width:215px; max-width:215px; min-height:215px; max-height:215px; box-sizing:border-box; display:flex; align-items:center; justify-content:center; border:2px solid #000000; background:#ffffff; padding:0; margin:0; overflow:hidden;"></div>
+                    <div id="<?php echo htmlspecialchars($qrTargetId); ?>" class="kp-qr-target" style="flex:none; width:215px; min-height:215px; height:auto; align-self:stretch; box-sizing:border-box; display:flex; align-items:center; justify-content:center; border:2px solid #000000; background:#ffffff; padding:0; margin:0; overflow:hidden;"></div>
                   </div>
                   <div class="pdf-grid" style="display:grid; grid-template-columns:repeat(4,1fr); column-gap:8px; row-gap:2px; background:#ffffff;">
                     <div class="pdf-item" style="grid-column:span 2; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">Shift:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['shift'] ?: ''); ?></span></div>
@@ -1299,11 +1323,10 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
           }
           .kp-qr-target {
             width: 215px !important;
-            height: 215px !important;
             min-width: 215px !important;
             max-width: 215px !important;
             min-height: 215px !important;
-            max-height: 215px !important;
+            height: auto !important;
             box-sizing: border-box !important;
             display: flex !important;
             align-items: center !important;
