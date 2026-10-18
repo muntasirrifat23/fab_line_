@@ -1652,9 +1652,9 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
               iframe.style.border = '0';
               document.body.appendChild(iframe);
 
-              var pages = images.map(function(src, i) {
-                var brk = (i < images.length - 1) ? 'page-break-after:always;break-after:page;' : '';
-                return '<div class="lbl-page" style="' + brk + '"><img src="' + src + '" alt="QR Label" /></div>';
+              var imgsHtml = images.map(function(src, i) {
+                var left = (1 + i * 6.6).toFixed(2);
+                return '<img src="' + src + '" alt="QR Label" style="left:' + left + 'cm;" />';
               }).join('');
 
               var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + (title || 'QR Card Print') + '</title>' +
@@ -1662,8 +1662,8 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
                 '@page { size: A4 portrait; margin: 0; }' +
                 'html, body { margin: 0 !important; padding: 0 !important; background: #ffffff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }' +
                 '.lbl-page { position: relative; width: 210mm; height: 296mm; overflow: hidden; }' +
-                '.lbl-page img { position: absolute; left: 1cm; top: 1cm; width: 6cm; height: 6cm; display: block; margin: 0; padding: 0; }' +
-                '</style></head><body>' + pages + '<\/body><\/html>';
+                '.lbl-page img { position: absolute; top: 1cm; width: 6cm; height: 6cm; display: block; margin: 0; padding: 0; }' +
+                '</style></head><body><div class="lbl-page">' + imgsHtml + '</div><\/body><\/html>';
 
               var doc = iframe.contentWindow.document;
               doc.open();

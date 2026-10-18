@@ -312,6 +312,9 @@ $end_entry   = min($offset + $limit, $total_records);
 
         .custom-table { width: 100%; border-collapse: separate; border-spacing: 0; }
         .custom-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 5;
             background: #0f172a;
             color: #f8fafc;
             font-size: 11px;
@@ -482,9 +485,46 @@ $end_entry   = min($offset + $limit, $total_records);
         }
 
         .table-responsive {
-            overflow-x: auto;
+            overflow: auto;
+            max-height: 68vh;
             -webkit-overflow-scrolling: touch;
             border-radius: 8px;
+        }
+
+        /* ═══════════════════════════════════════════
+           TABLE HEADER (STICKY TITLE + PAGE NUMBER)
+        ═══════════════════════════════════════════ */
+        .table-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 2px 2px 10px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .table-title {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .table-title i { color: #2563eb; }
+        .page-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #dbeafe;
+            border-radius: 100px;
+            padding: 4px 12px;
+            font-size: 11.5px;
+            font-weight: 700;
+            white-space: nowrap;
         }
     </style>
 </head>
@@ -604,6 +644,14 @@ $end_entry   = min($offset + $limit, $total_records);
 
         <!-- Data Table -->
         <div class="table-panel">
+            <div class="table-head">
+                <div class="table-title">
+                    <i class="fa-solid fa-table-list"></i> Knit Card List
+                </div>
+                <div class="page-badge">
+                    <i class="fa-solid fa-book-open"></i> Page <?php echo $current_page; ?> of <?php echo $total_pages; ?>
+                </div>
+            </div>
             <div class="table-responsive">
                 <table class="table custom-table table-hover mb-0">
                     <thead>
