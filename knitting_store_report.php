@@ -620,6 +620,7 @@
     </div>
 
     <script src="jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <script>
@@ -761,8 +762,9 @@
 
             var content = '' +
                 '<div id="rowPdfCard" style="position:relative;width:760px;min-height:1050px;padding:24px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">' +
-                '<div style="text-align:center;font-size:27px;font-weight:bold;color:#1e3a8a;border-bottom:3px solid #2563eb;padding-bottom:12px;margin-bottom:18px;">' +
-                'Knitting Store Report' +
+                '<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:3px solid #2563eb;padding-bottom:12px;margin-bottom:18px;">' +
+                '<div style="flex:1;text-align:center;font-size:27px;font-weight:bold;color:#1e3a8a;">Knitting Store Report</div>' +
+                '<div class="row-qr-box" style="flex:none;width:150px;height:150px;display:flex;align-items:center;justify-content:center;background:#ffffff;"></div>' +
                 '</div>' +
                 '<div class="pdf-grid">' + rowsHTML + '</div>' +
                 '<div style="text-align:center;font-size:14px;color: black; margin-top:18px;border-top:1px solid #e5e7eb;padding-top:10px;">' +
@@ -785,11 +787,51 @@
             tempDiv.style.top = '0';
             document.body.appendChild(tempDiv);
 
+            var roll = String(row.ROLL || '').trim();
+            var qrBox = tempDiv.querySelector('.row-qr-box');
+            if (typeof QRCode === 'undefined') {
+                tempDiv.remove();
+                throw new Error('QR code library failed to load.');
+            }
+            if (!roll) {
+                tempDiv.remove();
+                throw new Error('Cannot create a QR code without a roll number.');
+            }
+
+            new QRCode(qrBox, {
+                text: roll,
+                width: 144,
+                height: 144,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            var qrCanvas = qrBox.querySelector('canvas');
+            if (!qrCanvas) {
+                tempDiv.remove();
+                throw new Error('Failed to generate the roll QR code.');
+            }
+            var qrImage = document.createElement('img');
+            qrImage.src = qrCanvas.toDataURL('image/png');
+            qrImage.alt = 'QR code for roll ' + roll;
+            qrImage.width = 144;
+            qrImage.height = 144;
+            qrBox.innerHTML = '';
+            qrBox.appendChild(qrImage);
+
             return tempDiv;
         }
 
         function renderCardImage(row, done, fail) {
-            var card = buildRowCardElement(row);
+            var card;
+            try {
+                card = buildRowCardElement(row);
+            } catch (err) {
+                console.error('Card preparation error:', err);
+                if (fail) fail(err);
+                return;
+            }
 
             setTimeout(function() {
                 html2canvas(card, {
