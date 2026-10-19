@@ -699,6 +699,66 @@
         var currentData = [];
         var COLS = [];
 
+        // Base roll used to match the same roll across tabs (ignores -A/-B/-P/-R suffixes).
+        var rollSets = { receive: null, hold: null };
+
+        function baseRoll(roll) {
+            return String(roll === null || roll === undefined ? '' : roll)
+                .trim()
+                .replace(/-[A-Za-z]+$/, '')
+                .trim()
+                .toUpperCase();
+        }
+
+        function fetchRollSet(tab) {
+            return $.ajax({
+                url: TAB_CONFIG[tab].endpoint,
+                dataType: 'json',
+                method: 'GET'
+            }).then(function(resp) {
+                var set = {};
+                if (resp && resp.success && resp.data) {
+                    resp.data.forEach(function(r) {
+                        var b = baseRoll(r.ROLL);
+                        if (b) set[b] = true;
+                    });
+                }
+                rollSets[tab] = set;
+                return set;
+            });
+        }
+
+        function ensureRollSet(tab) {
+            if (rollSets[tab]) {
+                return new $.Deferred().resolve(rollSets[tab]).promise();
+            }
+            return fetchRollSet(tab);
+        }
+
+        // Receive > Hold > Pending : a roll shown in a later stage is hidden from earlier stages.
+        function ensureSetsFor(tab) {
+            if (tab === 'receive') {
+                return new $.Deferred().resolve().promise();
+            }
+            if (tab === 'hold') {
+                return ensureRollSet('receive');
+            }
+            return $.when(ensureRollSet('hold'), ensureRollSet('receive'));
+        }
+
+        function filterRowsForTab(data, tab) {
+            if (tab === 'receive') return data || [];
+            var exclude = {};
+            Object.keys(rollSets.receive || {}).forEach(function(k) { exclude[k] = true; });
+            if (tab === 'pending') {
+                Object.keys(rollSets.hold || {}).forEach(function(k) { exclude[k] = true; });
+            }
+            return (data || []).filter(function(r) {
+                var b = baseRoll(r.ROLL);
+                return !exclude[b];
+            });
+        }
+
         function colValue(row, c) {
             if (c.key === 'RACK') {
                 if (currentTab !== 'receive') return '';
@@ -977,50 +1037,56 @@
         }
 
         function searchBooking() {
+            var tab = currentTab;
             var search = $('#bookingInput').val().trim();
             $('#searchBtn').prop('disabled', true).html('Searching...');
-            $.ajax({
-                    url: TAB_CONFIG[currentTab].endpoint,
-                    data: { search: search },
-                    dataType: 'json',
-                    method: 'GET'
-                })
-.done(function(resp) {
-                    if (resp && resp.success) {
-                        renderTableRows(resp.data);
-                    } else {
+            ensureSetsFor(tab).always(function() {
+                $.ajax({
+                        url: TAB_CONFIG[tab].endpoint,
+                        data: { search: search },
+                        dataType: 'json',
+                        method: 'GET'
+                    })
+                    .done(function(resp) {
+                        if (resp && resp.success) {
+                            renderTableRows(filterRowsForTab(resp.data, tab));
+                        } else {
+                            var colspan = 1 + COLS.length;
+                            $('#tableBody').html('<tr class="empty-row"><td colspan="' + colspan + '">No data found</td></tr>');
+                        }
+                    })
+                    .fail(function() {
                         var colspan = 1 + COLS.length;
-                        $('#tableBody').html('<tr class="empty-row"><td colspan="' + colspan + '">No data found</td></tr>');
-                    }
-                })
-                .fail(function() {
-                    var colspan = 1 + COLS.length;
-                    $('#tableBody').html('<tr class="empty-row"><td colspan="' + colspan + '" style="color:#dc2626;">Error searching</td></tr>');
-                })
-                .always(function() {
-                    $('#searchBtn').prop('disabled', false).html('<i class="fa-solid fa-magnifying-glass"></i> Search');
-                });
+                        $('#tableBody').html('<tr class="empty-row"><td colspan="' + colspan + '" style="color:#dc2626;">Error searching</td></tr>');
+                    })
+                    .always(function() {
+                        $('#searchBtn').prop('disabled', false).html('<i class="fa-solid fa-magnifying-glass"></i> Search');
+                    });
+            });
         }
 
         function loadAll() {
+            var tab = currentTab;
             $('#tableBody').html('<tr><td colspan="' + (1 + COLS.length) + '" class="loading-cell">Loading data...</td></tr>');
-            $.ajax({
-                    url: TAB_CONFIG[currentTab].endpoint,
-                    dataType: 'json',
-                    method: 'GET'
-                })
-                .done(function(resp) {
-                    if (resp && resp.success) {
-                        renderTableRows(resp.data);
-                    } else {
+            ensureSetsFor(tab).always(function() {
+                $.ajax({
+                        url: TAB_CONFIG[tab].endpoint,
+                        dataType: 'json',
+                        method: 'GET'
+                    })
+                    .done(function(resp) {
+                        if (resp && resp.success) {
+                            renderTableRows(filterRowsForTab(resp.data, tab));
+                        } else {
+                            var colspan = 1 + COLS.length;
+                            $('#tableBody').html('<tr class="empty-row"><td colspan="' + colspan + '">No data returned</td></tr>');
+                        }
+                    })
+                    .fail(function() {
                         var colspan = 1 + COLS.length;
-                        $('#tableBody').html('<tr class="empty-row"><td colspan="' + colspan + '">No data returned</td></tr>');
-                    }
-                })
-                .fail(function() {
-                    var colspan = 1 + COLS.length;
-                    $('#tableBody').html('<tr class="empty-row"><td colspan="' + colspan + '" style="color:#dc2626;">Error loading data. Check the data endpoint or database connection.</td></tr>');
-                });
+                        $('#tableBody').html('<tr class="empty-row"><td colspan="' + colspan + '" style="color:#dc2626;">Error loading data. Check the data endpoint or database connection.</td></tr>');
+                    });
+            });
         }
 
         $(function() {
