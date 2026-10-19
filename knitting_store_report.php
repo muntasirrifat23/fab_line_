@@ -281,6 +281,14 @@
             background: #15803d;
         }
 
+        .btn-print-row.is-fail {
+            background: #dc2626;
+        }
+
+        .btn-print-row.is-fail:hover {
+            background: #b91c1c;
+        }
+
         .btn-view-row {
             background: #2563eb;
         }
@@ -1011,9 +1019,12 @@
             }
             currentData.forEach(function(row) {
                 var tr = $('<tr>');
+                var qcVal = String(row.QC_STATUS === null || row.QC_STATUS === undefined ? '' : row.QC_STATUS).trim().toLowerCase();
+                var qcFailed = qcVal.indexOf('fail') !== -1 || qcVal.indexOf('reject') !== -1;
                 var printBtn = $('<button>')
                     .attr('type', 'button')
                     .addClass('action-btn btn-print-row')
+                    .toggleClass('is-fail', qcFailed)
                     .html('<i class="fa-solid fa-print"></i> PRINT')
                     .attr('title', 'Print')
                     .on('click', function() {
