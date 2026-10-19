@@ -259,6 +259,17 @@
             background: #eff6ff;
         }
 
+        tbody tr.row-fail,
+        tbody tr.row-fail td,
+        tbody tr.row-fail td:first-child {
+            background: #fee2e2;
+        }
+
+        tbody tr.row-fail:hover,
+        tbody tr.row-fail:hover td {
+            background: #fecaca;
+        }
+
         .action-btn {
             border: none;
             color: #fff;
@@ -1021,6 +1032,7 @@
                 var tr = $('<tr>');
                 var qcVal = String(row.QC_STATUS === null || row.QC_STATUS === undefined ? '' : row.QC_STATUS).trim().toLowerCase();
                 var qcFailed = qcVal.indexOf('fail') !== -1 || qcVal.indexOf('reject') !== -1;
+                if (qcFailed) tr.addClass('row-fail');
                 var printBtn = $('<button>')
                     .attr('type', 'button')
                     .addClass('action-btn btn-print-row')
