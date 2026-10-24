@@ -1261,12 +1261,16 @@ var finishGsmSelect = $('#finish_gsm');
                     if (e.which === 13) $('#searchBtn').click();
                 });
                 $('#bookingInput').on('input', function() {
-                    this.value = this.value.toUpperCase();
                     $('#searchError').removeClass('show');
                 });
 
-                $('#knittingForm input[type="text"]').on('input', function() {
+                $(document).on('input', '#bookingInput, #knittingForm input[type="text"], #knittingForm textarea', function() {
+                    var start = this.selectionStart;
+                    var end = this.selectionEnd;
                     this.value = this.value.toUpperCase();
+                    if (start !== null && end !== null) {
+                        this.setSelectionRange(start, end);
+                    }
                 });
 
                 var manualFieldSelectors = [

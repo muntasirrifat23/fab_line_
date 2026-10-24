@@ -16,24 +16,25 @@ if (isset($_SESSION['subcontract_msg'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_subcontract'])) {
     $keepForm = true;
     $budat = trim($_POST['budat'] ?? '');
-    $po    = trim($_POST['po_number'] ?? '');
-    $sono  = trim($_POST['sono'] ?? '');
-    $buyer = trim($_POST['buyer'] ?? '');
-    $style = trim($_POST['style'] ?? '');
-    $color = trim($_POST['color'] ?? '');
+    $po    = strtoupper(trim($_POST['po_number'] ?? ''));
+    $sono  = strtoupper(trim($_POST['sono'] ?? ''));
+    $buyer = strtoupper(trim($_POST['buyer'] ?? ''));
+    $style = strtoupper(trim($_POST['style'] ?? ''));
+    $color = strtoupper(trim($_POST['color'] ?? ''));
+    $customer = strtoupper(trim($_POST['customer'] ?? ''));
     $qty   = trim($_POST['qty'] ?? '');
-    $gsm   = trim($_POST['finish_gsm'] ?? '');
-    $dia   = trim($_POST['finish_dia'] ?? '');
-    $ot    = trim($_POST['open_tube'] ?? '');
-    $ft    = trim($_POST['fabrics_type'] ?? '');
-    $yt    = trim($_POST['yarn_type'] ?? '');
-    $kmc   = trim($_POST['knit_material_code'] ?? '');
-    $kmd   = trim($_POST['knit_m_description'] ?? '');
+    $gsm   = strtoupper(trim($_POST['finish_gsm'] ?? ''));
+    $dia   = strtoupper(trim($_POST['finish_dia'] ?? ''));
+    $ot    = strtoupper(trim($_POST['open_tube'] ?? ''));
+    $ft    = strtoupper(trim($_POST['fabrics_type'] ?? ''));
+    $yt    = strtoupper(trim($_POST['yarn_type'] ?? ''));
+    $kmc   = strtoupper(trim($_POST['knit_material_code'] ?? ''));
+    $kmd   = strtoupper(trim($_POST['knit_m_description'] ?? ''));
 
     if ($budat === '') $budat = date('Y-m-d');
 
     $required = [
-        $po, $sono, $buyer, $style, $color, $qty,
+        $po, $sono, $buyer, $style, $color, $customer, $qty,
         $gsm, $dia, $ot, $ft, $yt, $kmc, $kmd
     ];
     $missing = false;
@@ -47,24 +48,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_subcontract'])) 
     if ($missing) {
         $message = 'All fields are required.';
         $messageType = 'error';
+    } elseif (!is_numeric($qty) || (float) $qty <= 0) {
+        $message = 'QTY must be greater than 0.';
+        $messageType = 'error';
     } else {
         $cbudat = date('Y-m-d H:i:s');
         $sql = "INSERT INTO knitting_input
-                (BUDAT, PO_NUMBER, SONO, BUYER, STYLE, COLOR, QTY,
+                (BUDAT, PO_NUMBER, SONO, BUYER, STYLE, COLOR, CUSTOMER, QTY,
                  FINISH_GSM, FINISH_DIA, OPEN_TUBE, FABRICS_TYPE, YARN_TYPE,
                  KNIT_MATERIAL_CODE, KNIT_M_DESCRIPTION, CBUDAT)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         $stmt = mysqli_prepare($db, $sql);
         if ($stmt) {
             mysqli_stmt_bind_param(
                 $stmt,
-                "sssssssssssssss",
+                "ssssssssssssssss",
                 $budat,
                 $po,
                 $sono,
                 $buyer,
                 $style,
                 $color,
+                $customer,
                 $qty,
                 $gsm,
                 $dia,
@@ -77,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_subcontract'])) 
             );
             if (mysqli_stmt_execute($stmt)) {
                 mysqli_stmt_close($stmt);
-                $_SESSION['subcontract_msg'] = 'Subcontract input saved successfully for PO ' . $po . '.';
+                $_SESSION['subcontract_msg'] = '# Subcontract Input data insert successfully';
                 header('Location: subcontract_input.php');
                 exit;
             } else {
@@ -93,6 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_subcontract'])) 
 } else {
     $budat = date('Y-m-d');
     $po = $sono = $buyer = $style = $color = $qty = '';
+    $customer = '';
     $gsm = $dia = $ot = $ft = $yt = $kmc = $kmd = '';
 }
 
@@ -228,6 +234,13 @@ $v = function ($val) use ($keepForm) {
             grid-column: 1 / -1;
         }
 
+        .material-fields-row {
+            grid-column: span 5;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1.2rem 1.5rem;
+        }
+
         .info-item input:focus {
             border-color: #2563eb;
             outline: none;
@@ -239,6 +252,10 @@ $v = function ($val) use ($keepForm) {
             .info-grid-6 {
                 grid-template-columns: repeat(3, 1fr);
                 gap: 1rem 1.2rem;
+            }
+
+            .material-fields-row {
+                grid-column: span 2;
             }
         }
 
@@ -254,6 +271,12 @@ $v = function ($val) use ($keepForm) {
 
             .card-unified {
                 padding: 1.2rem;
+            }
+
+            .material-fields-row {
+                grid-column: 1 / -1;
+                grid-template-columns: 1fr;
+                gap: 0.8rem;
             }
         }
 
@@ -340,10 +363,12 @@ $v = function ($val) use ($keepForm) {
             <div></div>
         </div>
 
-        <?php if ($message !== ''): ?>
+        <?php if ($message !== '' && $messageType === 'success'): ?>
+            <div id="successPopup" hidden><?php echo htmlspecialchars($message); ?></div>
+        <?php elseif ($message !== ''): ?>
             <div class="card-unified" style="padding-bottom: 1rem;">
-                <div class="alert <?php echo $messageType === 'success' ? 'alert-success' : 'alert-danger'; ?> mb-0">
-                    <i class="fa-solid fa-<?php echo $messageType === 'success' ? 'circle-check' : 'circle-exclamation'; ?> me-2"></i>
+                <div class="alert alert-danger mb-0">
+                    <i class="fa-solid fa-circle-exclamation me-2"></i>
                     <?php echo htmlspecialchars($message); ?>
                 </div>
             </div>
@@ -378,10 +403,14 @@ $v = function ($val) use ($keepForm) {
                         <label>Color</label>
                         <input type="text" name="color" placeholder="Enter Color" value="<?php echo $v($color); ?>" required>
                     </div>
+                    <div class="info-item">
+                        <label>Customer</label>
+                        <input type="text" name="customer" placeholder="Enter Customer" value="<?php echo $v($customer); ?>" required>
+                    </div>
 
                     <div class="info-item">
                         <label>QTY</label>
-                        <input type="number" name="qty" placeholder="Enter QTY" step="0.01" value="<?php echo $v($qty); ?>" required>
+                        <input type="number" name="qty" placeholder="Enter QTY" step="0.01" min="0.01" value="<?php echo $v($qty); ?>" required>
                     </div>
                     <div class="info-item">
                         <label>Finish GSM</label>
@@ -404,22 +433,24 @@ $v = function ($val) use ($keepForm) {
                         <input type="text" name="yarn_type" placeholder="Enter Yarn Type" value="<?php echo $v($yt); ?>" required>
                     </div>
 
-                    <div class="info-item full-width-item">
-                        <label>Knit Material Code</label>
-                        <input type="text"
-                            name="knit_material_code"
-                            placeholder="Enter Knit Material Code"
-                            value="<?php echo $v($kmc); ?>"
-                            required>
-                    </div>
+                    <div class="material-fields-row">
+                        <div class="info-item">
+                            <label>Knit Material Code</label>
+                            <input type="text"
+                                name="knit_material_code"
+                                placeholder="Enter Knit Material Code"
+                                value="<?php echo $v($kmc); ?>"
+                                required>
+                        </div>
 
-                    <div class="info-item full-width-item">
-                        <label>Knit M Description</label>
-                        <input type="text"
-                            name="knit_m_description"
-                            placeholder="Enter Knit M Description"
-                            value="<?php echo $v($kmd); ?>"
-                            required>
+                        <div class="info-item">
+                            <label>Knit M Description</label>
+                            <input type="text"
+                                name="knit_m_description"
+                                placeholder="Enter Knit M Description"
+                                value="<?php echo $v($kmd); ?>"
+                                required>
+                        </div>
                     </div>
                 </div>
 
@@ -437,17 +468,41 @@ $v = function ($val) use ($keepForm) {
     </div>
 
     <script src="jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
         $(function() {
+            var successPopup = document.getElementById('successPopup');
+            if (successPopup) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Successfully Saved!',
+                        text: successPopup.textContent.trim(),
+                        timer: 3000,
+                        timerProgressBar: true,
+                        showConfirmButton: false,
+                        allowOutsideClick: false,
+                        allowEscapeKey: false
+                    }).then(function() {
+                        window.location.reload();
+                    });
+                } else {
+                    window.alert(successPopup.textContent.trim());
+                    window.location.reload();
+                }
+            }
+
             function checkFormValidity() {
                 var allFilled = true;
+                var qty = Number($('#subcontractForm [name="qty"]').val());
                 $('#subcontractForm .info-item input').each(function() {
                     if ($(this).val().trim() === '') {
                         allFilled = false;
                         return false;
                     }
                 });
+                allFilled = allFilled && Number.isFinite(qty) && qty > 0;
                 $('#saveBtn').prop('disabled', !allFilled);
             }
 
@@ -456,6 +511,12 @@ $v = function ($val) use ($keepForm) {
             });
 
             $('#subcontractForm').on('input change', checkFormValidity);
+            $('#subcontractForm input[type="text"]').on('input', function() {
+                var start = this.selectionStart;
+                var end = this.selectionEnd;
+                this.value = this.value.toUpperCase();
+                this.setSelectionRange(start, end);
+            });
 
             $('#resetBtn').on('click', function() {
                 $('#subcontractForm')[0].reset();

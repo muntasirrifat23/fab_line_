@@ -14,7 +14,7 @@ if (session_status() === PHP_SESSION_NONE) {
 $response = ['success' => false, 'message' => 'Failed to save program.'];
 
 // Logged-in user id (username / operator id)
-$uname = isset($_SESSION['username']) ? trim($_SESSION['username']) : '';
+$uname = isset($_SESSION['username']) ? strtoupper(trim($_SESSION['username'])) : '';
 
 $hostname = 'localhost';
 $username = 'root';
@@ -50,6 +50,20 @@ if (isset($_POST['mcno_qty']) && is_string($_POST['mcno_qty'])) {
         $_POST['mcno_qty'] = $decodedMcnoQty;
     }
 }
+
+function uppercaseProgramValues($value)
+{
+    if (is_array($value)) {
+        foreach ($value as $key => $item) {
+            $value[$key] = uppercaseProgramValues($item);
+        }
+        return $value;
+    }
+
+    return is_string($value) ? strtoupper($value) : $value;
+}
+
+$_POST = uppercaseProgramValues($_POST);
 
 // Get POST data
 $booking = isset($_POST['booking']) ? trim($_POST['booking']) : '';

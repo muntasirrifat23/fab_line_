@@ -312,9 +312,7 @@ if ($res2) {
 
     <h2 class="section-title">
         <span class="sec-icon qc-icon"><i class="fa-solid fa-user-shield"></i></span> Knitting All QC
-        <span class="badge bg-success" style="font-size:0.8rem; font-weight:600; vertical-align:middle;"><i class="fa-solid fa-check-circle me-1"></i> Authorized for Fabric Inspection</span>
-        <a href="knitting_inspection.php" class="btn btn-sm btn-outline-success ms-auto" style="font-size:0.85rem; padding:6px 12px; text-decoration:none; border:1px solid #16a34a; color:#16a34a;"><i class="fa-solid fa-magnifying-glass me-1"></i> Go to Knitting Inspection</a>
-    </h2>
+  </h2>
 
     <div class="table-card">
         <div class="table-scroll">
@@ -425,15 +423,13 @@ if ($res2) {
         });
 
         function showOperatorBadge(idx, type) {
-            var u, idVal, roleLabel;
+            var u, idVal;
             if (type === 'qc') {
                 u = viewQcs[idx];
                 idVal = u.KNITTING_QC_ID;
-                roleLabel = 'Knitting QC';
             } else {
                 u = viewUsers[idx];
                 idVal = u.OPERATOR_ID;
-                roleLabel = 'Knitting Operator';
             }
             if (!u) return;
 
@@ -443,7 +439,7 @@ if ($res2) {
             var wrap = document.createElement('div');
             var label = document.createElement('div');
             label.className = 'print-qr-label';
-            label.textContent = roleLabel;
+            label.textContent = idVal || '';
             var qrHolder = document.createElement('div');
             qrHolder.id = 'printQrInner';
             wrap.appendChild(label);
