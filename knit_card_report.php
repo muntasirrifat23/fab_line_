@@ -16,7 +16,12 @@ $end_date      = isset($_GET['end_date'])   ? trim($_GET['end_date'])   : '';
 $kc_prog_col = get_knit_card_program_col($db);
 $query  = "SELECT kc.*, kp.PO_NUMBER AS kp_booking, kp.REMARKS AS prog_remarks, kp.MCDIA AS prog_mcdia
            FROM knit_card kc
-           LEFT JOIN knitting_program kp ON (kc.{$kc_prog_col} = kp.PROGRAM_NO OR kc.{$kc_prog_col} = kp.KPTID)
+           LEFT JOIN knitting_program kp ON kp.KPTID = (
+               SELECT kp2.KPTID FROM knitting_program kp2
+               WHERE kp2.PROGRAM_NO = kc.{$kc_prog_col} OR kp2.KPTID = kc.{$kc_prog_col}
+               ORDER BY (kp2.PROGRAM_NO = kc.{$kc_prog_col}) DESC, kp2.KPTID DESC
+               LIMIT 1
+           )  -- exactly one program per card, so every knit card shows once
            WHERE 1=1";
 $params = [];
 $types  = '';
@@ -70,6 +75,36 @@ if ($result && $result->num_rows > 0) {
         if (!empty($r['MCNO']))  $mc_set[$r['MCNO']]      = true;
     }
 }
+
+// ═══ Pagination (stats above stay for ALL cards; table shows one page) ═══
+$per_page_options = [25, 50, 100];
+$per_page = isset($_GET['per_page']) ? intval($_GET['per_page']) : 25;
+if (!in_array($per_page, $per_page_options, true)) {
+    $per_page = 25;
+}
+$total_records = count($rows_array);
+$total_pages   = max(1, (int)ceil($total_records / $per_page));
+$current_page  = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+if ($current_page > $total_pages) {
+    $current_page = $total_pages;
+}
+$offset      = ($current_page - 1) * $per_page;
+$page_rows   = array_slice($rows_array, $offset, $per_page);
+$start_entry = $total_records > 0 ? $offset + 1 : 0;
+$end_entry   = $offset + count($page_rows);
+
+// Build a page link that keeps the current filters
+function kcr_page_url($page, $per_page) {
+    $params = [];
+    foreach (['buyer', 'mc_no', 'start_date', 'end_date'] as $k) {
+        if (isset($_GET[$k]) && $_GET[$k] !== '') {
+            $params[$k] = $_GET[$k];
+        }
+    }
+    $params['per_page'] = $per_page;
+    $params['page']     = $page;
+    return 'knit_card_report.php?' . http_build_query($params);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -77,7 +112,7 @@ if ($result && $result->num_rows > 0) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Knit Cards Directory | Purbani Fabrics</title>
+    <title>Knit Card Report | Purbani Fabrics</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <link rel="stylesheet" href="css/bootstrap.min.css">
@@ -311,6 +346,10 @@ if ($result && $result->num_rows > 0) {
 
         .custom-table { width: 100%; border-collapse: separate; border-spacing: 0; }
         .custom-table thead th {
+            position: sticky;   /* header stays visible while scrolling the table */
+            top: 0;
+            z-index: 5;
+            white-space: nowrap;
             background: linear-gradient(135deg, #0a0f2e, #1e3a8a);
             color: #bfdbfe;
             font-size: 11.5px;
@@ -328,6 +367,76 @@ if ($result && $result->num_rows > 0) {
         .badge-kc    { background: linear-gradient(135deg, #dbeafe, #bfdbfe); color: #1e3a8a; font-weight: 700; font-size: 12.5px; padding: 5px 13px; border-radius: 20px; display: inline-block; border: 1px solid #93c5fd; }
         .badge-mc    { background: #f1f5f9; color: #475569; font-weight: 600; font-size: 12px; padding: 4px 10px; border-radius: 8px; border: 1px solid #cbd5e1; }
         .badge-buyer { color: #0f172a; font-weight: 700; }
+
+        /* Scroll box for the table: header sticks to its top */
+        .content-panel .table-responsive {
+            overflow: auto;
+            max-height: 70vh;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 12px;
+        }
+        .custom-table tbody td { white-space: nowrap; }
+
+        /* ═══ TABLE HEAD (title + page number) ═══ */
+        .table-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 0 2px 12px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .table-title {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .table-title i { color: #2563eb; }
+        .table-head-right { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .page-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #dbeafe;
+            border-radius: 100px;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .per-page-form { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #64748b; margin: 0; }
+        .per-page-form select { font-size: 12px; padding: 3px 6px; border-radius: 6px; border: 1px solid #cbd5e1; }
+
+        /* ═══ PAGINATION ═══ */
+        .pagination-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding-top: 12px;
+            margin-top: 10px;
+            border-top: 1px solid #f1f5f9;
+        }
+        .pagination-info { font-size: 12.5px; color: #64748b; font-weight: 600; }
+        .custom-pagination { display: inline-flex; gap: 4px; list-style: none; padding: 0; margin: 0; align-items: center; flex-wrap: wrap; }
+        .custom-pagination .page-link-custom {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 30px; height: 30px; padding: 0 9px; border-radius: 6px;
+            font-size: 12.5px; font-weight: 600; color: #334155;
+            background: #f8fafc; border: 1px solid #e2e8f0; text-decoration: none; transition: all 0.2s ease;
+        }
+        .custom-pagination .page-link-custom:hover { background: #f1f5f9; color: #0f172a; }
+        .custom-pagination .page-item-custom.active .page-link-custom { background: #1e3a8a; color: #ffffff; border-color: #1e3a8a; }
+        .custom-pagination .page-item-custom.disabled .page-link-custom { color: #94a3b8; cursor: not-allowed; pointer-events: none; opacity: 0.6; }
+        .custom-pagination .page-ellipsis { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 30px; color: #94a3b8; font-size: 12px; }
     </style>
 </head>
 
@@ -344,7 +453,7 @@ if ($result && $result->num_rows > 0) {
                         <i class="fa-solid fa-id-card"></i>
                     </div>
                     <div>
-                        <h1>Knit Cards Directory</h1>
+                        <h1>Knit Card Report</h1>
                         <p class="banner-subtitle">Digital production cards generated from knitting programs — Purbani Fabrics Ltd.</p>
                     </div>
                 </div>
@@ -432,54 +541,100 @@ if ($result && $result->num_rows > 0) {
 
         <!-- Table -->
         <div class="content-panel">
+            <div class="table-head">
+                <div class="table-title">
+                    <i class="fa-solid fa-table-list"></i> Knit Card List
+                </div>
+                <div class="table-head-right">
+                    <form method="get" class="per-page-form">
+                        <?php foreach (['buyer', 'mc_no', 'start_date', 'end_date'] as $fk): if (isset($_GET[$fk]) && $_GET[$fk] !== ''): ?>
+                            <input type="hidden" name="<?php echo $fk; ?>" value="<?php echo htmlspecialchars($_GET[$fk]); ?>">
+                        <?php endif; endforeach; ?>
+                        Show
+                        <select name="per_page" onchange="this.form.submit()">
+                            <?php foreach ($per_page_options as $opt): ?>
+                                <option value="<?php echo $opt; ?>" <?php echo $opt === $per_page ? 'selected' : ''; ?>><?php echo $opt; ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        rows
+                    </form>
+                    <div class="page-badge">
+                        <i class="fa-solid fa-book-open"></i> Page <?php echo $current_page; ?> of <?php echo $total_pages; ?>
+                    </div>
+                </div>
+            </div>
             <div class="table-responsive">
                 <table class="table custom-table align-middle mb-0">
                     <thead>
                         <tr>
+                            <th>#</th>
                             <th>Card Date</th>
                             <th>Knit Card Number</th>
                             <th>PO</th>
+                            <th>SONO</th>
+                            <th>Buyer</th>
+                            <th>Customer</th>
+                            <th>Style</th>
+                            <th>Color</th>
+                            <th>Shift</th>
                             <th>M/C No</th>
                             <th>M/C Dia</th>
-                            <th>Buyer</th>
-                            <th>Style</th>
                             <th>Fabric Type</th>
+                            <th>Finish GSM</th>
+                            <th>Finish Dia</th>
                             <th>Yarn Type</th>
+                            <th>Yarn Count</th>
                             <th>Yarn Brand</th>
+                            <th>Lot No</th>
                             <th>Remarks</th>
                             <th>Req Qty (KG)</th>
                             <th class="text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if (count($rows_array) > 0): ?>
-                            <?php foreach ($rows_array as $row): ?>
+                        <?php if (count($page_rows) > 0): ?>
+                            <?php foreach ($page_rows as $ri => $row): ?>
                                 <tr>
+                                    <td class="text-muted fw-semibold"><?php echo $offset + $ri + 1; ?></td>
                                     <td><i class="fa-regular fa-calendar me-1 text-muted"></i><?php echo htmlspecialchars($row['CREATED_DATE'] ?? ''); ?></td>
                                     <td><span class="badge-kc"><?php echo htmlspecialchars(!empty($row['KNITCARD']) ? $row['KNITCARD'] : ('KC-' . $row['KCTID'])); ?></span></td>
                                     <td><strong><?php echo htmlspecialchars($row['PO_NUMBER'] ?? ''); ?></strong></td>
+                                    <td><?php echo htmlspecialchars($row['SONO'] ?? ''); ?></td>
+                                    <td><span class="badge-buyer"><?php echo htmlspecialchars($row['BUYER'] ?? ''); ?></span></td>
+                                    <td><?php echo htmlspecialchars($row['CUSTOMER'] ?? ''); ?></td>
+                                    <td><?php echo htmlspecialchars($row['STYLE'] ?? ''); ?></td>
+                                    <td><?php echo htmlspecialchars($row['COLOR'] ?? ''); ?></td>
+                                    <td><?php echo htmlspecialchars($row['SHIFT'] ?? ''); ?></td>
                                     <td><span class="badge-mc">M/C <?php echo htmlspecialchars($row['MCNO'] ?? ''); ?></span></td>
                                     <td><strong><?php echo htmlspecialchars(!empty($row['MCDIA']) ? $row['MCDIA'] : ($row['prog_mcdia'] ?? 'N/A')); ?></strong></td>
-                                    <td><span class="badge-buyer"><?php echo htmlspecialchars($row['BUYER'] ?? ''); ?></span></td>
-                                    <td><?php echo htmlspecialchars($row['STYLE'] ?? ''); ?></td>
                                     <td><?php echo htmlspecialchars($row['FTYPE'] ?? ''); ?></td>
+                                    <td><?php echo htmlspecialchars($row['FGSM'] ?? ''); ?></td>
+                                    <td><?php echo htmlspecialchars($row['FDIA'] ?? ''); ?></td>
                                     <td><small class="text-muted"><?php echo htmlspecialchars($row['YTYPE'] ?? ''); ?></small></td>
+                                    <td><?php echo htmlspecialchars($row['YCOUNT'] ?? ''); ?></td>
                                     <td><?php echo htmlspecialchars($row['YBRAND'] ?? ''); ?></td>
+                                    <td><?php echo htmlspecialchars($row['LOT'] ?? ''); ?></td>
                                     <td><small class="text-muted"><?php echo htmlspecialchars($row['prog_remarks'] ?? ($row['REMARKS'] ?? '')); ?></small></td>
                                     <td><strong class="text-success"><?php echo number_format((float)($row['QTY'] ?? 0), 2); ?> KG</strong></td>
                                     <td class="text-center">
                                         <div class="d-inline-flex gap-1.5 flex-wrap justify-content-center">
-                                            <a href="knit_card_view.php?id=<?php echo intval($row['KCTID']); ?>"
+                                            <a href="knit_card_view.php?id=<?php echo intval($row['KCTID']); ?>&from=report"
                                                class="btn btn-sm btn-primary px-2.5 py-1"
                                                style="border-radius:8px; font-size:12.5px; background-color:#2563eb; border-color:#2563eb;"
                                                title="View & Manage Production Log">
                                                 <i class="fa-solid fa-eye me-1"></i> View Log
                                             </a>
-                                            <a href="knit_card_view.php?id=<?php echo intval($row['KCTID']); ?>&download=1"
+                                            <a href="knit_card_view.php?id=<?php echo intval($row['KCTID']); ?>&download=1&from=report"
                                                class="btn btn-sm px-2.5 py-1"
                                                style="border-radius:8px; font-size:12.5px; background:linear-gradient(135deg, #059669 0%, #10b981 100%); color:#ffffff !important; border:none; box-shadow:0 2px 6px rgba(16,185,129,0.3);"
                                                title="Download PDF Card">
                                                 <i class="fa-solid fa-download me-1" style="color:#ffffff !important;"></i> <span style="color:#ffffff !important;">Download</span>
+                                            </a>
+                                            <a href="knit_card_view.php?id=<?php echo intval($row['KCTID']); ?>&print=1&from=report"
+                                               class="btn btn-sm px-2.5 py-1"
+                                               style="border-radius:8px; font-size:12.5px; background:#0f172a; color:#ffffff !important; border:none;"
+                                               title="Print this Knit Card">
+                                                <i class="fa-solid fa-print me-1" style="color:#ffffff !important;"></i> <span style="color:#ffffff !important;">Print</span>
                                             </a>
                                         </div>
                                     </td>
@@ -487,7 +642,7 @@ if ($result && $result->num_rows > 0) {
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="13" class="text-center py-5 text-muted">
+                                <td colspan="22" class="text-center py-5 text-muted">
                                     <i class="fa-solid fa-folder-open fa-3x mb-3 text-secondary d-block"></i>
                                     <h6 class="fw-bold">No Knit Cards Found</h6>
                                     <p class="small mb-0">Try clearing your search filters or generate a new card from the Knitting Programs page.</p>
@@ -497,6 +652,42 @@ if ($result && $result->num_rows > 0) {
                     </tbody>
                 </table>
             </div>
+
+            <!-- ═══ PAGINATION ═══ -->
+            <?php if ($total_records > 0): ?>
+                <div class="pagination-container">
+                    <div class="pagination-info">
+                        Showing <span class="fw-bold text-dark"><?php echo $start_entry; ?></span> to <span class="fw-bold text-dark"><?php echo $end_entry; ?></span> of <span class="fw-bold text-dark"><?php echo number_format($total_records); ?></span> knit cards
+                    </div>
+                    <?php if ($total_pages > 1): ?>
+                        <ul class="custom-pagination">
+                            <li class="page-item-custom <?php echo ($current_page <= 1) ? 'disabled' : ''; ?>">
+                                <a class="page-link-custom" href="<?php echo htmlspecialchars(kcr_page_url($current_page - 1, $per_page)); ?>" title="Previous Page"><i class="fa-solid fa-chevron-left"></i></a>
+                            </li>
+                            <?php
+                            $range      = 2;
+                            $show_start = max(1, $current_page - $range);
+                            $show_end   = min($total_pages, $current_page + $range);
+                            if ($show_start > 1) {
+                                echo '<li class="page-item-custom"><a class="page-link-custom" href="' . htmlspecialchars(kcr_page_url(1, $per_page)) . '">1</a></li>';
+                                if ($show_start > 2) echo '<li class="page-ellipsis">&hellip;</li>';
+                            }
+                            for ($pg = $show_start; $pg <= $show_end; $pg++) {
+                                $active_cls = ($pg === $current_page) ? 'active' : '';
+                                echo '<li class="page-item-custom ' . $active_cls . '"><a class="page-link-custom" href="' . htmlspecialchars(kcr_page_url($pg, $per_page)) . '">' . $pg . '</a></li>';
+                            }
+                            if ($show_end < $total_pages) {
+                                if ($show_end < $total_pages - 1) echo '<li class="page-ellipsis">&hellip;</li>';
+                                echo '<li class="page-item-custom"><a class="page-link-custom" href="' . htmlspecialchars(kcr_page_url($total_pages, $per_page)) . '">' . $total_pages . '</a></li>';
+                            }
+                            ?>
+                            <li class="page-item-custom <?php echo ($current_page >= $total_pages) ? 'disabled' : ''; ?>">
+                                <a class="page-link-custom" href="<?php echo htmlspecialchars(kcr_page_url($current_page + 1, $per_page)); ?>" title="Next Page"><i class="fa-solid fa-chevron-right"></i></a>
+                            </li>
+                        </ul>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
         </div>
 
     </div>

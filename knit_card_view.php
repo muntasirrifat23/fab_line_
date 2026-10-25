@@ -79,6 +79,36 @@ if (empty($card_ids)) {
     exit();
 }
 
+// Opened with a single ?id= (e.g. from the report): also show every knit card that was
+// generated in the same batch (same program, same user, created within a few seconds),
+// one under another, so the whole batch can be seen / printed together.
+$focus_card_id = $card_ids[0];
+if (empty($_GET['ids']) && count($card_ids) === 1) {
+    $batch_col = get_knit_card_program_col($db);
+    $batch_sql = "SELECT b.KCTID
+                    FROM knit_card a
+                    JOIN knit_card b
+                      ON b.{$batch_col} = a.{$batch_col}
+                     AND (b.UNAME <=> a.UNAME)
+                     AND ABS(TIMESTAMPDIFF(SECOND, a.CREATED_DATE, b.CREATED_DATE)) <= 10
+                   WHERE a.KCTID = ?
+                   ORDER BY b.KCTID ASC";
+    $batch_stmt = $db->prepare($batch_sql);
+    if ($batch_stmt) {
+        $batch_stmt->bind_param('i', $focus_card_id);
+        $batch_stmt->execute();
+        $batch_res = $batch_stmt->get_result();
+        $batch_ids = [];
+        while ($batch_res && ($br = $batch_res->fetch_assoc())) {
+            $batch_ids[] = intval($br['KCTID']);
+        }
+        $batch_stmt->close();
+        if (count($batch_ids) > 1 && in_array($focus_card_id, $batch_ids, true)) {
+            $card_ids = $batch_ids;
+        }
+    }
+}
+
 $placeholders = implode(',', array_fill(0, count($card_ids), '?'));
 $types = str_repeat('i', count($card_ids));
 $kc_prog_col = get_knit_card_program_col($db);
@@ -222,6 +252,12 @@ foreach ($cards_list as $card) {
         'val_user_name' => $val_user_name,
         'val_user_id'   => $val_user_id,
     ];
+}
+
+// Index of the card that was clicked (used for ?print=1 / ?download=1 and scrolling)
+$focus_idx = 0;
+foreach ($cards_data as $fi => $fc) {
+    if (intval($fc['card_id']) === intval($focus_card_id)) { $focus_idx = $fi; break; }
 }
 ?>
 <!DOCTYPE html>
@@ -502,6 +538,14 @@ foreach ($cards_list as $card) {
         </div>
     </div>
 
+    <?php if (count($cards_data) > 1): ?>
+    <div class="page-alert no-print" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:8px 14px; margin-bottom:14px; font-size:13px; font-weight:600; color:#0f172a;">
+        <i class="fa-solid fa-layer-group me-1"></i>
+        <?php echo count($cards_data); ?> knit cards generated together
+        &mdash; PO: <?php echo htmlspecialchars($cards_data[0]['val_po']); ?>
+    </div>
+    <?php endif; ?>
+
     <!-- ALERTS (NO-PRINT) -->
     <?php if (!empty($msg)): ?>
         <div class="page-alert alert alert-success alert-dismissible fade show rounded-3 p-2 mb-3 small no-print">
@@ -632,10 +676,23 @@ foreach ($cards_list as $card) {
             })();
             <?php endforeach; ?>
 
-            <?php if (isset($_GET['download']) && $_GET['download'] == '1' && count($cards_data) === 1): ?>
+            <?php if (isset($_GET['print']) && $_GET['print'] == '1'): ?>
+            // Opened from the report's Print button -> open the print dialog for this card
             setTimeout(function() {
-                downloadSingleCard('card_box_0', <?php echo json_encode(strval($cards_data[0]['roll_number'])); ?>, <?php echo json_encode(strval($cards_data[0]['card_id'])); ?>);
+                printSingleCard('card_box_<?php echo $focus_idx; ?>', <?php echo json_encode(strval($cards_data[$focus_idx]['roll_number'])); ?>);
             }, 700);
+            <?php endif; ?>
+
+            <?php if (isset($_GET['download']) && $_GET['download'] == '1'): ?>
+            setTimeout(function() {
+                downloadSingleCard('card_box_<?php echo $focus_idx; ?>', <?php echo json_encode(strval($cards_data[$focus_idx]['roll_number'])); ?>, <?php echo json_encode(strval($cards_data[$focus_idx]['card_id'])); ?>);
+            }, 700);
+            <?php endif; ?>
+
+            <?php if ($focus_idx > 0): ?>
+            // Bring the clicked card into view inside its batch
+            var focusCard = document.getElementById('card_wrapper_<?php echo $focus_idx; ?>');
+            if (focusCard) focusCard.scrollIntoView({ block: 'start' });
             <?php endif; ?>
         });
 
@@ -650,6 +707,7 @@ foreach ($cards_list as $card) {
         var TAG_PAGE_MARGIN_MM = 10;    // left/top margin on A4
         var TAG_GAP_MM         = 6;     // gap between cards when several go on one page
         var TAG_DOWNLOAD_TOP_MM = 25.4; // 1 inch blank space on top of downloaded PDF (for punching a hole / tying)
+        var TAG_PRINT_TOP_MM    = 25.4; // 1 inch blank space above EVERY printed card (hole for the string)
 
         function prepareCardClone(cardElement) {
             var clone = cardElement.cloneNode(true);
@@ -726,19 +784,22 @@ foreach ($cards_list as $card) {
                 iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
                 document.body.appendChild(iframe);
 
-                // Fill A4 pages top-to-bottom with as many cards as fit
-                var usable = 297 - (TAG_PAGE_MARGIN_MM * 2);
+                // Fill A4 pages top-to-bottom. Every card gets 1 inch of blank paper above it,
+                // so after cutting, each card still has room to punch a hole and tie it to the roll.
+                var pageBottom = 297 - TAG_PAGE_MARGIN_MM;
                 var pagesHtml = '';
                 var pageImgs = '';
-                var y = 0;
+                var y = 0;   // mm used on the current page
                 images.forEach(function(im) {
-                    if (pageImgs && (y + im.heightMm) > usable) {
+                    var top = y + TAG_PRINT_TOP_MM;
+                    if (pageImgs && (top + im.heightMm) > pageBottom) {
                         pagesHtml += '<div class="lbl-page">' + pageImgs + '</div>';
                         pageImgs = '';
                         y = 0;
+                        top = TAG_PRINT_TOP_MM;
                     }
-                    pageImgs += '<img src="' + im.src + '" alt="Knit Tag Card" style="top:' + (TAG_PAGE_MARGIN_MM + y).toFixed(2) + 'mm;height:' + im.heightMm.toFixed(2) + 'mm;" />';
-                    y += im.heightMm + TAG_GAP_MM;
+                    pageImgs += '<img src="' + im.src + '" alt="Knit Tag Card" style="top:' + top.toFixed(2) + 'mm;height:' + im.heightMm.toFixed(2) + 'mm;" />';
+                    y = top + im.heightMm;
                 });
                 if (pageImgs) pagesHtml += '<div class="lbl-page">' + pageImgs + '</div>';
 
