@@ -17,7 +17,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'verify_operator') {
         exit();
     }
 
-    // Only registered Knitting Production Operators may access the Knit Card section
+    // Only registered Knit Card Production Operators may access the Knit Card section
     $op_stmt = $db->prepare("SELECT OPERATOR_ID, OPERATOR_NAME FROM knitting_operator
                              WHERE LOWER(TRIM(OPERATOR_ID)) = LOWER(TRIM(?))
                                 OR LOWER(TRIM(OPERATOR_NAME)) = LOWER(TRIM(?))
@@ -37,7 +37,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'verify_operator') {
                     'data'    => [
                         'OPERATOR_ID'   => $op_row['OPERATOR_ID'],
                         'OPERATOR_NAME' => $op_row['OPERATOR_NAME'],
-                        'ROLE'          => 'Knitting Production Operator'
+                        'ROLE'          => 'Knit Card Production Operator'
                     ]
                 ]);
                 $op_stmt->close();
@@ -58,13 +58,13 @@ if (isset($_GET['action']) && $_GET['action'] === 'verify_operator') {
         $qc_res = $qc_stmt->get_result();
         if ($qc_res && $qc_row = $qc_res->fetch_assoc()) {
             $qc_stmt->close();
-            echo json_encode(['success' => false, 'error' => 'Access Denied: "' . htmlspecialchars($qc_row['KNITTING_QC_NAME']) . ' (' . htmlspecialchars($qc_row['KNITTING_QC_ID']) . ')" is a QC Operator. Only Knitting Production Operators can access the Knit Card section.']);
+            echo json_encode(['success' => false, 'error' => 'Access Denied: "' . htmlspecialchars($qc_row['KNITTING_QC_NAME']) . ' (' . htmlspecialchars($qc_row['KNITTING_QC_ID']) . ')" is a QC Operator. Only Knit Card Production Operators can access the Knit Card section.']);
             exit();
         }
         $qc_stmt->close();
     }
 
-    echo json_encode(['success' => false, 'error' => 'Invalid Operator ID: "' . htmlspecialchars($op_input) . '". Only registered Knitting Production Operators can access this page.']);
+    echo json_encode(['success' => false, 'error' => 'Invalid Operator ID: "' . htmlspecialchars($op_input) . '". Only registered Knit Card Production Operators can access this page.']);
     exit();
 }
 
@@ -89,7 +89,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' && !isset($_GET['action'])) 
 
 $knit_card_operator = $_SESSION['knit_card_operator'] ?? null;
 
-// ── ACCESS GATE: require a scanned / typed Knitting Production Operator ID ──
+// ── ACCESS GATE: require a scanned / typed Knit Card Production Operator ID ──
 if (empty($knit_card_operator) || empty($knit_card_operator['id'])) {
     ?>
     <!DOCTYPE html>
@@ -126,15 +126,37 @@ if (empty($knit_card_operator) || empty($knit_card_operator['id'])) {
                                  padding: 5px 14px; font-size: 12px; font-weight: 600; cursor: pointer; }
             .cam-switch button:hover { background: #e2e8f0; border-color: #2563eb; color: #1e3a8a; }
             #opStatusMsg { margin-top: 12px; font-size: 12.5px; text-align: center; }
-            .gate-back { display: block; text-align: center; margin-top: 16px; font-size: 12.5px; font-weight: 600; color: #475569; text-decoration: none; }
-            .gate-back:hover { color: #0f172a; }
+            .gate-back {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                width: 100%;
+                margin-top: 16px;
+                padding: 10px 18px;
+                font-size: 13px;
+                font-weight: 700;
+                background: #000000 !important;
+                color: #ffffff !important;
+                border: 2px solid #000000 !important;
+                border-radius: 8px;
+                text-decoration: none;
+                transition: 0.25s ease;
+                box-sizing: border-box;
+            }
+            .gate-back:hover {
+                background: #ffffff !important;
+                color: #000000 !important;
+                border-color: #000000 !important;
+                text-decoration: none;
+            }
         </style>
     </head>
     <body>
         <div class="gate-card">
             <div class="gate-head">
                 <div class="gate-icon"><i class="fa-solid fa-user-gear"></i></div>
-                <h1 class="gate-title">Knitting Production Operator</h1>
+                <h1 class="gate-title">Knit Card Production Operator</h1>
                 <p class="gate-sub">Scan your operator QR code or type your ID to open the Knit Card section</p>
             </div>
             <div id="qr-reader"></div>
@@ -486,15 +508,15 @@ $end_entry   = min($offset + $limit, $total_records);
         }
 
         .btn-back {
-            background: #000000;
-            color: #ffffff;
-            border: 2px solid #000000;
+            background: #000000 !important;
+            color: #ffffff !important;
+            border: 2px solid #000000 !important;
             transition: all 0.2s ease;
         }
         .btn-back:hover {
-            background: #ffffff;
-            border-color: #000000;
-            color: #000000;
+            background: #ffffff !important;
+            border-color: #000000 !important;
+            color: #000000 !important;
         }
 
         /* ═══════════════════════════════════════════
@@ -1010,7 +1032,7 @@ $end_entry   = min($offset + $limit, $total_records);
                                             <div><span style="color:#d97706; font-weight:600;">Rem:</span> <strong style="color:#d97706;"><?php echo number_format($prog_rem, 0); ?> KG</strong></div>
                                         </div>
                                     </td>
-                                    <td class="text-center text-nowrap">
+                                    <td class="text-center">
                                         <?php if ($prog_carded <= 0): ?>
                                             <span class="badge-status badge-pending"><i class="fa-solid fa-clock"></i> Pending</span>
                                         <?php elseif ($prog_rem > 0.001): ?>
@@ -1031,12 +1053,12 @@ $end_entry   = min($offset + $limit, $total_records);
                                             <?php endif; ?>
 
                                             <?php if (!empty($p_card_id)): ?>
-                                                <a href="knit_card_view.php?id=<?php echo intval($p_card_id); ?>&from=card"
+                                                <a href="knit_card_view.php?id=<?php echo intval($p_card_id); ?>&from=card" 
                                                    class="btn btn-sm btn-action-view"
                                                    title="View Latest Generated Card">
                                                     <i class="fa-solid fa-eye me-1"></i> View Card
                                                 </a>
-                                                <a href="knit_card_view.php?id=<?php echo intval($p_card_id); ?>&download=1&from=card"
+                                                <a href="knit_card_view.php?id=<?php echo intval($p_card_id); ?>&download=1&from=card" 
                                                    class="btn btn-sm btn-action-download"
                                                    title="Download PDF Card">
                                                     <i class="fa-solid fa-download me-1"></i> Download

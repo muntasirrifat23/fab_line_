@@ -291,12 +291,12 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                 // Commit Transaction
                 $db->commit();
 
-                $redirect_id = $inserted_ids[0];
+                $ids_param = implode(',', $inserted_ids);
                 $success_msg = count($inserted_ids) > 1 
-                    ? count($inserted_ids) . " Knit Cards (Sub-TIDs) generated successfully!" 
+                    ? count($inserted_ids) . " Knit Cards generated successfully!" 
                     : "Knit Card generated successfully!";
 
-                header("Location: knit_card_view.php?id=" . $redirect_id . "&from=card&msg=" . urlencode($success_msg));
+                header("Location: knit_card_view.php?ids=" . urlencode($ids_param) . "&from=card&msg=" . urlencode($success_msg));
                 exit();
 
             } catch (Exception $e) {

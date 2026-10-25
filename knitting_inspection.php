@@ -1653,8 +1653,9 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
               document.body.appendChild(iframe);
 
               var imgsHtml = images.map(function(src, i) {
-                var left = (1 + i * 6.6).toFixed(2);
-                return '<img src="' + src + '" alt="QR Label" style="left:' + left + 'cm;" />';
+                // One label under the other (stacked top-to-bottom), 1cm from the left edge
+                var top = (1 + i * 6.6).toFixed(2);
+                return '<img src="' + src + '" alt="QR Label" style="top:' + top + 'cm;" />';
               }).join('');
 
               var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + (title || 'QR Card Print') + '</title>' +
@@ -1662,7 +1663,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
                 '@page { size: A4 portrait; margin: 0; }' +
                 'html, body { margin: 0 !important; padding: 0 !important; background: #ffffff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }' +
                 '.lbl-page { position: relative; width: 210mm; height: 296mm; overflow: hidden; }' +
-                '.lbl-page img { position: absolute; top: 1cm; width: 6cm; height: 6cm; display: block; margin: 0; padding: 0; }' +
+                '.lbl-page img { position: absolute; left: 1cm; width: 6cm; height: 6cm; display: block; margin: 0; padding: 0; }' +
                 '</style></head><body><div class="lbl-page">' + imgsHtml + '</div><\/body><\/html>';
 
               var doc = iframe.contentWindow.document;
