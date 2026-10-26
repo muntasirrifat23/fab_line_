@@ -63,9 +63,19 @@ function uppercaseProgramValues($value)
     return is_string($value) ? strtoupper($value) : $value;
 }
 
+$submittedCategory = isset($_POST['category']) && is_string($_POST['category'])
+    ? trim($_POST['category'])
+    : '';
 $_POST = uppercaseProgramValues($_POST);
 
 // Get POST data
+$categoryOptions = [
+    'In House (Sample)',
+    'In House (Bulk)',
+    'Knitting (Service)',
+    'Knitting (Outside)'
+];
+$category = $submittedCategory;
 $booking = isset($_POST['booking']) ? trim($_POST['booking']) : '';
 $sono = isset($_POST['sono']) ? trim($_POST['sono']) : null;
 $style = isset($_POST['style']) ? trim($_POST['style']) : null;
@@ -107,6 +117,13 @@ if ($bdHour >= 6 && $bdHour < 14) {
 if ($booking === '') {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'Booking number is required.']);
+    mysqli_close($db);
+    exit();
+}
+
+if (!in_array($category, $categoryOptions, true)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'A valid category is required.']);
     mysqli_close($db);
     exit();
 }
@@ -171,8 +188,9 @@ $insertSql = "INSERT INTO knitting_program (
     KNIT_MATERIAL_CODE,
     KNIT_M_DESCRIPTION,
     REMARKS,
-    UNAME
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    UNAME,
+    `Category`
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 $stmt = mysqli_prepare($db, $insertSql);
 
@@ -203,7 +221,7 @@ foreach ($mcnoQtyData as $row) {
 
     mysqli_stmt_bind_param(
         $stmt,
-        "isssssdsssssssssssssssss",
+        "isssssdssssssssssssssssss",
         $programNo,
         $booking,
         $sono,
@@ -227,7 +245,8 @@ foreach ($mcnoQtyData as $row) {
         $knitMaterialCode,
         $knitDescription,
         $remarks,
-        $uname
+        $uname,
+        $category
     );
 
     if (!mysqli_stmt_execute($stmt)) {

@@ -651,6 +651,15 @@
                         <div class="info-item"><label>Finish DIA</label><input type="text" id="finish_dia" placeholder="Finish DIA"></div>
                         <div class="info-item"><label>Open / Tube</label><input type="text" id="open_tube" placeholder="Open / Tube"></div>
                         <div class="info-item"><label>Fabrics Type</label><input type="text" id="fabrics_type" placeholder="Fabrics Type"></div>
+                        <div class="info-item">
+                            <label for="category">Category</label>
+                            <select id="category">
+                                <option value="In House (Sample)">In House (Sample)</option>
+                                <option value="In House (Bulk)">In House (Bulk)</option>
+                                <option value="Knitting (Service)">Knitting (Service)</option>
+                                <option value="Knitting (Outside)">Knitting (Outside)</option>
+                            </select>
+                        </div>
                         <input type="hidden" id="knit_material_code">
                     </div>
                     <input type="hidden" id="knit_m_description">
@@ -1242,6 +1251,7 @@ var finishGsmSelect = $('#finish_gsm');
                      // reset all display fields
                      $('#infoGrid span').text('-');
                      $('#finish_dia, #open_tube, #fabrics_type, #customer, #sl_vdq, #mc_dia, #feeder_plan, #knit_m_description, #remarks').val('');
+                     $('#category').val('In House (Sample)');
                      addMcnoRow();
                      $('#submitBtn').prop('disabled', true);
                  });
@@ -1331,6 +1341,7 @@ var finishGsmSelect = $('#finish_gsm');
                         yarn_type: $('#yarn_type').val(),
                         yarn_count: $('#yarn_count').val(),
                         fabrics_type: $('#fabrics_type').val(),
+                        category: $('#category').val(),
                         finish_gsm: $('#finish_gsm').val(),
                         feeder_plan: $('#feeder_plan').val(),
                         sl_vdq: $('#sl_vdq').val(),
