@@ -205,7 +205,7 @@ function kcr_page_url($page, $per_page) {
         .top-banner h1 {
             font-weight: 800;
             font-size: 1.85rem;
-            margin: 0 0 6px 0;
+            margin: 0;
             letter-spacing: -0.3px;
             line-height: 1.2;
         }
@@ -454,7 +454,6 @@ function kcr_page_url($page, $per_page) {
                     </div>
                     <div>
                         <h1>Knit Card Report</h1>
-                        <p class="banner-subtitle">Digital production cards generated from knitting programs — Purbani Fabrics Ltd.</p>
                     </div>
                 </div>
                 <!-- Right: nav buttons -->
@@ -567,6 +566,7 @@ function kcr_page_url($page, $per_page) {
                 <table class="table custom-table align-middle mb-0">
                     <thead>
                         <tr>
+                            <th class="text-center">Action</th>
                             <th>#</th>
                             <th>Card Date</th>
                             <th>Knit Card Number</th>
@@ -588,34 +588,12 @@ function kcr_page_url($page, $per_page) {
                             <th>Lot No</th>
                             <th>Remarks</th>
                             <th>Req Qty (KG)</th>
-                            <th class="text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (count($page_rows) > 0): ?>
                             <?php foreach ($page_rows as $ri => $row): ?>
                                 <tr>
-                                    <td class="text-muted fw-semibold"><?php echo $offset + $ri + 1; ?></td>
-                                    <td><i class="fa-regular fa-calendar me-1 text-muted"></i><?php echo htmlspecialchars($row['CREATED_DATE'] ?? ''); ?></td>
-                                    <td><span class="badge-kc"><?php echo htmlspecialchars(!empty($row['KNITCARD']) ? $row['KNITCARD'] : ('KC-' . $row['KCTID'])); ?></span></td>
-                                    <td><strong><?php echo htmlspecialchars($row['PO_NUMBER'] ?? ''); ?></strong></td>
-                                    <td><?php echo htmlspecialchars($row['SONO'] ?? ''); ?></td>
-                                    <td><span class="badge-buyer"><?php echo htmlspecialchars($row['BUYER'] ?? ''); ?></span></td>
-                                    <td><?php echo htmlspecialchars($row['CUSTOMER'] ?? ''); ?></td>
-                                    <td><?php echo htmlspecialchars($row['STYLE'] ?? ''); ?></td>
-                                    <td><?php echo htmlspecialchars($row['COLOR'] ?? ''); ?></td>
-                                    <td><?php echo htmlspecialchars($row['SHIFT'] ?? ''); ?></td>
-                                    <td><span class="badge-mc">M/C <?php echo htmlspecialchars($row['MCNO'] ?? ''); ?></span></td>
-                                    <td><strong><?php echo htmlspecialchars(!empty($row['MCDIA']) ? $row['MCDIA'] : ($row['prog_mcdia'] ?? 'N/A')); ?></strong></td>
-                                    <td><?php echo htmlspecialchars($row['FTYPE'] ?? ''); ?></td>
-                                    <td><?php echo htmlspecialchars($row['FGSM'] ?? ''); ?></td>
-                                    <td><?php echo htmlspecialchars($row['FDIA'] ?? ''); ?></td>
-                                    <td><small class="text-muted"><?php echo htmlspecialchars($row['YTYPE'] ?? ''); ?></small></td>
-                                    <td><?php echo htmlspecialchars($row['YCOUNT'] ?? ''); ?></td>
-                                    <td><?php echo htmlspecialchars($row['YBRAND'] ?? ''); ?></td>
-                                    <td><?php echo htmlspecialchars($row['LOT'] ?? ''); ?></td>
-                                    <td><small class="text-muted"><?php echo htmlspecialchars($row['prog_remarks'] ?? ($row['REMARKS'] ?? '')); ?></small></td>
-                                    <td><strong class="text-success"><?php echo number_format((float)($row['QTY'] ?? 0), 2); ?> KG</strong></td>
                                     <td class="text-center">
                                         <div class="d-inline-flex gap-1.5 flex-wrap justify-content-center">
                                             <a href="knit_card_view.php?id=<?php echo intval($row['KCTID']); ?>&from=report"
@@ -638,6 +616,27 @@ function kcr_page_url($page, $per_page) {
                                             </a>
                                         </div>
                                     </td>
+                                    <td class="text-muted fw-semibold"><?php echo $offset + $ri + 1; ?></td>
+                                    <td><i class="fa-regular fa-calendar me-1 text-muted"></i><?php echo htmlspecialchars($row['CREATED_DATE'] ?? ''); ?></td>
+                                    <td><span class="badge-kc"><?php echo htmlspecialchars(!empty($row['KNITCARD']) ? $row['KNITCARD'] : ('KC-' . $row['KCTID'])); ?></span></td>
+                                    <td><strong><?php echo htmlspecialchars($row['PO_NUMBER'] ?? ''); ?></strong></td>
+                                    <td><?php echo htmlspecialchars($row['SONO'] ?? ''); ?></td>
+                                    <td><span class="badge-buyer"><?php echo htmlspecialchars($row['BUYER'] ?? ''); ?></span></td>
+                                    <td><?php echo htmlspecialchars($row['CUSTOMER'] ?? ''); ?></td>
+                                    <td><?php echo htmlspecialchars($row['STYLE'] ?? ''); ?></td>
+                                    <td><?php echo htmlspecialchars($row['COLOR'] ?? ''); ?></td>
+                                    <td><?php echo htmlspecialchars($row['SHIFT'] ?? ''); ?></td>
+                                    <td><span class="badge-mc">M/C <?php echo htmlspecialchars($row['MCNO'] ?? ''); ?></span></td>
+                                    <td><strong><?php echo htmlspecialchars(!empty($row['MCDIA']) ? $row['MCDIA'] : ($row['prog_mcdia'] ?? 'N/A')); ?></strong></td>
+                                    <td><?php echo htmlspecialchars($row['FTYPE'] ?? ''); ?></td>
+                                    <td><?php echo htmlspecialchars($row['FGSM'] ?? ''); ?></td>
+                                    <td><?php echo htmlspecialchars($row['FDIA'] ?? ''); ?></td>
+                                    <td><small class="text-muted"><?php echo htmlspecialchars($row['YTYPE'] ?? ''); ?></small></td>
+                                    <td><?php echo htmlspecialchars($row['YCOUNT'] ?? ''); ?></td>
+                                    <td><?php echo htmlspecialchars($row['YBRAND'] ?? ''); ?></td>
+                                    <td><?php echo htmlspecialchars($row['LOT'] ?? ''); ?></td>
+                                    <td><small class="text-muted"><?php echo htmlspecialchars($row['prog_remarks'] ?? ($row['REMARKS'] ?? '')); ?></small></td>
+                                    <td><strong class="text-success"><?php echo number_format((float)($row['QTY'] ?? 0), 2); ?> KG</strong></td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
