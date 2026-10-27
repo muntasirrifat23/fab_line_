@@ -1231,9 +1231,9 @@ if (isset($db) && $db) {
         function renderKnittingProductionCardHTML(row, rollCode, qty) {
             var fieldHTML = [
                 ['Shift', row.SHIFT],
-                ['OPNAME', row.UNAME || row.UID],
+                ['OP NAME', row.UNAME || row.UID],
                 ['SONO', row.SONO],
-                ['PO NO', row.PO_NUMBER],
+                ['BUYER', row.BUYER],
                 ['Style', row.STYLE],
                 ['MCNO', row.MCNO],
                 ['MC Dia', row.MC_DIA],
@@ -1244,28 +1244,29 @@ if (isset($db) && $db) {
                 ['F. TYPE', row.FTYPE || row.FABRICS_TYPE, 'vertical'],
                 ['Y. COUNT', row.YCOUNT || row.YARN_COUNT, 'vertical'],
                 ['Y. BRAND', row.YBRAND, 'vertical'],
-                ['Y. LOT', row.LOTNO || row.YARN_LOT, 'vertical']
+                ['Y. LOT', row.LOTNO || row.YARN_LOT, 'vertical'],
+                ['CATEGORY', row.CATEGORY, 'vertical']
             ].map(function(f) {
                 var val = (f[1] === null || f[1] === undefined) ? '' : f[1];
-                return '<div class="pdf-item' + (f[2] ? ' pdf-' + f[2] : '') + '" style="font-size:29px;font-weight:800;line-height:1.15;margin-left:3px;padding:3px 0;word-break:break-word;background:#ffffff;color:#000000;' + (f[2] ? 'grid-column:1 / -1;' : 'grid-column:span 2;') + '"><span style="font-weight:800;color:#000000;">' + f[0] + ':</span> <span style="font-weight:800;color:#000000;">' + esc(val) + '</span></div>';
+                return '<div class="pdf-item' + (f[2] ? ' pdf-' + f[2] : '') + '" style="font-size:27px;font-weight:800;line-height:1.15;margin-left:3px;padding:3px 0;word-break:break-word;background:#ffffff;color:#000000;' + (f[2] ? 'grid-column:1 / -1;' : 'grid-column:span 2;') + '"><span style="font-weight:800;color:#000000;">' + f[0] + ':</span> <span style="font-weight:800;color:#000000;">' + esc(val) + '</span></div>';
             }).join('');
 
             return '' +
-                '<div id="reportCardPrintBox" style="width:700px;height:700px;padding:4px;background:white;font-family:Arial,Helvetica,sans-serif;color:#000000;box-sizing:border-box;border:2px solid #000000;font-weight:800;display:flex;flex-direction:column;margin:0 auto;">' +
+                '<div id="reportCardPrintBox" style="width:700px;height:700px;padding:4px;background:white;font-family:Arial,Helvetica,sans-serif;color:#000000;box-sizing:border-box;border:2px solid #000000;font-weight:800;text-transform:uppercase;display:flex;flex-direction:column;margin:0 auto;">' +
                 '<div style="display:flex;gap:4px;align-items:stretch;margin-bottom:4px;">' +
                 '<div style="flex:1;min-height:215px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:#ffffff;border:2px solid #000000;padding:6px;box-sizing:border-box;">' +
                 '<div style="background:white;color:#000000;text-align:center;font-size:30px;font-weight:800;padding:2px 0;margin-bottom:8px;letter-spacing:0;white-space:nowrap;display:inline-block;">' +
                 '<span style="text-decoration:none;">PURBANI FABRICS LTD.</span>' +
                 '<span style="display:block;width:100%;height:3px;background:#000000;margin-top:2px;"></span>' +
                 '</div>' +
-                '<div style="font-weight:800;color:#000000;line-height:1.5;word-break:break-word;">' +
-                '<div style="font-size:30px;">ROLL: ' + esc(rollCode) + '</div>' +
-                '<div style="font-size:29px;">QTY: ' + esc(qty) + '</div>' +
-                '<div style="font-size:28px;">Buyer: ' + esc(row.BUYER || '') + '</div>' +
-                '<div style="font-size:25px;">Date: ' + esc(row.BUDAT || row.P_CREATED || '') + '</div>' +
+                '<div style="font-weight:800;color:#000000;line-height:1.3;word-break:break-word;">' +
+                '<div style="font-size:26px;">ROLL: ' + esc(rollCode) + '</div>' +
+                '<div style="font-size:25px;">QTY: ' + esc(qty) + '</div>' +
+                '<div style="font-size:24px;">PO NO: ' + esc(row.PO_NUMBER || '') + '</div>' +
+                '<div style="font-size:22px;">DATE: ' + esc(row.BUDAT || row.P_CREATED || '') + '</div>' +
                 '</div>' +
                 '</div>' +
-                '<div id="reportRejQrTarget" style="flex:none;width:215px;min-height:215px;height:auto;align-self:stretch;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:2px solid #000000;background:#ffffff;"></div>' +
+                '<div id="reportRejQrTarget" style="flex:none;width:200px;min-height:200px;height:auto;align-self:stretch;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:2px solid #000000;background:#ffffff;"></div>' +
                 '</div>' +
                 '<div style="display:grid;grid-template-columns:repeat(4,1fr);column-gap:8px;row-gap:2px;background:#ffffff;">' + fieldHTML + '</div>' +
                 '</div>';
@@ -1297,8 +1298,8 @@ if (isset($db) && $db) {
             if (qTarget && typeof QRCode !== 'undefined') {
                 new QRCode(qTarget, {
                     text: String(rollCode),
-                    width: 208,
-                    height: 208,
+                    width: 194,
+                    height: 194,
                     colorDark: '#000000',
                     colorLight: '#ffffff',
                     correctLevel: QRCode.CorrectLevel.H
@@ -1333,8 +1334,8 @@ if (isset($db) && $db) {
             if (qTarget && typeof QRCode !== 'undefined') {
                 new QRCode(qTarget, {
                     text: String(rollCode),
-                    width: 208,
-                    height: 208,
+                    width: 194,
+                    height: 194,
                     colorDark: '#000000',
                     colorLight: '#ffffff',
                     correctLevel: QRCode.CorrectLevel.H
@@ -1360,7 +1361,7 @@ if (isset($db) && $db) {
             clone.style.margin = '0';
             clone.style.transform = 'none';
 
-            // qrcode.js puts both a <canvas> and an <img> in the box -> keep exactly one 208px QR image
+            // qrcode.js puts both a <canvas> and an <img> in the box -> keep exactly one 194px QR image
             var origQr = cardElement.querySelector('#reportRejQrTarget');
             var cloneQr = clone.querySelector('#reportRejQrTarget');
             if (origQr && cloneQr) {
@@ -1378,7 +1379,7 @@ if (isset($db) && $db) {
                     var qImg = document.createElement('img');
                     qImg.src = dataUrl;
                     qImg.alt = 'QR Code';
-                    qImg.style.cssText = 'width:208px;height:208px;display:block;margin:0 auto;';
+                    qImg.style.cssText = 'width:194px;height:194px;display:block;margin:0 auto;';
                     cloneQr.appendChild(qImg);
                 }
             }
