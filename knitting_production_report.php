@@ -136,7 +136,7 @@
 
         .pdf-item {
             grid-column: span 2;
-            font-size: 29px;
+            font-size: 27px;
             font-weight: 800;
             line-height: 1.15;
             margin-left: 3px;
@@ -347,11 +347,20 @@
 
     <script>
         function buildRowCardElement(row) {
+            var escapeLabelValue = function(value) {
+                return String(value === null || value === undefined ? '' : value)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            };
+
             var fieldHTML = [
                 ['Shift', row.SHIFT],
                 ['OP NAME', row.UNAME],
                 ['SONO', row.SONO],
-                ['PO NO', row.PO_NUMBER],
+                ['BUYER', row.BUYER],
                 ['Style', row.STYLE],
                 ['MCNO', row.MCNO],
                 ['MC Dia', row.MC_DIA],
@@ -362,30 +371,31 @@
                 ['F. TYPE', row.FABRICS_TYPE, 'vertical'],
                 ['Y. COUNT', row.YARN_COUNT, 'vertical'],
                 ['Y. BRAND', row.YBRAND, 'vertical'],
-                ['Y. LOT', row.YARN_LOT, 'vertical']
+                ['Y. LOT', row.YARN_LOT, 'vertical'],
+                ['CATEGORY', row.CATEGORY, 'vertical']
             ];
 
             var rowsHTML = fieldHTML.map(function(f) {
                 var val = (f[1] === null || f[1] === undefined) ? '' : f[1];
-                return '<div class="pdf-item' + (f[2] ? ' pdf-' + f[2] : '') + '"><span class="pdf-label">' + f[0] + ':</span> <span class="pdf-value">' + val + '</span></div>';
+                return '<div class="pdf-item' + (f[2] ? ' pdf-' + f[2] : '') + '"><span class="pdf-label">' + f[0] + ':</span> <span class="pdf-value">' + escapeLabelValue(val) + '</span></div>';
             }).join('');
 
             var content = '' +
-                '<div id="rowPdfCard" style="width:700px;height:700px;padding:4px;background: white;font-family:Arial,Helvetica,sans-serif;color:#000000;box-sizing:border-box;border:2px solid #000000;font-weight:800;display:flex;flex-direction:column;">' +
+                '<div id="rowPdfCard" style="width:700px;height:700px;padding:4px;background: white;font-family:Arial,Helvetica,sans-serif;color:#000000;box-sizing:border-box;border:2px solid #000000;font-weight:800;text-transform:uppercase;display:flex;flex-direction:column;">' +
                 '<div style="display:flex;gap:4px;align-items:stretch;margin-bottom:4px;">' +
                 '<div style="flex:1;min-height:215px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:#ffffff;border:2px solid #000000;padding:6px;box-sizing:border-box;">' +
                 '<div style="background:white;color:#000000;text-align:center;font-size:30px;font-weight:800;padding:2px 0;margin-bottom:8px;letter-spacing:0;white-space:nowrap;display:inline-block;">' +
                 '<span style="text-decoration:none;">PURBANI FABRICS LTD.</span>' +
                 '<span style="display:block;width:100%;height:3px;background:#000000;margin-top:2px;"></span>' +
                 '</div>' +
-                '<div style="font-weight:800;color:#000000;line-height:1.5;word-break:break-word;">' +
-                '<div style="font-size:30px;">ROLL: ' + (row.ROLL || '') + '</div>' +
-                '<div style="font-size:29px;">QTY: ' + (row.PQTY || '') + '</div>' +
-                '<div style="font-size:28px;">Buyer: ' + (row.BUYER || '') + '</div>' +
-                '<div style="font-size:25px;">Date: ' + (row.BUDAT || '') + '</div>' +
+                '<div style="font-weight:800;color:#000000;line-height:1.3;word-break:break-word;">' +
+                '<div style="font-size:26px;">ROLL: ' + escapeLabelValue(row.ROLL || '') + '</div>' +
+                '<div style="font-size:25px;">QTY: ' + escapeLabelValue(row.PQTY || '') + '</div>' +
+                '<div style="font-size:24px;">PO NO: ' + escapeLabelValue(row.PO_NUMBER || '') + '</div>' +
+                '<div style="font-size:22px;">DATE: ' + escapeLabelValue(row.BUDAT || '') + '</div>' +
                 '</div>' +
                 '</div>' +
-                '<div id="rowQrBoxRight" style="flex:none;width:215px;min-height:215px;height:auto;align-self:stretch;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:2px solid #000000;background:#ffffff;"></div>' +
+                '<div id="rowQrBoxRight" style="flex:none;width:200px;min-height:200px;height:auto;align-self:stretch;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:2px solid #000000;background:#ffffff;"></div>' +
                 '</div>' +
                 '<div class="pdf-grid">' + rowsHTML + '</div>' +
                 '</div>';
@@ -402,8 +412,8 @@
             if (typeof QRCode !== 'undefined' && qrBox) {
                 new QRCode(qrBox, {
                     text: String(row.ROLL || ''),
-                    width: 208,
-                    height: 208,
+                    width: 194,
+                    height: 194,
                     colorDark: "#000000",
                     colorLight: "#ffffff",
                     correctLevel: QRCode.CorrectLevel.H
@@ -415,8 +425,8 @@
                 if (canvas) {
                     var img = document.createElement('img');
                     img.src = canvas.toDataURL('image/png');
-                    img.width = 208;
-                    img.height = 208;
+                    img.width = 194;
+                    img.height = 194;
                     qrBox.innerHTML = '';
                     qrBox.appendChild(img);
                 }

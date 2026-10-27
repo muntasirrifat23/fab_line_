@@ -1954,7 +1954,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
         var style = document.createElement('style');
         style.textContent = '' +
           '.pdf-grid{display:grid;grid-template-columns:repeat(4,1fr);column-gap:8px;row-gap:2px;background:#ffffff;}' +
-          '.pdf-item{grid-column:span 2;font-size:29px;font-weight:800;line-height:1.15;margin-left:3px; padding:3px 0;word-break:break-word;background:#ffffff;color:#000000;}' +
+          '.pdf-item{grid-column:span 2;font-size:27px;font-weight:800;line-height:1.15;margin-left:3px; padding:3px 0;word-break:break-word;background:#ffffff;color:#000000;}' +
           '.pdf-item.pdf-vertical{grid-column:1 / -1;}' +
           '.pdf-label,.pdf-value{font-weight:800;color:#000000;text-transform:uppercase;}';
         document.body.appendChild(style);
