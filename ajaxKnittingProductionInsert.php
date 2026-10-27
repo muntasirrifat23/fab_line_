@@ -53,6 +53,7 @@ $color        = val("color");
 $sl_vdq       = val("sl_vdq");
 $customer     = val("customer");
 $feeder_plan  = val("feeder_plan");
+$category     = val("category");
 $knit_material_code = val("knit_material_code");
 $knit_m_des   = val("knit_m_desc") ? val("knit_m_desc") : val("knit_m_description");
 $pqty         = floatval(val("pqty"));
@@ -187,6 +188,7 @@ SL_VDQ,
 FEEDER_PLAN,
 LOT_NO,
 YBRAND,
+`CATEGORY`,
 KNIT_MATERIAL_CODE,
 KNIT_M_DES,
 UNAME,
@@ -194,6 +196,7 @@ UID
 )
 VALUES
 (
+    ?,
     ?,
     ?,
     ?,
@@ -234,7 +237,7 @@ if(!$stmt){
 
 mysqli_stmt_bind_param(
     $stmt,
-    "sssssssssssssssssssssssssss",
+    "ssssssssssssssssssssssssssss",
 
     $budat,
     $roll,
@@ -259,6 +262,7 @@ mysqli_stmt_bind_param(
     $feeder_plan,
     $lot_no,
     $yarn_brand,
+    $category,
     $knit_material_code,
     $knit_m_des,
     $uname,

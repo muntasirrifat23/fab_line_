@@ -97,12 +97,12 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
       min-height: 100vh;
       display: flex;
       justify-content: center;
-      align-items: center;
+      align-items: flex-start;
       padding: 16px;
     }
 
     .card {
-      max-width: 650px;
+      max-width: 1200px;
       width: 100%;
       background: #ffffff;
       border-radius: 40px;
@@ -136,17 +136,29 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
     }
 
     .card.expanded {
-      max-width: 650px;
+      max-width: 1200px;
     }
 
     .scanner-container {
       position: relative;
+      width: 100%;
+      max-width: min(100%, 54vh, 560px);
+      max-height: 54vh;
+      margin-left: auto;
+      margin-right: auto;
       background: #eef2f7;
       border-radius: 28px;
       overflow: hidden;
       box-shadow: inset 0 0 0 1px #d7e0ea, 0 8px 20px rgba(30, 60, 120, 0.12);
       margin-bottom: 24px;
       aspect-ratio: 1 / 1;
+    }
+
+    @supports (height: 100dvh) {
+      .scanner-container {
+        max-width: min(100%, 54dvh, 560px);
+        max-height: 54dvh;
+      }
     }
 
     #qr-reader {
@@ -156,10 +168,15 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
       background: #f4f7fb;
     }
 
+    #qr-reader > div {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
     #qr-reader video {
       border-radius: 28px;
-      width: 100%;
-      height: 100%;
+      width: 100% !important;
+      height: 100% !important;
       object-fit: cover;
       display: block;
     }
@@ -688,6 +705,88 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
       }
     }
 
+    @media (min-width: 1200px) {
+      .data-row.default-row:not(.operator-info-row):not(.quantity-summary-row):not(.scale-qty-row) {
+        grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+        gap: 10px;
+      }
+    }
+
+    @media (min-width: 769px) and (max-width: 1199px) {
+      .data-row.default-row:not(.operator-info-row):not(.quantity-summary-row):not(.scale-qty-row) {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 12px;
+      }
+
+      .card {
+        border-radius: 28px;
+        padding: 20px;
+      }
+
+      .result-panel {
+        padding: 14px;
+      }
+
+      .data-row.default-row:not(.operator-info-row):not(.quantity-summary-row):not(.scale-qty-row) {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 10px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 8px;
+      }
+
+      .card {
+        border-radius: 20px;
+        padding: 14px;
+      }
+
+      .result-panel {
+        padding: 10px;
+      }
+
+      .data-row.default-row:not(.operator-info-row):not(.quantity-summary-row):not(.scale-qty-row) {
+        gap: 8px;
+      }
+
+      .field-block .field-label {
+        font-size: 0.62rem;
+        letter-spacing: 0.2px;
+      }
+
+      .field-block .field-value {
+        font-size: 0.82rem;
+      }
+
+      .scanner-container {
+        max-width: min(100%, 46vh, 420px);
+        max-height: 46vh;
+        margin-bottom: 16px;
+        border-radius: 20px;
+      }
+
+      .scan-overlay,
+      #qr-reader video {
+        border-radius: 20px;
+      }
+    }
+
+    @supports (height: 100dvh) {
+      @media (max-width: 480px) {
+        .scanner-container {
+          max-width: min(100%, 46dvh, 420px);
+          max-height: 46dvh;
+        }
+      }
+    }
+
     .data-row.default-row .label {
     white-space: nowrap;
 }
@@ -926,7 +1025,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
         'KNIT_MATERIAL_CODE': 'Knit Material Code',
         'KNIT_M_DESCRIPTION': 'Knit M Description',
         'CREATED_DATE': 'Created Date',
-        'UNAME': 'User'
+        'UNAME': 'User',
+        'CATEGORY': 'Category'
       };
 
       let scannedInfo = null;
@@ -934,6 +1034,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
       let isScanning = false;
       let scanCount = 0;
       let operatorScanned = false;
+      let operatorRequiredPromptOpen = false;
       let verifying = false;
       let processingRoll = false;
       let operatorInfo = null;
@@ -1162,6 +1263,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           CUSTOMER: m(row.CUSTOMER),
           FEEDER_PLAN: m(row.FEEDER_PLAN),
           SHIFT: m(row.SHIFT),
+          CATEGORY: m(row.CATEGORY),
           KNIT_MATERIAL_CODE: m(row.KNIT_MATERIAL_CODE),
           KNIT_M_DESCRIPTION: m(row.KNIT_M_DESCRIPTION),
           CREATED_DATE: m(row.CREATED_DATE),
@@ -1206,8 +1308,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
         html += `
           <div class="data-row default-row knit-flow">
             ${['KNITCARD', 'BOOKING', 'SONO', 'BUYER', 'STYLE', 'COLOR', 'MCNO',
-              'MC_DIA', 'CUSTOMER', 'SHIFT', 'YARN_TYPE', 'YARN_COUNT', 'FABRICS_TYPE', 'FINISH_GSM',
-              'FINISH_DIA', 'OPEN_TUBE', 'SL_VDQ', 'FEEDER_PLAN', 'LOT_NO', 'YARN_BRAND'].map(field => `
+              'MC_DIA', 'SHIFT', 'CUSTOMER', 'FABRICS_TYPE', 'FINISH_GSM', 'FINISH_DIA',
+              'OPEN_TUBE', 'SL_VDQ', 'YARN_TYPE', 'YARN_COUNT', 'YARN_BRAND', 'LOT_NO',
+              'FEEDER_PLAN', 'CATEGORY'].map(field => `
               <div class="field-block">
                 <span class="field-label">${FIELD_LABELS[field] || field}</span>
                 <span class="field-value">${scannedInfo[field] || '-'}</span>
@@ -1220,7 +1323,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
         const qtyColor = remaining <= 0 ? '#b91c1c' : '#047857';
 
         html += `
-          <div class="data-row default-row" style="border-left-color:${remaining <= 0 ? '#ef4444' : '#10b981'}; background:${remaining <= 0 ? '#fef2f2' : '#f0fdf4'};">
+          <div class="data-row default-row quantity-summary-row" style="border-left-color:${remaining <= 0 ? '#ef4444' : '#10b981'}; background:${remaining <= 0 ? '#fef2f2' : '#f0fdf4'};">
             <div class="field-block">
               <span class="field-label">Original QTY (KG)</span>
               <span class="field-value">${origQty || '-'}</span>
@@ -1356,8 +1459,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
 
       function submitManualRoll() {
         if (!operatorScanned) {
-          const statusEl = document.getElementById('operatorInputStatus');
-          if (statusEl) statusEl.innerHTML = notFoundNoticeHtml('Please scan or enter Operator ID first.');
+          promptOperatorRequired();
           return;
         }
         const inp = document.getElementById('manualRollInput');
@@ -1382,6 +1484,49 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
             <i class="fas fa-times-circle"></i> ${escHtml(msg)}
           </div>
         `;
+      }
+
+      function promptOperatorRequired() {
+        if (operatorRequiredPromptOpen) return;
+
+        operatorRequiredPromptOpen = true;
+        processingRoll = true;
+        const shouldRestartScanner = isScanning;
+        const showPrompt = () => {
+          const resume = () => {
+            operatorRequiredPromptOpen = false;
+            processingRoll = false;
+            if (shouldRestartScanner && !operatorScanned) restartScanner();
+          };
+
+          if (typeof Swal !== 'undefined') {
+            Swal.fire({
+              icon: 'warning',
+              title: 'Operator ID Required',
+              text: 'Please scan or enter Operator ID first.',
+              confirmButtonText: 'OK',
+              allowOutsideClick: false,
+              timer: 3000,
+              timerProgressBar: true
+            }).then(resume);
+          } else {
+            alert('Please scan or enter Operator ID first.');
+            resume();
+          }
+        };
+
+        if (html5QrCode && isScanning) {
+          html5QrCode.stop().then(() => {
+            isScanning = false;
+            showPrompt();
+          }).catch(err => {
+            console.warn('Failed to pause scanner before operator prompt:', err);
+            isScanning = false;
+            showPrompt();
+          });
+        } else {
+          showPrompt();
+        }
       }
 
       function renderScannedData(qrText) {
@@ -1572,6 +1717,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
           feeder_plan: scannedInfo.FEEDER_PLAN || "",
           lot_no: scannedInfo.LOT_NO || "",
           yarn_brand: scannedInfo.YARN_BRAND || "",
+          category: scannedInfo.CATEGORY || "",
           knit_material_code: scannedInfo.KNIT_MATERIAL_CODE || "",
           knit_m_desc: scannedInfo.KNIT_M_DESCRIPTION || "",
           uid: operatorInfo && operatorInfo.OPERATOR_ID ? operatorInfo.OPERATOR_ID : "",
@@ -1948,8 +2094,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
 
         if (isRollCode(val)) {
           if (!operatorScanned) {
-            const statusEl = document.getElementById('operatorInputStatus');
-            if (statusEl) statusEl.innerHTML = notFoundNoticeHtml('Please scan or enter Operator ID first.');
+            promptOperatorRequired();
             return;
           }
           processingRoll = true;

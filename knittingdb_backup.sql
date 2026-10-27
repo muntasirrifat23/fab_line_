@@ -374,6 +374,7 @@ CREATE TABLE `knitting_production` (
   `FEEDER_PLAN` varchar(100) DEFAULT NULL,
   `LOT_NO` varchar(100) DEFAULT NULL,
   `YBRAND` varchar(100) DEFAULT NULL,
+  `CATEGORY` varchar(50) DEFAULT NULL,
   `KNIT_MATERIAL_CODE` varchar(50) DEFAULT NULL,
   `KNIT_M_DES` varchar(200) DEFAULT NULL,
   `UNAME` varchar(100) DEFAULT NULL,
