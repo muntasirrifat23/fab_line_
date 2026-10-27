@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Knitting | Store</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -18,22 +18,47 @@
     body {
       font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
       background: linear-gradient(135deg, #b9efe6, #a4d9f6, #c9f2dd);
-      min-height: 100vh;
+      height: 100vh;
       display: flex;
       justify-content: center;
-      align-items: center;
+      align-items: flex-start;
       padding: 16px;
+      overflow: hidden;
     }
 
+    .data-row.default-row.status-row {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    grid-template-columns: none !important;
+    gap: 10px;
+}
+
+.data-row.default-row.status-row .label {
+    min-width: auto;
+    white-space: nowrap;
+}
+
+.data-row.default-row.status-row .value {
+    flex: 1;
+    text-align: right;
+    margin-left: 10px;
+}
     .card {
-      max-width: 650px;
+      max-width: 1100px;
       width: 100%;
+      height: calc(100vh - 32px);
+      min-height: 0;
+      margin: 0 auto;
       background: #eef5f3;
       border-radius: 40px;
       padding: 24px 20px 30px;
       box-shadow: 0 20px 45px rgba(10, 60, 55, 0.3);
       border: 1px solid #b5d8d2;
       transition: 0.2s;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
     }
 
     .back-btn {
@@ -92,24 +117,32 @@
 
     .scanner-container {
       position: relative;
+      width: 100%;
+      max-width: 520px;
+      aspect-ratio: 1 / 1;
+      margin-left: auto;
+      margin-right: auto;
       background: #d9ede9;
       border-radius: 28px;
       overflow: hidden;
       box-shadow: inset 0 0 0 1px #b5d8d2, 0 8px 20px rgba(10, 60, 55, 0.18);
-      margin-bottom: 24px;
-      min-height: 300px;
+      margin-bottom: 12px;
+      flex: 0 0 auto;
     }
 
     #qr-reader {
       width: 100%;
+      height: 100%;
       padding: 0 !important;
       background: #e6f4f1;
+      overflow: hidden;
     }
 
     #qr-reader video {
       border-radius: 28px;
       width: 100%;
-      height: auto;
+      height: 100%;
+      object-fit: cover;
       display: block;
     }
 
@@ -129,8 +162,8 @@
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 70%;
-      height: 70%;
+      width: 76%;
+      height: 76%;
       transform: translate(-50%, -50%);
       border: 2px solid rgba(0, 255, 200, 0.5);
       border-radius: 20px;
@@ -213,7 +246,7 @@
       margin-top: 20px;
       border: 1px solid #a9cdc6;
       box-shadow: inset 0 2px 6px rgba(10, 60, 55, 0.1);
-      overflow-y: auto;
+      flex: 1 0 auto;
     }
 
     .result-panel::-webkit-scrollbar {
@@ -314,6 +347,13 @@
       line-height: 1.45;
     }
 
+    @media (min-width: 1200px) {
+      .data-row.default-row {
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 12px;
+      }
+    }
+
     .field-block {
       display: flex;
       flex-direction: column;
@@ -322,7 +362,7 @@
     }
 
     .field-block .field-label {
-      font-size: 0.7rem;
+      font-size: 0.78rem;
       color: #0b4f47;
       font-weight: 700;
       text-transform: uppercase;
@@ -331,7 +371,7 @@
     }
 
     .field-block .field-value {
-      font-size: 0.95rem;
+      font-size: 1.05rem;
       color: #042e2b;
       font-weight: 800;
       white-space: normal;
@@ -390,22 +430,39 @@
       color: #0f7a6f;
     }
 
+    .rack-selection-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      align-items: start;
+    }
+
+    .rack-selection-field {
+      min-width: 0;
+    }
+
+    .rack-selection-field .rack-section-title {
+      min-height: 34px;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      font-size: 0.82rem;
+    }
+
     .rack-group {
+      position: relative;
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
-      margin-bottom: 12px;
+      margin-bottom: 0;
     }
 
-    .rack-levels {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .rack-levels .sub-rack-group {
+    .rack-selection-grid .sub-rack-group {
       min-width: 0;
       margin-top: 0;
+      min-height: 46px;
+      padding: 8px;
+      gap: 6px;
+      align-items: center;
     }
 
     .rack-group .btn {
@@ -447,10 +504,13 @@
 
     .rack-number-options {
       display: none;
+      position: absolute;
+      z-index: 20;
+      top: calc(100% + 4px);
+      left: 0;
       width: 100%;
       max-height: 180px;
       overflow-y: auto;
-      margin-top: 4px;
       padding: 4px;
       background: #eef8f5;
       border: 1px solid #9fc8c1;
@@ -616,32 +676,64 @@
       color: #042f2c;
     }
 
-    @media (max-width: 480px) {
+    @media (min-width: 768px) and (max-width: 1199.98px) {
       .card {
-        padding: 16px;
+        max-width: 1100px;
+        border-radius: 30px;
+        padding: 22px;
       }
 
-      .data-row {
-        font-size: 0.8rem;
-        padding: 6px 10px;
-        flex-wrap: wrap;
+      .data-row.default-row {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+      }
+    }
+
+    @media (max-width: 767.98px) {
+      body {
+        padding: 10px;
       }
 
-      .data-row .label {
-        min-width: 80px;
-        font-size: 0.75rem;
+      .card {
+        max-width: 100%;
+        height: calc(100vh - 20px);
+        border-radius: 24px;
+        padding: 18px 14px 20px;
       }
 
-      .data-row .value {
-        font-size: 0.8rem;
+      .store-header {
+        margin-bottom: 14px;
       }
 
       .scanner-container {
-        min-height: 200px;
+        margin-bottom: 10px;
+      }
+
+      .result-panel {
+        padding: 14px;
+        border-radius: 22px;
+      }
+
+      .data-row.default-row {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 10px;
+      }
+
+      .rack-group .btn,
+      .rack-number-input {
+        padding: 11px 12px;
+      }
+
+      .footer-note {
+        margin-top: auto;
       }
 
       .rack-actions {
-        flex-direction: column;
+        flex-wrap: wrap;
+      }
+
+      .rack-selection-grid {
+        grid-template-columns: 1fr;
       }
     }
 
@@ -685,15 +777,78 @@
       filter: brightness(1.1);
     }
 
-    @media(max-width:768px) {
-      .data-row.default-row {
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
-      }
-    }
-
     @media(max-width:480px) {
+      body {
+        padding: 6px;
+      }
+
+      .card {
+        height: calc(100vh - 12px);
+        padding: 14px 10px 16px;
+        border-radius: 18px;
+      }
+
+      .store-header h2 {
+        font-size: 1.15rem;
+      }
+
+      .scanner-container {
+        max-width: min(100%, 420px);
+        border-radius: 20px;
+      }
+
+      #qr-reader video,
+      .scan-overlay {
+        border-radius: 20px;
+      }
+
+      .result-panel {
+        padding: 12px 10px;
+        border-radius: 18px;
+      }
+
       .data-row.default-row {
-        grid-template-columns: repeat(2, 1fr) !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px;
+        padding: 8px 10px;
+      }
+
+      .field-block {
+        gap: 4px;
+      }
+
+      .field-block .field-label {
+        font-size: 0.64rem;
+      }
+
+      .field-block .field-value {
+        font-size: 0.86rem;
+      }
+
+      .sub-rack-group {
+        min-height: 44px;
+      }
+
+      .rack-actions {
+        gap: 8px;
+      }
+
+      .btn-action {
+        min-width: 0;
+        flex-basis: calc(50% - 4px);
+        padding: 11px 8px;
+      }
+
+      .manual-entry {
+        flex-wrap: wrap;
+      }
+
+      .manual-entry input {
+        flex-basis: 100%;
+      }
+
+      .manual-entry button {
+        flex: 1;
       }
     }
   </style>
@@ -731,27 +886,36 @@
         <!-- Default content will be injected by JS -->
       </div>
       <div id="rack-section" class="rack-section" style="display:none;">
-        <div class="rack-section-title">
-          <i class="fas fa-warehouse"></i>
-          <span>Select Rack Number</span>
-        </div>
-        <div class="rack-group" id="rackGroup">
-          <input class="rack-number-input" type="text" id="rackNumberInput"
-            inputmode="numeric" maxlength="2"
-            placeholder="Enter rack number (01-50)" autocomplete="off">
-          <div class="rack-number-options" id="rackNumberOptions"></div>
-        </div>
-
-        <div class="rack-section-title">
-          <i class="fas fa-warehouse"></i>
-          <span>Select Rack Location</span>
-        </div>
-        <div class="rack-levels">
-          <div class="sub-rack-group" id="subRackGroup">
-            <span class="sub-placeholder">Select a rack location</span>
+        <div class="rack-selection-grid">
+          <div class="rack-selection-field">
+            <div class="rack-section-title">
+              <i class="fas fa-warehouse"></i>
+              <span>Select Rack Number</span>
+            </div>
+            <div class="rack-group" id="rackGroup">
+              <input class="rack-number-input" type="text" id="rackNumberInput"
+                inputmode="numeric" maxlength="2"
+                placeholder="Enter rack number (01-50)" autocomplete="off">
+              <div class="rack-number-options" id="rackNumberOptions"></div>
+            </div>
           </div>
-          <div class="sub-rack-group" id="subRackOptionsGroup">
-            <span class="sub-placeholder">Select A, B or C</span>
+          <div class="rack-selection-field">
+            <div class="rack-section-title">
+              <i class="fas fa-warehouse"></i>
+              <span>Select Rack Location</span>
+            </div>
+            <div class="sub-rack-group" id="subRackGroup">
+              <span class="sub-placeholder">Select a rack location</span>
+            </div>
+          </div>
+          <div class="rack-selection-field">
+            <div class="rack-section-title">
+              <i class="fas fa-warehouse"></i>
+              <span>Select Rack Section</span>
+            </div>
+            <div class="sub-rack-group" id="subRackOptionsGroup">
+              <span class="sub-placeholder">Select A, B or C</span>
+            </div>
           </div>
         </div>
         <div class="rack-actions">
@@ -809,6 +973,8 @@
         YTYPE: 'YARN TYPE',
         YCOUNT: 'YARN COUNT',
         YBRAND: 'YARN BRAND',
+        QC_STATUS: 'QC_STATUS',
+        CATEGORY: 'CATEGORY',
         FTYPE: 'FABRICS TYPE',
         FGSM: 'FINISH GSM',
         FDIA: 'FINISH DIA',
@@ -896,10 +1062,22 @@
         return `
           <div class="data-row default-row">
             ${fields.map(function(field) {
+              const value = scannedInfo[field] !== undefined && scannedInfo[field] !== null && scannedInfo[field] !== ''
+                ? String(scannedInfo[field])
+                : '-';
+              const safeValue = value.replace(/[&<>"']/g, function(char) {
+                return {
+                  '&': '&amp;',
+                  '<': '&lt;',
+                  '>': '&gt;',
+                  '"': '&quot;',
+                  "'": '&#039;'
+                }[char];
+              });
               return `
                 <div class="field-block">
                   <span class="field-label">${FIELD_LABELS[field] || field}</span>
-                  <span class="field-value">${scannedInfo[field] !== undefined && scannedInfo[field] !== null && scannedInfo[field] !== '' ? scannedInfo[field] : '-'}</span>
+                  <span class="field-value">${safeValue}</span>
                 </div>
               `;
             }).join('')}
@@ -907,11 +1085,22 @@
         `;
       }
 
+      function getDataColumns() {
+        if (window.matchMedia('(min-width: 1200px)').matches) return 7;
+        if (window.matchMedia('(max-width: 480px)').matches) return 2;
+        if (window.matchMedia('(max-width: 767.98px)').matches) return 3;
+        return 4;
+      }
+
+      let renderedFieldColumns = getDataColumns();
+
       function renderScannedData(row) {
         scannedInfo = row;
         hasLoadedData = true;
         clearMessage();
         showRackSection();
+        const columns = getDataColumns();
+        renderedFieldColumns = columns;
 
         let html = `
           <div class="data-row header-row" style="border-left-color:#4fc3f7;">
@@ -920,12 +1109,17 @@
           </div>
         `;
 
-        html += buildFieldRow(['ROLL', 'UQTY', 'UNAME', 'BUDAT']);
-        html += buildFieldRow(['TPOINT', 'PO_NUMBER', 'SONO', 'BUYER']);
-        html += buildFieldRow(['STYLE', 'COLOR', 'MCNO', 'MC_DIA']);
-        html += buildFieldRow(['CUSTOMER', 'FGSM', 'FDIA', 'FTYPE']);
-        html += buildFieldRow(['FPLAN', 'O_T', 'SL', 'LOTNO']);
-        html += buildFieldRow(['YCOUNT', 'YBRAND', 'YTYPE', 'QC_STATUS']);
+        const fields = [
+          'ROLL', 'UQTY', 'UNAME', 'BUDAT',
+          'TPOINT', 'PO_NUMBER', 'SONO', 'BUYER',
+          'STYLE', 'COLOR', 'MCNO', 'MC_DIA',
+          'CUSTOMER', 'FGSM', 'FDIA', 'FTYPE',
+          'FPLAN', 'O_T', 'SL', 'LOTNO',
+          'YCOUNT', 'YBRAND', 'YTYPE', 'QC_STATUS', 'CATEGORY'
+        ];
+        for (let index = 0; index < fields.length; index += columns) {
+          html += buildFieldRow(fields.slice(index, index + columns));
+        }
 
         html += `
           <button class="rescan-btn" onclick="window.location.reload();">
@@ -936,6 +1130,13 @@
         resultContainer.innerHTML = html;
         updateRackDisplay();
       }
+
+      window.addEventListener('resize', function() {
+        const columns = getDataColumns();
+        if (hasLoadedData && columns !== renderedFieldColumns) {
+          renderScannedData(scannedInfo);
+        }
+      });
 
       function showRackSection() {
         rackSection.style.display = 'block';
@@ -1377,12 +1578,14 @@
         html5QrCode = new Html5Qrcode("qr-reader");
 
         const config = {
-          fps: 30,
-          qrbox: {
-            width: 240,
-            height: 240
+          fps: 20,
+          qrbox: function(viewfinderWidth, viewfinderHeight) {
+            const size = Math.floor(Math.min(360, viewfinderWidth * 0.76, viewfinderHeight * 0.76));
+            return {
+              width: size,
+              height: size
+            };
           },
-          aspectRatio: 1.0
         };
 
         html5QrCode.start({
@@ -1397,20 +1600,45 @@
           cameraStatus.style.color = '#8bcbff';
           scannerContainer.style.display = 'block';
           cameraControls.style.display = 'flex';
+          applyCameraZoom();
         }).catch(function(err) {
           console.error("Camera start error:", err);
+          const errorMessage = err && err.message ? err.message : String(err || 'Unknown camera error');
           cameraStatus.innerText = 'Camera error';
           cameraStatus.style.color = '#f7a1a1';
           resultContainer.innerHTML = `
             <div class="data-row default-row" style="border-left-color:#c44;">
               <span class="label"><i class="fas fa-exclamation-triangle"></i> Camera unavailable</span>
-              <span class="value" style="font-size:0.8rem;">${err.message || 'Please allow camera access'}</span>
+              <span class="value" id="cameraErrorDetails" style="font-size:0.8rem;"></span>
             </div>
-            <button class="rescan-btn" onclick="window.location.reload();">
+            <button class="rescan-btn" id="retryCameraBtn" type="button">
               <i class="fas fa-redo"></i> Retry Camera
             </button>
           `;
+          document.getElementById('cameraErrorDetails').textContent = errorMessage;
+          document.getElementById('retryCameraBtn').addEventListener('click', function() {
+            restartScanner();
+          });
         });
+      }
+
+      function applyCameraZoom() {
+        try {
+          const capabilities = html5QrCode.getRunningTrackCapabilities();
+          const zoomRange = capabilities.zoom;
+          if (!zoomRange || typeof zoomRange.max !== 'number') return;
+
+          const zoomLevel = Math.min(1.5, zoomRange.max);
+          if (zoomLevel <= zoomRange.min) return;
+
+          html5QrCode.applyVideoConstraints({
+            advanced: [{ zoom: zoomLevel }]
+          }).catch(function(err) {
+            console.warn('Camera zoom is not supported:', err);
+          });
+        } catch (err) {
+          console.warn('Unable to read camera zoom capabilities:', err);
+        }
       }
 
       function onScanSuccess(decodedText, decodedResult) {

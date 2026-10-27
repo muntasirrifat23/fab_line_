@@ -99,6 +99,7 @@ $tpoint     = val($input, 'TPOINT');
 $mcode      = val($input, 'MATERIAL_CODE');
 $mdesc      = val($input, 'M_DES');
 $qcstatus   = val($input, 'QC_STATUS');
+$category   = val($input, 'CATEGORY');
 
 $columns = mysqli_query($db, "SHOW COLUMNS FROM knitting_store");
 $existingColumns = [];
@@ -118,6 +119,12 @@ if (!in_array('YBRAND', $existingColumns, true)) {
 }
 if (!in_array('QC_STATUS', $existingColumns, true)) {
     mysqli_query($db, "ALTER TABLE knitting_store ADD COLUMN QC_STATUS VARCHAR(50) DEFAULT NULL");
+}
+if (!in_array('CATEGORY', $existingColumns, true)) {
+    if (!mysqli_query($db, "ALTER TABLE knitting_store ADD COLUMN CATEGORY VARCHAR(100) DEFAULT NULL")) {
+        echo json_encode(['success' => false, 'error' => 'Unable to add CATEGORY column: ' . mysqli_error($db)]);
+        exit;
+    }
 }
 
 $curUser = isset($_SESSION['username']) ? trim($_SESSION['username']) : '';
@@ -142,8 +149,8 @@ if ($curUser !== '') {
 $sql = "INSERT INTO knitting_store
         (BUDAT, RACKNO, RACKLOCATION, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR, MCNO, MCDIA,
          CUSTOMER, YTYPE, YCOUNT, YBRAND, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
-         TPOINT, MCODE, MDESCRIPTION, UNAME, UID, QC_STATUS)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+         TPOINT, MCODE, MDESCRIPTION, UNAME, UID, QC_STATUS, CATEGORY)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 try {
     $stmt = mysqli_prepare($db, $sql);
@@ -153,10 +160,10 @@ try {
 
     mysqli_stmt_bind_param(
         $stmt,
-        "ssssssssssssssssssssssssssssss",
+        "sssssssssssssssssssssssssssssss",
         $budat, $rackNo, $rackLocation, $roll, $po_number, $qty, $sono, $shift, $buyer, $style, $color,
         $mcno, $mcdia, $customer, $ytype, $ycount, $ybrand, $o_t, $sl, $ftype, $fgsm, $fdia,
-        $fplan, $lotno, $tpoint, $mcode, $mdesc, $uname, $uid, $qcstatus
+        $fplan, $lotno, $tpoint, $mcode, $mdesc, $uname, $uid, $qcstatus, $category
     );
 
     if (!mysqli_stmt_execute($stmt)) {
