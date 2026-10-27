@@ -527,6 +527,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                             'yarn_brand'      => $ybrand,
                             'yarn_count'      => $ycount,
                             'yarn_lot'        => $lotno,
+                            'category'        => $category,
                             'operator_name'   => $uname,
                             'operator_id'     => $uid,
                             'date'            => $budat
@@ -594,6 +595,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                         'yarn_brand'      => $ybrand,
                         'yarn_count'      => $ycount,
                         'yarn_lot'        => $lotno,
+                        'category'        => $category,
                         'operator_name'   => $uname,
                         'operator_id'     => $uid,
                         'date'            => $budat
@@ -696,10 +698,10 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         margin: 0 auto !important;
       }
       .qr-print-area .kp-qr-target img {
-        width: 208px !important;
-        height: 208px !important;
-        max-width: 208px !important;
-        max-height: 208px !important;
+        width: 194px !important;
+        height: 194px !important;
+        max-width: 194px !important;
+        max-height: 194px !important;
       }
     }
 
@@ -1224,38 +1226,39 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         if (!function_exists('renderKnittingInspectionProductionCardBox')) {
             function renderKnittingInspectionProductionCardBox($cardData, $roll, $qty, $qrTargetId, $cardBoxId) {
                 ?>
-                <div id="<?php echo htmlspecialchars($cardBoxId); ?>" class="kp-print-card knitting-production-card-wrap" style="width:700px; height:700px; min-width:700px; max-width:700px; min-height:700px; max-height:700px; padding:4px; background:#ffffff; font-family:Arial,Helvetica,sans-serif; color:#000000; box-sizing:border-box; border:2px solid #000000; font-weight:800; display:flex; flex-direction:column; margin:0 auto;">
+                <div id="<?php echo htmlspecialchars($cardBoxId); ?>" class="kp-print-card knitting-production-card-wrap" style="width:700px; height:700px; min-width:700px; max-width:700px; min-height:700px; max-height:700px; padding:4px; background:#ffffff; font-family:Arial,Helvetica,sans-serif; color:#000000; box-sizing:border-box; border:2px solid #000000; font-weight:800; text-transform:uppercase; display:flex; flex-direction:column; margin:0 auto;">
                   <div class="kp-top-row" style="display:flex; gap:4px; align-items:stretch; margin-bottom:4px; box-sizing:border-box;">
                     <div class="kp-info-box" style="flex:1; min-height:215px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; background:#ffffff; border:2px solid #000000; padding:6px; box-sizing:border-box;">
                       <div style="background:#ffffff; color:#000000; text-align:center; font-size:30px; font-weight:800; padding:2px 0; margin-bottom:8px; letter-spacing:0; white-space:nowrap; display:inline-block;">
                         <span style="text-decoration:none;">PURBANI FABRICS LTD.</span>
                         <span style="display:block; width:100%; height:3px; background:#000000; margin-top:2px;"></span>
                       </div>
-                      <div style="font-weight:800; color:#000000; line-height:1.5; word-break:break-word;">
-                        <div style="font-size:30px;">ROLL: <?php echo htmlspecialchars($roll); ?></div>
-                        <div style="font-size:29px;">QTY: <?php echo htmlspecialchars($qty); ?></div>
-                        <div style="font-size:28px;">Buyer: <?php echo htmlspecialchars($cardData['buyer'] ?: ''); ?></div>
-                        <div style="font-size:25px;">Date: <?php echo htmlspecialchars($cardData['date'] ?: ''); ?></div>
+                      <div style="font-weight:800; color:#000000; line-height:1.3; word-break:break-word;">
+                        <div style="font-size:26px;">ROLL: <?php echo htmlspecialchars($roll); ?></div>
+                        <div style="font-size:25px;">QTY: <?php echo htmlspecialchars($qty); ?></div>
+                        <div style="font-size:24px;">PO NO: <?php echo htmlspecialchars($cardData['po_number'] ?: ''); ?></div>
+                        <div style="font-size:22px;">DATE: <?php echo htmlspecialchars($cardData['date'] ?: ''); ?></div>
                       </div>
                     </div>
-                    <div id="<?php echo htmlspecialchars($qrTargetId); ?>" class="kp-qr-target" style="flex:none; width:215px; min-height:215px; height:auto; align-self:stretch; box-sizing:border-box; display:flex; align-items:center; justify-content:center; border:2px solid #000000; background:#ffffff; padding:0; margin:0; overflow:hidden;"></div>
+                    <div id="<?php echo htmlspecialchars($qrTargetId); ?>" class="kp-qr-target" style="flex:none; width:200px; min-height:200px; height:auto; align-self:stretch; box-sizing:border-box; display:flex; align-items:center; justify-content:center; border:2px solid #000000; background:#ffffff; padding:0; margin:0; overflow:hidden;"></div>
                   </div>
                   <div class="pdf-grid" style="display:grid; grid-template-columns:repeat(4,1fr); column-gap:8px; row-gap:2px; background:#ffffff;">
-                    <div class="pdf-item" style="grid-column:span 2; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">Shift:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['shift'] ?: ''); ?></span></div>
-                    <div class="pdf-item" style="grid-column:span 2; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">OPNAME:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['operator_name'] ?: ''); ?></span></div>
-                    <div class="pdf-item" style="grid-column:span 2; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">SONO:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['sono'] ?: ''); ?></span></div>
-                    <div class="pdf-item" style="grid-column:span 2; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">PO NO:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['po_number'] ?: ''); ?></span></div>
-                    <div class="pdf-item" style="grid-column:span 2; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">Style:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['style'] ?: ''); ?></span></div>
-                    <div class="pdf-item" style="grid-column:span 2; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">MCNO:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['mcno'] ?: ''); ?></span></div>
-                    <div class="pdf-item" style="grid-column:span 2; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">MC Dia:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['mc_dia'] ?: ''); ?></span></div>
-                    <div class="pdf-item" style="grid-column:span 2; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">Customer:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['customer'] ?: ''); ?></span></div>
-                    <div class="pdf-item" style="grid-column:span 2; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">FGSM:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['finish_gsm'] ?: ''); ?></span></div>
-                    <div class="pdf-item" style="grid-column:span 2; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">F. DIA:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['finish_dia'] ?: ''); ?></span></div>
-                    <div class="pdf-item pdf-vertical" style="grid-column:1 / -1; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">Color:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['color'] ?: ''); ?></span></div>
-                    <div class="pdf-item pdf-vertical" style="grid-column:1 / -1; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">F. TYPE:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['fabrics_type'] ?: ''); ?></span></div>
-                    <div class="pdf-item pdf-vertical" style="grid-column:1 / -1; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">Y. COUNT:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['yarn_count'] ?: ''); ?></span></div>
-                    <div class="pdf-item pdf-vertical" style="grid-column:1 / -1; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">Y. BRAND:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['yarn_brand'] ?: ''); ?></span></div>
-                    <div class="pdf-item pdf-vertical" style="grid-column:1 / -1; font-size:29px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">Y. LOT:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['yarn_lot'] ?: ''); ?></span></div>
+                    <div class="pdf-item" style="grid-column:span 2; font-size:27px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">Shift:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['shift'] ?: ''); ?></span></div>
+                    <div class="pdf-item" style="grid-column:span 2; font-size:27px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">OP NAME:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['operator_name'] ?: ''); ?></span></div>
+                    <div class="pdf-item" style="grid-column:span 2; font-size:27px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">SONO:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['sono'] ?: ''); ?></span></div>
+                    <div class="pdf-item" style="grid-column:span 2; font-size:27px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">BUYER:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['buyer'] ?: ''); ?></span></div>
+                    <div class="pdf-item" style="grid-column:span 2; font-size:27px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">Style:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['style'] ?: ''); ?></span></div>
+                    <div class="pdf-item" style="grid-column:span 2; font-size:27px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">MCNO:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['mcno'] ?: ''); ?></span></div>
+                    <div class="pdf-item" style="grid-column:span 2; font-size:27px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">MC Dia:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['mc_dia'] ?: ''); ?></span></div>
+                    <div class="pdf-item" style="grid-column:span 2; font-size:27px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">Customer:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['customer'] ?: ''); ?></span></div>
+                    <div class="pdf-item" style="grid-column:span 2; font-size:27px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">FGSM:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['finish_gsm'] ?: ''); ?></span></div>
+                    <div class="pdf-item" style="grid-column:span 2; font-size:27px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">F. DIA:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['finish_dia'] ?: ''); ?></span></div>
+                    <div class="pdf-item pdf-vertical" style="grid-column:1 / -1; font-size:27px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">Color:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['color'] ?: ''); ?></span></div>
+                    <div class="pdf-item pdf-vertical" style="grid-column:1 / -1; font-size:27px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">F. TYPE:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['fabrics_type'] ?: ''); ?></span></div>
+                    <div class="pdf-item pdf-vertical" style="grid-column:1 / -1; font-size:27px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">Y. COUNT:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['yarn_count'] ?: ''); ?></span></div>
+                    <div class="pdf-item pdf-vertical" style="grid-column:1 / -1; font-size:27px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">Y. BRAND:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['yarn_brand'] ?: ''); ?></span></div>
+                    <div class="pdf-item pdf-vertical" style="grid-column:1 / -1; font-size:27px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">Y. LOT:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['yarn_lot'] ?: ''); ?></span></div>
+                    <div class="pdf-item pdf-vertical" style="grid-column:1 / -1; font-size:27px; font-weight:800; line-height:1.15; margin-left:3px; padding:3px 0; word-break:break-word; background:#ffffff; color:#000000;"><span class="pdf-label" style="font-weight:800; color:#000000;">CATEGORY:</span> <span class="pdf-value" style="font-weight:800; color:#000000;"><?php echo htmlspecialchars($cardData['category'] ?: ''); ?></span></div>
                   </div>
                 </div>
                 <?php
@@ -1345,10 +1348,10 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
             box-sizing: border-box !important;
           }
           .kp-qr-target {
-            width: 215px !important;
-            min-width: 215px !important;
-            max-width: 215px !important;
-            min-height: 215px !important;
+            width: 200px !important;
+            min-width: 200px !important;
+            max-width: 200px !important;
+            min-height: 200px !important;
             height: auto !important;
             box-sizing: border-box !important;
             display: flex !important;
@@ -1357,10 +1360,10 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
             overflow: hidden !important;
           }
           .kp-qr-target img, .kp-qr-target canvas {
-            width: 208px !important;
-            height: 208px !important;
-            max-width: 208px !important;
-            max-height: 208px !important;
+            width: 194px !important;
+            height: 194px !important;
+            max-width: 194px !important;
+            max-height: 194px !important;
             display: block !important;
             margin: 0 auto !important;
           }
@@ -1495,8 +1498,8 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
               if (pBox && typeof QRCode !== 'undefined') {
                 new QRCode(pBox, {
                   text: <?php echo json_encode($saved_inspection_data['pass_roll']); ?>,
-                  width: 208,
-                  height: 208,
+                  width: 194,
+                  height: 194,
                   colorDark: '#000000',
                   colorLight: '#ffffff',
                   correctLevel: QRCode.CorrectLevel.H
@@ -1506,8 +1509,8 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
               if (rBox && typeof QRCode !== 'undefined') {
                 new QRCode(rBox, {
                   text: <?php echo json_encode($saved_inspection_data['reject_roll']); ?>,
-                  width: 208,
-                  height: 208,
+                  width: 194,
+                  height: 194,
                   colorDark: '#000000',
                   colorLight: '#ffffff',
                   correctLevel: QRCode.CorrectLevel.H
@@ -1518,8 +1521,8 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
               if (sBox && typeof QRCode !== 'undefined') {
                 new QRCode(sBox, {
                   text: <?php echo json_encode($saved_inspection_data['single_roll']); ?>,
-                  width: 208,
-                  height: 208,
+                  width: 194,
+                  height: 194,
                   colorDark: '#000000',
                   colorLight: '#ffffff',
                   correctLevel: QRCode.CorrectLevel.H
@@ -1604,10 +1607,10 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
                 var img = document.createElement('img');
                 img.src = dataUrl;
                 img.alt = 'QR Code';
-                img.style.width = '208px';
-                img.style.height = '208px';
-                img.style.maxWidth = '208px';
-                img.style.maxHeight = '208px';
+                img.style.width = '194px';
+                img.style.height = '194px';
+                img.style.maxWidth = '194px';
+                img.style.maxHeight = '194px';
                 img.style.display = 'block';
                 img.style.margin = '0 auto';
                 cloneTarget.appendChild(img);
