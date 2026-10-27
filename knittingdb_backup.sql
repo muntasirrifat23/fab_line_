@@ -244,6 +244,7 @@ CREATE TABLE `knitting_inspection` (
   `SL` decimal(10,2) DEFAULT 0.00,
   `FPLAN` varchar(100) DEFAULT NULL,
   `LOTNO` varchar(100) DEFAULT NULL,
+  `CATEGORY` varchar(50) DEFAULT NULL,
   `MATERIAL_CODE` varchar(50) DEFAULT NULL,
   `M_DES` varchar(200) DEFAULT NULL,
   `TT` varchar(50) DEFAULT NULL,

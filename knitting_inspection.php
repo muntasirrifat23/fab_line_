@@ -11,6 +11,22 @@ if (isset($db) && $db) {
     }
 }
 
+$category_schema_error = '';
+if (isset($db) && $db) {
+    try {
+        $category_col_check = mysqli_query($db, "SHOW COLUMNS FROM knitting_inspection LIKE 'CATEGORY'");
+        if ($category_col_check === false) {
+            throw new mysqli_sql_exception($db->error);
+        }
+        if (mysqli_num_rows($category_col_check) === 0 && !mysqli_query($db, "ALTER TABLE knitting_inspection ADD COLUMN CATEGORY varchar(50) NULL AFTER LOTNO")) {
+            throw new mysqli_sql_exception($db->error);
+        }
+    } catch (mysqli_sql_exception $e) {
+        $category_schema_error = 'Unable to initialize the inspection CATEGORY field. Please contact the database administrator.';
+        error_log($category_schema_error . ' ' . $e->getMessage());
+    }
+}
+
 if (!isset($_SESSION['username'])) {
     echo "<script>alert('You must be logged in'); window.location.href='login.php';</script>";
     exit();
@@ -126,6 +142,11 @@ if (isset($_GET['action']) && ($_GET['action'] === 'logout_operator' || $_GET['a
 if (isset($_GET['action']) && $_GET['action'] === 'search_card') {
     header('Content-Type: application/json');
 
+    if ($category_schema_error !== '') {
+        echo json_encode(['success' => false, 'error' => $category_schema_error]);
+        exit();
+    }
+
     if (!isset($_SESSION['active_operator']) || empty($_SESSION['active_operator']['id']) || ($_SESSION['active_operator']['role'] ?? '') !== 'qc') {
         echo json_encode(['success' => false, 'error' => 'Please scan QC Operator ID first!']);
         exit();
@@ -140,7 +161,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'search_card') {
     $sql = "SELECT p.PID, p.BUDAT, p.ROLL, p.KNITCARD, p.PO_NUMBER, p.PQTY, p.SONO, p.BUYER, p.STYLE, p.COLOR,
              p.MCNO, p.MC_DIA, p.CUSTOMER, p.SHIFT, p.YARN_TYPE, p.YARN_COUNT,
              p.FABRICS_TYPE, p.FINISH_GSM, p.FINISH_DIA, p.OPEN_TUBE, p.SL_VDQ,
-             p.FEEDER_PLAN, p.LOT_NO, p.KNIT_MATERIAL_CODE,
+             p.FEEDER_PLAN, p.LOT_NO, p.CATEGORY, p.KNIT_MATERIAL_CODE,
              p.KNIT_M_DES, p.UNAME, p.UID,
              COALESCE(
                  (SELECT NULLIF(TRIM(k.YBRAND), '') FROM knit_card k WHERE TRIM(k.KNITCARD) = TRIM(p.KNITCARD) LIMIT 1),
@@ -205,8 +226,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'search_card') {
             'open_tube'        => $row['OPEN_TUBE'] ?: 'N/A',
             'sl_vdq'           => $row['SL_VDQ'] ?: 'N/A',
             'feeder_plan'      => $row['FEEDER_PLAN'] ?: 'N/A',
-            'material_code'    => $row['KNIT_MATERIAL_CODE'] ?: 'N/A',
-            'material_desc'    => $row['KNIT_M_DES'] ?: 'N/A',
+            'category'         => $row['CATEGORY'] ?: 'N/A',
             'production_qty'   => floatval($row['PQTY']),
             'suggested_roll'   => $row['ROLL'],
             'suggested_weight' => floatval($row['PQTY']) > 0 ? floatval($row['PQTY']) : 25.00
@@ -235,7 +255,9 @@ if (isset($_SESSION['inspection_flash'])) {
 
 // ── SAVE INSPECTION RECORD ──
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspection'])) {
-    if (!isset($_SESSION['active_operator']) || empty($_SESSION['active_operator']['id']) || ($_SESSION['active_operator']['role'] ?? '') !== 'qc') {
+    if ($category_schema_error !== '') {
+        $error = 'Database schema error: ' . $category_schema_error;
+    } elseif (!isset($_SESSION['active_operator']) || empty($_SESSION['active_operator']['id']) || ($_SESSION['active_operator']['role'] ?? '') !== 'qc') {
         $error = "Unauthorized: You must authenticate with a valid QC Operator ID QR Code before completing fabric inspection.";
     } else {
         $production_id       = intval($_POST['PRODUCTION_ID'] ?? 0);
@@ -353,6 +375,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                 $sl          = floatval($card_meta['SL_VDQ'] ?? 0.00);
                 $fplan       = strval($card_meta['FEEDER_PLAN'] ?? '');
                 $lotno       = strval($card_meta['LOT_NO'] ?? '');
+                $category    = strval($card_meta['CATEGORY'] ?? '');
                 $mat_code    = strval($card_meta['KNIT_MATERIAL_CODE'] ?? '');
                 $m_des       = strval($card_meta['KNIT_M_DES'] ?? '');
 
@@ -385,21 +408,21 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                     INSERT INTO knitting_inspection (
                         `BUDAT`, `ROLL`, `OQTY`, `RQTY`, `UQTY`, `PO_NUMBER`, `QTY`, `SONO`, `BUYER`, `STYLE`, `COLOR`,
                         `MCNO`, `MC_DIA`, `CUSTOMER`, `SHIFT`, `YTYPE`, `YCOUNT`, `YBRAND`, `FTYPE`, `FGSM`, `FDIA`, `O_T`,
-                        `SL`, `FPLAN`, `LOTNO`, `MATERIAL_CODE`, `M_DES`,
+                        `SL`, `FPLAN`, `LOTNO`, `CATEGORY`, `MATERIAL_CODE`, `M_DES`,
                         `TT`, `PATTA`, `SLUB`, `YC_SPOT`, `OILSPOT`, `FF`, `SEEDS`, `MSTITCH`, `SINKERMARK`, `NEEDLEMARK`,
                         `LYCOUT`, `OILLINE`, `HOLE`, `LOOP`, `SETUP`, `CMARK`, `TPOINT`,
                         `QC_GRADE`, `QC_STATUS`, `UNAME`, `UID`
                     ) VALUES (
                         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                        ?, ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?, ?,
                         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                         ?, ?, ?, ?, ?, ?, ?,
                         ?, ?, ?, ?
                     )
                 ";
 
-                $types = 'ssddd' . str_repeat('s', 17) . 'd' . str_repeat('s', 4)
+                $types = 'ssddd' . str_repeat('s', 17) . 'd' . str_repeat('s', 5)
                        . str_repeat('s', 17) . str_repeat('s', 4);
 
                 $active_defects = [];
@@ -442,7 +465,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                             $budat, $pass_roll, $update_qty, $v_zero_float, $update_qty,
                             $po_number, $v_pass_qty_str, $sono, $buyer, $style, $color,
                             $mcno, $mc_dia, $supplier, $shift, $ytype, $ycount, $ybrand, $ftype, $fgsm, $fdia, $o_t,
-                            $sl, $fplan, $lotno, $mat_code, $m_des,
+                            $sl, $fplan, $lotno, $category, $mat_code, $m_des,
                             $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str,
                             $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str,
                             $v_pass_grade, $v_pass_status, $uname, $uid
@@ -463,7 +486,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                             $budat, $rej_roll, $reject_qty, $reject_qty, $v_zero_float,
                             $po_number, $v_rej_qty_str, $sono, $buyer, $style, $color,
                             $mcno, $mc_dia, $supplier, $shift, $ytype, $ycount, $ybrand, $ftype, $fgsm, $fdia, $o_t,
-                            $sl, $fplan, $lotno, $mat_code, $m_des,
+                            $sl, $fplan, $lotno, $category, $mat_code, $m_des,
                             $v_tt, $v_patta, $v_slub, $v_yc_spot, $v_oilspot, $v_ff, $v_seeds, $v_mstitch, $v_sinkermark, $v_needlemark,
                             $v_lycout, $v_oilline, $v_hole, $v_loop, $v_setup, $v_cmark, $v_tpoint,
                             $v_rej_grade, $v_rej_status, $uname, $uid
@@ -528,7 +551,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                         $budat, $roll_no, $v_main_qty, $v_reject, $v_update,
                         $po_number, $qty, $sono, $buyer, $style, $color,
                         $mcno, $mc_dia, $supplier, $shift, $ytype, $ycount, $ybrand, $ftype, $fgsm, $fdia, $o_t,
-                        $sl, $fplan, $lotno, $mat_code, $m_des,
+                        $sl, $fplan, $lotno, $category, $mat_code, $m_des,
                         $v_tt, $v_patta, $v_slub, $v_yc_spot, $v_oilspot, $v_ff, $v_seeds, $v_mstitch, $v_sinkermark, $v_needlemark,
                         $v_lycout, $v_oilline, $v_hole, $v_loop, $v_setup, $v_cmark, $v_tpoint,
                         $qc_grade, $qc_status, $uname, $uid
@@ -2155,8 +2178,8 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
               <div class="info-val">${d.lot_no || 'N/A'} / ${d.feeder_plan || 'N/A'}</div>
             </div>
             <div class="info-item" style="grid-column: span 2;">
-              <div class="info-label">Material Code / Desc</div>
-              <div class="info-val">${d.material_code || 'N/A'} - ${d.material_desc || 'N/A'}</div>
+              <div class="info-label">Category</div>
+              <div class="info-val">${d.category || 'N/A'}</div>
             </div>
           </div>
           
