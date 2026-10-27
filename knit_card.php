@@ -948,7 +948,7 @@ $end_entry   = min($offset + $limit, $total_records);
                         <tr>
                             <th class="text-nowrap">Date</th>
                             <th class="text-nowrap">Program No</th>
-                            <th class="text-nowrap">PO</th>
+                            <th class="text-nowrap">PO NO</th>
                             <th class="text-nowrap">SONO</th>
                             <th class="text-nowrap">Buyer</th>
                             <th class="text-nowrap">Customer</th>
@@ -965,6 +965,7 @@ $end_entry   = min($offset + $limit, $total_records);
                             <th class="text-nowrap">GSM</th>
                             <th class="text-nowrap">SL/VDQ</th>
                             <th class="text-nowrap">Feeder Plan</th>
+                            <th class="text-nowrap">Category</th>
                             <th class="text-nowrap">Qty (KG)</th>
                             <th class="text-nowrap">Card Status</th>
                             <th class="text-center text-nowrap">Actions</th>
@@ -993,6 +994,7 @@ $end_entry   = min($offset + $limit, $total_records);
                                 $p_sl          = $row['SL']          ?? '';
                                 $p_fgsm        = $row['FGSM']        ?? '';
                                 $p_feeder_plan = $row['FEEDER_PLAN'] ?? '';
+                                $p_category    = $row['CATEGORY']    ?? '';
                                 $p_card_gen    = !empty($row['card_id']) ? 1 : 0;
                                 $p_card_id     = $row['card_id'] ?? '';
                             ?>
@@ -1019,6 +1021,7 @@ $end_entry   = min($offset + $limit, $total_records);
                                     <td class="text-nowrap"><?php echo htmlspecialchars($p_fgsm ?: 'N/A'); ?></td>
                                     <td class="text-nowrap"><?php echo htmlspecialchars($p_sl ?: 'N/A'); ?></td>
                                     <td class="text-nowrap"><?php echo htmlspecialchars($p_feeder_plan ?: 'N/A'); ?></td>
+                                    <td class="text-nowrap"><?php echo htmlspecialchars($p_category ?: 'N/A'); ?></td>
 
                                     <td class="text-nowrap">
                                         <?php

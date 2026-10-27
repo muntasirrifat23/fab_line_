@@ -108,6 +108,7 @@ $p_yarn_brand       = !empty($prog['YBRAND']) ? $prog['YBRAND'] : ($input['YBRAN
 $p_remarks          = !empty($prog['REMARKS']) ? $prog['REMARKS'] : ($input['REMARKS'] ?? '');
 $p_knit_m_desc      = !empty($prog['KNIT_M_DESCRIPTION']) ? $prog['KNIT_M_DESCRIPTION'] : ($input['KNIT_M_DESCRIPTION'] ?? '');
 $p_knit_mat_code    = !empty($prog['KNIT_MATERIAL_CODE']) ? $prog['KNIT_MATERIAL_CODE'] : ($input['KNIT_MATERIAL_CODE'] ?? '');
+$p_category         = $prog['CATEGORY'] ?? ($prog['Category'] ?? '');
 $p_sl_vdq           = (isset($prog['SL']) && trim((string)$prog['SL']) !== '') ? trim((string)$prog['SL']) : (isset($input['SL']) && trim((string)$input['SL']) !== '' ? trim((string)$input['SL']) : '');
 
 $default_qty        = $remaining_qty;
@@ -227,8 +228,8 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                         {$kc_prog_col}, KNITCARD, MCNO, QTY, PO_NUMBER, SONO, BUYER, STYLE, COLOR,
                         FGSM, FDIA, O_T, FTYPE, YTYPE, CUSTOMER, YCOUNT, SL, MCDIA,
                         FEEDER_PLAN, LOT, SHIFT, KNIT_MATERIAL_CODE, KNIT_M_DESCRIPTION, UNAME,
-                        YBRAND
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        YBRAND, CATEGORY
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
 
                 if (!$ins) {
@@ -248,7 +249,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                     $r_qty   = round($row_item['qty']);
 
                     $ins->bind_param(
-                        "sisdsssssssssssssssssssss",
+                        "sisdssssssssssssssssssssss",
                         $p_prog_no,
                         $current_knitcard,
                         $r_mcno,
@@ -273,7 +274,8 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                         $p_knit_mat_code,
                         $p_knit_m_desc,
                         $p_uname,
-                        $p_yarn_brand
+                        $p_yarn_brand,
+                        $p_category
                     );
 
                     if (!$ins->execute()) {
@@ -1218,14 +1220,14 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                         </div>
                     </div>
 
-                    <!-- Box 17: Knit Material Code -->
+                    <!-- Box 17: Category -->
                     <div class="spec-item-box">
                         <div class="spec-box-head">
-                            <i class="fa-solid fa-barcode spec-box-icon"></i>
-                            <span>Material Code</span>
+                            <i class="fa-solid fa-tag spec-box-icon"></i>
+                            <span>Category</span>
                         </div>
-                        <div class="spec-box-value" style="font-family: monospace; font-size: 11px;">
-                            <?php echo htmlspecialchars($p_knit_mat_code ?: 'N/A'); ?>
+                        <div class="spec-box-value">
+                            <?php echo htmlspecialchars($p_category ?: 'N/A'); ?>
                         </div>
                     </div>
 
@@ -1523,4 +1525,3 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
 
 </body>
 </html>
-
