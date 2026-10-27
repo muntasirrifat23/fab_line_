@@ -794,18 +794,18 @@ if (isset($db) && $db) {
                             <th>ACTION</th>
                             <th>BUDAT</th>
                             <th>ROLL</th>
-                            <th>CATEGORY</th>
+                            <th>PASS / REJ</th>
                             <th>MAIN QTY</th>
                             <th>REJECT QTY</th>
                             <th>UPDATE QTY</th>
-                            <th>PO_NUMBER</th>
+                            <th>PO NO</th>
                             <th>QTY</th>
                             <th>SONO</th>
                             <th>BUYER</th>
                             <th>STYLE</th>
                             <th>COLOR</th>
                             <th>MCNO</th>
-                            <th>MC_DIA</th>
+                            <th>MC DIA</th>
                             <th>CUSTOMER</th>
                             <th>SHIFT</th>
                             <th>YTYPE</th>
@@ -814,14 +814,15 @@ if (isset($db) && $db) {
                             <th>FTYPE</th>
                             <th>FGSM</th>
                             <th>FDIA</th>
-                            <th>O_T</th>
+                            <th>O / T</th>
                             <th>SL</th>
                             <th>FPLAN</th>
                             <th>LOTNO</th>
+                            <th>CATEGORY</th>
                             <th>TT</th>
                             <th>PATTA</th>
                             <th>SLUB</th>
-                            <th>YC_SPOT</th>
+                            <th>YC SPOT</th>
                             <th>OILSPOT</th>
                             <th>FF</th>
                             <th>SEEDS</th>
@@ -835,16 +836,14 @@ if (isset($db) && $db) {
                             <th>SETUP</th>
                             <th>CMARK</th>
                             <th>TPOINT</th>
-                            <th>QC_GRADE</th>
-                            <th>QC_STATUS</th>
-                            <th>UNAME</th>
-                            <th>UID</th>
-                            <th>P_CREATED</th>
+                            <th>QC GRADE</th>
+                            <th>QC STATUS</th>
+                            <th>OP NAME</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="49" class="loading-cell">Loading inspection data...</td>
+                            <td colspan="48" class="loading-cell">Loading inspection data...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -862,7 +861,7 @@ if (isset($db) && $db) {
         var COLS = [
             { key: 'BUDAT', label: 'BUDAT' },
             { key: 'ROLL', label: 'ROLL' },
-            { key: 'INSPECTION_CATEGORY', label: 'CATEGORY' },
+            { key: 'INSPECTION_CATEGORY', label: 'PASS / REJ' },
             { key: 'OQTY',   label: 'MAIN QTY'   },
             { key: 'RQTY', label: 'REJECT QTY'  },
             { key: 'UQTY', label: 'UPDATE QTY'  },
@@ -886,6 +885,7 @@ if (isset($db) && $db) {
             { key: 'SL', label: 'SL' },
             { key: 'FPLAN', label: 'FPLAN' },
             { key: 'LOTNO', label: 'LOTNO' },
+            { key: 'CATEGORY', label: 'CATEGORY' },
             { key: 'TT', label: 'TT' },
             { key: 'PATTA', label: 'PATTA' },
             { key: 'SLUB', label: 'SLUB' },
@@ -905,9 +905,7 @@ if (isset($db) && $db) {
             { key: 'TPOINT', label: 'TPOINT' },
             { key: 'QC_GRADE', label: 'QC_GRADE' },
             { key: 'QC_STATUS', label: 'QC_STATUS' },
-            { key: 'UNAME', label: 'UNAME' },
-            { key: 'UID', label: 'UID' },
-            { key: 'P_CREATED', label: 'P_CREATED' }
+            { key: 'UNAME', label: 'UNAME' }
         ];
 
         var currentData = [];
@@ -1540,7 +1538,7 @@ if (isset($db) && $db) {
             tbody.empty();
             currentData = data || [];
             if (!currentData.length) {
-                tbody.append('<tr class="empty-row"><td colspan="49"><i class="fa-regular fa-folder-open me-2"></i>No inspection records found for the selected filters</td></tr>');
+                tbody.append('<tr class="empty-row"><td colspan="48"><i class="fa-regular fa-folder-open me-2"></i>No inspection records found for the selected filters</td></tr>');
                 return;
             }
             currentData.forEach(function(row) {
@@ -1615,7 +1613,7 @@ if (isset($db) && $db) {
 
         function loadInspectionData(silent) {
             if (!silent) {
-                $('#tableBody').html('<tr><td colspan="49" class="loading-cell"><i class="fa-solid fa-spinner fa-spin me-2"></i>Loading inspection report data...</td></tr>');
+                $('#tableBody').html('<tr><td colspan="48" class="loading-cell"><i class="fa-solid fa-spinner fa-spin me-2"></i>Loading inspection report data...</td></tr>');
             }
             var payload = getFilterPayload();
             $.ajax({
@@ -1629,12 +1627,12 @@ if (isset($db) && $db) {
                     renderTableRows(resp.data);
                     updateStatsBar(resp.stats);
                 } else if (!silent) {
-                    $('#tableBody').html('<tr class="empty-row"><td colspan="49">No data returned from server</td></tr>');
+                    $('#tableBody').html('<tr class="empty-row"><td colspan="48">No data returned from server</td></tr>');
                 }
             })
             .fail(function() {
                 if (!silent) {
-                    $('#tableBody').html('<tr class="empty-row"><td colspan="49" style="color:#dc2626;"><i class="fa-solid fa-triangle-exclamation me-2"></i>Error loading inspection data</td></tr>');
+                    $('#tableBody').html('<tr class="empty-row"><td colspan="48" style="color:#dc2626;"><i class="fa-solid fa-triangle-exclamation me-2"></i>Error loading inspection data</td></tr>');
                 }
             })
             .always(function() {
