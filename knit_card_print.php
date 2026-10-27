@@ -19,7 +19,7 @@ $qr_payload = "KC-" . $card_id;
 
 // Fetch Card Header joined with knitting program for MCDIA fallback
 $kc_prog_col = get_knit_card_program_col($db);
-$stmt = $db->prepare("SELECT kc.*, kp.MCDIA AS prog_mcdia FROM knit_card kc LEFT JOIN knitting_program kp ON (kc.{$kc_prog_col} = kp.PROGRAM_NO OR kc.{$kc_prog_col} = kp.KPTID) WHERE kc.KCTID = ?");
+$stmt = $db->prepare("SELECT kc.*, kp.MCDIA AS prog_mcdia, kp.CATEGORY AS prog_category FROM knit_card kc LEFT JOIN knitting_program kp ON (kc.{$kc_prog_col} = kp.PROGRAM_NO OR kc.{$kc_prog_col} = kp.KPTID) WHERE kc.KCTID = ?");
 if ($stmt) {
     $stmt->bind_param("i", $card_id);
     $stmt->execute();
@@ -315,12 +315,20 @@ if ($prod_stmt) {
             <tr>
                 <th>S.L / VDQ</th>
                 <td><?php echo htmlspecialchars($card['SL'] ?? ''); ?></td>
-                <th>SONO</th>
-                <td><?php echo htmlspecialchars($card['SONO'] ?? ''); ?></td>
+                <th>Category</th>
+                <td><strong><?php echo htmlspecialchars(!empty($card['CATEGORY']) ? $card['CATEGORY'] : ($card['prog_category'] ?? 'N/A')); ?></strong></td>
             </tr>
             <tr>
+                <th>SONO</th>
+                <td><?php echo htmlspecialchars($card['SONO'] ?? ''); ?></td>
                 <th>Req Quantity (KG)</th>
-                <td colspan="3"><strong style="font-size: 15px;"><?php echo number_format((float)($card['QTY'] ?? 0), 2); ?> KG</strong></td>
+                <td><strong style="font-size: 15px;"><?php echo number_format((float)($card['QTY'] ?? 0), 2); ?> KG</strong></td>
+            </tr>
+            <tr>
+                <th>Operator ID</th>
+                <td><strong style="color: #0f172a; font-family: monospace; font-size: 14px;"><?php echo htmlspecialchars(!empty($card['UID']) ? $card['UID'] : 'N/A'); ?></strong></td>
+                <th>Operator Name</th>
+                <td><strong><?php echo htmlspecialchars(!empty($card['UID']) && !empty($card['UNAME']) ? $card['UNAME'] : 'N/A'); ?></strong></td>
             </tr>
         </table>
 
@@ -381,8 +389,8 @@ if ($prod_stmt) {
         <!-- Signatures -->
         <div class="signature-section">
             <div class="signature-box">
-                <div><?php echo htmlspecialchars($card['UNAME'] ?? ''); ?></div>
-                <div class="signature-line">Prepared By</div>
+                <div><strong><?php echo htmlspecialchars(!empty($card['UID']) ? ($card['UID'] . (!empty($card['UNAME']) ? ' - ' . $card['UNAME'] : '')) : 'N/A'); ?></strong></div>
+                <div class="signature-line">Prepared By (Operator)</div>
             </div>
             <div class="signature-box">
                 <div><?php echo htmlspecialchars($card['AUTHORISED_BY'] ?? ''); ?></div>

@@ -112,9 +112,73 @@ $p_category         = $prog['CATEGORY'] ?? ($prog['Category'] ?? '');
 $p_sl_vdq           = (isset($prog['SL']) && trim((string)$prog['SL']) !== '') ? trim((string)$prog['SL']) : (isset($input['SL']) && trim((string)$input['SL']) !== '' ? trim((string)$input['SL']) : '');
 
 $default_qty        = $remaining_qty;
-$prepared_by        = $_SESSION['username'] ?? '';
 $authorised_by      = '';
 $error              = '';
+
+// ── Knit Card Operator (the operator SCANNED on the Knit Card page) ──
+// IMPORTANT: only $_SESSION['knit_card_operator'] (set by the scan on knit_card.php) or the
+// operator chosen/scanned on this form is used. $_SESSION['operator_id'] / ['username'] belong
+// to the LOGGED-IN account and must never end up on the knit card.
+$operator_id   = '';
+$operator_name = '';
+
+// Make sure knit_card has the UID column that stores the operator ID
+$uid_col_chk = @$db->query("SHOW COLUMNS FROM knit_card LIKE 'UID'");
+if ($uid_col_chk && $uid_col_chk->num_rows === 0) {
+    @$db->query("ALTER TABLE knit_card ADD COLUMN UID varchar(100) DEFAULT NULL AFTER UNAME");
+}
+
+// Registered operators for the dropdown
+$operators = [];
+$op_all_res = $db->query("SELECT OPERATOR_ID, OPERATOR_NAME FROM knitting_operator ORDER BY OPERATOR_NAME ASC");
+if ($op_all_res) {
+    while ($orow = $op_all_res->fetch_assoc()) {
+        $operators[] = $orow;
+    }
+}
+
+function kc_lookup_operator($db, $value) {
+    $value = trim((string)$value);
+    if ($value === '') return null;
+    $st = $db->prepare("SELECT OPERATOR_ID, OPERATOR_NAME FROM knitting_operator WHERE LOWER(TRIM(OPERATOR_ID)) = LOWER(TRIM(?)) LIMIT 1");
+    if (!$st) return null;
+    $st->bind_param("s", $value);
+    $st->execute();
+    $res = $st->get_result();
+    $row = ($res) ? $res->fetch_assoc() : null;
+    $st->close();
+    return $row ?: null;
+}
+
+$operator_error = '';
+if (isset($_POST['operator_id'])) {
+    // Operator chosen / scanned on this form
+    $posted_op = kc_lookup_operator($db, $_POST['operator_id']);
+    if ($posted_op) {
+        $operator_id   = $posted_op['OPERATOR_ID'];
+        $operator_name = $posted_op['OPERATOR_NAME'];
+    } else {
+        $operator_error = trim((string)$_POST['operator_id']) === ''
+            ? "Please scan or select the Knit Card Operator."
+            : "Operator ID \"" . trim((string)$_POST['operator_id']) . "\" is not a registered knitting operator.";
+    }
+} elseif (!empty($_SESSION['knit_card_operator']['id'])) {
+    // Operator scanned on the Knit Card page
+    $sess_op = kc_lookup_operator($db, $_SESSION['knit_card_operator']['id']);
+    if ($sess_op) {
+        $operator_id   = $sess_op['OPERATOR_ID'];
+        $operator_name = $sess_op['OPERATOR_NAME'];
+    }
+}
+
+// Remember the knit card operator for the next cards (knit card session only)
+if ($operator_id !== '') {
+    $_SESSION['knit_card_operator'] = [
+        'id'   => $operator_id,
+        'name' => $operator_name,
+        'role' => 'production'
+    ];
+}
 
 if ($remaining_qty <= 0) {
     $error = "No remaining quantity is available for this program.";
@@ -159,6 +223,10 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             'qty'   => $qty
         ];
         $total_user_req_qty += $qty;
+    }
+
+    if (empty($error) && ($operator_error !== '' || $operator_id === '')) {
+        $error = $operator_error !== '' ? $operator_error : "Please scan or select the Knit Card Operator.";
     }
 
     if (empty($error)) {
@@ -222,14 +290,14 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                 }
                 $res_mc->free();
 
-                // Insert into knit_card dynamically
+                // Insert into knit_card dynamically (including UID and UNAME)
                 $ins = $db->prepare("
                     INSERT INTO knit_card (
                         {$kc_prog_col}, KNITCARD, MCNO, QTY, PO_NUMBER, SONO, BUYER, STYLE, COLOR,
                         FGSM, FDIA, O_T, FTYPE, YTYPE, CUSTOMER, YCOUNT, SL, MCDIA,
                         FEEDER_PLAN, LOT, SHIFT, KNIT_MATERIAL_CODE, KNIT_M_DESCRIPTION, UNAME,
-                        YBRAND, CATEGORY
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        UID, YBRAND, CATEGORY
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
 
                 if (!$ins) {
@@ -237,7 +305,9 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                 }
 
                 $p_fplan   = !empty($prog['FEEDER_PLAN']) ? $prog['FEEDER_PLAN'] : ($input['FEEDER_PLAN'] ?? '');
-                $p_uname   = $prepared_by;
+                // Knit card is stamped with the SCANNED operator (never the logged-in account)
+                $p_uname   = $operator_name !== '' ? $operator_name : $operator_id;
+                $p_uid     = $operator_id;
 
                 $inserted_ids = [];
                 $current_roll = $next_roll;
@@ -249,7 +319,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                     $r_qty   = round($row_item['qty']);
 
                     $ins->bind_param(
-                        "sisdssssssssssssssssssssss",
+                        "sisdsssssssssssssssssssssss",
                         $p_prog_no,
                         $current_knitcard,
                         $r_mcno,
@@ -274,6 +344,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                         $p_knit_mat_code,
                         $p_knit_m_desc,
                         $p_uname,
+                        $p_uid,
                         $p_yarn_brand,
                         $p_category
                     );
@@ -1248,6 +1319,45 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
                 </div>
             </div>
 
+            <!-- 2.5 OPERATOR ASSIGNMENT -->
+            <div class="workspace-card mb-3">
+                <div class="card-header-custom">
+                    <h4 class="card-header-title">
+                        <span><i class="fa-solid fa-user-gear text-primary"></i></span> Operator Assignment
+                    </h4>
+                    <span class="badge-pill-header badge-status-blue">Knit Card Production</span>
+                </div>
+                <div style="padding: 18px 24px;">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-6">
+                            <label class="form-label-custom required-label">Assigned Operator (from `knitting_operator` table)</label>
+                            <select name="operator_id" id="operatorSelect" class="form-select-custom" required>
+                                <option value="">-- Select Operator --</option>
+                                <?php foreach ($operators as $op): ?>
+                                    <option value="<?php echo htmlspecialchars($op['OPERATOR_ID']); ?>" <?php echo ($operator_id === $op['OPERATOR_ID']) ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($op['OPERATOR_NAME'] . ' (' . $op['OPERATOR_ID'] . ')'); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Scan / Quick Enter Operator ID</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted border-end-0" style="border-radius:10px 0 0 10px; font-size:14px;"><i class="fa-solid fa-barcode"></i></span>
+                                <input type="text" id="quickOperatorScan" class="form-input-custom" style="border-radius:0 10px 10px 0;" placeholder="Scan QR or type Operator ID (e.g. OP01)" value="<?php echo htmlspecialchars($operator_id); ?>">
+                            </div>
+                        </div>
+                    </div>
+                    <div id="operatorFeedback" class="mt-2 text-muted small">
+                        <?php if (!empty($operator_id)): ?>
+                            <span class="text-success fw-bold"><i class="fa-solid fa-circle-check"></i> Assigned Operator: <?php echo htmlspecialchars($operator_name ?: $operator_id); ?> (<?php echo htmlspecialchars($operator_id); ?>)</span>
+                        <?php else: ?>
+                            <span><i class="fa-solid fa-circle-info"></i> Please select or scan an operator ID.</span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
             <!-- 3. SUB-TID ALLOCATIONS & MACHINE ASSIGNMENTS -->
             <div class="workspace-card mb-3">
                 <div class="card-header-custom">
@@ -1349,6 +1459,38 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
             const progressBarFill       = document.getElementById("progressBarFill");
             const progressPercentText   = document.getElementById("progressPercentText");
             const submitBtn             = document.querySelector(".btn-submit");
+
+            // Operator quick scan / select synchronization
+            const opSelect   = document.getElementById("operatorSelect");
+            const quickScan  = document.getElementById("quickOperatorScan");
+            const opFeedback = document.getElementById("operatorFeedback");
+
+            if (quickScan && opSelect) {
+                quickScan.addEventListener("input", function() {
+                    const val = this.value.trim().toLowerCase();
+                    let matched = false;
+                    for (let i = 0; i < opSelect.options.length; i++) {
+                        const opt = opSelect.options[i];
+                        if (opt.value && (opt.value.toLowerCase() === val || opt.text.toLowerCase().includes(val))) {
+                            opSelect.selectedIndex = i;
+                            matched = true;
+                            break;
+                        }
+                    }
+                    if (matched) {
+                        opFeedback.innerHTML = '<span class="text-success fw-bold"><i class="fa-solid fa-circle-check"></i> Operator Matched: ' + opSelect.options[opSelect.selectedIndex].text + '</span>';
+                    } else if (val.length > 0) {
+                        opFeedback.innerHTML = '<span class="text-warning fw-semibold"><i class="fa-solid fa-triangle-exclamation"></i> Searching operator: "' + this.value + '"...</span>';
+                    }
+                });
+
+                opSelect.addEventListener("change", function() {
+                    if (this.value) {
+                        quickScan.value = this.value;
+                        opFeedback.innerHTML = '<span class="text-success fw-bold"><i class="fa-solid fa-circle-check"></i> Assigned Operator: ' + this.options[this.selectedIndex].text + '</span>';
+                    }
+                });
+            }
 
             // Pre-built machine options HTML for newly added rows
             const mcOptionsHtml = `

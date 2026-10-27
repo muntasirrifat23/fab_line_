@@ -7,14 +7,15 @@ if (!isset($_SESSION['username'])) {
     exit();
 }
 
-$buyer_filter  = isset($_GET['buyer'])      ? trim($_GET['buyer'])      : '';
-$mc_no_filter  = isset($_GET['mc_no'])      ? trim($_GET['mc_no'])      : '';
-$start_date    = isset($_GET['start_date']) ? trim($_GET['start_date']) : '';
-$end_date      = isset($_GET['end_date'])   ? trim($_GET['end_date'])   : '';
+$buyer_filter    = isset($_GET['buyer'])      ? trim($_GET['buyer'])      : '';
+$mc_no_filter    = isset($_GET['mc_no'])      ? trim($_GET['mc_no'])      : '';
+$category_filter = isset($_GET['category'])   ? trim($_GET['category'])   : '';
+$start_date      = isset($_GET['start_date']) ? trim($_GET['start_date']) : '';
+$end_date        = isset($_GET['end_date'])   ? trim($_GET['end_date'])   : '';
 
 // Build query using real column names dynamically
 $kc_prog_col = get_knit_card_program_col($db);
-$query  = "SELECT kc.*, kp.PO_NUMBER AS kp_booking, kp.REMARKS AS prog_remarks, kp.MCDIA AS prog_mcdia
+$query  = "SELECT kc.*, kp.PO_NUMBER AS kp_booking, kp.REMARKS AS prog_remarks, kp.MCDIA AS prog_mcdia, kp.CATEGORY AS prog_category
            FROM knit_card kc
            LEFT JOIN knitting_program kp ON kp.KPTID = (
                SELECT kp2.KPTID FROM knitting_program kp2
@@ -35,6 +36,12 @@ if ($mc_no_filter !== '') {
     $query   .= " AND kc.MCNO LIKE ?";
     $params[] = "%{$mc_no_filter}%";
     $types   .= 's';
+}
+if ($category_filter !== '') {
+    $query   .= " AND (kc.CATEGORY = ? OR (kc.CATEGORY IS NULL AND kp.CATEGORY = ?))";
+    $params[] = $category_filter;
+    $params[] = $category_filter;
+    $types   .= 'ss';
 }
 if ($start_date !== '') {
     $query   .= " AND kc.CREATED_DATE >= ?";
@@ -96,7 +103,7 @@ $end_entry   = $offset + count($page_rows);
 // Build a page link that keeps the current filters
 function kcr_page_url($page, $per_page) {
     $params = [];
-    foreach (['buyer', 'mc_no', 'start_date', 'end_date'] as $k) {
+    foreach (['buyer', 'mc_no', 'category', 'start_date', 'end_date'] as $k) {
         if (isset($_GET[$k]) && $_GET[$k] !== '') {
             $params[$k] = $_GET[$k];
         }
@@ -331,8 +338,6 @@ function kcr_page_url($page, $per_page) {
             box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
         }
 
-
-
         /* ═══════════════════════════════════════════
            TABLE
         ═══════════════════════════════════════════ */
@@ -367,6 +372,7 @@ function kcr_page_url($page, $per_page) {
         .badge-kc    { background: linear-gradient(135deg, #dbeafe, #bfdbfe); color: #1e3a8a; font-weight: 700; font-size: 12.5px; padding: 5px 13px; border-radius: 20px; display: inline-block; border: 1px solid #93c5fd; }
         .badge-mc    { background: #f1f5f9; color: #475569; font-weight: 600; font-size: 12px; padding: 4px 10px; border-radius: 8px; border: 1px solid #cbd5e1; }
         .badge-buyer { color: #0f172a; font-weight: 700; }
+        .badge-category { background: #f3e8ff; color: #6b21a8; font-weight: 600; font-size: 12px; padding: 4px 10px; border-radius: 8px; border: 1px solid #d8b4fe; display: inline-block; white-space: nowrap; }
 
         /* Scroll box for the table: header sticks to its top */
         .content-panel .table-responsive {
@@ -536,7 +542,46 @@ function kcr_page_url($page, $per_page) {
             </div>
         </div>
 
-
+        <!-- Filter Panel -->
+        <div class="filter-panel">
+            <form method="get" class="row g-3 align-items-end">
+                <input type="hidden" name="per_page" value="<?php echo $per_page; ?>">
+                <div class="col-md-3 col-sm-6">
+                    <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-user me-1"></i> Buyer</label>
+                    <input type="text" name="buyer" class="form-control" placeholder="Search Buyer..." value="<?php echo htmlspecialchars($buyer_filter); ?>">
+                </div>
+                <div class="col-md-2 col-sm-6">
+                    <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-gears me-1"></i> Machine</label>
+                    <input type="text" name="mc_no" class="form-control" placeholder="M/C No..." value="<?php echo htmlspecialchars($mc_no_filter); ?>">
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-tag me-1"></i> Category</label>
+                    <select name="category" class="form-select">
+                        <option value="">All Categories</option>
+                        <option value="In House (Sample)" <?php echo ($category_filter === 'In House (Sample)') ? 'selected' : ''; ?>>In House (Sample)</option>
+                        <option value="In House (Bulk)" <?php echo ($category_filter === 'In House (Bulk)') ? 'selected' : ''; ?>>In House (Bulk)</option>
+                        <option value="Knitting (Service)" <?php echo ($category_filter === 'Knitting (Service)') ? 'selected' : ''; ?>>Knitting (Service)</option>
+                        <option value="Knitting (Outside)" <?php echo ($category_filter === 'Knitting (Outside)') ? 'selected' : ''; ?>>Knitting (Outside)</option>
+                    </select>
+                </div>
+                <div class="col-md-2 col-sm-6">
+                    <label class="form-label small fw-bold text-muted mb-1"><i class="fa-regular fa-calendar me-1"></i> Start Date</label>
+                    <input type="date" name="start_date" class="form-control" value="<?php echo htmlspecialchars($start_date); ?>">
+                </div>
+                <div class="col-md-2 col-sm-6">
+                    <label class="form-label small fw-bold text-muted mb-1"><i class="fa-regular fa-calendar me-1"></i> End Date</label>
+                    <input type="date" name="end_date" class="form-control" value="<?php echo htmlspecialchars($end_date); ?>">
+                </div>
+                <div class="col-12 d-flex gap-2 justify-content-end mt-3">
+                    <button type="submit" class="btn btn-primary px-4" style="background:#2563eb;border-color:#2563eb;border-radius:10px;font-weight:700;">
+                        <i class="fa-solid fa-filter me-1"></i> Filter
+                    </button>
+                    <a href="knit_card_report.php" class="btn btn-light px-3" style="border:1px solid #cbd5e1;border-radius:10px;font-weight:600;">
+                        <i class="fa-solid fa-rotate-left me-1"></i> Reset
+                    </a>
+                </div>
+            </form>
+        </div>
 
         <!-- Table -->
         <div class="content-panel">
@@ -546,7 +591,7 @@ function kcr_page_url($page, $per_page) {
                 </div>
                 <div class="table-head-right">
                     <form method="get" class="per-page-form">
-                        <?php foreach (['buyer', 'mc_no', 'start_date', 'end_date'] as $fk): if (isset($_GET[$fk]) && $_GET[$fk] !== ''): ?>
+                        <?php foreach (['buyer', 'mc_no', 'category', 'start_date', 'end_date'] as $fk): if (isset($_GET[$fk]) && $_GET[$fk] !== ''): ?>
                             <input type="hidden" name="<?php echo $fk; ?>" value="<?php echo htmlspecialchars($_GET[$fk]); ?>">
                         <?php endif; endforeach; ?>
                         Show
@@ -575,6 +620,7 @@ function kcr_page_url($page, $per_page) {
                             <th>Buyer</th>
                             <th>Customer</th>
                             <th>Style</th>
+                            <th class="text-nowrap">Category</th>
                             <th>Color</th>
                             <th>Shift</th>
                             <th>M/C No</th>
@@ -588,6 +634,7 @@ function kcr_page_url($page, $per_page) {
                             <th>Lot No</th>
                             <th>Remarks</th>
                             <th>Req Qty (KG)</th>
+                            <th>Operator</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -624,6 +671,7 @@ function kcr_page_url($page, $per_page) {
                                     <td><span class="badge-buyer"><?php echo htmlspecialchars($row['BUYER'] ?? ''); ?></span></td>
                                     <td><?php echo htmlspecialchars($row['CUSTOMER'] ?? ''); ?></td>
                                     <td><?php echo htmlspecialchars($row['STYLE'] ?? ''); ?></td>
+                                    <td><span class="badge-category"><?php echo htmlspecialchars(!empty($row['CATEGORY']) ? $row['CATEGORY'] : ($row['prog_category'] ?? 'N/A')); ?></span></td>
                                     <td><?php echo htmlspecialchars($row['COLOR'] ?? ''); ?></td>
                                     <td><?php echo htmlspecialchars($row['SHIFT'] ?? ''); ?></td>
                                     <td><span class="badge-mc">M/C <?php echo htmlspecialchars($row['MCNO'] ?? ''); ?></span></td>
@@ -637,11 +685,12 @@ function kcr_page_url($page, $per_page) {
                                     <td><?php echo htmlspecialchars($row['LOT'] ?? ''); ?></td>
                                     <td><small class="text-muted"><?php echo htmlspecialchars($row['prog_remarks'] ?? ($row['REMARKS'] ?? '')); ?></small></td>
                                     <td><strong class="text-success"><?php echo number_format((float)($row['QTY'] ?? 0), 2); ?> KG</strong></td>
+                                    <td><strong class="font-monospace text-primary"><?php echo htmlspecialchars(!empty($row['UID']) ? $row['UID'] : '-'); ?></strong><?php if (!empty($row['UID']) && !empty($row['UNAME']) && $row['UNAME'] !== $row['UID']): ?><br><small class="text-muted"><?php echo htmlspecialchars($row['UNAME']); ?></small><?php endif; ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="22" class="text-center py-5 text-muted">
+                                <td colspan="24" class="text-center py-5 text-muted">
                                     <i class="fa-solid fa-folder-open fa-3x mb-3 text-secondary d-block"></i>
                                     <h6 class="fw-bold">No Knit Cards Found</h6>
                                     <p class="small mb-0">Try clearing your search filters or generate a new card from the Knitting Programs page.</p>

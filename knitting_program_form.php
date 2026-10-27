@@ -52,6 +52,7 @@ $lot_no = '';
 $knit_material_code = '';
 $operator_id = '';
 $mcno_id = '';
+$category = 'In House (Sample)';
 
 // Auto-detect SHIFT based on current server time
 $hour_now = (int)date('G');
@@ -91,6 +92,7 @@ if ($is_edit) {
             $open_tube = $row['O_T'] ?? 'O';
             $lot_no = $row['LOT'] ?? '';
             $knit_material_code = $row['KNIT_MATERIAL_CODE'] ?? '';
+            $category = $row['CATEGORY'] ?? 'In House (Sample)';
         } else {
             header("Location: knit_card.php?error=Program+not+found");
             exit();
@@ -118,6 +120,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
     $knit_material_code = trim($_POST['KNIT_MATERIAL_CODE'] ?? '');
     $operator_id = trim($_POST['OPERATOR_ID'] ?? '');
     $mcno_id = intval($_POST['MCNO_ID'] ?? 0);
+    $category = trim($_POST['CATEGORY'] ?? 'In House (Sample)');
     $program_no = trim($_POST['PROGRAM_NO'] ?? '');
 
     // Auto-generate PROGRAM_NO if empty
@@ -144,15 +147,15 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
             $sql = "UPDATE knitting_program SET 
                 PROGRAM_NO=?, PO_NUMBER=?, SONO=?, STYLE=?, BUYER=?, CUSTOMER=?,
                 KNIT_M_DESCRIPTION=?, QTY=?, SHIFT=?, YTYPE=?, YCOUNT=?,
-                FTYPE=?, FGSM=?, FDIA=?, O_T=?, LOT=?, KNIT_MATERIAL_CODE=?, UNAME=?
+                FTYPE=?, FGSM=?, FDIA=?, O_T=?, LOT=?, KNIT_MATERIAL_CODE=?, UNAME=?, CATEGORY=?
                 WHERE KPTID=?";
             $stmt = $db->prepare($sql);
             if ($stmt) {
                 $stmt->bind_param(
-                    "isssssssssssssssssi",
+                    "issssssssssssssssssi",
                     $program_no, $po_number, $sono, $style, $buyer, $customer,
                     $knit_m_description, $qty, $shift, $yarn_type, $yarn_count,
-                    $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code, $uname, $edit_id
+                    $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code, $uname, $category, $edit_id
                 );
                 if ($stmt->execute()) {
                     header("Location: knit_card.php?msg=Program+updated+successfully");
@@ -167,15 +170,15 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
             $sql = "INSERT INTO knitting_program (
                 PROGRAM_NO, PO_NUMBER, SONO, STYLE, BUYER, CUSTOMER,
                 KNIT_M_DESCRIPTION, QTY, SHIFT, YTYPE, YCOUNT,
-                FTYPE, FGSM, FDIA, O_T, LOT, KNIT_MATERIAL_CODE, UNAME
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                FTYPE, FGSM, FDIA, O_T, LOT, KNIT_MATERIAL_CODE, UNAME, CATEGORY
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $db->prepare($sql);
             if ($stmt) {
                 $stmt->bind_param(
-                    "isssssssssssssssss",
+                    "issssssssssssssssss",
                     $program_no, $po_number, $sono, $style, $buyer, $customer,
                     $knit_m_description, $qty, $shift, $yarn_type, $yarn_count,
-                    $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code, $uname
+                    $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code, $uname, $category
                 );
                 if ($stmt->execute()) {
                     header("Location: knit_card.php?msg=New+program+added+successfully");
@@ -572,7 +575,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                 </div>
 
                 <div class="row g-4">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label">PO Number <span class="required-tag">*</span></label>
                         <div class="d-flex flex-column gap-3">
                             <input type="text" name="PO_NUMBER" id="bookingInput" class="form-control" placeholder="Enter PO Number (e.g. 230043287)" value="<?php echo htmlspecialchars($po_number); ?>" required <?php echo $is_edit ? 'readonly' : ''; ?>>
@@ -583,7 +586,16 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
+                        <label class="form-label">Category <span class="required-tag">*</span></label>
+                        <select name="CATEGORY" id="categorySelect" class="form-select" required>
+                            <option value="In House (Sample)" <?php echo ($category === 'In House (Sample)') ? 'selected' : ''; ?>>In House (Sample)</option>
+                            <option value="In House (Bulk)" <?php echo ($category === 'In House (Bulk)') ? 'selected' : ''; ?>>In House (Bulk)</option>
+                            <option value="Knitting (Service)" <?php echo ($category === 'Knitting (Service)') ? 'selected' : ''; ?>>Knitting (Service)</option>
+                            <option value="Knitting (Outside)" <?php echo ($category === 'Knitting (Outside)') ? 'selected' : ''; ?>>Knitting (Outside)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
                         <label class="form-label">Machine No (MCNO) <span class="required-tag">*</span></label>
                         <select name="MCNO_ID" id="mcnoSelect" class="form-select" required>
                             <option value="">-- Select Machine --</option>
@@ -594,7 +606,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label">Shift <small class="text-muted">(Auto - Based on Time)</small></label>
                         <input type="text" name="SHIFT" class="form-control" value="<?php echo htmlspecialchars($shift ?: $auto_shift); ?>">
                     </div>

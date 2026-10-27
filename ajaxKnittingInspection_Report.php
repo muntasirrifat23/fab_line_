@@ -34,13 +34,14 @@ if ($search !== '') {
     )";
 }
 
-// Category filter based on Rejection Quantity:
-// Rejection: rejection quantity > 0
-// Pass: rejection quantity <= 0 (or 0 / NULL / empty)
+// Category filter:
+// Rejection: only the split reject roll (-R)
+// Pass: the split pass roll (-P) AND every single (not split) roll - a single roll keeps its
+//       good (net) qty, the reject qty is just deducted from it.
 if ($category === 'pass') {
-    $whereClauses[] = "(CAST(COALESCE(i.RQTY, 0) AS DECIMAL(10,2)) <= 0 OR TRIM(i.ROLL) LIKE '%-P')";
+    $whereClauses[] = "(TRIM(i.ROLL) NOT LIKE '%-R')";
 } elseif ($category === 'rejection') {
-    $whereClauses[] = "(CAST(COALESCE(i.RQTY, 0) AS DECIMAL(10,2)) > 0 OR TRIM(i.ROLL) LIKE '%-R')";
+    $whereClauses[] = "(TRIM(i.ROLL) LIKE '%-R')";
 }
 
 if ($from_date !== '') {
@@ -130,14 +131,11 @@ while ($row = mysqli_fetch_assoc($result)) {
         $displayRoll = $rawRoll;
         $pass_rolls++;
     } else {
+        // Single (not split) roll: always Pass - the net good qty (UQTY) goes forward,
+        // the reject qty is only deducted from it.
         $displayRoll = $rawRoll;
-        if ($rqty > 0) {
-            $cat = 'Rejection';
-            $reject_rolls++;
-        } else {
-            $cat = 'Pass';
-            $pass_rolls++;
-        }
+        $cat = 'Pass';
+        $pass_rolls++;
     }
 
     $total_rolls++;

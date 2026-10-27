@@ -569,6 +569,7 @@
                             <th>Buyer</th>
                             <th>Style</th>
                             <th>Color</th>
+                            <th class="text-nowrap">Category</th>
                             <th>Customer</th>
                             <th>QTY (KG)</th>
                             <th>O / T</th>
@@ -592,7 +593,7 @@
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                             <td colspan="22" class="state-cell">
+                             <td colspan="23" class="state-cell">
                                  <span class="loading-spinner"></span>
                                  <div class="state-text mt-2">Loading data...</div>
                              </td>
@@ -642,7 +643,7 @@
             updateStats(data);
 
             if (!data || data.length === 0) {
-                tbody.append('<tr><td colspan="22" class="state-cell">' +
+                tbody.append('<tr><td colspan="23" class="state-cell">' +
                     '<i class="fa-regular fa-folder-open state-icon"></i>' +
                     '<div class="state-text">No data found</div></td></tr>');
                 return;
@@ -665,6 +666,7 @@
                 tr.append($('<td>').text(row.BUYER || ''));
                 tr.append($('<td>').text(row.STYLE || ''));
                 tr.append($('<td>').text(row.COLOR || ''));
+                tr.append($('<td>').html('<span class="badge bg-light text-primary border" style="font-size:11.5px;padding:4px 8px;white-space:nowrap;">' + (row.CATEGORY || 'N/A') + '</span>'));
                 tr.append($('<td>').text(row.CUSTOMER || ''));
                 tr.append($('<td class="qty-cell">').text(row.QTY || ''));
                 tr.append($('<td>').text(row.O_T || ''));
@@ -689,7 +691,7 @@
 
         function showState(icon, text) {
             updateStats([]);
-            $('#tableBody').html('<tr><td colspan="22" class="state-cell">' +
+            $('#tableBody').html('<tr><td colspan="23" class="state-cell">' +
                 '<i class="' + icon + ' state-icon"></i>' +
                 '<div class="state-text">' + text + '</div></td></tr>');
         }
@@ -758,6 +760,7 @@
                 ['Buyer', row.BUYER],
                 ['Style', row.STYLE],
                 ['Color', row.COLOR],
+                ['Category', row.CATEGORY || 'N/A'],
                 ['Customer', row.CUSTOMER],
                 ['QTY', row.QTY],
                 ['Open / Tube', row.O_T],

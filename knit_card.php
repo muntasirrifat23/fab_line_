@@ -81,8 +81,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'logout_operator') {
 // (e.g. the Dashboard) clears it, forcing another scan / ID entry.
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' && !isset($_GET['action'])) {
     $ref_path = parse_url($_SERVER['HTTP_REFERER'] ?? '', PHP_URL_PATH) ?: '';
-    $arrived_from_self = (strcasecmp(basename($ref_path), 'knit_card.php') === 0);
-    if (!$arrived_from_self) {
+    $ref_base = strtolower(basename($ref_path));
+    $allowed_referrers = ['knit_card.php', 'knit_card_generate.php', 'knit_card_view.php', 'knit_card_print.php'];
+    if (!in_array($ref_base, $allowed_referrers, true)) {
         unset($_SESSION['knit_card_operator']);
     }
 }

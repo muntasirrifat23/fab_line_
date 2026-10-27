@@ -12,7 +12,7 @@ if ($card_id <= 0) {
 
 // Fetch Knit Card Header using real column names
 $kc_prog_col = get_knit_card_program_col($db);
-$stmt = $db->prepare("SELECT kc.*, kp.MCDIA AS prog_mcdia FROM knit_card kc LEFT JOIN knitting_program kp ON (kc.{$kc_prog_col} = kp.PROGRAM_NO OR kc.{$kc_prog_col} = kp.KPTID) WHERE kc.KCTID = ?");
+$stmt = $db->prepare("SELECT kc.*, kp.MCDIA AS prog_mcdia, kp.CATEGORY AS prog_category FROM knit_card kc LEFT JOIN knitting_program kp ON (kc.{$kc_prog_col} = kp.PROGRAM_NO OR kc.{$kc_prog_col} = kp.KPTID) WHERE kc.KCTID = ?");
 if ($stmt) {
     $stmt->bind_param("i", $card_id);
     $stmt->execute();
@@ -149,6 +149,8 @@ if ($prod_result && $prod_result->num_rows > 0) {
                 <tr><td class="lbl">Finish GSM</td><td class="val">: <?php echo htmlspecialchars($card['FGSM'] ?? ''); ?></td></tr>
                 <tr><td class="lbl">Open / Tube</td><td class="val">: <?php echo htmlspecialchars($card['O_T'] ?? ''); ?></td></tr>
                 <tr><td class="lbl">SI / VDQ</td><td class="val">: <?php echo htmlspecialchars($card['SL'] ?? ''); ?></td></tr>
+                <tr><td class="lbl">Category</td><td class="val">: <?php echo htmlspecialchars(!empty($card['CATEGORY']) ? $card['CATEGORY'] : ($card['prog_category'] ?? 'N/A')); ?></td></tr>
+                <tr><td class="lbl">Operator ID</td><td class="val">: <strong><?php echo htmlspecialchars(!empty($card['UID']) ? $card['UID'] : 'N/A'); ?></strong></td></tr>
             </table>
             <!-- Right -->
             <table class="spec-table">
@@ -157,8 +159,10 @@ if ($prod_result && $prod_result->num_rows > 0) {
                 <tr><td class="lbl">Style No</td><td class="val">: <?php echo htmlspecialchars($card['STYLE'] ?? ''); ?></td></tr>
                 <tr><td class="lbl">Fabric Type</td><td class="val">: <?php echo htmlspecialchars($card['FTYPE'] ?? ''); ?></td></tr>
                 <tr><td class="lbl">Yarn Type</td><td class="val">: <?php echo htmlspecialchars($card['YTYPE'] ?? ''); ?></td></tr>
+                <tr><td class="lbl">SONO</td><td class="val">: <?php echo htmlspecialchars($card['SONO'] ?? ''); ?></td></tr>
                 <tr><td class="lbl">Lot No.</td><td class="val">: <?php echo htmlspecialchars($card['LOT'] ?? ''); ?></td></tr>
                 <tr><td class="lbl">Req. Qty</td><td class="val">: <?php echo number_format((float)($card['QTY'] ?? 0), 2); ?> kg</td></tr>
+                <tr><td class="lbl">Operator Name</td><td class="val">: <?php echo htmlspecialchars(!empty($card['UID']) && !empty($card['UNAME']) ? $card['UNAME'] : 'N/A'); ?></td></tr>
             </table>
         </div>
 
@@ -209,8 +213,8 @@ if ($prod_result && $prod_result->num_rows > 0) {
 
         <div class="signature-section">
             <div class="signature-box">
-                <div><?php echo htmlspecialchars($card['UNAME'] ?? ''); ?></div>
-                <div class="signature-line">Prepared by</div>
+                <div><strong><?php echo htmlspecialchars(!empty($card['UID']) ? ($card['UID'] . (!empty($card['UNAME']) ? ' - ' . $card['UNAME'] : '')) : 'N/A'); ?></strong></div>
+                <div class="signature-line">Prepared by (Operator)</div>
             </div>
             <div class="signature-box">
                 <div><?php echo htmlspecialchars($card['AUTHORISED_BY'] ?? ''); ?></div>

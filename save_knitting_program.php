@@ -42,6 +42,7 @@ $color              = trim($data['COLOR'] ?? '');
 $sl_vdq             = trim($data['SL_VDQ'] ?? '');
 $operator_id        = trim($data['OPERATOR_ID'] ?? '');
 $program_no         = trim($data['PROGRAM_NO'] ?? ($data['MAIN_TID'] ?? ''));
+$category           = trim($data['CATEGORY'] ?? ($data['category'] ?? ''));
 
 // Auto-detect SHIFT based on current server time
 $shiftHour = (int)date('G');
@@ -96,15 +97,16 @@ try {
             FDIA = ?, 
             O_T = ?, 
             LOT = ?, 
-            KNIT_MATERIAL_CODE = ? 
+            KNIT_MATERIAL_CODE = ?, 
+            CATEGORY = ? 
             WHERE KPTID = ?";
 
         $stmt = $db->prepare($sql);
         $stmt->bind_param(
-            "isssssssdssssssssi",
+            "isssssssdsssssssssi",
             $program_no, $booking, $sono, $style, $buyer, $customer,
             $knit_m_description, $qty, $shift, $yarn_type, $yarn_count,
-            $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code, $kptid
+            $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code, $category, $kptid
         );
 
         if ($stmt->execute()) {
@@ -125,15 +127,15 @@ try {
         $sql = "INSERT INTO knitting_program (
             PROGRAM_NO, PO_NUMBER, SONO, STYLE, BUYER, CUSTOMER, 
             KNIT_M_DESCRIPTION, QTY, SHIFT, YTYPE, YCOUNT, 
-            FTYPE, FGSM, FDIA, O_T, LOT, KNIT_MATERIAL_CODE
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            FTYPE, FGSM, FDIA, O_T, LOT, KNIT_MATERIAL_CODE, CATEGORY
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $db->prepare($sql);
         $stmt->bind_param(
-            "isssssssdssssssss",
+            "isssssssdsssssssss",
             $program_no, $booking, $sono, $style, $buyer, $customer,
             $knit_m_description, $qty, $shift, $yarn_type, $yarn_count,
-            $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code
+            $fabrics_type, $finish_gsm, $finish_dia, $open_tube, $lot_no, $knit_material_code, $category
         );
 
         if ($stmt->execute()) {

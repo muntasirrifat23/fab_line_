@@ -16,7 +16,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
 
     $where = count($conditions) > 0 ? 'WHERE ' . implode(' AND ', $conditions) : '';
 
-    $q = "SELECT p.KPTID, p.PROGRAM_NO, p.CREATED_DATE AS BUDAT, p.PO_NUMBER, p.SONO, p.BUYER, p.STYLE, p.COLOR,
+    $q = "SELECT p.KPTID, p.PROGRAM_NO, p.CREATED_DATE AS BUDAT, p.PO_NUMBER, p.SONO, p.BUYER, p.STYLE, p.COLOR, p.CATEGORY,
                  p.FGSM, p.FDIA, p.O_T, p.FTYPE, p.YTYPE, p.CUSTOMER, p.YCOUNT, p.YBRAND, p.SL,
                  p.MCDIA, p.FEEDER_PLAN, p.LOT, p.SHIFT,
                  CAST(p.QTY AS DECIMAL(10,2)) AS QTY,
@@ -126,6 +126,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
                             <th>BUYER</th>
                             <th>STYLE</th>
                             <th>COLOR</th>
+                            <th>CATEGORY</th>
                             <th>FGSM</th>
                             <th>FDIA</th>
                             <th>O/T</th>
@@ -146,7 +147,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
                         </tr>
                     </thead>
                     <tbody id="tableBody">
-                        <tr><td colspan="24" class="text-center small-muted">Loading...</td></tr>
+                        <tr><td colspan="25" class="text-center small-muted">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -161,7 +162,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
 
             $.get(url, function(resp) {
                 if (!resp || !resp.success || !resp.data || resp.data.length === 0) {
-                    $('#tableBody').html('<tr><td colspan="24" class="text-center small-muted">No data found</td></tr>');
+                    $('#tableBody').html('<tr><td colspan="25" class="text-center small-muted">No data found</td></tr>');
                     renderStats(0, 0, 0);
                     return;
                 }
@@ -189,6 +190,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
                         '<td>' + esc(r.BUYER) + '</td>' +
                         '<td>' + esc(r.STYLE) + '</td>' +
                         '<td>' + esc(r.COLOR) + '</td>' +
+                        '<td><span class="badge bg-light text-dark border">' + esc(r.CATEGORY || 'N/A') + '</span></td>' +
                         '<td>' + esc(r.FGSM) + '</td>' +
                         '<td>' + esc(r.FDIA) + '</td>' +
                         '<td>' + esc(r.O_T) + '</td>' +
@@ -211,7 +213,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
                 renderStats(totalRows, tInput, tProg);
                 $('#tableBody').html(tbody);
             }, 'json').fail(function() {
-                    $('#tableBody').html('<tr><td colspan="24" class="text-center text-danger small-muted">Error loading data</td></tr>');
+                    $('#tableBody').html('<tr><td colspan="25" class="text-center text-danger small-muted">Error loading data</td></tr>');
             });
         }
 

@@ -1549,7 +1549,8 @@ if (isset($db) && $db) {
                 // Action Column
                 var actHtml = '<div style="display:flex;gap:4px;align-items:center;">';
                 actHtml += '<button class="btn-print-row" onclick="openReportModal(\'' + kitIdEsc + '\')"><i class="fa-solid fa-file-invoice"></i> Report</button>';
-                if (isReject || parseFloat(row.RQTY || row.REJECT_QTY || 0) > 0) {
+                // Only the split reject roll (-R) gets a Rejection QR; single rolls print the good (pass) qty
+                if (isReject) {
                     actHtml += '<button class="btn-qr-action" onclick="openRejectionQrFromReport(\'' + kitIdEsc + '\')" title="Generate & Print Rejection QR Code"><i class="fa-solid fa-qrcode"></i> Rejection QR</button>';
                 } else {
                     actHtml += '<button class="btn-qr-action btn-qr-pass" onclick="openPassQrFromReport(\'' + kitIdEsc + '\')" title="Generate & Print Pass QR Code"><i class="fa-solid fa-qrcode"></i> QR</button>';

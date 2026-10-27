@@ -197,7 +197,10 @@ foreach ($cards_list as $card) {
     $val_mcdia        = !empty($card['MCDIA']) ? $card['MCDIA'] : (!empty($card['prog_mcdia']) ? $card['prog_mcdia'] : 'N/A');
     $val_feeder       = !empty($card['FEEDER_PLAN']) ? $card['FEEDER_PLAN'] : ($card['prog_feeder_plan'] ?? 'N/A');
     $val_qty          = number_format(floatval($card['QTY'] ?? 0), 2) . ' KG';
-    $val_uname        = !empty($card['UNAME']) ? $card['UNAME'] : 'System';
+    // Operator = the operator scanned on the Knit Card page (stored in UID / UNAME).
+    // Old cards made before this have no UID; their UNAME is the logged-in account, so it is not shown as operator.
+    $val_uid          = !empty($card['UID']) ? $card['UID'] : 'N/A';
+    $val_uname        = !empty($card['UID']) ? (!empty($card['UNAME']) ? $card['UNAME'] : $card['UID']) : 'N/A';
     $val_category     = !empty($card['CATEGORY']) ? $card['CATEGORY'] : (!empty($card['prog_category']) ? $card['prog_category'] : 'N/A');
 
     $cards_data[] = [
@@ -229,6 +232,7 @@ foreach ($cards_list as $card) {
         'val_mcdia'     => $val_mcdia,
         'val_feeder'    => $val_feeder,
         'val_qty'       => $val_qty,
+        'val_uid'       => $val_uid,
         'val_uname'     => $val_uname,
         'val_category'  => $val_category,
     ];
@@ -592,7 +596,8 @@ foreach ($cards_data as $fi => $fc) {
                             <div class="tag-qr" id="roll_qrcode_<?php echo $idx; ?>"></div>
                         </div>
                         <div class="qr-payload-lbl">
-                            User: <strong><?php echo htmlspecialchars($c['val_uname']); ?></strong><br>
+                            Operator: <strong><?php echo htmlspecialchars($c['val_uname']); ?></strong><br>
+                            ID: <strong><?php echo htmlspecialchars($c['val_uid']); ?></strong><br>
                             Date: <strong><?php echo htmlspecialchars($c['val_date']); ?></strong>
                         </div>
                     </div>

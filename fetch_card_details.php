@@ -24,10 +24,10 @@ try {
     $kc_prog_col = get_knit_card_program_col($db);
     $sql = "
         SELECT 
-            kc.KCTID, kc.{$kc_prog_col} AS prog_id, kc.MCNO, kc.FDIA, kc.FGSM, 
+            kc.KCTID, kc.KNITCARD, kc.{$kc_prog_col} AS prog_id, kc.MCNO, kc.FDIA, kc.FGSM, 
             kc.SL, kc.O_T, kc.BUYER, kc.CUSTOMER, kc.PO_NUMBER, 
             kc.SONO, kc.STYLE, kc.FTYPE, kc.YTYPE, kc.YCOUNT, kc.LOT, 
-            kc.KNIT_M_DESCRIPTION, kc.QTY, kc.UNAME,
+            kc.KNIT_M_DESCRIPTION, kc.QTY, kc.UNAME, kc.UID,
             kp.PROGRAM_NO
         FROM knit_card kc
         LEFT JOIN knitting_program kp ON (kc.{$kc_prog_col} = kp.PROGRAM_NO OR kc.{$kc_prog_col} = kp.KPTID)
@@ -85,7 +85,9 @@ try {
             'lot_no'             => $row['LOT'] ?: 'N/A',
             'req_qty'            => floatval($row['QTY']),
             'suggested_roll'     => $suggested_roll_no,
-            'suggested_weight'   => $suggested_weight
+            'suggested_weight'   => $suggested_weight,
+            'operator_id'        => $row['UID'] ?? '',
+            'operator_name'      => !empty($row['UID']) ? ($row['UNAME'] ?? '') : ''
         ]);
     } else {
         echo json_encode([
