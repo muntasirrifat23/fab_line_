@@ -12,8 +12,19 @@
 
     <style>
         body {
-            padding: 18px;
+            padding: 0 18px 18px;
             background: #f5f7fa;
+        }
+
+        .page-header {
+            position: relative;
+            min-height: 68px;
+            padding: 8px 18px;
+            gap: 12px;
+            justify-content: center !important;
+            background: #5b9084;
+            border-radius: 8px;
+            box-shadow: 0 6px 18px rgba(20, 30, 50, 0.12);
         }
 
         .panel {
@@ -33,14 +44,29 @@
         }
 
         h1.title {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
             font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 18px;
+            color: #ffffff;
+            font-size: clamp(1.7rem, 3vw, 2.4rem) !important;
+            text-align: center;
+            margin: 0;
+            line-height: 1.15;
+            padding: 0 12px;
+            box-sizing: border-box;
         }
 
         .table-container {
             margin-top: 12px;
             background: transparent;
+        }
+
+        .report-table {
+            min-width: 1700px;
+            margin-bottom: 0;
         }
 
         .table {
@@ -51,12 +77,14 @@
             vertical-align: middle;
             font-size: 16px;
             padding: 14px 10px;
+            white-space: nowrap;
         }
 
         .table tbody td {
             vertical-align: middle;
             font-size: 16px;
             padding: 12px 8px;
+            white-space: nowrap;
         }
 
         .small-muted {
@@ -77,6 +105,13 @@
             display: inline-flex;
             align-items: center;
             cursor: pointer;
+        }
+
+        .page-header .back-btn {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
         }
 
         #backBtn:hover,
@@ -243,19 +278,153 @@
             padding: 8px 18px;
             font-size: 14px;
         }
+
+        @media (max-width: 991.98px) {
+            body {
+                padding: 0 14px 14px;
+            }
+
+            .panel {
+                padding: 14px;
+            }
+
+            .page-header {
+                min-height: 92px;
+            }
+
+            .page-header .title {
+                top: auto;
+                bottom: 10px;
+                transform: none;
+                font-size: clamp(1.7rem, 4vw, 2.1rem) !important;
+                white-space: normal;
+            }
+
+            .page-header .back-btn {
+                top: 10px;
+                left: 12px;
+                transform: none;
+            }
+
+            .table thead th,
+            .table tbody td {
+                font-size: 14px;
+                padding: 10px 8px;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            body {
+                padding: 0 10px 10px;
+            }
+
+            .page-header {
+                padding: 10px 12px;
+            }
+
+            .page-header .title {
+                font-size: clamp(1.7rem, 6vw, 1.9rem) !important;
+            }
+
+            #backBtn,
+            .back-btn {
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+
+            .panel {
+                padding: 12px;
+            }
+
+            .controls .form-label {
+                font-size: 16px !important;
+            }
+
+            .controls .input-group {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px !important;
+            }
+
+            .controls .input-group .form-control {
+                flex: 1 1 100%;
+                width: 100%;
+                min-width: 0;
+            }
+
+            .controls .input-group button {
+                flex: 1 1 calc(50% - 4px);
+                min-width: 0;
+                margin: 0 !important;
+                padding-left: 12px !important;
+                padding-right: 12px !important;
+            }
+
+            .table-container .panel {
+                padding: 8px;
+            }
+
+            .table thead th,
+            .table tbody td {
+                font-size: 13px;
+                padding: 8px 6px;
+            }
+
+            .action-btn {
+                font-size: 11px;
+                padding: 6px 8px;
+            }
+
+            .preview-overlay {
+                padding: 8px;
+            }
+
+            .preview-box {
+                max-height: 96vh;
+            }
+
+            .preview-body {
+                padding: 10px;
+            }
+
+            .preview-foot {
+                padding: 10px;
+            }
+        }
+
+        @media (max-width: 399.98px) {
+            body {
+                padding: 0 8px 8px;
+            }
+
+            .page-header .title {
+                font-size: clamp(1.6rem, 6vw, 1.8rem) !important;
+            }
+
+            .panel {
+                padding: 10px;
+            }
+
+            .page-header {
+                padding: 12px 10px;
+            }
+
+            .page-header .back-btn {
+                font-size: 13px;
+            }
+        }
     </style>
 </head>
 
 <body>
 
     <div class="container-fluid">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="page-header d-flex justify-content-between align-items-center mb-3">
             <button class="back-btn" id="backBtn">
                 <i class="fa-solid fa-arrow-left" style="margin-right:6px;background:none;border:none;box-shadow:none;transform:none;"></i>
                 Back to Initial Page
             </button>
             <h1 class="title">Knitting Production Report</h1>
-            <div></div>
         </div>
 
         <div class="panel mb-3">
@@ -279,16 +448,14 @@
                     </div>
 
                 </div>
-                <div class="col-md-4 text-end">
-                    <!-- reserved -->
-                </div>
             </div>
         </div>
 
 
         <div class="table-container">
             <div class="panel">
-                <table class="table table-bordered table-striped table-hover table-sm">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped table-hover table-sm report-table">
                     <thead class="table-dark">
                         <tr>
                             <th>ACTION</th>
@@ -310,15 +477,17 @@
                             <th>YARN COUNT</th>
                             <th>YARN BRAND</th>
                             <th>YARN LOT</th>
+                            <th>CATEGORY</th>
                             <th>OP NAME</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="19" class="text-center small-muted">Loading data...</td>
+                            <td colspan="21" class="text-center small-muted">Loading data...</td>
                         </tr>
                     </tbody>
-                </table>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -509,7 +678,7 @@
 
             renderCardImage(row, function(imgData) {
                 body.empty();
-                var availWidth = body.width() - 40;
+                var availWidth = body.width() - 20;
                 var maxW = Math.min(availWidth, 520);
                 if (!(maxW > 0)) maxW = 520;
 
@@ -540,7 +709,7 @@
             var tbody = $('#tableBody');
             tbody.empty();
             if (!data || data.length === 0) {
-                tbody.append('<tr><td colspan="19" class="text-center small-muted">No Roll Or Booking No found</td></tr>');
+                tbody.append('<tr><td colspan="21" class="text-center small-muted">No Roll Or Booking No found</td></tr>');
                 return;
             }
 
@@ -581,6 +750,7 @@
                 tr.append($('<td>').text(row.YARN_COUNT || ''));
                 tr.append($('<td>').text(row.YBRAND || ''));
                 tr.append($('<td>').text(row.YARN_LOT || ''));
+                tr.append($('<td>').text(row.CATEGORY || ''));
                 tr.append($('<td>').text(row.UNAME || ''));
                 tbody.append(tr);
             });
@@ -609,13 +779,13 @@
                         renderTableRows(resp.data);
                     } else {
                         $('#tableBody').html(
-                            '<tr><td colspan="19" class="text-center small-muted">No data found</td></tr>'
+                            '<tr><td colspan="21" class="text-center small-muted">No data found</td></tr>'
                         );
                     }
                 })
                 .fail(function() {
                     $('#tableBody').html(
-                        '<tr><td colspan="19" class="text-center text-danger">Error searching</td></tr>'
+                        '<tr><td colspan="21" class="text-center text-danger">Error searching</td></tr>'
                     );
                 })
                 .always(function() {
@@ -626,7 +796,7 @@
         }
 
         function loadAll() {
-            $('#tableBody').html('<tr><td colspan="19" class="text-center small-muted">Loading data...</td></tr>');
+            $('#tableBody').html('<tr><td colspan="21" class="text-center small-muted">Loading data...</td></tr>');
             $.ajax({
                     url: 'ajaxKnittingProduction_Report.php',
                     dataType: 'json',
@@ -634,10 +804,10 @@
                 })
                 .done(function(resp) {
                     if (resp && resp.success) renderTableRows(resp.data);
-                    else $('#tableBody').html('<tr><td colspan="19" class="text-center small-muted">No data returned</td></tr>');
+                    else $('#tableBody').html('<tr><td colspan="21" class="text-center small-muted">No data returned</td></tr>');
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr><td colspan="19" class="text-center text-danger">Error loading data</td></tr>');
+                    $('#tableBody').html('<tr><td colspan="21" class="text-center text-danger">Error loading data</td></tr>');
                 });
         }
 
