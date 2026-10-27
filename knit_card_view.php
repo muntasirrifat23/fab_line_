@@ -126,7 +126,8 @@ $sql = "SELECT kc.*,
                kp.MCDIA AS prog_mcdia,
                kp.FDIA AS prog_fdia,
                kp.FGSM AS prog_fgsm,
-               kp.SONO AS prog_sono
+               kp.SONO AS prog_sono,
+               kp.CATEGORY AS prog_category
          FROM knit_card kc
          LEFT JOIN knitting_program kp ON (kc.{$kc_prog_col} = kp.PROGRAM_NO OR kc.{$kc_prog_col} = kp.KPTID)
          WHERE kc.KCTID IN ($placeholders)";
@@ -163,7 +164,6 @@ if (empty($cards_list)) {
     exit();
 }
 
-$user_cache = [];
 $cards_data = [];
 
 foreach ($cards_list as $card) {
@@ -172,6 +172,7 @@ foreach ($cards_list as $card) {
     $qr_payload = strval($roll_number);
 
     $val_card_id      = "#KC-" . $card_id;
+    $val_knitcard     = !empty($card['KNITCARD']) ? $card['KNITCARD'] : 'N/A';
     $prog_id_val      = !empty($card['KNITTING_PROGRAM_ID']) ? $card['KNITTING_PROGRAM_ID'] : (!empty($card['Knitting Program ID']) ? $card['Knitting Program ID'] : (!empty($card['knitting_program_id']) ? $card['knitting_program_id'] : ($card['KPTID'] ?? '')));
     $val_sub_tid      = !empty($card['prog_program_no']) ? $card['prog_program_no'] : ('KP-' . $prog_id_val);
     $val_date         = !empty($card['CREATED_DATE']) ? date('d M Y', strtotime($card['CREATED_DATE'])) : date('d M Y');
@@ -197,35 +198,14 @@ foreach ($cards_list as $card) {
     $val_feeder       = !empty($card['FEEDER_PLAN']) ? $card['FEEDER_PLAN'] : ($card['prog_feeder_plan'] ?? 'N/A');
     $val_qty          = number_format(floatval($card['QTY'] ?? 0), 2) . ' KG';
     $val_uname        = !empty($card['UNAME']) ? $card['UNAME'] : 'System';
-
-    $val_user_name    = $val_uname;
-    $val_user_id      = $val_uname;
-
-    if (!empty($card['UNAME'])) {
-        if (isset($user_cache[$card['UNAME']])) {
-            $val_user_name = $user_cache[$card['UNAME']]['name'];
-            $val_user_id   = $user_cache[$card['UNAME']]['id'];
-        } else {
-            $u_stmt = $db->prepare("SELECT USER_NAME, USER_ID FROM users WHERE USER_ID = ? LIMIT 1");
-            if ($u_stmt) {
-                $u_stmt->bind_param("s", $card['UNAME']);
-                $u_stmt->execute();
-                $u_res = $u_stmt->get_result();
-                if ($u_res && $u_row = $u_res->fetch_assoc()) {
-                    $val_user_name = !empty($u_row['USER_NAME']) ? $u_row['USER_NAME'] : $u_row['USER_ID'];
-                    $val_user_id   = $u_row['USER_ID'];
-                }
-                $u_stmt->close();
-            }
-            $user_cache[$card['UNAME']] = ['name' => $val_user_name, 'id' => $val_user_id];
-        }
-    }
+    $val_category     = !empty($card['CATEGORY']) ? $card['CATEGORY'] : (!empty($card['prog_category']) ? $card['prog_category'] : 'N/A');
 
     $cards_data[] = [
         'card_id'       => $card_id,
         'roll_number'   => $roll_number,
         'qr_payload'    => $qr_payload,
         'val_card_id'   => $val_card_id,
+        'val_knitcard'  => $val_knitcard,
         'val_sub_tid'   => $val_sub_tid,
         'val_date'      => $val_date,
         'val_buyer'     => $val_buyer,
@@ -249,8 +229,8 @@ foreach ($cards_list as $card) {
         'val_mcdia'     => $val_mcdia,
         'val_feeder'    => $val_feeder,
         'val_qty'       => $val_qty,
-        'val_user_name' => $val_user_name,
-        'val_user_id'   => $val_user_id,
+        'val_uname'     => $val_uname,
+        'val_category'  => $val_category,
     ];
 }
 
@@ -445,6 +425,15 @@ foreach ($cards_data as $fi => $fc) {
             line-height: 1.1;
         }
 
+        .val-qty-num {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .lbl-qty {
+            font-size: 15px;
+        }
+
         .qr-frame-box {
             background: #ffffff;
             padding: 4px;
@@ -511,6 +500,16 @@ foreach ($cards_data as $fi => $fc) {
             font-weight: 800;
         }
 
+        .tag-table td.knit-card-cell {
+            white-space: nowrap;
+            font-size: 14px;
+        }
+
+        .tag-table td.knit-card-cell .tag-lbl,
+        .tag-table td.knit-card-cell .tag-val {
+            font-size: inherit;
+        }
+
         .tag-table td.req-qty .tag-val {
             font-size: 13px;
         }
@@ -566,7 +565,6 @@ foreach ($cards_data as $fi => $fc) {
         <div class="card-action-bar no-print d-flex justify-content-between align-items-center mb-2">
             <span class="card-bar-title">
                 <i class="fa-solid fa-tag me-1 text-primary"></i> <strong>Knit Card <?php echo htmlspecialchars($c['val_card_id']); ?></strong>
-                <span class="text-muted ms-1">(Roll: <?php echo htmlspecialchars($c['roll_number']); ?>)</span>
             </span>
             <div class="btn-group-tag">
                 <button type="button" onclick="downloadSingleCard('card_box_<?php echo $idx; ?>', <?php echo htmlspecialchars(json_encode(strval($c['roll_number'])), ENT_QUOTES); ?>, <?php echo htmlspecialchars(json_encode(strval($c['card_id'])), ENT_QUOTES); ?>)" class="btn btn-tag btn-primary">
@@ -588,65 +586,61 @@ foreach ($cards_data as $fi => $fc) {
 
                 <div class="card-main-row">
                     <div class="col-qr-left">
-                        <div class="lbl-roll-tag">ROLL NO</div>
-                        <div class="val-roll-num"><?php echo htmlspecialchars($c['roll_number']); ?></div>
+                        <div class="lbl-roll-tag lbl-qty">QTY</div>
+                        <div class="val-roll-num val-qty-num"><?php echo htmlspecialchars($c['val_qty']); ?></div>
                         <div class="qr-frame-box">
                             <div class="tag-qr" id="roll_qrcode_<?php echo $idx; ?>"></div>
                         </div>
                         <div class="qr-payload-lbl">
-                            User: <strong><?php echo htmlspecialchars($c['val_user_name']); ?></strong><br>
-                            ID: <strong><?php echo htmlspecialchars($c['val_user_id']); ?></strong><br>
+                            User: <strong><?php echo htmlspecialchars($c['val_uname']); ?></strong><br>
                             Date: <strong><?php echo htmlspecialchars($c['val_date']); ?></strong>
                         </div>
                     </div>
 
                     <div class="col-specs-right">
-                        <!-- FIXED SERIAL (do not change, do not remove fields):
-                             left column top-to-bottom (Prog ID..Shift), then right column (Finish Dia..Yarn Brand),
-                             then M/C No + M/C Dia, then O/T + SL/VDQ, then Lot No + Feeder, then Req Qty -->
                         <table class="tag-table">
                             <tr>
-                                <td><span class="tag-lbl">Prog ID:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_sub_tid']); ?></span></td>
-                                <td><span class="tag-lbl">Finish Dia:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_fdia']); ?></span></td>
+                                <td colspan="2" class="knit-card-cell"><span class="tag-lbl">Knit Card:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_knitcard']); ?></span></td>
                             </tr>
                             <tr>
                                 <td><span class="tag-lbl">PO No:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_po']); ?></span></td>
-                                <td><span class="tag-lbl">Fabric:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_ftype']); ?></span></td>
+                                <td><span class="tag-lbl">Finish Dia:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_fdia']); ?></span></td>
                             </tr>
                             <tr>
                                 <td><span class="tag-lbl">SONO:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_sono']); ?></span></td>
-                                <td><span class="tag-lbl">Finish GSM:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_fgsm']); ?></span></td>
+                                <td><span class="tag-lbl">Fabric:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_ftype']); ?></span></td>
                             </tr>
                             <tr>
                                 <td><span class="tag-lbl">Buyer:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_buyer']); ?></span></td>
-                                <td><span class="tag-lbl">Customer:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_customer']); ?></span></td>
+                                <td><span class="tag-lbl">Finish GSM:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_fgsm']); ?></span></td>
                             </tr>
                             <tr>
                                 <td><span class="tag-lbl">Style:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_style']); ?></span></td>
-                                <td><span class="tag-lbl">Yarn Type:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_ytype']); ?></span></td>
+                                <td><span class="tag-lbl">Customer:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_customer']); ?></span></td>
                             </tr>
                             <tr>
                                 <td><span class="tag-lbl">Color:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_color']); ?></span></td>
-                                <td><span class="tag-lbl">Yarn Count:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_ycount']); ?></span></td>
+                                <td><span class="tag-lbl">Yarn Type:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_ytype']); ?></span></td>
                             </tr>
                             <tr>
                                 <td><span class="tag-lbl">Shift:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_shift']); ?></span></td>
-                                <td><span class="tag-lbl">Yarn Brand:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_ybrand']); ?></span></td>
+                                <td><span class="tag-lbl">Yarn Count:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_ycount']); ?></span></td>
                             </tr>
                             <tr>
                                 <td><span class="tag-lbl">M/C No:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_mcno']); ?></span></td>
-                                <td><span class="tag-lbl">M/C Dia:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_mcdia']); ?></span></td>
+                                <td><span class="tag-lbl">Yarn Brand:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_ybrand']); ?></span></td>
                             </tr>
                             <tr>
                                 <td><span class="tag-lbl">O / T:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_ot']); ?></span></td>
-                                <td><span class="tag-lbl">SL/VDQ:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_sl']); ?></span></td>
+                                <td><span class="tag-lbl">M/C Dia:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_mcdia']); ?></span></td>
                             </tr>
                             <tr>
                                 <td><span class="tag-lbl">Lot No:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_lot']); ?></span></td>
-                                <td><span class="tag-lbl">Feeder:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_feeder']); ?></span></td>
+                                <td><span class="tag-lbl">SL/VDQ:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_sl']); ?></span></td>
                             </tr>
                             <tr>
-                                <td colspan="2" class="req-qty"><span class="tag-lbl">Req Qty:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_qty']); ?></span></td>
+                                <td><span class="tag-lbl">Category:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_category']); ?></span></td>
+                                <td><span class="tag-lbl">Feeder:</span> <span class="tag-val"><?php echo htmlspecialchars($c['val_feeder']); ?></span></td>
                             </tr>
                         </table>
                     </div>
