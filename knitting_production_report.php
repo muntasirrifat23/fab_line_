@@ -16,31 +16,17 @@
             background: #f5f7fa;
         }
 
+
         .page-header {
             position: relative;
-            min-height: 68px;
+            min-height: 76px;
             padding: 8px 18px;
-            gap: 12px;
+            display: flex;
+            align-items: center !important;
             justify-content: center !important;
             background: #5b9084;
             border-radius: 8px;
             box-shadow: 0 6px 18px rgba(20, 30, 50, 0.12);
-        }
-
-        .panel {
-            background: #fff;
-            padding: 18px;
-            border-radius: 8px;
-            box-shadow: 0 6px 18px rgba(20, 30, 50, 0.06);
-        }
-
-        .controls .form-label {
-            font-size: 12px;
-            color: #6b7280;
-        }
-
-        .controls .btn {
-            min-width: 120px;
         }
 
         h1.title {
@@ -57,6 +43,33 @@
             line-height: 1.15;
             padding: 0 12px;
             box-sizing: border-box;
+        }
+
+        .page-header .back-btn {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+
+        .panel {
+            background: #fff;
+            padding: 18px;
+            border-radius: 8px;
+            box-shadow: 0 6px 18px rgba(20, 30, 50, 0.06);
+        }
+
+        .controls .form-label {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .controls .btn {
+            min-width: 120px;
         }
 
         .table-container {
@@ -105,13 +118,6 @@
             display: inline-flex;
             align-items: center;
             cursor: pointer;
-        }
-
-        .page-header .back-btn {
-            position: absolute;
-            left: 18px;
-            top: 50%;
-            transform: translateY(-50%);
         }
 
         #backBtn:hover,
@@ -292,20 +298,6 @@
                 min-height: 92px;
             }
 
-            .page-header .title {
-                top: auto;
-                bottom: 10px;
-                transform: none;
-                font-size: clamp(1.7rem, 4vw, 2.1rem) !important;
-                white-space: normal;
-            }
-
-            .page-header .back-btn {
-                top: 10px;
-                left: 12px;
-                transform: none;
-            }
-
             .table thead th,
             .table tbody td {
                 font-size: 14px;
@@ -422,7 +414,7 @@
         <div class="page-header d-flex justify-content-between align-items-center mb-3">
             <button class="back-btn" id="backBtn">
                 <i class="fa-solid fa-arrow-left" style="margin-right:6px;background:none;border:none;box-shadow:none;transform:none;"></i>
-                Back to Initial Page
+                Back To Report
             </button>
             <h1 class="title">Knitting Production Report</h1>
         </div>
@@ -435,7 +427,7 @@
                     </label>
 
                     <div class="input-group input-group-sm d-flex align-items-center gap-2">
-                        <input type="text" id="bookingInput" class="form-control" placeholder="Enter Roll / Booking No">
+                        <input type="text" id="bookingInput" class="form-control" placeholder="Enter Roll / PO No">
                         <button class="btn px-4" id="searchBtn" style="margin-top:8px; background:#2563eb; border:1px solid #2563eb; color:#fff; border-radius:8px;">
                             <i class="fa-solid fa-magnifying-glass me-1" style="margin-right:6px;background:none;border:none;box-shadow:none;transform:none;"></i>
                             Search
@@ -456,36 +448,36 @@
             <div class="panel">
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped table-hover table-sm report-table">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>ACTION</th>
-                            <th>DATE</th>
-                            <th>ROLL NO</th>
-                            <th>PO NUMBER</th>
-                            <th>QTY</th>
-                            <th>SONO</th>
-                            <th>BUYER</th>
-                            <th>STYLE</th>
-                            <th>COLOR</th>
-                            <th>MCNO</th>
-                            <th>MC DIA</th>
-                            <th>CUSTOMER</th>
-                            <th>SHIFT</th>
-                            <th>FABRICS TYPE</th>
-                            <th>FINISH GSM</th>
-                            <th>FINISH DIA</th>
-                            <th>YARN COUNT</th>
-                            <th>YARN BRAND</th>
-                            <th>YARN LOT</th>
-                            <th>CATEGORY</th>
-                            <th>OP NAME</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody">
-                        <tr>
-                            <td colspan="21" class="text-center small-muted">Loading data...</td>
-                        </tr>
-                    </tbody>
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ACTION</th>
+                                <th>DATE</th>
+                                <th>ROLL NO</th>
+                                <th>PO NUMBER</th>
+                                <th>QTY</th>
+                                <th>SONO</th>
+                                <th>BUYER</th>
+                                <th>STYLE</th>
+                                <th>COLOR</th>
+                                <th>MCNO</th>
+                                <th>MC DIA</th>
+                                <th>CUSTOMER</th>
+                                <th>SHIFT</th>
+                                <th>FABRICS TYPE</th>
+                                <th>FINISH GSM</th>
+                                <th>FINISH DIA</th>
+                                <th>YARN COUNT</th>
+                                <th>YARN BRAND</th>
+                                <th>YARN LOT</th>
+                                <th>CATEGORY</th>
+                                <th>OP NAME</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr>
+                                <td colspan="21" class="text-center small-muted">Loading data...</td>
+                            </tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -709,7 +701,7 @@
             var tbody = $('#tableBody');
             tbody.empty();
             if (!data || data.length === 0) {
-                tbody.append('<tr><td colspan="21" class="text-center small-muted">No Roll Or Booking No found</td></tr>');
+                tbody.append('<tr><td colspan="21" class="text-center small-muted">No Roll Or PO No found</td></tr>');
                 return;
             }
 
@@ -816,6 +808,12 @@
                 history.back();
             });
             $('#searchBtn').on('click', searchBooking);
+            $('#bookingInput').on('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    searchBooking();
+                }
+            });
             $('#clearBtn').on('click', function() {
                 $('#bookingInput').val('');
                 loadAll();
