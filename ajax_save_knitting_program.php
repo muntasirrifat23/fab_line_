@@ -189,7 +189,7 @@ $insertSql = "INSERT INTO knitting_program (
     KNIT_M_DESCRIPTION,
     REMARKS,
     UNAME,
-    `Category`
+    `CATEGORY`
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 $stmt = mysqli_prepare($db, $insertSql);
