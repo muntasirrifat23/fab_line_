@@ -669,7 +669,8 @@
             { key: 'FEEDER_PLAN', label: 'Feeder Plan' },
             { key: 'LOT_NO', label: 'Lot No' },
             { key: 'TPOINT', label: 'T Point' },
-            { key: 'UNAME', label: 'Uname' }
+            { key: 'CATEGORY', label: 'Category' },
+            { key: 'UNAME', label: 'Operator' }
         ];
 
         var TAB_CONFIG = {
