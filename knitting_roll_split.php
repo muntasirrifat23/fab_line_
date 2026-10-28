@@ -199,6 +199,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
     <style>
         body {
@@ -215,8 +216,72 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
 
         h1.title {
             font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 18px;
+            color: #ffffff;
+            font-size: clamp(1.25rem, 3vw, 1.8rem);
+            margin: 0;
+            text-align: center;
+        }
+
+        .page-header {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            margin-bottom: 20px;
+            padding: 14px 18px;
+            border: 1px solid #0f766e;
+            border-radius: 14px;
+            background: linear-gradient(120deg, #0f766e, #2563eb);
+            box-shadow: 0 8px 20px rgba(15, 118, 110, 0.18);
+        }
+
+        .page-header .back-btn {
+            justify-self: start;
+        }
+
+        .reenter-btn {
+            justify-self: end;
+            display: none;
+            align-items: center;
+            gap: 7px;
+            padding: 10px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.75);
+            border-radius: 8px;
+            background: #ffffff;
+            color: #0f766e;
+            font-weight: 700;
+            transition: background .2s ease, transform .2s ease;
+        }
+
+        .reenter-btn:hover {
+            background: #ecfeff;
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 575.98px) {
+            .page-header {
+                grid-template-columns: 1fr auto;
+                gap: 10px;
+                padding: 12px;
+            }
+
+            .page-header .back-btn {
+                grid-column: 1;
+                grid-row: 1;
+                padding: 8px 10px;
+            }
+
+            h1.title {
+                grid-column: 1 / -1;
+                grid-row: 2;
+            }
+
+            .reenter-btn {
+                grid-column: 2;
+                grid-row: 1;
+                padding: 8px 10px;
+            }
         }
 
         .small-muted {
@@ -283,26 +348,234 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
             color: #000000 !important;
             text-decoration: none;
         }
+
+        #qrScannerPanel {
+            margin-bottom: 16px;
+        }
+
+        .lookup-panel {
+            width: min(100%, 900px);
+            margin: 0 auto 20px;
+            padding: 26px 30px;
+            text-align: center;
+            border: 1px solid #cbd5e1;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #ffffff, #eff6ff);
+            box-shadow: 0 10px 24px rgba(30, 64, 175, 0.09);
+        }
+
+        .lookup-panel label {
+            display: block;
+            margin-bottom: 14px;
+            font-size: 1.15rem !important;
+        }
+
+        .lookup-controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .lookup-controls .form-control {
+            flex: 1 1 360px;
+            max-width: 560px;
+            min-height: 46px;
+            font-size: 1rem;
+        }
+
+        .lookup-controls .btn {
+            min-height: 44px;
+            margin: 0 !important;
+        }
+
+        .scanner-container {
+            position: relative;
+            width: 100%;
+            max-width: 520px;
+            aspect-ratio: 1 / 1;
+            margin-left: auto;
+            margin-right: auto;
+            background: #d9ede9;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: inset 0 0 0 1px #b5d8d2, 0 8px 20px rgba(10, 60, 55, 0.18);
+            margin-bottom: 12px;
+        }
+
+        #qr-reader {
+            width: 100%;
+            height: 100%;
+            padding: 0 !important;
+            background: #e6f4f1;
+            overflow: hidden;
+        }
+
+        #qr-reader video {
+            border-radius: 28px;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .scan-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            border-radius: 28px;
+            box-shadow: inset 0 0 0 2px rgba(0, 255, 200, 0.3);
+        }
+
+        .scan-overlay::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 76%;
+            height: 76%;
+            transform: translate(-50%, -50%);
+            border: 2px solid rgba(0, 255, 200, 0.5);
+            border-radius: 20px;
+            box-shadow: 0 0 30px rgba(0, 255, 200, 0.1);
+            animation: pulse-border 2.2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-border {
+            0% {
+                opacity: 0.4;
+                transform: translate(-50%, -50%) scale(0.96);
+            }
+
+            50% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.02);
+            }
+
+            100% {
+                opacity: 0.4;
+                transform: translate(-50%, -50%) scale(0.96);
+            }
+        }
+
+        .camera-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 520px;
+            margin: 12px auto 0;
+            padding: 0 6px;
+        }
+
+        .status-badge {
+            background: #dcebe8;
+            padding: 8px 18px;
+            border-radius: 100px;
+            color: #083a36;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid #9fc8c1;
+        }
+
+        .status-badge i {
+            color: #0f7a6f;
+            font-size: 0.9rem;
+        }
+
+        .btn-icon {
+            background: #dcebe8;
+            border: 1px solid #9fc8c1;
+            color: #083a36;
+            width: 44px;
+            height: 44px;
+            border-radius: 40px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-icon:hover {
+            background: #c3dcd7;
+            border-color: #0f7a6f;
+            color: #042f2c;
+        }
+
+        .btn-icon:active {
+            transform: scale(0.92);
+        }
+
+        #qrScannerStatus {
+            color: inherit;
+        }
+
+        @media (max-width: 767.98px) {
+            .scanner-container,
+            .camera-controls {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 6px;
+            }
+
+            .scanner-container {
+                max-width: min(100%, 420px);
+                border-radius: 20px;
+            }
+
+            #qr-reader video,
+            .scan-overlay {
+                border-radius: 20px;
+            }
+        }
     </style>
 </head>
 
 <body>
 
     <div class="container-fluid">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="page-header">
             <button class="back-btn" id="backBtn">
                 <i class="fa-solid fa-arrow-left" style="margin-right:6px;"></i>
                 Back to Initial Page
             </button>
             <h1 class="title">Knitting Roll Split</h1>
-            <div></div>
+            <button class="reenter-btn" id="reenterBtn" type="button">
+                <i class="fa-solid fa-rotate-right"></i> Re-enter Roll
+            </button>
         </div>
 
-        <div class="panel mb-3">
-            <label class="form-label fw-semibold" style="font-size: larger; color: black;">
+        <div id="rollLookupPanel">
+        <div id="qrScannerPanel">
+            <div class="scanner-container" id="scannerContainer">
+                <div id="qr-reader"></div>
+                <div class="scan-overlay"></div>
+            </div>
+            <div class="camera-controls">
+                <div class="status-badge">
+                    <i class="fas fa-video"></i>
+                    <span id="qrScannerStatus" role="status" aria-live="polite">Starting camera...</span>
+                </div>
+                <button class="btn-icon" id="scanQrBtn" type="button" title="Restart / switch camera" aria-label="Restart camera">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="panel lookup-panel mb-3">
+            <label class="form-label fw-semibold" style="font-size:x-large; color: black;">
                 Search Roll Number <span class="small-muted">(from Knitting Store)</span>
             </label>
-            <div class="input-group input-group-sm d-flex align-items-center gap-2">
+            <div class="lookup-controls">
                 <input type="text" id="rollInput" class="form-control" placeholder="Enter Roll No" autocomplete="off">
                 <button class="btn px-4" id="searchBtn" style="margin-top:8px;background:#2563eb;border:1px solid #2563eb;color:#fff;border-radius:8px;">
                     <i class="fa-solid fa-magnifying-glass me-1" style="margin-right:6px;"></i> Search
@@ -312,6 +585,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
                 </button>
             </div>
         </div>
+        </div>
 
         <div id="resultArea"></div>
     </div>
@@ -320,9 +594,16 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
     <script src="js/bootstrap.bundle.min.js"></script>
     <script>
         var currentRoll = null;
+        var qrScanner = null;
+        var qrScannerRunning = false;
+        var qrScanLocked = false;
 
         $('#backBtn').on('click', function() {
             history.back();
+        });
+
+        $('#reenterBtn').on('click', function() {
+            window.location.reload();
         });
 
         function esc(v) {
@@ -335,11 +616,13 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
 
         function renderRoll(d) {
             currentRoll = d;
+            $('#rollLookupPanel').hide();
+            $('#reenterBtn').css('display', 'inline-flex');
 
             var html = '' +
                 '<div class="panel">' +
-                '<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2" style="font-size: larger; color: black; font-weight: bold;">' +
-                '<h5 class="mb-0 fw-bold" style="color:#1e293b;"><i class="fa-solid fa-circle-info me-2 text-primary"></i> Store Roll Details</h5>' +
+                '<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2" style="font-size: x-large; color: black; font-weight: bold;">' +
+                '<h5 class="mb-0 fw-bold" style="color:#1e293b; font-weight: bold; font-size:x-large;"><i class="fa-solid fa-circle-info me-2 text-primary"></i> Store Roll Details</h5>' +
                 '</div>' +
                 '<div class="info-grid mb-3">' +
                 infoItem('Roll No', d.ROLL, true) +
@@ -452,10 +735,6 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
                                 '<div class="small-muted mt-2">Old roll number will no longer exist - print new labels for both rolls</div>' +
                                 '</div>';
 
-                            var after = function() {
-                                loadRoll(resp.roll_a);
-                            };
-
                             if (typeof Swal !== 'undefined') {
                                 Swal.fire({
                                     icon: 'success',
@@ -463,10 +742,12 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
                                     html: msgHtml,
                                     confirmButtonText: 'OK',
                                     confirmButtonColor: '#2563eb'
-                                }).then(after)['catch'](after);
+                                }).then(function() {
+                                    window.location.reload();
+                                });
                             } else {
                                 alert('Roll Split Successful! ' + resp.roll_a + ' (' + resp.qty_a + ') & ' + resp.roll_b + ' (' + resp.qty_b + ')');
-                                after();
+                                window.location.reload();
                             }
                         } else {
                             if (typeof Swal !== 'undefined') {
@@ -494,7 +775,21 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
             });
         }
 
-        function loadRoll(roll) {
+        function showQrError(message) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: message,
+                    confirmButtonText: 'OK',
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+                return;
+            }
+            alert(message);
+        }
+
+        function loadRoll(roll, restartScannerOnFailure) {
             $.ajax({
                     url: 'knitting_roll_split.php',
                     method: 'GET',
@@ -508,12 +803,143 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
                     if (resp && resp.success) {
                         renderRoll(resp.data);
                     } else {
-                        $('#resultArea').html('<div class="panel"><div class="text-center small-muted">' + esc((resp && resp.error) || 'Roll not found') + '</div></div>');
+                        showQrError('Wrong QR Code! Please scan a valid knitting Store Roll.');
+                        if (restartScannerOnFailure) restartScanner();
                     }
                 })
                 .fail(function() {
-                    $('#resultArea').html('<div class="panel"><div class="text-center text-danger small-muted">Error loading roll</div></div>');
+                    showQrError('Unable to load roll data. Please try again.');
+                    if (restartScannerOnFailure) restartScanner();
                 });
+        }
+
+        function extractRollFromQR(qrText) {
+            var text = String(qrText || '').trim();
+            if (!text) return null;
+
+            if (text.indexOf('|') !== -1) {
+                var first = text.split('|')[0].trim();
+                if (first) return first;
+            }
+
+            var match = text.match(/ROLL:\s*([^\n\r]+)/i);
+            if (match && match[1]) return match[1].trim();
+
+            return /^[a-zA-Z0-9_-]{2,}$/.test(text) ? text : null;
+        }
+
+        function setQrScannerStatus(message, isError) {
+            $('#qrScannerStatus')
+                .text(message)
+                .toggleClass('text-danger', Boolean(isError));
+        }
+
+        function stopQrScanner() {
+            if (!qrScanner) return Promise.resolve(true);
+
+            var scanner = qrScanner;
+            var wasRunning = qrScannerRunning;
+            qrScanner = null;
+            qrScannerRunning = false;
+            $('#scanQrBtn').prop('disabled', false);
+
+            var stopped;
+            try {
+                stopped = wasRunning ? scanner.stop() : Promise.resolve();
+            } catch (error) {
+                console.error('Unable to stop QR scanner:', error);
+                setQrScannerStatus('Unable to stop the camera: ' + (error.message || error), true);
+                return Promise.resolve(false);
+            }
+            return stopped.then(function() {
+                scanner.clear();
+                return true;
+            }).catch(function(error) {
+                console.error('Unable to stop QR scanner:', error);
+                setQrScannerStatus('Unable to stop the camera: ' + (error.message || error), true);
+                return false;
+            });
+        }
+
+        function startQrScanner() {
+            $('#qrScannerPanel').show();
+            if (typeof Html5Qrcode === 'undefined') {
+                setQrScannerStatus('QR scanner could not be loaded. Use roll number search instead.', true);
+                return;
+            }
+
+            $('#scanQrBtn').prop('disabled', true);
+            setQrScannerStatus('Starting camera...');
+            qrScanner = new Html5Qrcode('qr-reader');
+
+            qrScanner.start(
+                { facingMode: 'environment' },
+                {
+                    fps: 20,
+                    qrbox: function(viewfinderWidth, viewfinderHeight) {
+                        var size = Math.floor(Math.min(320, viewfinderWidth * 0.76, viewfinderHeight * 0.76));
+                        return { width: size, height: size };
+                    }
+                },
+                function(decodedText) {
+                    if (qrScanLocked) return;
+                    qrScanLocked = true;
+
+                    var roll = extractRollFromQR(decodedText);
+                    if (!roll) {
+                        setQrScannerStatus('This QR code does not contain a valid roll number.', true);
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Invalid QR Code',
+                            text: 'Please scan a valid knitting store roll QR code.',
+                            confirmButtonColor: '#2563eb'
+                        }).then(function() {
+                            qrScanLocked = false;
+                            setQrScannerStatus('Scanning...');
+                        });
+                        return;
+                    }
+
+                    $('#rollInput').val(roll);
+                    setQrScannerStatus('QR scanned. Loading store data...');
+                    stopQrScanner().then(function(stopped) {
+                        if (!stopped) {
+                            qrScanLocked = false;
+                            return;
+                        }
+                        $('#qr-reader').empty();
+                        $('#qrScannerPanel').show();
+                        $('#resultArea').html('<div class="panel"><div class="text-center small-muted">Loading...</div></div>');
+                        loadRoll(roll, true);
+                    });
+                },
+                function() {}
+            ).then(function() {
+                qrScannerRunning = true;
+                $('#scanQrBtn').prop('disabled', false);
+                setQrScannerStatus('Scanning for a roll QR code...');
+            }).catch(function(error) {
+                console.error('Unable to start QR scanner:', error);
+                if (qrScanner) {
+                    try {
+                        qrScanner.clear();
+                    } catch (cleanupError) {
+                        console.error('Unable to clear failed QR scanner:', cleanupError);
+                    }
+                }
+                qrScanner = null;
+                qrScannerRunning = false;
+                $('#scanQrBtn').prop('disabled', false);
+                setQrScannerStatus('Camera unavailable', true);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Camera unavailable',
+                    text: (error.message || error) + '. You can still search by roll number.',
+                    confirmButtonText: 'OK',
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+            });
         }
 
         function searchRoll() {
@@ -527,16 +953,46 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
                 });
                 return;
             }
-            $('#resultArea').html('<div class="panel"><div class="text-center small-muted">Loading...</div></div>');
-            loadRoll(roll);
+            stopQrScanner().then(function(stopped) {
+                if (stopped) $('#qrScannerPanel').hide();
+                $('#resultArea').html('<div class="panel"><div class="text-center small-muted">Loading...</div></div>');
+                loadRoll(roll);
+            });
+        }
+
+        function restartScanner() {
+            qrScanLocked = false;
+            $('#qrScannerPanel').show();
+            $('#qr-reader').empty();
+            startQrScanner();
         }
 
         $(function() {
+            startQrScanner();
             $('#searchBtn').on('click', searchRoll);
+            $('#scanQrBtn').on('click', function() {
+                $(this).prop('disabled', true);
+                stopQrScanner().then(function(stopped) {
+                    if (stopped) {
+                        $('#qrScannerPanel').show();
+                        $('#qr-reader').empty();
+                        startQrScanner();
+                    } else {
+                        $('#scanQrBtn').prop('disabled', false);
+                    }
+                });
+            });
             $('#clearBtn').on('click', function() {
-                $('#rollInput').val('');
-                currentRoll = null;
-                $('#resultArea').html('');
+                stopQrScanner().then(function(stopped) {
+                    $('#rollInput').val('');
+                    currentRoll = null;
+                    $('#resultArea').html('');
+                    if (stopped) {
+                        $('#qrScannerPanel').show();
+                        $('#qr-reader').empty();
+                        startQrScanner();
+                    }
+                });
             });
             $('#rollInput').on('keyup', function(e) {
                 if (e.key === 'Enter') searchRoll();
