@@ -390,6 +390,37 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
             margin: 0 !important;
         }
 
+        .roll-split-popup {
+            width: min(620px, calc(100vw - 28px)) !important;
+            padding: 38px 34px !important;
+        }
+
+        .roll-split-popup .swal2-title {
+            font-size: 2rem !important;
+        }
+
+        .roll-split-popup .swal2-html-container {
+            font-size: 1.3rem !important;
+            line-height: 1.6 !important;
+        }
+
+        .roll-split-popup .swal2-icon {
+            transform: scale(1.25);
+        }
+
+        .roll-split-popup .swal2-actions {
+            gap: 12px;
+            margin-top: 1.5rem;
+        }
+
+        .roll-split-popup .swal2-styled {
+            min-width: 120px;
+            min-height: 48px;
+            padding: 12px 22px !important;
+            font-size: 1.1rem !important;
+            font-weight: 700 !important;
+        }
+
         .scanner-container {
             position: relative;
             width: 100%;
@@ -706,7 +737,8 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
                 showCancelButton: true,
                 confirmButtonColor: '#dc2626',
                 cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Yes, Split!'
+                confirmButtonText: 'Yes, Split!',
+                customClass: { popup: 'roll-split-popup' }
             }).then(function(r) {
                 if (!r.isConfirmed) return;
 
@@ -725,14 +757,14 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
                     .done(function(resp) {
                         if (resp && resp.success) {
                             var msgHtml =
-                                '<div style="text-align:left;font-size:15px;">' +
-                                '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;margin-bottom:8px;">' +
+                                '<div style="text-align:left;font-size:18px;line-height:1.55;">' +
+                                '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px 16px;margin-bottom:10px;">' +
                                 '<b>Original Roll:</b> ' + resp.old_roll + '</div>' +
-                                '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;margin-bottom:8px;">' +
+                                '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px 16px;margin-bottom:10px;">' +
                                 '<b>Roll A:</b> <span style="color:#16a34a;font-weight:800;">' + resp.roll_a + '</span> &rarr; QTY: <b>' + resp.qty_a + '</b></div>' +
-                                '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;">' +
+                                '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px 16px;">' +
                                 '<b>Roll B:</b> <span style="color:#16a34a;font-weight:800;">' + resp.roll_b + '</span> &rarr; QTY: <b>' + resp.qty_b + '</b></div>' +
-                                '<div class="small-muted mt-2">Old roll number will no longer exist - print new labels for both rolls</div>' +
+                                '<div class="small-muted mt-3" style="font-size:15px;">Old roll number will no longer exist - print new labels for both rolls</div>' +
                                 '</div>';
 
                             if (typeof Swal !== 'undefined') {
@@ -740,8 +772,10 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
                                     icon: 'success',
                                     title: 'Roll Split Successful!',
                                     html: msgHtml,
-                                    confirmButtonText: 'OK',
-                                    confirmButtonColor: '#2563eb'
+                                    customClass: { popup: 'roll-split-popup' },
+                                    timer: 3000,
+                                    timerProgressBar: true,
+                                    showConfirmButton: false
                                 }).then(function() {
                                     window.location.reload();
                                 });
