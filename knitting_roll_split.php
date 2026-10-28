@@ -259,7 +259,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
             transform: translateY(-1px);
         }
 
-        @media (max-width: 575.98px) {
+        @media (max-width: 767.98px) {
             .page-header {
                 grid-template-columns: 1fr auto;
                 gap: 10px;
@@ -421,6 +421,10 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
             font-weight: 700 !important;
         }
 
+        #splitQtyInput {
+            min-height: 44px;
+        }
+
         .scanner-container {
             position: relative;
             width: 100%;
@@ -546,26 +550,140 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
             color: inherit;
         }
 
+        @media (min-width: 576px) and (max-width: 991.98px) {
+            body {
+                padding: 14px;
+            }
+
+            .lookup-panel {
+                width: min(100%, 820px);
+                padding: 22px;
+            }
+
+            .info-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            body {
+                padding: 10px;
+            }
+
+            .page-header {
+                margin-bottom: 14px;
+                padding: 10px;
+            }
+
+            .page-header .back-btn,
+            .reenter-btn {
+                max-width: 100%;
+                font-size: 0.85rem;
+            }
+
+            .page-header .back-btn {
+                white-space: nowrap;
+            }
+
+            .lookup-panel {
+                padding: 18px 14px;
+            }
+
+            .lookup-panel label {
+                font-size: 1rem !important;
+            }
+
+            .lookup-controls {
+                gap: 8px;
+            }
+
+            .lookup-controls .form-control {
+                flex: 1 1 100%;
+                max-width: none;
+            }
+
+            .lookup-controls .btn {
+                flex: 1 1 calc(50% - 8px);
+                padding-right: 10px !important;
+                padding-left: 10px !important;
+            }
+
+            .panel {
+                padding: 14px;
+            }
+
+            .info-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 8px;
+            }
+
+            .info-item {
+                min-width: 0;
+                padding: 9px;
+            }
+
+            .info-item .val {
+                font-size: 0.9rem;
+            }
+
+            .info-item.hl .val {
+                font-size: 1rem;
+            }
+
+            .roll-split-popup {
+                width: calc(100vw - 20px) !important;
+                padding: 24px 16px !important;
+            }
+
+            .roll-split-popup .swal2-title {
+                font-size: 1.55rem !important;
+            }
+
+            .roll-split-popup .swal2-html-container {
+                font-size: 1rem !important;
+            }
+
+            .roll-split-popup .swal2-styled {
+                min-width: 104px;
+                min-height: 46px;
+                padding: 10px 14px !important;
+                font-size: 1rem !important;
+            }
+        }
+
+        @media (max-width: 360px) {
+            body {
+                padding: 6px;
+            }
+
+            .page-header .back-btn,
+            .reenter-btn {
+                padding: 8px !important;
+                font-size: 0.75rem;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .camera-controls {
+                padding: 0;
+            }
+
+            .status-badge {
+                padding: 7px 12px;
+                font-size: 0.75rem;
+            }
+        }
+
         @media (max-width: 767.98px) {
             .scanner-container,
             .camera-controls {
                 max-width: 100%;
             }
-        }
-
-        @media (max-width: 480px) {
-            body {
-                padding: 6px;
-            }
 
             .scanner-container {
-                max-width: min(100%, 420px);
-                border-radius: 20px;
-            }
-
-            #qr-reader video,
-            .scan-overlay {
-                border-radius: 20px;
+                width: min(100%, 520px);
             }
         }
     </style>
