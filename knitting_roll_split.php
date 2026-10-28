@@ -423,6 +423,59 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
 
         #splitQtyInput {
             min-height: 44px;
+            font-size: 1.35rem;
+            padding: 10px 14px;
+        }
+
+        .split-form-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .split-qty-field {
+            flex: 0 0 33.333%;
+            max-width: 33.333%;
+            min-width: 0;
+        }
+
+        .split-action {
+            flex: 0 0 auto;
+            padding-top: 32px;
+        }
+
+        .split-action .btn {
+            min-height: 44px;
+            white-space: nowrap;
+        }
+
+        .lookup-controls .form-control {
+            font-size: 1.35rem;
+            padding: 10px 14px;
+        }
+
+        @media (max-width: 991.98px) {
+            .split-qty-field {
+                flex-basis: 66.667%;
+                max-width: 66.667%;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .split-form-row {
+                gap: 8px;
+            }
+
+            .split-action {
+                padding-top: 32px;
+            }
+
+            .split-action .btn {
+                padding-right: 10px !important;
+                padding-left: 10px !important;
+                font-size: 0.85rem;
+            }
         }
 
         .scanner-container {
@@ -801,14 +854,14 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
                 '</div>' +
                 '<hr>' +
                 '<h5 class="fw-bold mb-3" style="color:#1e293b;"><i class="fa-solid fa-scissors me-2 text-danger"></i>Split This Roll</h5>' +
-                '<div class="row g-3 align-items-end">' +
-                '<div class="col-md-4">' +
+                '<div class="split-form-row">' +
+                '<div class="split-qty-field">' +
                 '<label class="form-label fw-semibold" style="color:black;">Split QTY</label>' +
                 '<input type="number" id="splitQtyInput" class="form-control" min="0.01" step="0.01" placeholder="Enter split QTY">' +
                 '<div class="small-muted mt-1">Example: Roll 300000001 (QTY 500), split 200 &rarr; <b>300000001-A</b> (200) + <b>300000001-B</b> (300)</div>' +
                 '</div>' +
-                '<div class="col-md-4">' +
-                '<button class="btn px-4" id="splitBtn" style="background:#dc2626;border:1px solid #dc2626;color:#fff;border-radius:8px;padding:10px 18px;">' +
+                '<div class="split-action">' +
+                '<button class="btn" id="splitBtn" style="background:#dc2626;border:1px solid #dc2626;color:#fff;border-radius:8px;">' +
                 '<i class="fa-solid fa-scissors me-1"></i> Split Roll' +
                 '</button>' +
                 '</div>' +
