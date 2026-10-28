@@ -1,6 +1,39 @@
 <?php
 include 'config.php';
 
+if (
+    $_SERVER['REQUEST_METHOD'] === 'POST'
+    && isset($_POST['action'])
+    && $_POST['action'] === 'verify_knitting_roll_split_password'
+) {
+    header('Content-Type: application/json');
+    $password = isset($_POST['password']) ? (string) $_POST['password'] : '';
+
+    if (hash_equals('2211', $password)) {
+        $_SESSION['knitting_roll_split_authorized'] = true;
+        echo json_encode(['success' => true]);
+    } else {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'message' => 'Wrong password. Please enter a valid password.']);
+    }
+    exit();
+}
+
+if (empty($_SESSION['knitting_roll_split_authorized'])) {
+    if (
+        (isset($_GET['action']) && $_GET['action'] === 'get_roll')
+        || (isset($_POST['action']) && $_POST['action'] === 'split')
+    ) {
+        header('Content-Type: application/json');
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Knitting Roll Split password verification is required.']);
+        exit();
+    }
+
+    header('Location: initialPage.php?require_knitting_roll_split_password=1');
+    exit();
+}
+
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Pragma: no-cache');
 

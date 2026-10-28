@@ -63,6 +63,10 @@ if (isset($_POST['knitting_rack_transfer'])) {
     exit();
 }
 if (isset($_POST['knitting_roll_split'])) {
+    if (empty($_SESSION['knitting_roll_split_authorized'])) {
+        header('Location: initialPage.php?require_knitting_roll_split_password=1');
+        exit();
+    }
     $_SESSION['lineNo'] = $_POST['option'];
     header('location:knitting_roll_split.php');
     exit();
@@ -73,6 +77,10 @@ if (isset($_POST['dyeing_batch_card'])) {
     exit();
 }
 if (isset($_POST['dyeing_batch_split'])) {
+    if (empty($_SESSION['batch_split_authorized'])) {
+        header('Location: initialPage.php?require_batch_split_password=1');
+        exit();
+    }
     $_SESSION['lineNo'] = $_POST['option'];
     header('location:dyeing_batch_split.php');
     exit();
@@ -461,6 +469,144 @@ mysqli_close($db);
         .btn-grid .w3-button {
             text-transform: none !important;
         }
+
+        .batch-split-auth-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: rgba(15, 23, 42, .55);
+        }
+
+        .batch-split-auth-overlay[hidden],
+        .batch-split-error[hidden] {
+            display: none;
+        }
+
+        .batch-split-auth-dialog {
+            width: min(100%, 500px);
+            padding: 20px 16px 16px;
+            border-radius: 16px;
+            background: #fff;
+            box-shadow: 0 24px 70px rgba(0, 0, 0, .28);
+            color: #212529;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .batch-split-auth-heading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0 0 30px;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .batch-split-auth-heading .auth-close {
+            margin-left: auto;
+            border: 0;
+            background: transparent;
+            color: #64748b;
+            font-size: 1.7rem;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .batch-split-auth-description {
+            margin-bottom: 14px;
+            color: #6b7280;
+        }
+
+        .batch-split-auth-input {
+            width: 100%;
+            min-height: 46px;
+            padding: 10px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+
+        .batch-split-auth-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 30px;
+        }
+
+        .batch-split-auth-actions button {
+            min-height: 42px;
+            padding: 9px 14px;
+            border: 0;
+            border-radius: 8px;
+            color: #fff;
+            font-size: .95rem;
+            cursor: pointer;
+        }
+
+        #cancelBatchSplitAuth {
+            background: #6c757d;
+        }
+
+        #verifyBatchSplitAuth {
+            background: #0d6efd;
+        }
+
+        #verifyBatchSplitAuth:disabled {
+            opacity: .7;
+            cursor: wait;
+        }
+
+        .batch-split-error {
+            position: fixed;
+            z-index: 10001;
+            top: 50%;
+            left: 50%;
+            width: min(calc(100% - 32px), 390px);
+            padding: 22px;
+            transform: translate(-50%, -50%);
+            border-radius: 14px;
+            background: #fff;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .3);
+            text-align: center;
+            color: #334155;
+        }
+
+        .batch-split-error-icon {
+            display: grid;
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 12px;
+            place-items: center;
+            border: 3px solid #ef4444;
+            border-radius: 50%;
+            color: #ef4444;
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .batch-split-error strong {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 480px) {
+            .batch-split-auth-dialog {
+                padding: 18px 14px 14px;
+            }
+
+            .batch-split-auth-heading {
+                margin-bottom: 22px;
+                font-size: 1.1rem;
+            }
+
+            .batch-split-auth-actions {
+                margin-top: 22px;
+            }
+        }
     </style>
 </head>
 
@@ -530,6 +676,27 @@ mysqli_close($db);
 
             </form>
         </div>
+    </div>
+
+    <div id="batchSplitAuthOverlay" class="batch-split-auth-overlay" hidden>
+        <section class="batch-split-auth-dialog" role="dialog" aria-modal="true" aria-labelledby="batchSplitAuthTitle">
+            <h2 class="batch-split-auth-heading" id="batchSplitAuthTitle">
+                <i class="fas fa-lock" aria-hidden="true"></i>
+                Authentication Required
+                <button type="button" class="auth-close" id="closeBatchSplitAuth" aria-label="Close">&times;</button>
+            </h2>
+            <p class="batch-split-auth-description" id="authDescription">Please enter the password to access <strong>Batch Split</strong>.</p>
+            <input type="password" id="batchSplitPassword" class="batch-split-auth-input" placeholder="Enter password" autocomplete="current-password">
+            <div class="batch-split-auth-actions">
+                <button type="button" id="cancelBatchSplitAuth">Cancel</button>
+                <button type="button" id="verifyBatchSplitAuth">Verify &amp; Proceed</button>
+            </div>
+        </section>
+    </div>
+    <div id="batchSplitAuthError" class="batch-split-error" role="alert" aria-live="assertive" hidden>
+        <span class="batch-split-error-icon" aria-hidden="true">!</span>
+        <strong>Wrong password</strong>
+        <span>Please enter a valid password.</span>
     </div>
 
     <!-- Line Selection Modal (for DASHBOARD TV) -->
@@ -622,6 +789,158 @@ mysqli_close($db);
         }
 
         $(function() {
+            var batchSplitButton = document.getElementById('dyeing_batch_split');
+            var batchSplitForm = batchSplitButton ? batchSplitButton.closest('form') : null;
+            var authOverlay = document.getElementById('batchSplitAuthOverlay');
+            var authPassword = document.getElementById('batchSplitPassword');
+            var authError = document.getElementById('batchSplitAuthError');
+            var batchSplitAuthorized = <?php echo !empty($_SESSION['batch_split_authorized']) ? 'true' : 'false'; ?>;
+            var knittingRollSplitAuthorized = <?php echo !empty($_SESSION['knitting_roll_split_authorized']) ? 'true' : 'false'; ?>;
+            var authErrorTimer = null;
+            var authSubmitting = false;
+            var authConfig = null;
+
+            function openBatchSplitAuth(config) {
+                authConfig = config;
+                authOverlay.hidden = false;
+                authPassword.value = '';
+                authError.hidden = true;
+                document.getElementById('authDescription').innerHTML =
+                    'Please enter the password to access <strong>' + config.label + '</strong>.';
+                authPassword.focus();
+            }
+
+            function closeBatchSplitAuth() {
+                authOverlay.hidden = true;
+                authPassword.value = '';
+                authSubmitting = false;
+                document.getElementById('verifyBatchSplitAuth').disabled = false;
+            }
+
+            function showBatchSplitAuthError(message) {
+                authError.querySelector('strong').textContent = message || 'Wrong password';
+                authError.querySelector('span:last-child').textContent = message
+                    ? 'Please try again.'
+                    : 'Please enter a valid password.';
+                authError.hidden = false;
+                window.clearTimeout(authErrorTimer);
+                authErrorTimer = window.setTimeout(function() {
+                    authError.hidden = true;
+                }, 3000);
+            }
+
+            function verifyBatchSplitPassword() {
+                if (authSubmitting) return;
+                var password = authPassword.value;
+                if (!password) {
+                    showBatchSplitAuthError();
+                    return;
+                }
+
+                authSubmitting = true;
+                var verifyButton = document.getElementById('verifyBatchSplitAuth');
+                verifyButton.disabled = true;
+                verifyButton.textContent = 'Verifying...';
+
+                fetch(authConfig.verificationUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        action: authConfig.verifyAction,
+                        password: password
+                    })
+                })
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(data) {
+                    if (!data.success) {
+                        authPassword.value = '';
+                        authPassword.focus();
+                        showBatchSplitAuthError();
+                        return;
+                    }
+
+                    var submitter = document.createElement('input');
+                    submitter.type = 'hidden';
+                    submitter.name = authConfig.formAction;
+                    submitter.value = '1';
+                    batchSplitForm.appendChild(submitter);
+                    closeBatchSplitAuth();
+                    batchSplitForm.submit();
+                })
+                .catch(function(error) {
+                    console.error(authConfig.label + ' password verification failed:', error);
+                    authPassword.value = '';
+                    authPassword.focus();
+                    showBatchSplitAuthError('Verification failed');
+                })
+                .finally(function() {
+                    authSubmitting = false;
+                    verifyButton.disabled = false;
+                    verifyButton.textContent = 'Verify & Proceed';
+                });
+            }
+
+            batchSplitButton.addEventListener('click', function(event) {
+                event.preventDefault();
+                openBatchSplitAuth({
+                    label: 'Batch Split',
+                    verificationUrl: 'dyeing_batch_split.php',
+                    verifyAction: 'verify_batch_split_password',
+                    formAction: 'dyeing_batch_split'
+                });
+            });
+            var knittingRollSplitButton = document.getElementById('knitting_roll_split');
+            knittingRollSplitButton.addEventListener('click', function(event) {
+                event.preventDefault();
+                openBatchSplitAuth({
+                    label: 'Knitting Roll Split',
+                    verificationUrl: 'knitting_roll_split.php',
+                    verifyAction: 'verify_knitting_roll_split_password',
+                    formAction: 'knitting_roll_split'
+                });
+            });
+            document.getElementById('verifyBatchSplitAuth').addEventListener('click', verifyBatchSplitPassword);
+            document.getElementById('cancelBatchSplitAuth').addEventListener('click', closeBatchSplitAuth);
+            document.getElementById('closeBatchSplitAuth').addEventListener('click', closeBatchSplitAuth);
+            authPassword.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') verifyBatchSplitPassword();
+                if (event.key === 'Escape') closeBatchSplitAuth();
+            });
+
+            var currentUrl = new URL(window.location.href);
+            var requiresBatchSplitPassword = currentUrl.searchParams.get('require_batch_split_password') === '1';
+            var requiresKnittingRollSplitPassword = currentUrl.searchParams.get('require_knitting_roll_split_password') === '1';
+
+            if (requiresBatchSplitPassword && batchSplitAuthorized) {
+                currentUrl.searchParams.delete('require_batch_split_password');
+                window.history.replaceState(null, '', currentUrl.pathname + currentUrl.search + currentUrl.hash);
+            } else if (requiresBatchSplitPassword) {
+                openBatchSplitAuth({
+                    label: 'Batch Split',
+                    verificationUrl: 'dyeing_batch_split.php',
+                    verifyAction: 'verify_batch_split_password',
+                    formAction: 'dyeing_batch_split'
+                });
+            }
+
+            if (requiresKnittingRollSplitPassword && knittingRollSplitAuthorized) {
+                currentUrl.searchParams.delete('require_knitting_roll_split_password');
+                window.history.replaceState(null, '', currentUrl.pathname + currentUrl.search + currentUrl.hash);
+            } else if (requiresKnittingRollSplitPassword) {
+                openBatchSplitAuth({
+                    label: 'Knitting Roll Split',
+                    verificationUrl: 'knitting_roll_split.php',
+                    verifyAction: 'verify_knitting_roll_split_password',
+                    formAction: 'knitting_roll_split'
+                });
+            }
+
+            window.addEventListener('pageshow', function(event) {
+                if (event.persisted) closeBatchSplitAuth();
+            });
+
             var urTYP = document.getElementById('idUSR').innerText.trim().toLowerCase();
             var idFLR = document.getElementById('sidFLOOR');
             var idLNE = document.getElementById('sidLINE');

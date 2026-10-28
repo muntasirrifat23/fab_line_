@@ -10,6 +10,12 @@ if (!isset($_SESSION['username'])) {
     exit;
 }
 
+if (empty($_SESSION['batch_split_authorized'])) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Batch Split password verification is required.']);
+    exit;
+}
+
 function insertSplitRow($db, $budat, $bcmtid, $rollNo, $row) {
     $vPO_NUMBER = isset($row['PO_NUMBER']) ? $row['PO_NUMBER'] : null;
     $vRACK = isset($row['RACK']) ? $row['RACK'] : null;

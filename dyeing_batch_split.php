@@ -6,6 +6,29 @@ if (!isset($_SESSION['username'])) {
     echo "<script>alert('You must be logged in'); window.location.href='login.php';</script>";
     exit;
 }
+
+if (
+    $_SERVER['REQUEST_METHOD'] === 'POST'
+    && isset($_POST['action'])
+    && $_POST['action'] === 'verify_batch_split_password'
+) {
+    header('Content-Type: application/json');
+    $password = isset($_POST['password']) ? (string) $_POST['password'] : '';
+
+    if (hash_equals('1122', $password)) {
+        $_SESSION['batch_split_authorized'] = true;
+        echo json_encode(['success' => true]);
+    } else {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'message' => 'Wrong password. Please enter a valid password.']);
+    }
+    exit;
+}
+
+if (empty($_SESSION['batch_split_authorized'])) {
+    header('Location: initialPage.php?require_batch_split_password=1');
+    exit;
+}
 ?>
 
 <!DOCTYPE html>
