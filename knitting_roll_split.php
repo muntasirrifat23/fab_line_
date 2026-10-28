@@ -120,6 +120,8 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
     $fFDIA    = mysqli_real_escape_string($db, $orig['FDIA']);
     $fFEEDER  = mysqli_real_escape_string($db, $orig['FEEDER_PLAN']);
     $fLOT     = mysqli_real_escape_string($db, $orig['LOT_NO']);
+    $fCATEGORY = mysqli_real_escape_string($db, isset($orig['CATEGORY']) ? $orig['CATEGORY'] : '');
+    $fQCSTATUS = mysqli_real_escape_string($db, isset($orig['QC_STATUS']) ? $orig['QC_STATUS'] : '');
     $fTPOINT  = mysqli_real_escape_string($db, $orig['TPOINT']);
     $fMCODE   = mysqli_real_escape_string($db, $orig['MCODE']);
     $fMDES    = mysqli_real_escape_string($db, $orig['MDESCRIPTION']);
@@ -158,11 +160,11 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
     $i2 = "INSERT INTO knitting_store
             (BUDAT, RACKNO, RACKLOCATION, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
              MCNO, MCDIA, CUSTOMER, YTYPE, YCOUNT, YBRAND, O_T, SL, FTYPE, FGSM, FDIA,
-             FEEDER_PLAN, LOT_NO, TPOINT, MCODE, MDESCRIPTION, UNAME, UID)
+             FEEDER_PLAN, CATEGORY, LOT_NO, TPOINT, MCODE, MDESCRIPTION, UNAME, UID, QC_STATUS, CREATED_DATE)
            VALUES
             ('$fBUDAT', '$fRACKNO', '$fRACKLOC', '$newRollB', '$fPO', '$remainB', '$fSONO', '$fSHIFT', '$fBUYER', '$fSTYLE', '$fCOLOR',
              '$fMCNO', '$fMCDIA', '$fCUST', '$fYTYPE', '$fYCOUNT', '$fYBRAND', '$fOT', '$fSL', '$fFTYPE', '$fFGSM', '$fFDIA',
-             '$fFEEDER', '$fLOT', '$fTPOINT', '$fMCODE', '$fMDES', '$fUNAME', '$fUID')";
+             '$fFEEDER', '$fCATEGORY', '$fLOT', '$fTPOINT', '$fMCODE', '$fMDES', '$fUNAME', '$fUID', '$fQCSTATUS', NOW())";
 
     $ok1 = mysqli_query($db, $u1);
     $ok2 = $ok1 ? mysqli_query($db, $i2) : false;
@@ -352,17 +354,18 @@ if (isset($_POST['action']) && $_POST['action'] === 'split') {
                 infoItem('Machine No', d.MCNO) +
                 infoItem('Machine Dia', d.MCDIA) +
                 infoItem('Customer', d.CUSTOMER) +
-                infoItem('YARN BRAND', d.YBRAND) +
-                infoItem('Yarn Type', d.YTYPE) +
-                infoItem('Yarn Count', d.YCOUNT) +
                 infoItem('Fabrics Type', d.FTYPE) +
                 infoItem('Finish GSM', d.FGSM) +
                 infoItem('Finish Dia', d.FDIA) +
                 infoItem('Open / Tube', d.O_T) +
-                infoItem('SL', d.SL) +
+                infoItem('SL / VDQ', d.SL) +
+                infoItem('YARN TYPE', d.YTYPE) +
+                infoItem('YARN COUNT', d.YCOUNT) +
+                infoItem('YARN BRAND', d.YBRAND) +
+                infoItem('LOT NO', d.LOT_NO) +
                 infoItem('Feeder Plan', d.FEEDER_PLAN) +
-                infoItem('Lot No', d.LOT_NO) +
-                infoItem('Date', d.BUDAT) +
+                infoItem('CATEGORY', d.CATEGORY) +
+                infoItem('QC_STATUS', d.QC_STATUS) +
                 '</div>' +
                 '<hr>' +
                 '<h5 class="fw-bold mb-3" style="color:#1e293b;"><i class="fa-solid fa-scissors me-2 text-danger"></i>Split This Roll</h5>' +
