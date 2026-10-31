@@ -372,34 +372,33 @@ unset($_SESSION['dyeing_batch']['saved']);
                 <table>
                     <thead>
                         <tr>
-                            <th>#</th>
                             <th>ROLL</th>
-                            <th>PO_NUMBER</th>
-                            <th>RACK</th>
+                            <th>Rack</th>
+                            <th>PO Number</th>
                             <th>QTY</th>
+                            <th>Color</th>
                             <th>SONO</th>
-                            <th>BUYER</th>
-                            <th>STYLE</th>
-                            <th>COLOR</th>
-                            <th>MCNO</th>
-                            <th>MCDIA</th>
-                            <th>CUSTOMER</th>
-                            <th>YTYPE</th>
-                            <th>YCOUNT</th>
-                            <th>O_T</th>
-                            <th>SL</th>
-                            <th>FTYPE</th>
-                            <th>FGSM</th>
-                            <th>FDIA</th>
-                            <th>GGSM</th>
-                            <th>FEEDER_PLAN</th>
-                            <th>LOT_NO</th>
+                            <th>Buyer</th>
+                            <th>Style</th>
+                            <th>MC Dia</th>
+                            <th>Customer</th>
+                            <th>Open / Tube</th>
+                            <th>SL/VQ</th>
+                            <th>Fabrics Type</th>
+                            <th>Finish GSM</th>
+                            <th>Finish Dia</th>
+                            <th>Yarn Type</th>
+                            <th>Yarn Count</th>
+                            <th>Yarn Brand</th>
+                            <th>Feeder Plan</th>
+                            <th>Lot No</th>
+                            <th>Category</th>
                             <th>ACTION</th>
                         </tr>
                     </thead>
                     <tbody id="rollsBody">
                         <tr class="empty-row">
-                            <td colspan="23">No roll added yet. Select rolls from the list below.</td>
+                            <td colspan="22">No roll added yet. Select rolls from the list below.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -422,28 +421,27 @@ unset($_SESSION['dyeing_batch']['saved']);
                 <table>
                     <thead>
                         <tr>
-                            <th>#</th>
                             <th>ROLL</th>
-                            <th>PO_NUMBER</th>
-                            <th>RACK</th>
+                            <th>Rack</th>
+                            <th>PO Number</th>
                             <th>QTY</th>
+                            <th>Color</th>
                             <th>SONO</th>
-                            <th>BUYER</th>
-                            <th>STYLE</th>
-                            <th>COLOR</th>
-                            <th>MCNO</th>
-                            <th>MCDIA</th>
-                            <th>CUSTOMER</th>
-                            <th>YTYPE</th>
-                            <th>YCOUNT</th>
-                            <th>O_T</th>
-                            <th>SL</th>
-                            <th>FTYPE</th>
-                            <th>FGSM</th>
-                            <th>FDIA</th>
-                            <th>GGSM</th>
-                            <th>FEEDER_PLAN</th>
-                            <th>LOT_NO</th>
+                            <th>Buyer</th>
+                            <th>Style</th>
+                            <th>MC Dia</th>
+                            <th>Customer</th>
+                            <th>Open / Tube</th>
+                            <th>SL/VQ</th>
+                            <th>Fabrics Type</th>
+                            <th>Finish GSM</th>
+                            <th>Finish Dia</th>
+                            <th>Yarn Type</th>
+                            <th>Yarn Count</th>
+                            <th>Yarn Brand</th>
+                            <th>Feeder Plan</th>
+                            <th>Lot No</th>
+                            <th>Category</th>
                             <th>ACTION
                                 <span style="display:block; margin-top:5px;">
                                     <select id="actionFilter" class="filter-select">
@@ -457,7 +455,7 @@ unset($_SESSION['dyeing_batch']['saved']);
                     </thead>
                     <tbody id="storeBody">
                         <tr class="empty-row">
-                            <td colspan="23">Loading...</td>
+                            <td colspan="22">Loading...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -544,12 +542,12 @@ unset($_SESSION['dyeing_batch']['saved']);
 
             if (!filtered || filtered.length === 0) {
                 var msg = storeRolls.length === 0 ? 'No rolls found in knitting store.' : 'No roll matches the selected filter.';
-                tbody.innerHTML = '<tr class="empty-row"><td colspan="23">' + msg + '</td></tr>';
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="22">' + msg + '</td></tr>';
                 return;
             }
 
             var html = '';
-            filtered.forEach(function(row, i) {
+            filtered.forEach(function(row) {
                 var actionHtml;
                 if (row.in_batch) {
                     actionHtml = '<span class="added-tag"><i class="fa-solid fa-check"></i> Added</span>';
@@ -557,67 +555,65 @@ unset($_SESSION['dyeing_batch']['saved']);
                     actionHtml = '<button class="add-btn" onclick="addRoll(\'' + escAttr(row.ROLL) + '\')"><i class="fa-solid fa-plus"></i> Add</button>';
                 }
                 html += '<tr>' +
-                    '<td><strong>' + (i + 1) + '</strong></td>' +
                     '<td><span class="roll-badge">' + esc(row.ROLL) + '</span></td>' +
-                    '<td>' + esc(row.PO_NUMBER) + '</td>' +
                     '<td>' + esc(row.RACK) + '</td>' +
+                    '<td>' + esc(row.PO_NUMBER) + '</td>' +
                     '<td>' + esc(row.QTY) + '</td>' +
+                    '<td>' + esc(row.COLOR) + '</td>' +
                     '<td>' + esc(row.SONO) + '</td>' +
                     '<td>' + esc(row.BUYER) + '</td>' +
                     '<td>' + esc(row.STYLE) + '</td>' +
-                    '<td>' + esc(row.COLOR) + '</td>' +
-                    '<td>' + esc(row.MCNO) + '</td>' +
                     '<td>' + esc(row.MCDIA) + '</td>' +
                     '<td>' + esc(row.CUSTOMER) + '</td>' +
-                    '<td>' + esc(row.YTYPE) + '</td>' +
-                    '<td>' + esc(row.YCOUNT) + '</td>' +
                     '<td>' + esc(row.O_T) + '</td>' +
                     '<td>' + esc(row.SL) + '</td>' +
                     '<td>' + esc(row.FTYPE) + '</td>' +
                     '<td>' + esc(row.FGSM) + '</td>' +
                     '<td>' + esc(row.FDIA) + '</td>' +
-                    '<td>' + esc(row.GGSM) + '</td>' +
+                    '<td>' + esc(row.YTYPE) + '</td>' +
+                    '<td>' + esc(row.YCOUNT) + '</td>' +
+                    '<td>' + esc(row.YBRAND) + '</td>' +
                     '<td>' + esc(row.FEEDER_PLAN) + '</td>' +
                     '<td>' + esc(row.LOT_NO) + '</td>' +
+                    '<td>' + esc(row.CATEGORY) + '</td>' +
                     '<td>' + actionHtml + '</td>' +
                     '</tr>';
             });
             tbody.innerHTML = html;
         }
 
-        function rollRow(i, row, deletable) {
+        function rollRow(row, deletable) {
             var actionHtml = deletable ?
                 '<button class="delete-btn" title="Remove from batch" onclick="deleteRoll(\'' + escAttr(row.ROLL) + '\')"><i class="fa-solid fa-trash"></i></button>' :
                 '';
             return '<tr>' +
-                '<td><strong>' + (i + 1) + '</strong></td>' +
                 '<td><span class="roll-badge">' + esc(row.ROLL) + '</span></td>' +
-                '<td>' + esc(row.PO_NUMBER) + '</td>' +
                 '<td>' + esc(row.RACK) + '</td>' +
+                '<td>' + esc(row.PO_NUMBER) + '</td>' +
                 '<td>' + esc(row.QTY) + '</td>' +
+                '<td>' + esc(row.COLOR) + '</td>' +
                 '<td>' + esc(row.SONO) + '</td>' +
                 '<td>' + esc(row.BUYER) + '</td>' +
                 '<td>' + esc(row.STYLE) + '</td>' +
-                '<td>' + esc(row.COLOR) + '</td>' +
-                '<td>' + esc(row.MCNO) + '</td>' +
                 '<td>' + esc(row.MCDIA) + '</td>' +
                 '<td>' + esc(row.CUSTOMER) + '</td>' +
-                '<td>' + esc(row.YTYPE) + '</td>' +
-                '<td>' + esc(row.YCOUNT) + '</td>' +
                 '<td>' + esc(row.O_T) + '</td>' +
                 '<td>' + esc(row.SL) + '</td>' +
                 '<td>' + esc(row.FTYPE) + '</td>' +
                 '<td>' + esc(row.FGSM) + '</td>' +
                 '<td>' + esc(row.FDIA) + '</td>' +
-                '<td>' + esc(row.GGSM) + '</td>' +
+                '<td>' + esc(row.YTYPE) + '</td>' +
+                '<td>' + esc(row.YCOUNT) + '</td>' +
+                '<td>' + esc(row.YBRAND) + '</td>' +
                 '<td>' + esc(row.FEEDER_PLAN) + '</td>' +
                 '<td>' + esc(row.LOT_NO) + '</td>' +
+                '<td>' + esc(row.CATEGORY) + '</td>' +
                 '<td>' + actionHtml + '</td>' +
                 '</tr>';
         }
 
         function renderEmptyBatch() {
-            document.getElementById('rollsBody').innerHTML = '<tr class="empty-row"><td colspan="23">Select rolls from the list below to view batch data.</td></tr>';
+            document.getElementById('rollsBody').innerHTML = '<tr class="empty-row"><td colspan="22">Select rolls from the list below to view batch data.</td></tr>';
             document.getElementById('rollCount').textContent = '0 roll';
         }
 
@@ -626,17 +622,17 @@ unset($_SESSION['dyeing_batch']['saved']);
             var count = document.getElementById('rollCount');
 
             if (!currentRolls || currentRolls.length === 0) {
-                tbody.innerHTML = '<tr class="empty-row"><td colspan="23">Select rolls from the list below to view batch data.</td></tr>';
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="22">Select rolls from the list below to view batch data.</td></tr>';
                 count.textContent = '0 roll';
                 return;
             }
 
-            var html = '<tr class="card-group-row"><td colspan="23">' +
+            var html = '<tr class="card-group-row"><td colspan="22">' +
                 '<i class="fa-solid fa-pen-to-square"></i> Current Batch (not created yet) — ' + currentRolls.length + ' roll(s)' +
                 '</td></tr>';
 
-            currentRolls.forEach(function(row, i) {
-                html += rollRow(i, row, true);
+            currentRolls.forEach(function(row) {
+                html += rollRow(row, true);
             });
 
             tbody.innerHTML = html;

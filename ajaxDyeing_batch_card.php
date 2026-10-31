@@ -43,6 +43,12 @@ function rollExistsInDatabase($db, $roll) {
     return $exists;
 }
 
+function formatRackNumberFirst($row) {
+    $location = isset($row['RACKLOCATION']) ? trim((string)$row['RACKLOCATION']) : '';
+    $number = isset($row['RACKNO']) ? trim((string)$row['RACKNO']) : '';
+    return $number . $location;
+}
+
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
 switch ($action) {
@@ -56,7 +62,9 @@ switch ($action) {
             $search = mysqli_real_escape_string($db, $search);
             $sql .= " WHERE ROLL LIKE '%$search%' OR PO_NUMBER LIKE '%$search%' OR SONO LIKE '%$search%'
                       OR BUYER LIKE '%$search%' OR STYLE LIKE '%$search%' OR COLOR LIKE '%$search%'
-                      OR RACK LIKE '%$search%' OR QTY LIKE '%$search%'";
+                      OR RACK LIKE '%$search%'
+                      OR CONCAT(COALESCE(RACKNO, ''), COALESCE(RACKLOCATION, '')) LIKE '%$search%'
+                      OR QTY LIKE '%$search%'";
         }
         $sql .= " ORDER BY KSTID DESC LIMIT 100";
 
@@ -77,6 +85,7 @@ switch ($action) {
 
         $rolls = [];
         while ($row = mysqli_fetch_assoc($result)) {
+            $row['RACK'] = formatRackNumberFirst($row);
             $inSession = isset($_SESSION['dyeing_batch']['rolls'][$row['ROLL']]);
             $row['in_batch'] = $inSession || isset($savedRolls[$row['ROLL']]);
             $rolls[] = $row;
@@ -103,6 +112,7 @@ switch ($action) {
         $result = $stmt->get_result();
 
         if ($row = $result->fetch_assoc()) {
+            $row['RACK'] = formatRackNumberFirst($row);
             $already = isset($_SESSION['dyeing_batch']['rolls'][$row['ROLL']]);
             echo json_encode([
                 'success' => true,
@@ -135,6 +145,7 @@ switch ($action) {
 
 if ($row = $result->fetch_assoc()) {
             $stmt->close();
+            $row['RACK'] = formatRackNumberFirst($row);
             if (isset($_SESSION['dyeing_batch']['rolls'][$row['ROLL']])) {
                 echo json_encode(['success' => false, 'message' => 'Roll ' . $row['ROLL'] . ' is already added to this batch card']);
                 exit;

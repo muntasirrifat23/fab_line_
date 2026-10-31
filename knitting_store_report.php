@@ -786,7 +786,7 @@
                 var no = row.RACKNO;
                 loc = (loc === null || loc === undefined) ? '' : String(loc);
                 no = (no === null || no === undefined) ? '' : String(no);
-                return loc + no;
+                return no.trim() + loc.trim();
             }
             if (currentTab === 'hold' && c.key === 'QTY') {
                 var qcStatus = String(row.QC_STATUS || '').trim().toUpperCase();
