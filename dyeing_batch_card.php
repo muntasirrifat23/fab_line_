@@ -105,12 +105,17 @@ unset($_SESSION['dyeing_batch']['saved']);
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
+            align-items: flex-end;
             margin-bottom: 14px;
         }
 
         .filter-field {
             flex: 1;
             min-width: 220px;
+        }
+
+        .filter-field.target-qty-field {
+            flex: 0 1 220px;
         }
 
         .filter-field label {
@@ -169,30 +174,6 @@ unset($_SESSION['dyeing_batch']['saved']);
             cursor: text !important;
         }
 
-        .qty-toolbar {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(150px, 1fr));
-            gap: 12px;
-            align-items: end;
-            padding: 14px;
-            margin-bottom: 14px;
-            background: #f0fdfa;
-            border: 1px solid #ccfbf1;
-            border-radius: 12px;
-        }
-
-        .selection-value {
-            min-height: 42px;
-            display: flex;
-            align-items: center;
-            padding: 10px 12px;
-            border: 1px solid #ccfbf1;
-            border-radius: 10px;
-            background: #fff;
-            color: #134e4a;
-            font-weight: 700;
-        }
-
         .suggestion-preview {
             margin-top: 16px;
         }
@@ -222,8 +203,8 @@ unset($_SESSION['dyeing_batch']['saved']);
         }
 
         @media (max-width: 720px) {
-            .qty-toolbar {
-                grid-template-columns: 1fr 1fr;
+            .filter-field.target-qty-field {
+                flex: 1;
             }
         }
 
@@ -236,8 +217,8 @@ unset($_SESSION['dyeing_batch']['saved']);
                 padding: 12px;
             }
 
-            .qty-toolbar {
-                grid-template-columns: 1fr;
+            .filter-field {
+                min-width: 100%;
             }
         }
 
@@ -253,6 +234,13 @@ unset($_SESSION['dyeing_batch']['saved']);
             align-items: center;
             gap: 8px;
             transition: 0.2s;
+        }
+
+        .search-row > .btn {
+            min-height: 42px;
+            justify-content: center;
+            align-self: flex-end;
+            white-space: nowrap;
         }
 
         .btn:hover {
@@ -316,6 +304,20 @@ unset($_SESSION['dyeing_batch']['saved']);
             border-bottom: 1px solid #e2e8f0;
             white-space: nowrap;
             vertical-align: middle;
+        }
+
+        tfoot th,
+        tfoot td {
+            padding: 12px 10px;
+            border-top: 2px solid #cbd5e1;
+            background: #f0fdfa;
+            color: #134e4a;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        tfoot .total-label {
+            text-align: right;
         }
 
         .roll-select-cell {
@@ -528,6 +530,10 @@ unset($_SESSION['dyeing_batch']['saved']);
                         <option value="">Select a PO Number first</option>
                     </select>
                 </div>
+                <div class="filter-field target-qty-field">
+                    <label for="targetQtyInput">Target QTY (KG)</label>
+                    <input type="number" id="targetQtyInput" class="qty-input" min="0.001" step="0.001" placeholder="Enter target QTY">
+                </div>
                 <button class="btn btn-blue" id="searchBtn" type="button" disabled>
                     <i class="fa-solid fa-magnifying-glass"></i> Search
                 </button>
@@ -538,20 +544,6 @@ unset($_SESSION['dyeing_batch']['saved']);
             <div class="panel-title">
                 <i class="fa-solid fa-table-list"></i> Matching Rolls
                 <span class="card-no-badge" id="resultCount">0 roll</span>
-            </div>
-            <div class="qty-toolbar is-hidden" id="qtyToolbar">
-                <div>
-                    <label class="filter-field-label">PO Number</label>
-                    <div class="selection-value" id="selectedPoDisplay">-</div>
-                </div>
-                <div>
-                    <label class="filter-field-label">Color</label>
-                    <div class="selection-value" id="selectedColorDisplay">-</div>
-                </div>
-                <div>
-                    <label for="targetQtyInput" class="filter-field-label">Target QTY (KG)</label>
-                    <input type="number" id="targetQtyInput" class="qty-input" min="0.001" step="0.001" placeholder="Enter required total QTY">
-                </div>
             </div>
             <div class="status-line" id="resultsStatus"></div>
             <div class="table-scroll">
@@ -585,6 +577,7 @@ unset($_SESSION['dyeing_batch']['saved']);
                     <tbody id="storeBody">
                         <tr class="empty-row"><td colspan="22">Select PO Number and Color, then search.</td></tr>
                     </tbody>
+                    <tfoot id="storeFoot"></tfoot>
                 </table>
             </div>
         </div>
@@ -600,6 +593,7 @@ unset($_SESSION['dyeing_batch']['saved']);
                         <tbody id="suggestionRolls">
                             <tr class="empty-row"><td colspan="4">Select rolls from the Matching Rolls table above.</td></tr>
                         </tbody>
+                        <tfoot id="selectedRollsFoot"></tfoot>
                     </table>
                 </div>
                 <div class="footer-actions">
@@ -665,20 +659,21 @@ unset($_SESSION['dyeing_batch']['saved']);
             }).then(readJson);
         }
 
-        function resetResults() {
+        function resetResults(preserveTargetQty) {
             searchRequestId++;
             candidateRolls = [];
             selectedRolls.clear();
             document.getElementById('searchResults').classList.add('is-hidden');
             document.getElementById('suggestionPanel').classList.add('is-hidden');
-            document.getElementById('qtyToolbar').classList.add('is-hidden');
             document.getElementById('storeBody').innerHTML =
                 '<tr class="empty-row"><td colspan="22">Select PO Number and Color, then search.</td></tr>';
+            document.getElementById('storeFoot').innerHTML = '';
             document.getElementById('resultCount').textContent = '0 roll';
-            targetQtyInput.value = '';
+            if (!preserveTargetQty) targetQtyInput.value = '';
             confirmCreateBtn.disabled = true;
             document.getElementById('suggestionRolls').innerHTML =
                 '<tr class="empty-row"><td colspan="4">Select rolls from the Matching Rolls table above.</td></tr>';
+            document.getElementById('selectedRollsFoot').innerHTML = '';
         }
 
         function loadPoNumbers() {
@@ -766,6 +761,13 @@ unset($_SESSION['dyeing_batch']['saved']);
             });
             document.getElementById('storeBody').innerHTML = html ||
                 '<tr class="empty-row"><td colspan="22">No available rolls found for this PO Number and Color.</td></tr>';
+            var availableTotal = rolls.reduce(function(total, row) {
+                return total + qtyUnits(row);
+            }, 0);
+            document.getElementById('storeFoot').innerHTML =
+                '<tr><th colspan="4" class="total-label">Available total QTY</th>' +
+                '<th id="availableQtyTotal">' + (availableTotal / 1000).toFixed(3) + ' KG</th>' +
+                '<th colspan="17"></th></tr>';
             document.querySelectorAll('.roll-select-checkbox').forEach(function(checkbox) {
                 checkbox.addEventListener('change', function() {
                     var row = candidateRolls[Number(this.dataset.rollIndex)];
@@ -784,7 +786,6 @@ unset($_SESSION['dyeing_batch']['saved']);
             }, 0);
             var minimum = Math.max(0, qty - 5000);
             var maximum = qty + 5000;
-            document.getElementById('qtyToolbar').classList.toggle('is-hidden', candidateRolls.length === 0);
             document.getElementById('suggestionPanel').classList.toggle(
                 'is-hidden',
                 candidateRolls.length === 0 || qty <= 0
@@ -795,11 +796,15 @@ unset($_SESSION['dyeing_batch']['saved']);
             if (candidateRolls.length === 0) {
                 status.textContent = 'No available rolls match this PO Number and Color.';
             } else if (qty > 0) {
-                status.textContent = 'Select rolls below. Selected total: ' +
-                    (selectedTotal / 1000).toFixed(3) + ' KG; target range: ' +
-                    (minimum / 1000).toFixed(3) + '–' + (maximum / 1000).toFixed(3) + ' KG.';
+                status.textContent = 'Available total: ' +
+                    (candidateRolls.reduce(function(sum, row) { return sum + qtyUnits(row); }, 0) / 1000).toFixed(3) +
+                    ' KG. Selected total: ' + (selectedTotal / 1000).toFixed(3) +
+                    ' KG; target: ' + (qty / 1000).toFixed(3) + ' KG (' +
+                    (minimum / 1000).toFixed(3) + '–' + (maximum / 1000).toFixed(3) + ' KG allowed).';
             } else {
-                status.textContent = 'Enter the required total QTY, then select matching rolls.';
+                status.textContent = 'Available total: ' +
+                    (candidateRolls.reduce(function(sum, row) { return sum + qtyUnits(row); }, 0) / 1000).toFixed(3) +
+                    ' KG. Enter Target QTY to auto-select rolls.';
             }
             renderSelectedRolls();
         }
@@ -892,7 +897,7 @@ unset($_SESSION['dyeing_batch']['saved']);
             var poNumber = poNumberSelect.value;
             var color = colorSelect.value;
             hideMsg();
-            resetResults();
+            resetResults(true);
             if (!poNumber || !color) {
                 showMsg('Select both PO Number and Color before searching.', 'error');
                 return;
@@ -907,10 +912,12 @@ unset($_SESSION['dyeing_batch']['saved']);
                 if (requestId !== searchRequestId) return;
                 if (!response.success) throw new Error(response.message || 'Could not search rolls');
                 candidateRolls = response.rolls || [];
-                document.getElementById('selectedPoDisplay').textContent = poNumber;
-                document.getElementById('selectedColorDisplay').textContent = color;
                 renderRolls(candidateRolls);
-                updateCreateButton();
+                if (targetUnits()) {
+                    suggestRollsForTarget();
+                } else {
+                    updateCreateButton();
+                }
             }).catch(function(error) {
                 if (requestId !== searchRequestId) return;
                 document.getElementById('resultsStatus').textContent = '';
@@ -959,7 +966,8 @@ unset($_SESSION['dyeing_batch']['saved']);
                     (difference === 0 ? 'exact' : difference < 0 ? 'below' : 'above') + ' target)' : '')
                 : 'Select rolls from the Matching Rolls table above.';
             document.getElementById('suggestionPreviewTitle').textContent =
-                rows.length + ' selected roll(s), total ' + (total / 1000).toFixed(3) + ' KG';
+                rows.length + ' selected roll(s), selected total ' + (total / 1000).toFixed(3) +
+                ' KG; target total ' + (target / 1000).toFixed(3) + ' KG';
             document.getElementById('suggestionRolls').innerHTML = rows.length
                 ? rows.map(function(row) {
                     return '<tr><td><span class="roll-badge">' + esc(row.ROLL) + '</span></td>' +
@@ -968,6 +976,11 @@ unset($_SESSION['dyeing_batch']['saved']);
                         esc(row.ROLL) + '"><i class="fa-solid fa-trash"></i> Remove</button></td></tr>';
                 }).join('')
                 : '<tr class="empty-row"><td colspan="4">Select rolls from the Matching Rolls table above.</td></tr>';
+            document.getElementById('selectedRollsFoot').innerHTML =
+                '<tr><th colspan="2" class="total-label">Selected total QTY</th>' +
+                '<th id="selectedQtyTotal">' + (total / 1000).toFixed(3) + ' KG</th>' +
+                '<th>Target: <span id="targetQtyTotal">' +
+                (target ? (target / 1000).toFixed(3) + ' KG' : '-') + '</span></th></tr>';
 
             document.querySelectorAll('[data-remove-roll]').forEach(function(button) {
                 button.addEventListener('click', function() {
