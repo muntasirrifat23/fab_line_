@@ -13,9 +13,44 @@ $category_filter = isset($_GET['category'])   ? trim($_GET['category'])   : '';
 $start_date      = isset($_GET['start_date']) ? trim($_GET['start_date']) : '';
 $end_date        = isset($_GET['end_date'])   ? trim($_GET['end_date'])   : '';
 
+// Ensure UID column exists in knit_card (auto-heal for imported DBs)
+$uid_col_chk = @$db->query("SHOW COLUMNS FROM knit_card LIKE 'UID'");
+if ($uid_col_chk && $uid_col_chk->num_rows === 0) {
+    @$db->query("ALTER TABLE knit_card ADD COLUMN UID varchar(100) DEFAULT NULL AFTER UNAME");
+}
+
+// Auto-backfill operator in knit_card from knitting_production if UID is missing or empty
+@$db->query("
+    UPDATE knit_card kc
+    JOIN (
+        SELECT KNITCARD, UID, UNAME 
+        FROM knitting_production 
+        WHERE UID IS NOT NULL AND UID != '' 
+        GROUP BY KNITCARD
+    ) kp ON kc.KNITCARD = kp.KNITCARD
+    SET kc.UID = kp.UID,
+        kc.UNAME = COALESCE(NULLIF(kp.UNAME, ''), kc.UNAME)
+    WHERE kc.UID IS NULL OR kc.UID = ''
+");
+
 // Build query using real column names dynamically
 $kc_prog_col = get_knit_card_program_col($db);
-$query  = "SELECT kc.*, kp.PO_NUMBER AS kp_booking, kp.REMARKS AS prog_remarks, kp.MCDIA AS prog_mcdia, kp.CATEGORY AS prog_category
+$query  = "SELECT kc.*, 
+                  kp.PO_NUMBER AS kp_booking, 
+                  kp.REMARKS AS prog_remarks, 
+                  kp.MCDIA AS prog_mcdia, 
+                  kp.CATEGORY AS prog_category,
+                  (
+                      SELECT GROUP_CONCAT(DISTINCT 
+                          IF(kprod.UNAME IS NOT NULL AND kprod.UNAME != '', 
+                             CONCAT(kprod.UNAME, IF(kprod.UID IS NOT NULL AND kprod.UID != '', CONCAT(' (', kprod.UID, ')'), '')),
+                             kprod.UID
+                          ) SEPARATOR ', '
+                      )
+                      FROM knitting_production kprod
+                      WHERE kprod.KNITCARD = kc.KNITCARD 
+                        AND ((kprod.UID IS NOT NULL AND kprod.UID != '') OR (kprod.UNAME IS NOT NULL AND kprod.UNAME != ''))
+                  ) AS prod_operators
            FROM knit_card kc
            LEFT JOIN knitting_program kp ON kp.KPTID = (
                SELECT kp2.KPTID FROM knitting_program kp2
@@ -478,7 +513,7 @@ function kcr_page_url($page, $per_page) {
                 </div>
                 <div class="strip-item">
                     <span class="strip-dot" style="background:#7dd3fc;"></span>
-                    <span>Total Req. Qty: <strong style="color:#fff;"><?php echo number_format($total_qty, 2); ?> KG</strong></span>
+                    <span>Total Qty: <strong style="color:#fff;"><?php echo number_format($total_qty, 2); ?> KG</strong></span>
                 </div>
                 <div class="strip-item">
                     <span class="strip-dot" style="background:#6ee7b7;"></span>
@@ -517,7 +552,7 @@ function kcr_page_url($page, $per_page) {
                 <div class="stat-card">
                     <div class="stat-icon sky"><i class="fa-solid fa-weight-hanging"></i></div>
                     <div>
-                        <p class="stat-label">Total Req. Quantity</p>
+                        <p class="stat-label">Total Quantity</p>
                         <p class="stat-value"><?php echo number_format($total_qty, 2); ?> <small style="font-size:13px;font-weight:500;color:#94a3b8;">KG</small></p>
                     </div>
                 </div>
@@ -633,7 +668,7 @@ function kcr_page_url($page, $per_page) {
                             <th>Yarn Brand</th>
                             <th>Lot No</th>
                             <th>Remarks</th>
-                            <th>Req Qty (KG)</th>
+                            <th>QTY (KG)</th>
                             <th>Operator</th>
                         </tr>
                     </thead>
@@ -685,7 +720,29 @@ function kcr_page_url($page, $per_page) {
                                     <td><?php echo htmlspecialchars($row['LOT'] ?? ''); ?></td>
                                     <td><small class="text-muted"><?php echo htmlspecialchars($row['prog_remarks'] ?? ($row['REMARKS'] ?? '')); ?></small></td>
                                     <td><strong class="text-success"><?php echo number_format((float)($row['QTY'] ?? 0), 2); ?> KG</strong></td>
-                                    <td><strong class="font-monospace text-primary"><?php echo htmlspecialchars(!empty($row['UID']) ? $row['UID'] : '-'); ?></strong><?php if (!empty($row['UID']) && !empty($row['UNAME']) && $row['UNAME'] !== $row['UID']): ?><br><small class="text-muted"><?php echo htmlspecialchars($row['UNAME']); ?></small><?php endif; ?></td>
+                                    <td>
+                                        <?php
+                                        $op_id    = trim((string)($row['UID'] ?? ''));
+                                        $op_name  = trim((string)($row['UNAME'] ?? ''));
+                                        $prod_ops = trim((string)($row['prod_operators'] ?? ''));
+
+                                        if ($op_id !== '') {
+                                            echo '<strong class="font-monospace text-primary">' . htmlspecialchars($op_id) . '</strong>';
+                                            if ($op_name !== '' && strcasecmp($op_name, $op_id) !== 0) {
+                                                echo '<br><small class="text-muted">' . htmlspecialchars($op_name) . '</small>';
+                                            }
+                                            if ($prod_ops !== '' && stripos($prod_ops, $op_id) === false) {
+                                                echo '<br><small class="text-secondary" title="Production Operator(s)"><i class="fa-solid fa-industry me-1"></i>' . htmlspecialchars($prod_ops) . '</small>';
+                                            }
+                                        } elseif ($prod_ops !== '') {
+                                            echo '<strong class="text-primary">' . htmlspecialchars($prod_ops) . '</strong>';
+                                        } elseif ($op_name !== '') {
+                                            echo '<strong class="font-monospace text-secondary">' . htmlspecialchars($op_name) . '</strong>';
+                                        } else {
+                                            echo '<span class="text-muted">-</span>';
+                                        }
+                                        ?>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
