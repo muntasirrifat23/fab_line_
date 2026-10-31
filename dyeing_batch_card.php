@@ -171,7 +171,7 @@ unset($_SESSION['dyeing_batch']['saved']);
 
         .qty-toolbar {
             display: grid;
-            grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) minmax(180px, 1fr) auto;
+            grid-template-columns: repeat(3, minmax(150px, 1fr));
             gap: 12px;
             align-items: end;
             padding: 14px;
@@ -198,8 +198,7 @@ unset($_SESSION['dyeing_batch']['saved']);
         }
 
         .suggestion-preview table {
-            width: auto;
-            min-width: 420px;
+            width: 100%;
         }
 
         .suggestion-preview th,
@@ -293,29 +292,56 @@ unset($_SESSION['dyeing_batch']['saved']);
         }
 
         #searchResults .table-scroll > table {
-            width: max-content;
+            width: 100%;
+            min-width: 1500px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.82rem;
+            font-size: 0.92rem;
         }
 
         thead th {
             background: #134e4a;
             color: #fff;
-            padding: 10px 8px;
+            padding: 12px 10px;
             text-align: left;
             font-weight: 700;
             white-space: nowrap;
         }
 
         tbody td {
-            padding: 9px 8px;
+            padding: 11px 10px;
             border-bottom: 1px solid #e2e8f0;
             white-space: nowrap;
             vertical-align: middle;
+        }
+
+        .roll-select-cell {
+            width: 48px;
+            text-align: center;
+        }
+
+        .roll-select-checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: #0d9488;
+            cursor: pointer;
+        }
+
+        .remove-roll-btn {
+            border: 0;
+            border-radius: 8px;
+            padding: 7px 10px;
+            background: #fee2e2;
+            color: #b91c1c;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .remove-roll-btn:hover {
+            background: #fecaca;
         }
 
         tbody tr:nth-child(even) {
@@ -526,15 +552,13 @@ unset($_SESSION['dyeing_batch']['saved']);
                     <label for="targetQtyInput" class="filter-field-label">Target QTY (KG)</label>
                     <input type="number" id="targetQtyInput" class="qty-input" min="0.001" step="0.001" placeholder="Enter required total QTY">
                 </div>
-                <button class="btn btn-amber is-hidden" id="createCardBtn" type="button" disabled>
-                    <i class="fa-solid fa-clipboard-check"></i> Create Batch Card
-                </button>
             </div>
             <div class="status-line" id="resultsStatus"></div>
             <div class="table-scroll">
                 <table>
                     <thead>
                         <tr>
+                            <th class="roll-select-cell">Select</th>
                             <th>ROLL</th>
                             <th>Rack</th>
                             <th>PO Number</th>
@@ -559,7 +583,7 @@ unset($_SESSION['dyeing_batch']['saved']);
                         </tr>
                     </thead>
                     <tbody id="storeBody">
-                        <tr class="empty-row"><td colspan="21">Select PO Number and Color, then search.</td></tr>
+                        <tr class="empty-row"><td colspan="22">Select PO Number and Color, then search.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -568,12 +592,14 @@ unset($_SESSION['dyeing_batch']['saved']);
         <div class="panel is-hidden" id="suggestionPanel">
             <div class="panel-title"><i class="fa-solid fa-lightbulb"></i> Rolls for Target QTY</div>
             <p id="suggestionIntro" class="status-line"></p>
-            <div class="suggestion-preview is-hidden" id="suggestionPreview">
+            <div class="suggestion-preview" id="suggestionPreview">
                 <h3 id="suggestionPreviewTitle"></h3>
                 <div class="table-scroll">
                     <table>
-                        <thead><tr><th>ROLL</th><th>Rack</th><th>QTY</th></tr></thead>
-                        <tbody id="suggestionRolls"></tbody>
+                        <thead><tr><th>ROLL</th><th>Rack</th><th>QTY</th><th>ACTION</th></tr></thead>
+                        <tbody id="suggestionRolls">
+                            <tr class="empty-row"><td colspan="4">Select rolls from the Matching Rolls table above.</td></tr>
+                        </tbody>
                     </table>
                 </div>
                 <div class="footer-actions">
@@ -587,16 +613,16 @@ unset($_SESSION['dyeing_batch']['saved']);
 
     <script>
         var candidateRolls = [];
-        var suggestions = [];
-        var selectedSuggestionIndex = -1;
+        var selectedRolls = new Map();
         var colorRequestId = 0;
         var searchRequestId = 0;
         var poInputTimer = null;
+        var targetQtyTimer = null;
         var poNumberSelect = document.getElementById('poNumberSelect');
         var colorSelect = document.getElementById('colorSelect');
         var searchBtn = document.getElementById('searchBtn');
-        var createCardBtn = document.getElementById('createCardBtn');
         var targetQtyInput = document.getElementById('targetQtyInput');
+        var confirmCreateBtn = document.getElementById('confirmCreateBtn');
 
         function showMsg(message, type) {
             var box = document.getElementById('msgBox');
@@ -642,17 +668,17 @@ unset($_SESSION['dyeing_batch']['saved']);
         function resetResults() {
             searchRequestId++;
             candidateRolls = [];
-            suggestions = [];
-            selectedSuggestionIndex = -1;
+            selectedRolls.clear();
             document.getElementById('searchResults').classList.add('is-hidden');
             document.getElementById('suggestionPanel').classList.add('is-hidden');
             document.getElementById('qtyToolbar').classList.add('is-hidden');
-            createCardBtn.classList.add('is-hidden');
             document.getElementById('storeBody').innerHTML =
-                '<tr class="empty-row"><td colspan="21">Select PO Number and Color, then search.</td></tr>';
+                '<tr class="empty-row"><td colspan="22">Select PO Number and Color, then search.</td></tr>';
             document.getElementById('resultCount').textContent = '0 roll';
             targetQtyInput.value = '';
-            createCardBtn.disabled = true;
+            confirmCreateBtn.disabled = true;
+            document.getElementById('suggestionRolls').innerHTML =
+                '<tr class="empty-row"><td colspan="4">Select rolls from the Matching Rolls table above.</td></tr>';
         }
 
         function loadPoNumbers() {
@@ -725,8 +751,12 @@ unset($_SESSION['dyeing_batch']['saved']);
                 ['LOT_NO', 'LOT_NO'], ['CATEGORY', 'CATEGORY']
             ];
             var html = '';
-            rolls.forEach(function(row) {
-                html += '<tr>' + fields.map(function(field) {
+            rolls.forEach(function(row, index) {
+                var rollKey = String(row.ROLL);
+                html += '<tr><td class="roll-select-cell"><input type="checkbox" class="roll-select-checkbox" data-roll-index="' +
+                    index + '" aria-label="Select roll ' + esc(rollKey) + '"' +
+                    (selectedRolls.has(rollKey) ? ' checked' : '') + '></td>' +
+                    fields.map(function(field) {
                     var value = row[field[1]];
                     if (field[0] === 'ROLL') {
                         return '<td><span class="roll-badge">' + esc(value) + '</span></td>';
@@ -735,30 +765,126 @@ unset($_SESSION['dyeing_batch']['saved']);
                 }).join('') + '</tr>';
             });
             document.getElementById('storeBody').innerHTML = html ||
-                '<tr class="empty-row"><td colspan="21">No available rolls found for this PO Number and Color.</td></tr>';
+                '<tr class="empty-row"><td colspan="22">No available rolls found for this PO Number and Color.</td></tr>';
+            document.querySelectorAll('.roll-select-checkbox').forEach(function(checkbox) {
+                checkbox.addEventListener('change', function() {
+                    var row = candidateRolls[Number(this.dataset.rollIndex)];
+                    if (row) toggleRollSelection(row, this.checked, this);
+                });
+            });
             document.getElementById('resultCount').textContent =
                 rolls.length + ' available roll' + (rolls.length === 1 ? '' : 's');
         }
 
         function updateCreateButton() {
             var qty = targetUnits();
-            var available = candidateRolls.reduce(function(sum, row) {
+            var selected = Array.from(selectedRolls.values());
+            var selectedTotal = selected.reduce(function(sum, row) {
                 return sum + qtyUnits(row);
             }, 0);
+            var minimum = Math.max(0, qty - 5000);
+            var maximum = qty + 5000;
             document.getElementById('qtyToolbar').classList.toggle('is-hidden', candidateRolls.length === 0);
-            createCardBtn.classList.toggle('is-hidden', candidateRolls.length === 0 || qty <= 0);
-            createCardBtn.disabled = candidateRolls.length === 0 || qty <= 0 || qty > available + 5000;
+            document.getElementById('suggestionPanel').classList.toggle(
+                'is-hidden',
+                candidateRolls.length === 0 || qty <= 0
+            );
+            confirmCreateBtn.disabled = !selected.length || selectedTotal < minimum || selectedTotal > maximum;
 
             var status = document.getElementById('resultsStatus');
             if (candidateRolls.length === 0) {
                 status.textContent = 'No available rolls match this PO Number and Color.';
-            } else if (qty > available + 5000) {
-                status.textContent = 'Available total (' + (available / 1000).toFixed(3) +
-                    ' KG) is more than 5 KG below the target.';
             } else if (qty > 0) {
-                status.textContent = 'Available total: ' + (available / 1000).toFixed(3) + ' KG.';
+                status.textContent = 'Select rolls below. Selected total: ' +
+                    (selectedTotal / 1000).toFixed(3) + ' KG; target range: ' +
+                    (minimum / 1000).toFixed(3) + '–' + (maximum / 1000).toFixed(3) + ' KG.';
             } else {
-                status.textContent = 'Enter the required total QTY to find rolls.';
+                status.textContent = 'Enter the required total QTY, then select matching rolls.';
+            }
+            renderSelectedRolls();
+        }
+
+        function buildSuggestedRolls(target) {
+            var available = candidateRolls.reduce(function(sum, row) {
+                return sum + qtyUnits(row);
+            }, 0);
+            var minimum = Math.max(0, target - 5000);
+            var maximum = Math.min(available, target + 5000);
+            if (maximum < minimum || maximum > 5000000) return null;
+
+            var stateNodes = new Int32Array(maximum + 1);
+            stateNodes.fill(-2);
+            stateNodes[0] = -1;
+            var previousNodes = [];
+            var rowIndexes = [];
+            var reachableSums = [0];
+
+            candidateRolls.forEach(function(row, rowIndex) {
+                var units = qtyUnits(row);
+                if (units <= 0 || units > maximum) return;
+
+                var countBeforeRow = reachableSums.length;
+                for (var i = countBeforeRow - 1; i >= 0; i--) {
+                    var sum = reachableSums[i];
+                    var next = sum + units;
+                    if (next > maximum || stateNodes[next] !== -2) continue;
+
+                    previousNodes.push(stateNodes[sum]);
+                    rowIndexes.push(rowIndex);
+                    stateNodes[next] = previousNodes.length - 1;
+                    reachableSums.push(next);
+                }
+            });
+
+            var total = -1;
+            for (var distance = 0; distance <= 5000; distance++) {
+                var below = target - distance;
+                var above = target + distance;
+                if (below >= minimum && below <= maximum && stateNodes[below] !== -2) {
+                    total = below;
+                    break;
+                }
+                if (above <= maximum && stateNodes[above] !== -2) {
+                    total = above;
+                    break;
+                }
+            }
+            if (total < 0) return null;
+
+            var selected = [];
+            var node = stateNodes[total];
+            while (node >= 0) {
+                selected.push(candidateRolls[rowIndexes[node]]);
+                node = previousNodes[node];
+            }
+            return selected;
+        }
+
+        function suggestRollsForTarget() {
+            var target = targetUnits();
+            if (!target || candidateRolls.length === 0) {
+                selectedRolls.clear();
+                updateCreateButton();
+                return;
+            }
+
+            var suggested = buildSuggestedRolls(target);
+            selectedRolls.clear();
+            if (suggested) {
+                suggested.forEach(function(row) {
+                    selectedRolls.set(String(row.ROLL), row);
+                });
+            }
+
+            document.querySelectorAll('.roll-select-checkbox').forEach(function(checkbox) {
+                var row = candidateRolls[Number(checkbox.dataset.rollIndex)];
+                checkbox.checked = Boolean(row && selectedRolls.has(String(row.ROLL)));
+            });
+
+            updateCreateButton();
+            if (!suggested) {
+                document.getElementById('suggestionIntro').textContent =
+                    'No automatic combination is within 5 KG of the target. Select or remove rolls manually.';
             }
         }
 
@@ -796,123 +922,82 @@ unset($_SESSION['dyeing_batch']['saved']);
             });
         }
 
-        function buildSuggestion(rows, target) {
-            var minimum = Math.max(0, target - 5000);
-            var available = rows.reduce(function(sum, row) {
+        function toggleRollSelection(row, checked, checkbox) {
+            var key = String(row.ROLL);
+            if (checked) {
+                var currentTotal = Array.from(selectedRolls.values()).reduce(function(sum, selectedRow) {
+                    return sum + qtyUnits(selectedRow);
+                }, 0);
+                if (!targetUnits()) {
+                    checkbox.checked = false;
+                    showMsg('Enter Target QTY before selecting rolls.', 'error');
+                    return;
+                }
+                if (currentTotal + qtyUnits(row) > targetUnits() + 5000) {
+                    checkbox.checked = false;
+                    showMsg('This roll would exceed the target by more than 5 KG. Remove a selected roll or increase the target.', 'error');
+                    return;
+                }
+                selectedRolls.set(key, row);
+                hideMsg();
+            } else {
+                selectedRolls.delete(key);
+            }
+            updateCreateButton();
+        }
+
+        function renderSelectedRolls() {
+            var rows = Array.from(selectedRolls.values());
+            var total = rows.reduce(function(sum, row) {
                 return sum + qtyUnits(row);
             }, 0);
-            var maximum = Math.min(target + 5000, available);
-            if (maximum < minimum) return null;
-
-            var stateNodes = new Int32Array(maximum + 1);
-            stateNodes.fill(-2);
-            stateNodes[0] = -1;
-
-            var previousNodes = [];
-            var rowIndexes = [];
-            var reachableSums = [0];
-
-            for (var i = 0; i < rows.length; i++) {
-                var units = qtyUnits(rows[i]);
-                if (units <= 0 || units > maximum) continue;
-
-                var currentReachableCount = reachableSums.length;
-                for (var j = currentReachableCount - 1; j >= 0; j--) {
-                    var sum = reachableSums[j];
-                    var nextSum = sum + units;
-                    if (nextSum > maximum || stateNodes[nextSum] !== -2) continue;
-
-                    previousNodes.push(stateNodes[sum]);
-                    rowIndexes.push(i);
-                    stateNodes[nextSum] = previousNodes.length - 1;
-                    reachableSums.push(nextSum);
-                }
-            }
-
-            var total = -1;
-            for (var distance = 0; distance <= 5000; distance++) {
-                var lowerTotal = target - distance;
-                var higherTotal = target + distance;
-                if (lowerTotal >= minimum && lowerTotal <= maximum && stateNodes[lowerTotal] !== -2) {
-                    total = lowerTotal;
-                    break;
-                }
-                if (higherTotal <= maximum && stateNodes[higherTotal] !== -2) {
-                    total = higherTotal;
-                    break;
-                }
-            }
-            if (total < 0) return null;
-
-            var selected = [];
-            var node = stateNodes[total];
-            while (node >= 0) {
-                selected.push(rows[rowIndexes[node]]);
-                node = previousNodes[node];
-            }
-            selected.reverse();
-            return {rows: selected, total: total};
-        }
-
-        function createSuggestions() {
-            hideMsg();
             var target = targetUnits();
-            if (!target || candidateRolls.length === 0) {
-                showMsg('Enter a valid target QTY after searching for rolls.', 'error');
-                return;
-            }
-
-            var suggestion = buildSuggestion(candidateRolls, target);
-            if (!suggestion) {
-                showMsg('No roll combination is available between ' +
-                    Math.max(0, target - 5000) / 1000 + ' and ' +
-                    ((target + 5000) / 1000).toFixed(3) + ' KG (within 5 KG below or above target).', 'error');
-                return;
-            }
-
-            suggestions = [suggestion];
-            var difference = suggestion.total - target;
-            document.getElementById('suggestionIntro').textContent = difference === 0
-                ? 'Exact match: ' + (target / 1000).toFixed(3) + ' KG. Review the rolls and confirm.'
-                : 'Target: ' + (target / 1000).toFixed(3) + ' KG. Closest available total: ' +
-                    (suggestion.total / 1000).toFixed(3) + ' KG (' +
-                    Math.abs(difference / 1000).toFixed(3) + ' KG ' +
-                    (difference < 0 ? 'below' : 'above') + ' target).';
-            document.getElementById('suggestionPanel').classList.remove('is-hidden');
-            renderSuggestion(0);
-            document.getElementById('suggestionPanel').scrollIntoView({behavior: 'smooth', block: 'start'});
-        }
-
-        function renderSuggestion(index) {
-            selectedSuggestionIndex = index;
-            var suggestion = suggestions[index];
-            if (!suggestion) return;
-
-            document.getElementById('suggestionPreview').classList.remove('is-hidden');
+            var difference = total - target;
+            document.getElementById('suggestionIntro').textContent = rows.length
+                ? rows.length + ' roll(s), selected total ' + (total / 1000).toFixed(3) +
+                    ' KG' + (target ? ' (' + Math.abs(difference / 1000).toFixed(3) + ' KG ' +
+                    (difference === 0 ? 'exact' : difference < 0 ? 'below' : 'above') + ' target)' : '')
+                : 'Select rolls from the Matching Rolls table above.';
             document.getElementById('suggestionPreviewTitle').textContent =
-                suggestion.rows.length + ' roll(s), total ' +
-                (suggestion.total / 1000).toFixed(3) + ' KG';
-            document.getElementById('suggestionRolls').innerHTML = suggestion.rows.map(function(row) {
-                return '<tr><td><span class="roll-badge">' + esc(row.ROLL) + '</span></td>' +
-                    '<td>' + esc(row.RACK) + '</td><td>' + esc(row.QTY) + '</td></tr>';
-            }).join('');
+                rows.length + ' selected roll(s), total ' + (total / 1000).toFixed(3) + ' KG';
+            document.getElementById('suggestionRolls').innerHTML = rows.length
+                ? rows.map(function(row) {
+                    return '<tr><td><span class="roll-badge">' + esc(row.ROLL) + '</span></td>' +
+                        '<td>' + esc(row.RACK) + '</td><td>' + esc(row.QTY) + '</td>' +
+                        '<td><button type="button" class="remove-roll-btn" data-remove-roll="' +
+                        esc(row.ROLL) + '"><i class="fa-solid fa-trash"></i> Remove</button></td></tr>';
+                }).join('')
+                : '<tr class="empty-row"><td colspan="4">Select rolls from the Matching Rolls table above.</td></tr>';
+
+            document.querySelectorAll('[data-remove-roll]').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var key = this.dataset.removeRoll;
+                    selectedRolls.delete(key);
+                    var matchingCheckbox = Array.from(document.querySelectorAll('.roll-select-checkbox'))
+                        .find(function(checkbox) {
+                            var row = candidateRolls[Number(checkbox.dataset.rollIndex)];
+                            return row && String(row.ROLL) === key;
+                        });
+                    if (matchingCheckbox) matchingCheckbox.checked = false;
+                    updateCreateButton();
+                });
+            });
         }
 
         function confirmCreate() {
-            var suggestion = suggestions[selectedSuggestionIndex];
-            if (!suggestion) {
-                showMsg('Choose a roll suggestion first.', 'error');
+            var selected = Array.from(selectedRolls.values());
+            if (!selected.length || confirmCreateBtn.disabled) {
+                showMsg('Select rolls whose total is within 5 KG of the target QTY.', 'error');
                 return;
             }
 
-            var button = document.getElementById('confirmCreateBtn');
-            button.disabled = true;
-            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating...';
+            confirmCreateBtn.disabled = true;
+            confirmCreateBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating...';
             var payload = {
                 po_number: poNumberSelect.value,
                 color: colorSelect.value,
                 target_qty: Number(targetQtyInput.value),
-                rolls: suggestion.rows.map(function(row) { return row.ROLL; })
+                rolls: selected.map(function(row) { return row.ROLL; })
             };
 
             apiPost('select_rolls', payload).then(function(response) {
@@ -925,14 +1010,12 @@ unset($_SESSION['dyeing_batch']['saved']);
             }).then(function(response) {
                 if (!response.success) throw new Error(response.message || 'Could not create batch card');
                 document.getElementById('cardNo').textContent = response.card_no || '-';
-                createCardBtn.disabled = true;
                 showMsg(response.message + ' Card No: ' + response.card_no, 'success');
-                document.getElementById('suggestionPanel').classList.add('is-hidden');
-                button.innerHTML = '<i class="fa-solid fa-check"></i> Batch Card Created';
+                confirmCreateBtn.innerHTML = '<i class="fa-solid fa-check"></i> Batch Card Created';
             }).catch(function(error) {
                 showMsg(error.message, 'error');
-                button.disabled = false;
-                button.innerHTML = '<i class="fa-solid fa-check"></i> Confirm &amp; Create Batch Card';
+                confirmCreateBtn.disabled = false;
+                confirmCreateBtn.innerHTML = '<i class="fa-solid fa-check"></i> Confirm &amp; Create Batch Card';
             });
         }
 
@@ -972,18 +1055,32 @@ unset($_SESSION['dyeing_batch']['saved']);
         });
 
         searchBtn.addEventListener('click', searchRolls);
-        createCardBtn.addEventListener('click', createSuggestions);
         targetQtyInput.addEventListener('input', function() {
-            document.getElementById('suggestionPanel').classList.add('is-hidden');
             updateCreateButton();
+            if (targetQtyTimer) clearTimeout(targetQtyTimer);
+            targetQtyTimer = setTimeout(function() {
+                targetQtyTimer = null;
+                suggestRollsForTarget();
+            }, 250);
+        });
+        targetQtyInput.addEventListener('change', function() {
+            if (targetQtyTimer) {
+                clearTimeout(targetQtyTimer);
+                targetQtyTimer = null;
+            }
+            suggestRollsForTarget();
         });
         targetQtyInput.addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
                 event.preventDefault();
-                if (!createCardBtn.disabled) createSuggestions();
+                if (targetQtyTimer) {
+                    clearTimeout(targetQtyTimer);
+                    targetQtyTimer = null;
+                }
+                suggestRollsForTarget();
             }
         });
-        document.getElementById('confirmCreateBtn').addEventListener('click', confirmCreate);
+        confirmCreateBtn.addEventListener('click', confirmCreate);
         document.getElementById('backBtn').addEventListener('click', function(event) {
             event.preventDefault();
             window.location.href = 'dyeing_batch_card_report.php';
