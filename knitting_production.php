@@ -564,6 +564,29 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
       box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
     }
 
+    .field-input.scale-qty-pending {
+      animation: scale-qty-attention 1s ease-in-out infinite;
+    }
+
+    @keyframes scale-qty-attention {
+      0%, 100% {
+        border-color: #cbd5e1;
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+      }
+
+      50% {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.22);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .field-input.scale-qty-pending {
+        animation: none;
+        border-color: #ef4444;
+      }
+    }
+
     .field-label {
       display: block;
       margin-bottom: 5px;
@@ -1374,6 +1397,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
 
         resultContainer.innerHTML = html;
         renderProductionActions();
+        setupScaleQtyInput();
       }
 
       function verifyOperatorScan(qrText) {
@@ -1659,6 +1683,29 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_operator') {
         document.getElementById('cancelProductionBtn').addEventListener('click', function() {
           window.location.reload();
         });
+      }
+
+      function setupScaleQtyInput() {
+        const scaleQtyInput = document.getElementById('scaleQtyInput');
+        if (!scaleQtyInput) return;
+
+        const updatePendingState = () => {
+          const qty = Number(scaleQtyInput.value);
+          scaleQtyInput.classList.toggle(
+            'scale-qty-pending',
+            !Number.isFinite(qty) || qty <= 0
+          );
+        };
+
+        scaleQtyInput.addEventListener('input', updatePendingState);
+        scaleQtyInput.addEventListener('keydown', function(event) {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            handleProductionSave();
+          }
+        });
+        updatePendingState();
+        scaleQtyInput.focus();
       }
 
       function hideActionContent() {
