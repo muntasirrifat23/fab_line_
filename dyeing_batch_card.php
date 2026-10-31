@@ -320,6 +320,11 @@ unset($_SESSION['dyeing_batch']['saved']);
             text-align: right;
         }
 
+        tfoot .selected-total-value {
+            text-align: left;
+            padding-left: 24px;
+        }
+
         .roll-select-cell {
             width: 48px;
             text-align: center;
@@ -610,6 +615,7 @@ unset($_SESSION['dyeing_batch']['saved']);
         var selectedRolls = new Map();
         var colorRequestId = 0;
         var searchRequestId = 0;
+        var searchInProgress = false;
         var poInputTimer = null;
         var targetQtyTimer = null;
         var poNumberSelect = document.getElementById('poNumberSelect');
@@ -661,6 +667,7 @@ unset($_SESSION['dyeing_batch']['saved']);
 
         function resetResults(preserveTargetQty) {
             searchRequestId++;
+            searchInProgress = false;
             candidateRolls = [];
             selectedRolls.clear();
             document.getElementById('searchResults').classList.add('is-hidden');
@@ -766,7 +773,7 @@ unset($_SESSION['dyeing_batch']['saved']);
             }, 0);
             document.getElementById('storeFoot').innerHTML =
                 '<tr><th colspan="4" class="total-label">Available total QTY</th>' +
-                '<th id="availableQtyTotal">' + (availableTotal / 1000).toFixed(3) + ' KG</th>' +
+                '<th id="availableQtyTotal">' + (availableTotal / 1000).toFixed(2) + ' KG</th>' +
                 '<th colspan="17"></th></tr>';
             document.querySelectorAll('.roll-select-checkbox').forEach(function(checkbox) {
                 checkbox.addEventListener('change', function() {
@@ -797,13 +804,13 @@ unset($_SESSION['dyeing_batch']['saved']);
                 status.textContent = 'No available rolls match this PO Number and Color.';
             } else if (qty > 0) {
                 status.textContent = 'Available total: ' +
-                    (candidateRolls.reduce(function(sum, row) { return sum + qtyUnits(row); }, 0) / 1000).toFixed(3) +
-                    ' KG. Selected total: ' + (selectedTotal / 1000).toFixed(3) +
-                    ' KG; target: ' + (qty / 1000).toFixed(3) + ' KG (' +
-                    (minimum / 1000).toFixed(3) + '–' + (maximum / 1000).toFixed(3) + ' KG allowed).';
+                    (candidateRolls.reduce(function(sum, row) { return sum + qtyUnits(row); }, 0) / 1000).toFixed(2) +
+                    ' KG. Selected total: ' + (selectedTotal / 1000).toFixed(2) +
+                    ' KG; target: ' + (qty / 1000).toFixed(2) + ' KG (' +
+                    (minimum / 1000).toFixed(2) + '–' + (maximum / 1000).toFixed(2) + ' KG allowed).';
             } else {
                 status.textContent = 'Available total: ' +
-                    (candidateRolls.reduce(function(sum, row) { return sum + qtyUnits(row); }, 0) / 1000).toFixed(3) +
+                    (candidateRolls.reduce(function(sum, row) { return sum + qtyUnits(row); }, 0) / 1000).toFixed(2) +
                     ' KG. Enter Target QTY to auto-select rolls.';
             }
             renderSelectedRolls();
@@ -904,6 +911,7 @@ unset($_SESSION['dyeing_batch']['saved']);
             }
 
             var requestId = searchRequestId;
+            searchInProgress = true;
             searchBtn.disabled = true;
             searchBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Searching...';
             document.getElementById('searchResults').classList.remove('is-hidden');
@@ -924,6 +932,7 @@ unset($_SESSION['dyeing_batch']['saved']);
                 showMsg(error.message, 'error');
             }).then(function() {
                 if (requestId !== searchRequestId) return;
+                searchInProgress = false;
                 searchBtn.disabled = !poNumberSelect.value || !colorSelect.value;
                 searchBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Search';
             });
@@ -961,13 +970,13 @@ unset($_SESSION['dyeing_batch']['saved']);
             var target = targetUnits();
             var difference = total - target;
             document.getElementById('suggestionIntro').textContent = rows.length
-                ? rows.length + ' roll(s), selected total ' + (total / 1000).toFixed(3) +
-                    ' KG' + (target ? ' (' + Math.abs(difference / 1000).toFixed(3) + ' KG ' +
+                ? rows.length + ' roll(s), selected total ' + (total / 1000).toFixed(2) +
+                    ' KG' + (target ? ' (' + Math.abs(difference / 1000).toFixed(2) + ' KG ' +
                     (difference === 0 ? 'exact' : difference < 0 ? 'below' : 'above') + ' target)' : '')
                 : 'Select rolls from the Matching Rolls table above.';
             document.getElementById('suggestionPreviewTitle').textContent =
-                rows.length + ' selected roll(s), selected total ' + (total / 1000).toFixed(3) +
-                ' KG; target total ' + (target / 1000).toFixed(3) + ' KG';
+                rows.length + ' selected roll(s), selected total ' + (total / 1000).toFixed(2) +
+                ' KG; target total ' + (target / 1000).toFixed(2) + ' KG';
             document.getElementById('suggestionRolls').innerHTML = rows.length
                 ? rows.map(function(row) {
                     return '<tr><td><span class="roll-badge">' + esc(row.ROLL) + '</span></td>' +
@@ -977,10 +986,10 @@ unset($_SESSION['dyeing_batch']['saved']);
                 }).join('')
                 : '<tr class="empty-row"><td colspan="4">Select rolls from the Matching Rolls table above.</td></tr>';
             document.getElementById('selectedRollsFoot').innerHTML =
-                '<tr><th colspan="2" class="total-label">Selected total QTY</th>' +
-                '<th id="selectedQtyTotal">' + (total / 1000).toFixed(3) + ' KG</th>' +
-                '<th>Target: <span id="targetQtyTotal">' +
-                (target ? (target / 1000).toFixed(3) + ' KG' : '-') + '</span></th></tr>';
+                '<tr><th colspan="2" class="total-label">Selected total QTY :</th>' +
+                '<th id="selectedQtyTotal" class="selected-total-value">' +
+                (total / 1000).toFixed(2) + ' KG</th>' +
+                '<th></th></tr>';
 
             document.querySelectorAll('[data-remove-roll]').forEach(function(button) {
                 button.addEventListener('click', function() {
@@ -1063,8 +1072,12 @@ unset($_SESSION['dyeing_batch']['saved']);
         poNumberSelect.addEventListener('search', refreshColorsForCurrentPo);
 
         colorSelect.addEventListener('change', function() {
-            resetResults();
-            searchBtn.disabled = !poNumberSelect.value || !this.value;
+            if (poNumberSelect.value.trim() && this.value) {
+                searchRolls();
+            } else {
+                resetResults();
+                searchBtn.disabled = true;
+            }
         });
 
         searchBtn.addEventListener('click', searchRolls);
@@ -1090,7 +1103,15 @@ unset($_SESSION['dyeing_batch']['saved']);
                     clearTimeout(targetQtyTimer);
                     targetQtyTimer = null;
                 }
-                suggestRollsForTarget();
+                if (!poNumberSelect.value.trim() || !colorSelect.value) {
+                    showMsg('Select PO Number and Color to show matching rolls.', 'error');
+                } else if (searchInProgress) {
+                    return;
+                } else if (!document.getElementById('searchResults').classList.contains('is-hidden')) {
+                    suggestRollsForTarget();
+                } else {
+                    searchRolls();
+                }
             }
         });
         confirmCreateBtn.addEventListener('click', confirmCreate);
