@@ -8,6 +8,9 @@ if (!isset($_SESSION['username'])) {
 }
 
 $uname = $_SESSION['username'];
+$userId = strtolower(trim((string) $uname));
+$isDyeingUser = $userId === 'd01';
+$isKnittingUser = $userId === 'k01';
 
 $options = "";
 $lineNumbers = array();
@@ -620,6 +623,7 @@ mysqli_close($db);
             <form action="initialPage.php" method="post">
 
                 <div class="btn-grid">
+                    <?php if (!$isDyeingUser): ?>
                     <button class="w3-button w3-teal" name="subcontract_input" id="subcontract_input">
                         <i class="fa-solid fa-clipboard-list"></i> Subcontract Input
                     </button>
@@ -652,8 +656,10 @@ mysqli_close($db);
                     <button class="w3-button w3-teal" name="knitting_roll_split" id="knitting_roll_split">
                         <i class="fas fa-warehouse"></i> Knitting Roll Split
                     </button>
+                    <?php endif; ?>
 
                     <!-- Dyeing Buttons -->
+                    <?php if (!$isKnittingUser): ?>
                     <button class="w3-button w3-teal" name="dyeing_batch_card" id="dyeing_batch_card">
                         <i class="fas fa-id-card"></i> Batch Card
                     </button>
@@ -661,6 +667,7 @@ mysqli_close($db);
                     <button class="w3-button w3-teal" name="dyeing_batch_split" id="dyeing_batch_split">
                         <i class="fas fa-scissors"></i> Batch Split
                     </button>
+                    <?php endif; ?>
                     <button class="w3-button w3-teal" name="user_management" id="user_management">
                         <i class="fas fa-users-cog"></i> User Management
                     </button>

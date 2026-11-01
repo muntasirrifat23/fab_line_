@@ -2,6 +2,8 @@
 session_start();
 
 $user = strtolower($_SESSION['username'] ?? '');
+$isDyeingUser = $user === 'd01';
+$isKnittingUser = $user === 'k01';
 
 // $adminUsers = ['admin', 'ppq30', 'ppq34', 'ppq70'];
 
@@ -201,9 +203,12 @@ $user = strtolower($_SESSION['username'] ?? '');
 <body>
   <div class="report-container">
     <div class="card">
-      <h2 class="card-title text-center" style="color: #6d28d9;">Report Selection</h2>
+      <h2 class="card-title text-center" style="color: #6d28d9;">
+        <?php echo $isDyeingUser ? 'Dyeing Report Section' : 'Knitting Report Section'; ?>
+      </h2>
       <div class="row d-flex align-items-stretch">
 
+        <?php if (!$isDyeingUser): ?>
         <!-- 1. Knitting Input Details Report -->
         <div class="col-md-4 mb-3 d-flex">
           <div class="report-card w-100 card-bg">
@@ -301,8 +306,10 @@ $user = strtolower($_SESSION['username'] ?? '');
             </form>
           </div>
         </div>
+        <?php endif; ?>
 
         <!-- Dyeing Part Start -->
+        <?php if (!$isKnittingUser): ?>
         <!-- 8. Dyeing Batch Card Report -->
         <div class="col-md-4 mb-3 d-flex">
           <div class="report-card w-100 card-bg">
@@ -316,6 +323,7 @@ $user = strtolower($_SESSION['username'] ?? '');
             </form>
           </div>
         </div>
+        <?php endif; ?>
 
 
       </div>
