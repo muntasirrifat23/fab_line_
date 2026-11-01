@@ -25,6 +25,7 @@ unset($_SESSION['dyeing_batch']['saved']);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dyeing | Batch Card</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -618,6 +619,7 @@ unset($_SESSION['dyeing_batch']['saved']);
         var searchInProgress = false;
         var poInputTimer = null;
         var targetQtyTimer = null;
+        var batchMessageTimer = null;
         var poNumberSelect = document.getElementById('poNumberSelect');
         var colorSelect = document.getElementById('colorSelect');
         var searchBtn = document.getElementById('searchBtn');
@@ -634,6 +636,37 @@ unset($_SESSION['dyeing_batch']['saved']);
             var box = document.getElementById('msgBox');
             box.className = 'msg-box';
             box.textContent = '';
+        }
+
+        function showBatchPopup(message, type) {
+            var box = document.getElementById('msgBox');
+            if (batchMessageTimer) clearTimeout(batchMessageTimer);
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: type === 'error' ? 'error' : 'success',
+                    title: type === 'error' ? 'Batch Card Not Created' : 'Successfully Saved!',
+                    text: message,
+                    timer: 3000,
+                    timerProgressBar: true,
+                    showConfirmButton: false,
+                    allowOutsideClick: type !== 'success',
+                    allowEscapeKey: type !== 'success'
+                }).then(function() {
+                    if (type === 'success') window.location.reload();
+                });
+                return;
+            }
+
+            box.className = 'msg-box ' + (type === 'error' ? 'msg-error' : 'msg-success');
+            box.textContent = message;
+            batchMessageTimer = setTimeout(function() {
+                if (type === 'success') {
+                    window.location.reload();
+                    return;
+                }
+                hideMsg();
+                batchMessageTimer = null;
+            }, 3000);
         }
 
         function esc(value) {
@@ -1028,14 +1061,22 @@ unset($_SESSION['dyeing_batch']['saved']);
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({})
-                }).then(readJson);
+                }).then(readJson).then(function(insertResponse) {
+                    if (!insertResponse.success) {
+                        throw new Error(insertResponse.message || 'Database insert failed. Batch Card was not created.');
+                    }
+                    return insertResponse;
+                });
             }).then(function(response) {
-                if (!response.success) throw new Error(response.message || 'Could not create batch card');
                 document.getElementById('cardNo').textContent = response.card_no || '-';
-                showMsg(response.message + ' Card No: ' + response.card_no, 'success');
+                var successMessage = 'Batch Created Successfully!\n' + response.count +
+                    ' roll(s) saved in the database.\nBatch Card No: ' + response.card_no;
+                showMsg(successMessage.replace(/\n/g, ' '), 'success');
+                showBatchPopup(successMessage.replace(/\n/g, ' '), 'success');
                 confirmCreateBtn.innerHTML = '<i class="fa-solid fa-check"></i> Batch Card Created';
             }).catch(function(error) {
                 showMsg(error.message, 'error');
+                showBatchPopup('Batch Card was NOT created. ' + error.message, 'error');
                 confirmCreateBtn.disabled = false;
                 confirmCreateBtn.innerHTML = '<i class="fa-solid fa-check"></i> Confirm &amp; Create Batch Card';
             });

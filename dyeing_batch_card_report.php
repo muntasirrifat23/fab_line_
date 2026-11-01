@@ -257,7 +257,6 @@
                             <th>FABRICS TYPE</th>
                             <th>FINISH GSM</th>
                             <th>FINISH DIA</th>
-                            <th>GRAY GSM</th>
                             <th>FEEDER PLAN</th>
                             <th>LOT NO</th>
                             <th>T POINT</th>
@@ -265,7 +264,7 @@
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="26" class="loading-cell">Loading data...</td>
+                            <td colspan="25" class="loading-cell">Loading data...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -301,7 +300,6 @@
             { key: 'FTYPE', label: 'Fabrics Type' },
             { key: 'FGSM', label: 'Finish GSM' },
             { key: 'FDIA', label: 'Finish Dia' },
-            { key: 'GGSM', label: 'Gray GSM' },
             { key: 'FEEDER_PLAN', label: 'Feeder Plan' },
             { key: 'LOT_NO', label: 'Lot No' },
             { key: 'TPOINT', label: 'T Point' }
@@ -491,7 +489,7 @@
             tbody.empty();
             currentData = data || [];
             if (!currentData.length) {
-                tbody.append('<tr class="empty-row"><td colspan="26">No data found</td></tr>');
+                tbody.append('<tr class="empty-row"><td colspan="25">No data found</td></tr>');
                 return;
             }
             var groups = {};
@@ -540,11 +538,11 @@
                     if (resp && resp.success) {
                         renderTableRows(resp.data);
                     } else {
-                        $('#tableBody').html('<tr class="empty-row"><td colspan="26">No data found</td></tr>');
+                        $('#tableBody').html('<tr class="empty-row"><td colspan="25">No data found</td></tr>');
                     }
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr class="empty-row"><td colspan="26" style="color:#dc2626;">Error searching</td></tr>');
+                    $('#tableBody').html('<tr class="empty-row"><td colspan="25" style="color:#dc2626;">Error searching</td></tr>');
                 })
                 .always(function() {
                     $('#searchBtn').prop('disabled', false).html('<i class="fa-solid fa-magnifying-glass"></i> Search');
@@ -552,7 +550,7 @@
         }
 
         function loadAll() {
-            $('#tableBody').html('<tr><td colspan="26" class="loading-cell">Loading data...</td></tr>');
+            $('#tableBody').html('<tr><td colspan="25" class="loading-cell">Loading data...</td></tr>');
             $.ajax({
                     url: 'ajaxDyeing_batch_card_Report.php',
                     dataType: 'json',
@@ -562,11 +560,11 @@
                     if (resp && resp.success) {
                         renderTableRows(resp.data);
                     } else {
-                        $('#tableBody').html('<tr class="empty-row"><td colspan="26">No data returned</td></tr>');
+                        $('#tableBody').html('<tr class="empty-row"><td colspan="25">No data returned</td></tr>');
                     }
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr class="empty-row"><td colspan="26" style="color:#dc2626;">Error loading data</td></tr>');
+                    $('#tableBody').html('<tr class="empty-row"><td colspan="25" style="color:#dc2626;">Error loading data</td></tr>');
                 });
         }
 

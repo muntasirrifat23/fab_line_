@@ -41,9 +41,9 @@ foreach ($rolls as $row) {
     $stmt = $db->prepare(
         "INSERT INTO dyeing_batch_card
          (BUDAT, BCMTID, ROLL, PO_NUMBER, RACK, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
-          MCNO, MCDIA, CUSTOMER, YTYPE, YCOUNT, O_T, SL, FTYPE, FGSM, FDIA, GGSM,
+          MCNO, MCDIA, CUSTOMER, YTYPE, YCOUNT, O_T, SL, FTYPE, FGSM, FDIA,
           FEEDER_PLAN, LOT_NO, TPOINT, MCODE, MDESCRIPTION, UNAME)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
 
     if (!$stmt) {
@@ -69,7 +69,6 @@ foreach ($rolls as $row) {
     $vFTYPE = isset($row['FTYPE']) ? $row['FTYPE'] : null;
     $vFGSM = isset($row['FGSM']) ? $row['FGSM'] : null;
     $vFDIA = isset($row['FDIA']) ? $row['FDIA'] : null;
-    $vGGSM = isset($row['GGSM']) ? $row['GGSM'] : null;
     $vFEEDER_PLAN = isset($row['FEEDER_PLAN']) ? $row['FEEDER_PLAN'] : null;
     $vLOT_NO = isset($row['LOT_NO']) ? $row['LOT_NO'] : null;
     $vTPOINT = isset($row['TPOINT']) ? $row['TPOINT'] : null;
@@ -78,7 +77,7 @@ foreach ($rolls as $row) {
     $vROLL = isset($row['ROLL']) ? $row['ROLL'] : '';
 
     $stmt->bind_param(
-        'ssssssssssssssssssssssssssss',
+        'sssssssssssssssssssssssssss',
         $budat,
         $cardNo,
         $vROLL,
@@ -100,7 +99,6 @@ foreach ($rolls as $row) {
         $vFTYPE,
         $vFGSM,
         $vFDIA,
-        $vGGSM,
         $vFEEDER_PLAN,
         $vLOT_NO,
         $vTPOINT,
@@ -119,7 +117,13 @@ foreach ($rolls as $row) {
 }
 
 if ($inserted === count($rolls)) {
-    $db->commit();
+    if (!$db->commit()) {
+        $errorMsg = 'Database commit failed: ' . $db->error;
+        $db->rollback();
+        $db->autocommit(true);
+        echo json_encode(['success' => false, 'message' => $errorMsg]);
+        exit;
+    }
     unset($_SESSION['dyeing_batch']['rolls']);
     unset($_SESSION['dyeing_batch']['card_no']);
     unset($_SESSION['dyeing_batch']['created_at']);

@@ -207,15 +207,27 @@ switch ($action) {
         $stmt->close();
 
         if (count($selectedRolls) !== count($rolls)) {
-            echo json_encode(['success' => false, 'message' => 'Some suggested rolls are no longer available. Search again and choose another suggestion.']);
+            $unavailableRolls = array_values(array_diff($rolls, array_keys($selectedRolls)));
+            echo json_encode([
+                'success' => false,
+                'message' => 'These rolls no longer match the selected PO Number and Color or are already in a batch: ' .
+                    implode(', ', $unavailableRolls) . '. Search again and choose available rolls.'
+            ]);
             exit;
         }
         $minimumQty = max(0, $targetQty - 5);
         $maximumQty = $targetQty + 5;
         if ($selectedQty + 0.000001 < $minimumQty || $selectedQty - 0.000001 > $maximumQty) {
+            $rollQtyDetails = [];
+            foreach ($selectedRolls as $roll => $row) {
+                $rollQtyDetails[] = $roll . ' (' . (is_numeric($row['QTY']) ? number_format((float)$row['QTY'], 3) : 'invalid') . ' KG)';
+            }
             echo json_encode([
                 'success' => false,
-                'message' => 'Selected roll QTY must be within 5 KG below or above the target'
+                'message' => 'QTY does not match the target range. Target: ' . number_format($targetQty, 3) .
+                    ' KG; selected total: ' . number_format($selectedQty, 3) . ' KG; allowed: ' .
+                    number_format($minimumQty, 3) . '–' . number_format($maximumQty, 3) .
+                    ' KG. Selected rolls: ' . implode(', ', $rollQtyDetails)
             ]);
             exit;
         }
