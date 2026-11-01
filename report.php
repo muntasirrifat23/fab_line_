@@ -317,7 +317,21 @@ $isKnittingUser = $user === 'k01';
               <button type="submit" class="btn btn-report">
                 <i class="fa-solid fa-id-card card-btn"></i>
                 <span class="floor-text">
-                  <span>Dyeing Batch Card Report</span>
+                  <span>Batch Card Report</span>
+                </span>
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- 9. Dyeing Batch Delivery Report -->
+        <div class="col-md-4 mb-3 d-flex">
+          <div class="report-card w-100 card-bg">
+            <form method="POST" action="dyeing_batch_delivery_report.php" class="h-100 w-100">
+              <button type="submit" class="btn btn-report">
+                <i class="fa-solid fa-truck card-btn"></i>
+                <span class="floor-text">
+                  <span>Batch Delivery Report</span>
                 </span>
               </button>
             </form>

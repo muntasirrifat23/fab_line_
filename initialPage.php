@@ -79,6 +79,11 @@ if (isset($_POST['dyeing_batch_card'])) {
     header('location:dyeing_batch_card.php');
     exit();
 }
+if (isset($_POST['dyeing_batch_delivery'])) {
+    $_SESSION['lineNo'] = $_POST['option'];
+    header('location:dyeing_batch_delivery.php');
+    exit();
+}
 if (isset($_POST['dyeing_batch_split'])) {
     if (empty($_SESSION['batch_split_authorized'])) {
         header('Location: initialPage.php?require_batch_split_password=1');
@@ -662,6 +667,10 @@ mysqli_close($db);
                     <?php if (!$isKnittingUser): ?>
                     <button class="w3-button w3-teal" name="dyeing_batch_card" id="dyeing_batch_card">
                         <i class="fas fa-id-card"></i> Batch Card
+                    </button>
+                    
+                    <button class="w3-button w3-teal" name="dyeing_batch_delivery" id="dyeing_batch_delivery">
+                        <i class="fas fa-truck"></i> Batch Delivery
                     </button>
 
                     <button class="w3-button w3-teal" name="dyeing_batch_split" id="dyeing_batch_split">
