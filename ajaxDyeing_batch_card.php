@@ -21,7 +21,7 @@ function nextCardNoFromDb($db) {
     $r = mysqli_query($db, "SELECT COALESCE(MAX(CAST(BCMTID AS UNSIGNED)), 4000000000) + 1 AS nxt FROM dyeing_batch_card");
     if (!$r) return 4000000001;
     $row = mysqli_fetch_assoc($r);
-    return (int)$row['nxt'];
+    return $row && isset($row['nxt']) ? (int)$row['nxt'] : 4000000001;
 }
 
 function rollExistsInDatabase($db, $roll) {
@@ -233,6 +233,7 @@ switch ($action) {
         }
 
         $_SESSION['dyeing_batch']['rolls'] = $selectedRolls;
+        $_SESSION['dyeing_batch']['target_qty'] = $targetQty;
         echo json_encode([
             'success' => true,
             'count' => count($selectedRolls),

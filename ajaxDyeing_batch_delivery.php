@@ -45,7 +45,8 @@ function fetchDeliveryBatchRows($db, $cardNo, $forUpdate = false)
                    dbc.FEEDER_PLAN, dbc.LOT_NO,
                    COALESCE((SELECT ks.CATEGORY FROM knitting_store ks
                              WHERE TRIM(ks.ROLL) = TRIM(dbc.ROLL)
-                             ORDER BY ks.KSTID DESC LIMIT 1), '') AS CATEGORY
+                             ORDER BY ks.KSTID DESC LIMIT 1), '') AS CATEGORY,
+                   dbc.BCMTID
             FROM dyeing_batch_card dbc
             WHERE TRIM(dbc.BCMTID) = ?
             ORDER BY dbc.DBCTID ASC";
@@ -86,7 +87,12 @@ function fetchDeliveryBatchRows($db, $cardNo, $forUpdate = false)
     }
     $stmt->close();
 
-    return ['rows' => $rows, 'rolls' => $rolls, 'total_qty' => $totalQty];
+    return [
+        'rows' => $rows,
+        'rolls' => $rolls,
+        'total_qty' => $totalQty,
+        'target_qty' => $totalQty
+    ];
 }
 
 $action = isset($_GET['action']) ? trim($_GET['action']) : '';
@@ -127,6 +133,68 @@ try {
             'rows' => $batch['rows'],
             'roll_count' => count($batch['rows']),
             'total_qty' => round($batch['total_qty'], 3),
+            'target_qty' => round($batch['target_qty'], 3),
+            'delivery' => $delivery
+        ]);
+    }
+
+    if ($action === 'load_batch_by_roll') {
+        $roll = isset($_GET['roll']) ? trim((string)$_GET['roll']) : '';
+        if ($roll === '') {
+            respond(['success' => false, 'message' => 'Scan or enter a roll number first.'], 400);
+        }
+
+        $stmt = $db->prepare(
+            "SELECT BCMTID
+             FROM dyeing_batch_card
+             WHERE TRIM(ROLL) = ?
+             ORDER BY DBCTID DESC
+             LIMIT 1"
+        );
+        if (!$stmt) {
+            respond(['success' => false, 'message' => 'Database error: ' . $db->error], 500);
+        }
+        $stmt->bind_param('s', $roll);
+        if (!$stmt->execute()) {
+            $error = $stmt->error;
+            $stmt->close();
+            respond(['success' => false, 'message' => 'Database error: ' . $error], 500);
+        }
+        $card = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        if (!$card) {
+            respond(['success' => false, 'message' => 'Roll ' . $roll . ' was not found in any Dyeing Batch Card.'], 404);
+        }
+
+        $cardNo = trim((string)$card['BCMTID']);
+        $batch = fetchDeliveryBatchRows($db, $cardNo);
+        if (!$batch['rows']) {
+            respond(['success' => false, 'message' => 'No rolls found for Batch Card ' . $cardNo . '.'], 404);
+        }
+
+        $stmt = $db->prepare(
+            "SELECT DELIVERED_QTY, ROLL_COUNT, UNAME, DELIVERED_AT
+             FROM dyeing_batch_delivery WHERE BCMTID = ? LIMIT 1"
+        );
+        if (!$stmt) {
+            respond(['success' => false, 'message' => 'Database error: ' . $db->error], 500);
+        }
+        $stmt->bind_param('s', $cardNo);
+        if (!$stmt->execute()) {
+            $error = $stmt->error;
+            $stmt->close();
+            respond(['success' => false, 'message' => 'Database error: ' . $error], 500);
+        }
+        $delivery = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        respond([
+            'success' => true,
+            'card_no' => $cardNo,
+            'rows' => $batch['rows'],
+            'roll_count' => count($batch['rows']),
+            'total_qty' => round($batch['total_qty'], 3),
+            'target_qty' => round($batch['target_qty'], 3),
             'delivery' => $delivery
         ]);
     }
@@ -161,10 +229,10 @@ try {
             $inTransaction = false;
             respond(['success' => false, 'message' => 'Batch Card ' . $cardNo . ' was not found.'], 404);
         }
-        if (abs($loadedTotalQty - $batch['total_qty']) > 0.0005) {
+        if (abs($loadedTotalQty - $batch['target_qty']) > 0.0005) {
             $db->rollback();
             $inTransaction = false;
-            respond(['success' => false, 'message' => 'Batch QTY changed after it was loaded. Reload the batch before confirming delivery.'], 409);
+            respond(['success' => false, 'message' => 'Batch Target QTY changed after it was loaded. Reload the batch before confirming delivery.'], 409);
         }
 
         $stmt = $db->prepare("SELECT ID FROM dyeing_batch_delivery WHERE BCMTID = ? LIMIT 1 FOR UPDATE");
@@ -212,20 +280,25 @@ try {
                 }
             }
         }
-        if ($scannedQty - $batch['total_qty'] > 0.0005) {
+        if ($scannedQty - $batch['target_qty'] > 0.0005) {
             $db->rollback();
             $inTransaction = false;
             respond([
                 'success' => false,
-                'message' => 'Over quantity: scanned QTY exceeds this batch total. Delivery was not confirmed.'
+                'message' => 'Over quantity by ' . number_format($scannedQty - $batch['target_qty'], 3) .
+                    ' KG. Batch total is ' . number_format($batch['target_qty'], 3) .
+                    ' KG; scanned total is ' . number_format($scannedQty, 3) .
+                    ' KG. Delivery was not confirmed.'
             ], 422);
         }
-        if (abs($scannedQty - $batch['total_qty']) > 0.0005) {
+        if (abs($scannedQty - $batch['target_qty']) > 0.0005) {
             $db->rollback();
             $inTransaction = false;
             respond([
                 'success' => false,
-                'message' => 'Scanned QTY does not match this batch total. Delivery was not confirmed.'
+                'message' => 'Scanned QTY ' . number_format($scannedQty, 3) .
+                    ' KG does not match batch total ' . number_format($batch['target_qty'], 3) .
+                    ' KG. Delivery was not confirmed.'
             ], 422);
         }
 

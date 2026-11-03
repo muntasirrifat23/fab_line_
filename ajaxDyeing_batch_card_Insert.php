@@ -24,10 +24,33 @@ if (count($rolls) === 0) {
     exit;
 }
 
+foreach ([
+    'YBRAND' => "VARCHAR(100) DEFAULT NULL",
+    'CATEGORY' => "VARCHAR(100) DEFAULT NULL"
+] as $column => $definition) {
+    $columnResult = $db->query("SHOW COLUMNS FROM dyeing_batch_card LIKE '$column'");
+    if (!$columnResult) {
+        echo json_encode(['success' => false, 'message' => 'Could not check batch card column ' . $column . ': ' . $db->error]);
+        exit;
+    }
+    if ($columnResult->num_rows === 0 && !$db->query("ALTER TABLE dyeing_batch_card ADD COLUMN `$column` $definition")) {
+        echo json_encode(['success' => false, 'message' => 'Could not add batch card column ' . $column . ': ' . $db->error]);
+        exit;
+    }
+}
+
 // Assign next card number from DB
 $r = mysqli_query($db, "SELECT COALESCE(MAX(CAST(BCMTID AS UNSIGNED)), 4000000000) + 1 AS nxt FROM dyeing_batch_card");
+if (!$r) {
+    echo json_encode(['success' => false, 'message' => 'Could not generate the next batch card number: ' . $db->error]);
+    exit;
+}
 $rowX = $r ? mysqli_fetch_assoc($r) : null;
-$seq = $rowX && isset($rowX['nxt']) ? (int)$rowX['nxt'] : 4000000001;
+if (!$rowX || !isset($rowX['nxt'])) {
+    echo json_encode(['success' => false, 'message' => 'Could not generate the next batch card number']);
+    exit;
+}
+$seq = (int)$rowX['nxt'];
 $cardNo = (string)$seq;
 
 $uname = $_SESSION['username'];
@@ -41,8 +64,8 @@ foreach ($rolls as $row) {
     $stmt = $db->prepare(
         "INSERT INTO dyeing_batch_card
          (BUDAT, BCMTID, ROLL, PO_NUMBER, RACK, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
-          MCNO, MCDIA, CUSTOMER, YTYPE, YCOUNT, O_T, SL, FTYPE, FGSM, FDIA,
-          FEEDER_PLAN, LOT_NO, TPOINT, MCODE, MDESCRIPTION, UNAME)
+          MCNO, MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
+          YTYPE, YCOUNT, YBRAND, CATEGORY, TPOINT, UNAME)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
 
@@ -71,9 +94,9 @@ foreach ($rolls as $row) {
     $vFDIA = isset($row['FDIA']) ? $row['FDIA'] : null;
     $vFEEDER_PLAN = isset($row['FEEDER_PLAN']) ? $row['FEEDER_PLAN'] : null;
     $vLOT_NO = isset($row['LOT_NO']) ? $row['LOT_NO'] : null;
+    $vYBRAND = isset($row['YBRAND']) ? $row['YBRAND'] : null;
+    $vCATEGORY = isset($row['CATEGORY']) ? $row['CATEGORY'] : null;
     $vTPOINT = isset($row['TPOINT']) ? $row['TPOINT'] : null;
-    $vMCODE = isset($row['MCODE']) ? $row['MCODE'] : null;
-    $vMDESCRIPTION = isset($row['MDESCRIPTION']) ? $row['MDESCRIPTION'] : null;
     $vROLL = isset($row['ROLL']) ? $row['ROLL'] : '';
 
     $stmt->bind_param(
@@ -92,8 +115,6 @@ foreach ($rolls as $row) {
         $vMCNO,
         $vMCDIA,
         $vCUSTOMER,
-        $vYTYPE,
-        $vYCOUNT,
         $vO_T,
         $vSL,
         $vFTYPE,
@@ -101,9 +122,11 @@ foreach ($rolls as $row) {
         $vFDIA,
         $vFEEDER_PLAN,
         $vLOT_NO,
+        $vYTYPE,
+        $vYCOUNT,
+        $vYBRAND,
+        $vCATEGORY,
         $vTPOINT,
-        $vMCODE,
-        $vMDESCRIPTION,
         $uname
     );
 
@@ -127,6 +150,7 @@ if ($inserted === count($rolls)) {
     unset($_SESSION['dyeing_batch']['rolls']);
     unset($_SESSION['dyeing_batch']['card_no']);
     unset($_SESSION['dyeing_batch']['created_at']);
+    unset($_SESSION['dyeing_batch']['target_qty']);
     $_SESSION['dyeing_batch']['seq'] = $seq + 1;
 
     echo json_encode([

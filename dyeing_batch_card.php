@@ -14,6 +14,7 @@ if (!isset($_SESSION['dyeing_batch']) || !is_array($_SESSION['dyeing_batch'])) {
 $_SESSION['dyeing_batch']['rolls'] = [];
 unset($_SESSION['dyeing_batch']['card_no']);
 unset($_SESSION['dyeing_batch']['created_at']);
+unset($_SESSION['dyeing_batch']['target_qty']);
 unset($_SESSION['dyeing_batch']['saved']);
 ?>
 

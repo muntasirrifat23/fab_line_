@@ -14,6 +14,7 @@ if (!isset($_SESSION['username'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dyeing Batch Delivery</title>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         * { box-sizing: border-box; }
         body {
@@ -84,8 +85,11 @@ if (!isset($_SESSION['username'])) {
         .is-hidden { display: none !important; }
         .batch-summary { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 14px; }
         .summary-item { padding: 9px 12px; border-radius: 8px; background: #ecfdf5; font-weight: 800; }
-        .camera-layout { display: grid; grid-template-columns: minmax(260px, 420px) 1fr; gap: 18px; align-items: start; }
-        #qr-reader { width: 100%; min-height: 260px; overflow: hidden; border-radius: 12px; background: #f1f5f9; }
+        .camera-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; justify-items: center; }
+        .scanner-stage { width: min(100%, 460px); }
+        #qr-reader { width: 100%; min-height: 300px; overflow: hidden; border-radius: 12px; background: #f1f5f9; }
+        .scanner-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 10px; }
+        .manual-scan { width: min(100%, 900px); }
         .scan-help { margin: 0 0 12px; color: #475569; }
         .table-wrap { width: 100%; overflow: auto; max-height: calc(100vh - 350px); }
         table { width: 100%; min-width: 1900px; border-collapse: collapse; font-size: .92rem; }
@@ -107,7 +111,7 @@ if (!isset($_SESSION['username'])) {
         @media (max-width: 800px) {
             body { padding: 9px; }
             .header { flex-wrap: wrap; }
-            .camera-layout { grid-template-columns: 1fr; }
+            #qr-reader { min-height: 260px; }
             .table-wrap { max-height: 55vh; }
         }
     </style>
@@ -119,20 +123,9 @@ if (!isset($_SESSION['username'])) {
             <h1>Dyeing Batch Delivery</h1>
         </header>
 
-        <section class="panel">
-            <h2 class="panel-title">1. Load Batch Card</h2>
-            <form class="batch-form" id="batchForm">
-                <div class="field">
-                    <label for="batchCardInput">Batch Card Number</label>
-                    <input type="text" id="batchCardInput" autocomplete="off" placeholder="Enter batch card number" required>
-                </div>
-                <button type="submit" id="loadBatchBtn">Load Batch</button>
-            </form>
+        <section class="panel" id="deliveryPanel">
+            <h2 class="panel-title">Scan a Roll to Find Its Batch, Then Scan Every Roll in That Batch</h2>
             <div class="message" id="message" role="status" aria-live="polite"></div>
-        </section>
-
-        <section class="panel is-hidden" id="deliveryPanel">
-            <h2 class="panel-title">2. Scan Each Roll</h2>
             <div class="batch-summary">
                 <div class="summary-item">Batch: <span id="summaryCardNo">-</span></div>
                 <div class="summary-item">Rolls scanned: <span id="scannedCount">0</span> / <span id="expectedCount">0</span></div>
@@ -140,18 +133,25 @@ if (!isset($_SESSION['username'])) {
                 <div class="summary-item">Batch total QTY: <span id="expectedQty">0.000</span> KG</div>
             </div>
             <div class="camera-layout">
-                <div>
+                <div class="scanner-stage">
                     <div id="qr-reader"></div>
-                    <button class="scan-button" id="cameraBtn" type="button" style="margin-top:10px">Start Camera Scanner</button>
+                    <div class="scanner-controls">
+                        <button class="scan-button" id="cameraBtn" type="button">Start Camera Scanner</button>
+                        <button type="button" id="switchCameraBtn">Switch to Front Camera</button>
+                        <button type="button" id="anotherBatchBtn">Another Batch Scan</button>
+                    </div>
                 </div>
-                <div>
-                    <p class="scan-help">Scan the barcode/QR of every roll in this batch, or enter a roll number manually. A roll not belonging to this batch will be rejected.</p>
+                <div class="manual-scan">
                     <form class="scan-form" id="rollForm">
                         <div class="field">
                             <label for="rollInput">Roll Number</label>
-                            <input type="text" id="rollInput" autocomplete="off" placeholder="Scan or enter roll number" disabled>
+                            <input type="text" id="rollInput" autocomplete="off" placeholder="Scan or enter roll number">
                         </div>
-                        <button type="submit" id="addRollBtn" disabled>Add Roll</button>
+                        <div class="field">
+                            <label for="remainingQtyInput">Request QTY Remaining (KG)</label>
+                            <input type="text" id="remainingQtyInput" value="-" readonly>
+                        </div>
+                        <button type="submit" id="addRollBtn">Add Roll</button>
                     </form>
                 </div>
             </div>
@@ -186,27 +186,68 @@ if (!isset($_SESSION['username'])) {
         (function() {
             'use strict';
 
-            var batchForm = document.getElementById('batchForm');
-            var batchInput = document.getElementById('batchCardInput');
-            var loadButton = document.getElementById('loadBatchBtn');
             var deliveryPanel = document.getElementById('deliveryPanel');
             var scannedPanel = document.getElementById('scannedPanel');
             var rollForm = document.getElementById('rollForm');
             var rollInput = document.getElementById('rollInput');
+            var remainingQtyInput = document.getElementById('remainingQtyInput');
             var addRollBtn = document.getElementById('addRollBtn');
             var confirmBtn = document.getElementById('confirmBtn');
             var cameraBtn = document.getElementById('cameraBtn');
+            var switchCameraBtn = document.getElementById('switchCameraBtn');
+            var anotherBatchBtn = document.getElementById('anotherBatchBtn');
             var message = document.getElementById('message');
             var qrScanner = null;
             var batch = null;
             var scannedRolls = new Map();
             var expectedByRoll = new Map();
             var processingRoll = false;
+            var scanPopupActive = false;
             var delivered = false;
+            var cameraFacingMode = 'environment';
+            var cameraSwitching = false;
 
             function showMessage(text, type) {
                 message.textContent = text;
                 message.className = 'message ' + (type || 'info');
+            }
+
+            function showScanPopup(text) {
+                message.textContent = '';
+                message.className = 'message';
+                scanPopupActive = true;
+                rollInput.disabled = true;
+                addRollBtn.disabled = true;
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Quantity / Roll Mismatch',
+                        text: text,
+                        timer: 3000,
+                        timerProgressBar: true,
+                        showConfirmButton: false
+                    }).then(function() {
+                        scanPopupActive = false;
+                        if (!delivered) {
+                            rollInput.disabled = false;
+                            addRollBtn.disabled = false;
+                            rollInput.focus();
+                        }
+                    });
+                    return;
+                }
+
+                showMessage(text, 'error');
+                window.setTimeout(function() {
+                    message.textContent = '';
+                    message.className = 'message';
+                    scanPopupActive = false;
+                    if (!delivered) {
+                        rollInput.disabled = false;
+                        addRollBtn.disabled = false;
+                        rollInput.focus();
+                    }
+                }, 3000);
             }
 
             function escapeHtml(value) {
@@ -220,12 +261,13 @@ if (!isset($_SESSION['username'])) {
                 return Number.isFinite(qty) ? qty.toFixed(3) : '0.000';
             }
 
-            function api(action, payload) {
+            function api(action, payload, queryParams) {
                 var options = payload
                     ? {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)}
                     : {method: 'GET'};
-                return fetch('ajaxDyeing_batch_delivery.php?action=' + encodeURIComponent(action) +
-                    (payload ? '' : '&card_no=' + encodeURIComponent(batchInput.value.trim())), options)
+                var query = new URLSearchParams(queryParams || {});
+                query.set('action', action);
+                return fetch('ajaxDyeing_batch_delivery.php?' + query.toString(), options)
                     .then(function(response) {
                         return response.json().then(function(data) {
                             if (!response.ok || !data.success) {
@@ -239,14 +281,17 @@ if (!isset($_SESSION['username'])) {
             function updateSummary() {
                 var total = 0;
                 scannedRolls.forEach(function(row) { total += Number(row.QTY) || 0; });
+                var targetQty = batch ? Number(batch.target_qty) : 0;
                 document.getElementById('scannedCount').textContent = String(scannedRolls.size);
                 document.getElementById('scannedQty').textContent = formatQty(total);
+                document.getElementById('expectedQty').textContent = formatQty(targetQty);
+                remainingQtyInput.value = batch ? formatQty(Math.max(0, targetQty - total)) : '-';
                 document.getElementById('scannedFooter').innerHTML =
                     '<tr><th colspan="2">Scanned total QTY</th><th>' + formatQty(total) +
                     ' KG</th><th colspan="18"></th></tr>';
 
                 var allRollsScanned = batch && scannedRolls.size === batch.rows.length;
-                var isOverQty = batch && total - Number(batch.total_qty) > 0.0005;
+                var isOverQty = batch && total - targetQty > 0.0005;
                 confirmBtn.disabled = delivered || !allRollsScanned || isOverQty;
             }
 
@@ -284,43 +329,74 @@ if (!isset($_SESSION['username'])) {
 
             function addScannedRoll(rawRoll) {
                 var roll = String(rawRoll || '').trim();
-                if (!roll || processingRoll || delivered || !batch) return;
+                if (!roll || processingRoll || scanPopupActive || delivered) return;
                 processingRoll = true;
                 rollInput.disabled = true;
                 addRollBtn.disabled = true;
 
-                if (!expectedByRoll.has(roll)) {
-                    showMessage('Not match this roll for this batch: ' + roll, 'error');
-                    finishScan();
-                    return;
-                }
-                if (scannedRolls.has(roll)) {
-                    showMessage('Roll ' + roll + ' has already been scanned for this batch.', 'error');
-                    finishScan();
-                    return;
-                }
+                var resolveBatch = batch
+                    ? Promise.resolve(batch)
+                    : api('load_batch_by_roll', null, {roll: roll}).then(function(response) {
+                        batch = response;
+                        batch.rows.forEach(function(row) {
+                            expectedByRoll.set(String(row.ROLL), row);
+                        });
+                        document.getElementById('summaryCardNo').textContent = response.card_no;
+                        document.getElementById('expectedCount').textContent = String(response.roll_count);
+                        document.getElementById('expectedQty').textContent = formatQty(response.target_qty);
+                        updateSummary();
+                        if (response.delivery) {
+                            delivered = true;
+                            showMessage('Batch Card ' + response.card_no + ' was already delivered on ' +
+                                response.delivery.DELIVERED_AT + ' by ' + response.delivery.UNAME + '.', 'error');
+                        } else {
+                            showMessage('Batch Card ' + response.card_no + ' found. Scan its remaining rolls.', 'info');
+                        }
+                        return response;
+                    });
 
-                var row = expectedByRoll.get(roll);
-                var nextTotal = Number(row.QTY);
-                scannedRolls.forEach(function(scanned) { nextTotal += Number(scanned.QTY) || 0; });
-                if (nextTotal - Number(batch.total_qty) > 0.0005) {
-                    showMessage('Over quantity: scanned total would exceed this batch QTY. Delivery is blocked.', 'error');
-                    finishScan();
-                    return;
-                }
+                resolveBatch.then(function() {
+                    if (delivered) return;
+                    if (!expectedByRoll.has(roll)) {
+                        showScanPopup('Not match this roll for this batch: ' + roll);
+                        return;
+                    }
+                    if (scannedRolls.has(roll)) {
+                        showScanPopup('Roll ' + roll + ' has already been scanned for this batch.');
+                        return;
+                    }
 
-                scannedRolls.set(roll, row);
-                scannedPanel.classList.remove('is-hidden');
-                renderScannedRows();
-                showMessage('Roll ' + roll + ' matched this batch.', 'success');
-                finishScan();
+                    var row = expectedByRoll.get(roll);
+                    var previousTotal = 0;
+                    scannedRolls.forEach(function(scanned) { previousTotal += Number(scanned.QTY) || 0; });
+                    var nextTotal = previousTotal + (Number(row.QTY) || 0);
+                    var targetQty = Number(batch.target_qty);
+                    if (nextTotal - targetQty > 0.0005) {
+                        showScanPopup(
+                            'Over QTY by ' + formatQty(nextTotal - targetQty) + ' KG. Batch total: ' +
+                            formatQty(targetQty) + ' KG; previous scanned: ' +
+                            formatQty(previousTotal) + ' KG; this roll: ' +
+                            formatQty(row.QTY) + ' KG. This roll was not added.'
+                        );
+                        return;
+                    }
+
+                    scannedRolls.set(roll, row);
+                    scannedPanel.classList.remove('is-hidden');
+                    renderScannedRows();
+                    showMessage('Roll ' + roll + ' matched Batch Card ' + batch.card_no + '.', 'success');
+                }).catch(function(error) {
+                    showScanPopup(error.message);
+                }).then(function() {
+                    finishScan();
+                });
             }
 
             function finishScan() {
                 processingRoll = false;
                 rollInput.value = '';
-                rollInput.disabled = delivered || !batch;
-                addRollBtn.disabled = delivered || !batch;
+                rollInput.disabled = delivered || scanPopupActive;
+                addRollBtn.disabled = delivered || scanPopupActive;
                 rollInput.focus();
             }
 
@@ -343,62 +419,46 @@ if (!isset($_SESSION['username'])) {
                 cameraBtn.textContent = 'Starting camera...';
                 qrScanner = qrScanner || new Html5Qrcode('qr-reader');
                 qrScanner.start(
-                    {facingMode: 'environment'},
+                    {facingMode: cameraFacingMode},
                     {fps: 12, qrbox: {width: 250, height: 180}},
                     function(decodedText) { addScannedRoll(decodedText); },
                     function() {}
                 ).then(function() {
-                    cameraBtn.textContent = 'Camera Scanner Active';
-                    showMessage('Camera scanner is ready. Scan each roll in the loaded batch.', 'info');
+                    cameraBtn.hidden = true;
+                    showMessage('Camera scanner is ready. First scan a roll to find its batch.', 'info');
                 }).catch(function(error) {
                     cameraBtn.disabled = false;
+                    cameraBtn.hidden = false;
                     cameraBtn.textContent = 'Start Camera Scanner';
                     showMessage('Camera unavailable: ' + error + '. You can enter roll numbers manually.', 'error');
                 });
             }
 
-            batchForm.addEventListener('submit', function(event) {
-                event.preventDefault();
-                var cardNo = batchInput.value.trim();
-                if (!cardNo) {
-                    showMessage('Enter a Batch Card number.', 'error');
-                    return;
-                }
-                loadButton.disabled = true;
-                loadButton.textContent = 'Loading...';
-                confirmBtn.disabled = true;
-                scannedRolls.clear();
-                batch = null;
-                expectedByRoll.clear();
-                scannedPanel.classList.add('is-hidden');
-                deliveryPanel.classList.add('is-hidden');
+            function switchCamera() {
+                if (cameraSwitching || typeof Html5Qrcode === 'undefined') return;
+                cameraSwitching = true;
+                switchCameraBtn.disabled = true;
+                var wasScanning = Boolean(qrScanner && qrScanner.isScanning);
+                var stopPromise = wasScanning ? qrScanner.stop() : Promise.resolve();
 
-                api('load_batch').then(function(response) {
-                    batch = response;
-                    batch.rows.forEach(function(row) { expectedByRoll.set(String(row.ROLL), row); });
-                    document.getElementById('summaryCardNo').textContent = response.card_no;
-                    document.getElementById('expectedCount').textContent = String(response.roll_count);
-                    document.getElementById('expectedQty').textContent = formatQty(response.total_qty);
-                    deliveryPanel.classList.remove('is-hidden');
-                    rollInput.disabled = Boolean(response.delivery);
-                    addRollBtn.disabled = Boolean(response.delivery);
-                    delivered = Boolean(response.delivery);
-                    if (delivered) {
-                        showMessage('This Batch Card was already delivered on ' + response.delivery.DELIVERED_AT +
-                            ' by ' + response.delivery.UNAME + '.', 'error');
-                    } else {
-                        showMessage('Batch loaded. Scan all ' + response.roll_count + ' rolls to confirm delivery.', 'info');
-                        rollInput.focus();
-                        startCamera();
+                stopPromise.then(function() {
+                    if (qrScanner) {
+                        qrScanner.clear();
+                        qrScanner = null;
                     }
-                    renderScannedRows();
+                    cameraFacingMode = cameraFacingMode === 'environment' ? 'user' : 'environment';
+                    switchCameraBtn.textContent = cameraFacingMode === 'environment'
+                        ? 'Switch to Front Camera'
+                        : 'Switch to Back Camera';
+                    cameraSwitching = false;
+                    switchCameraBtn.disabled = false;
+                    if (wasScanning) startCamera();
                 }).catch(function(error) {
-                    showMessage(error.message, 'error');
-                }).then(function() {
-                    loadButton.disabled = false;
-                    loadButton.textContent = 'Load Batch';
+                    cameraSwitching = false;
+                    switchCameraBtn.disabled = false;
+                    showMessage('Could not switch camera: ' + error, 'error');
                 });
-            });
+            }
 
             rollForm.addEventListener('submit', function(event) {
                 event.preventDefault();
@@ -406,6 +466,10 @@ if (!isset($_SESSION['username'])) {
             });
 
             cameraBtn.addEventListener('click', startCamera);
+            switchCameraBtn.addEventListener('click', switchCamera);
+            anotherBatchBtn.addEventListener('click', function() {
+                window.location.reload();
+            });
 
             confirmBtn.addEventListener('click', function() {
                 if (!batch || confirmBtn.disabled) return;
@@ -414,7 +478,7 @@ if (!isset($_SESSION['username'])) {
                 api('confirm_delivery', {
                     card_no: batch.card_no,
                     rolls: Array.from(scannedRolls.keys()),
-                    total_qty: Number(batch.total_qty)
+                    total_qty: Number(batch.target_qty)
                 }).then(function(response) {
                     delivered = true;
                     rollInput.disabled = true;
@@ -429,6 +493,9 @@ if (!isset($_SESSION['username'])) {
                     confirmBtn.textContent = 'Confirm Batch Delivery';
                 });
             });
+
+            rollInput.focus();
+            startCamera();
         })();
     </script>
 </body>

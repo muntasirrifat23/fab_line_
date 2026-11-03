@@ -30,25 +30,24 @@ function insertSplitRow($db, $budat, $bcmtid, $rollNo, $row) {
     $vCUSTOMER = isset($row['CUSTOMER']) ? $row['CUSTOMER'] : null;
     $vYTYPE = isset($row['YTYPE']) ? $row['YTYPE'] : null;
     $vYCOUNT = isset($row['YCOUNT']) ? $row['YCOUNT'] : null;
+    $vYBRAND = isset($row['YBRAND']) ? $row['YBRAND'] : null;
+    $vCATEGORY = isset($row['CATEGORY']) ? $row['CATEGORY'] : null;
     $vO_T = isset($row['O_T']) ? $row['O_T'] : null;
     $vSL = isset($row['SL']) ? $row['SL'] : null;
     $vFTYPE = isset($row['FTYPE']) ? $row['FTYPE'] : null;
     $vFGSM = isset($row['FGSM']) ? $row['FGSM'] : null;
     $vFDIA = isset($row['FDIA']) ? $row['FDIA'] : null;
-    $vGGSM = isset($row['GGSM']) ? $row['GGSM'] : null;
     $vFEEDER_PLAN = isset($row['FEEDER_PLAN']) ? $row['FEEDER_PLAN'] : null;
     $vLOT_NO = isset($row['LOT_NO']) ? $row['LOT_NO'] : null;
     $vTPOINT = isset($row['TPOINT']) ? $row['TPOINT'] : null;
-    $vMCODE = isset($row['MCODE']) ? $row['MCODE'] : null;
-    $vMDESCRIPTION = isset($row['MDESCRIPTION']) ? $row['MDESCRIPTION'] : null;
     $uname = isset($_SESSION['username']) ? $_SESSION['username'] : '';
 
     $stmt = $db->prepare(
         "INSERT INTO dyeing_batch_card
          (BUDAT, BCMTID, ROLL, PO_NUMBER, RACK, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
-          MCNO, MCDIA, CUSTOMER, YTYPE, YCOUNT, O_T, SL, FTYPE, FGSM, FDIA, GGSM,
-          FEEDER_PLAN, LOT_NO, TPOINT, MCODE, MDESCRIPTION, UNAME)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+          MCNO, MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
+          YTYPE, YCOUNT, YBRAND, CATEGORY, TPOINT, UNAME)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
 
     if (!$stmt) {
@@ -56,7 +55,7 @@ function insertSplitRow($db, $budat, $bcmtid, $rollNo, $row) {
     }
 
     $stmt->bind_param(
-        'ssssssssssssssssssssssssssss',
+        'sssssssssssssssssssssssssss',
         $budat,
         $bcmtid,
         $rollNo,
@@ -71,19 +70,18 @@ function insertSplitRow($db, $budat, $bcmtid, $rollNo, $row) {
         $vMCNO,
         $vMCDIA,
         $vCUSTOMER,
-        $vYTYPE,
-        $vYCOUNT,
         $vO_T,
         $vSL,
         $vFTYPE,
         $vFGSM,
         $vFDIA,
-        $vGGSM,
         $vFEEDER_PLAN,
         $vLOT_NO,
+        $vYTYPE,
+        $vYCOUNT,
+        $vYBRAND,
+        $vCATEGORY,
         $vTPOINT,
-        $vMCODE,
-        $vMDESCRIPTION,
         $uname
     );
 
