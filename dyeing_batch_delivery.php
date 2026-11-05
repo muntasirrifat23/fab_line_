@@ -89,7 +89,7 @@ if (!isset($_SESSION['username'])) {
         .scanner-stage { width: min(100%, 460px); }
         #qr-reader { width: 100%; min-height: 300px; overflow: hidden; border-radius: 12px; background: #f1f5f9; }
         .scanner-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 10px; }
-        .manual-scan { width: min(100%, 900px); }
+        .manual-scan { width: min(100%, 1100px); }
         .scan-help { margin: 0 0 12px; color: #475569; }
         .table-wrap { width: 100%; overflow: auto; max-height: calc(100vh - 350px); }
         table { width: 100%; min-width: 1900px; border-collapse: collapse; font-size: .92rem; }
@@ -148,8 +148,12 @@ if (!isset($_SESSION['username'])) {
                             <input type="text" id="rollInput" autocomplete="off" placeholder="Scan or enter roll number">
                         </div>
                         <div class="field">
-                            <label for="remainingQtyInput">Request QTY Remaining (KG)</label>
+                            <label for="remainingQtyInput">Remaining QTY (KG)</label>
                             <input type="text" id="remainingQtyInput" value="-" readonly>
+                        </div>
+                        <div class="field">
+                            <label for="requestQtyInput">Request QTY (KG)</label>
+                            <input type="number" id="requestQtyInput" min="0" step="0.001" value="0" placeholder="Extra quantity requested">
                         </div>
                         <button type="submit" id="addRollBtn">Add Roll</button>
                     </form>
@@ -204,6 +208,7 @@ if (!isset($_SESSION['username'])) {
             var processingRoll = false;
             var scanPopupActive = false;
             var delivered = false;
+            var alreadyDeliveredMessage = '';
             var cameraFacingMode = 'environment';
             var cameraSwitching = false;
 
@@ -212,7 +217,7 @@ if (!isset($_SESSION['username'])) {
                 message.className = 'message ' + (type || 'info');
             }
 
-            function showScanPopup(text) {
+            function showScanPopup(text, title, icon, duration) {
                 message.textContent = '';
                 message.className = 'message';
                 scanPopupActive = true;
@@ -220,19 +225,19 @@ if (!isset($_SESSION['username'])) {
                 addRollBtn.disabled = true;
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
-                        icon: 'warning',
-                        title: 'Quantity / Roll Mismatch',
+                        icon: icon || 'warning',
+                        title: title || 'Quantity / Roll Mismatch',
                         text: text,
-                        timer: 3000,
+                        timer: duration || 3000,
                         timerProgressBar: true,
-                        showConfirmButton: false
+                        showConfirmButton: false,
+                        allowOutsideClick: false,
+                        allowEscapeKey: false
                     }).then(function() {
                         scanPopupActive = false;
-                        if (!delivered) {
-                            rollInput.disabled = false;
-                            addRollBtn.disabled = false;
-                            rollInput.focus();
-                        }
+                        rollInput.disabled = false;
+                        addRollBtn.disabled = false;
+                        rollInput.focus();
                     });
                     return;
                 }
@@ -242,12 +247,16 @@ if (!isset($_SESSION['username'])) {
                     message.textContent = '';
                     message.className = 'message';
                     scanPopupActive = false;
-                    if (!delivered) {
-                        rollInput.disabled = false;
-                        addRollBtn.disabled = false;
-                        rollInput.focus();
-                    }
-                }, 3000);
+                    rollInput.disabled = false;
+                    addRollBtn.disabled = false;
+                    rollInput.focus();
+                }, duration || 3000);
+            }
+
+            function wait(milliseconds) {
+                return new Promise(function(resolve) {
+                    window.setTimeout(resolve, milliseconds);
+                });
             }
 
             function escapeHtml(value) {
@@ -329,7 +338,11 @@ if (!isset($_SESSION['username'])) {
 
             function addScannedRoll(rawRoll) {
                 var roll = String(rawRoll || '').trim();
-                if (!roll || processingRoll || scanPopupActive || delivered) return;
+                if (!roll || processingRoll || scanPopupActive) return;
+                if (delivered) {
+                    showScanPopup(alreadyDeliveredMessage, 'Batch Already Delivered', 'error');
+                    return;
+                }
                 processingRoll = true;
                 rollInput.disabled = true;
                 addRollBtn.disabled = true;
@@ -347,8 +360,9 @@ if (!isset($_SESSION['username'])) {
                         updateSummary();
                         if (response.delivery) {
                             delivered = true;
-                            showMessage('Batch Card ' + response.card_no + ' was already delivered on ' +
-                                response.delivery.DELIVERED_AT + ' by ' + response.delivery.UNAME + '.', 'error');
+                            alreadyDeliveredMessage = 'Batch Card ' + response.card_no + ' was already delivered on ' +
+                                response.delivery.DELIVERED_AT + ' by ' + response.delivery.UNAME + '.';
+                            showScanPopup(alreadyDeliveredMessage, 'Batch Already Delivered', 'error');
                         } else {
                             showMessage('Batch Card ' + response.card_no + ' found. Scan its remaining rolls.', 'info');
                         }
@@ -384,7 +398,14 @@ if (!isset($_SESSION['username'])) {
                     scannedRolls.set(roll, row);
                     scannedPanel.classList.remove('is-hidden');
                     renderScannedRows();
-                    showMessage('Roll ' + roll + ' matched Batch Card ' + batch.card_no + '.', 'success');
+                    return wait(2000).then(function() {
+                        showScanPopup(
+                            'Roll ' + roll + ' added successfully to Batch Card ' + batch.card_no + '.',
+                            'Roll Added Successfully',
+                            'success',
+                            1000
+                        );
+                    });
                 }).catch(function(error) {
                     showScanPopup(error.message);
                 }).then(function() {
@@ -403,7 +424,7 @@ if (!isset($_SESSION['username'])) {
             function stopCamera() {
                 if (qrScanner && qrScanner.isScanning) {
                     return qrScanner.stop().catch(function(error) {
-                        showMessage('Could not stop camera scanner: ' + error, 'error');
+                        showScanPopup('Could not stop camera scanner: ' + error, 'Camera Error', 'error');
                     });
                 }
                 return Promise.resolve();
@@ -411,7 +432,7 @@ if (!isset($_SESSION['username'])) {
 
             function startCamera() {
                 if (typeof Html5Qrcode === 'undefined') {
-                    showMessage('Camera scanner library did not load. Use the roll number input instead.', 'error');
+                    showScanPopup('Camera scanner library did not load. Use the roll number input instead.', 'Camera Error', 'error');
                     return;
                 }
                 if (qrScanner && qrScanner.isScanning) return;
@@ -430,7 +451,7 @@ if (!isset($_SESSION['username'])) {
                     cameraBtn.disabled = false;
                     cameraBtn.hidden = false;
                     cameraBtn.textContent = 'Start Camera Scanner';
-                    showMessage('Camera unavailable: ' + error + '. You can enter roll numbers manually.', 'error');
+                    showScanPopup('Camera unavailable: ' + error + '. You can enter roll numbers manually.', 'Camera Unavailable', 'error');
                 });
             }
 
@@ -456,7 +477,7 @@ if (!isset($_SESSION['username'])) {
                 }).catch(function(error) {
                     cameraSwitching = false;
                     switchCameraBtn.disabled = false;
-                    showMessage('Could not switch camera: ' + error, 'error');
+                    showScanPopup('Could not switch camera: ' + error, 'Camera Error', 'error');
                 });
             }
 
@@ -481,14 +502,14 @@ if (!isset($_SESSION['username'])) {
                     total_qty: Number(batch.target_qty)
                 }).then(function(response) {
                     delivered = true;
-                    rollInput.disabled = true;
-                    addRollBtn.disabled = true;
-                    showMessage(response.message + ' ' + response.roll_count + ' roll(s), ' +
-                        formatQty(response.total_qty) + ' KG.', 'success');
+                    var confirmationMessage = response.message + ' ' + response.roll_count + ' roll(s), ' +
+                        formatQty(response.total_qty) + ' KG.';
+                    alreadyDeliveredMessage = 'Batch Card ' + batch.card_no + ' was already delivered.';
+                    showScanPopup(confirmationMessage, 'Delivery Confirmed', 'success');
                     confirmBtn.textContent = 'Delivery Confirmed';
                     stopCamera();
                 }).catch(function(error) {
-                    showMessage(error.message, 'error');
+                    showScanPopup(error.message, 'Batch Delivery Error', 'error');
                     confirmBtn.disabled = false;
                     confirmBtn.textContent = 'Confirm Batch Delivery';
                 });
