@@ -79,7 +79,7 @@ try {
 function fetchDeliveryBatchRows($db, $cardNo, $forUpdate = false)
 {
     $sql = "SELECT dbc.ROLL, dbc.RACK, dbc.QTY, dbc.PO_NUMBER, dbc.SONO, dbc.BUYER,
-                   dbc.STYLE, dbc.COLOR, dbc.MCDIA, dbc.CUSTOMER, dbc.O_T, dbc.SL,
+                   dbc.STYLE, dbc.COLOR, dbc.DYMCNO AS MCNO, dbc.MCDIA, dbc.CUSTOMER, dbc.O_T, dbc.SL,
                    dbc.FTYPE, dbc.FGSM, dbc.FDIA, dbc.YTYPE, dbc.YCOUNT,
                    dbc.FEEDER_PLAN, dbc.LOT_NO, dbc.YBRAND, dbc.CATEGORY, dbc.BCARD
             FROM dyeing_batch_card dbc

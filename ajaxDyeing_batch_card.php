@@ -71,6 +71,19 @@ switch ($action) {
         echo json_encode(['success' => true, 'po_numbers' => $poNumbers]);
         exit;
 
+    case 'dyeing_machines':
+        $result = mysqli_query($db, "SELECT DMCNO, DCAPACITY FROM dyeing_mcno ORDER BY DMCNO");
+        if (!$result) {
+            echo json_encode(['success' => false, 'message' => 'Could not load dyeing machines: ' . mysqli_error($db)]);
+            exit;
+        }
+        $machines = [];
+        while ($row = mysqli_fetch_assoc($result)) {
+            $machines[] = $row;
+        }
+        echo json_encode(['success' => true, 'machines' => $machines]);
+        exit;
+
     case 'colors':
         $poNumber = isset($_GET['po_number']) ? trim($_GET['po_number']) : '';
         if ($poNumber === '') {
@@ -149,6 +162,7 @@ switch ($action) {
         $poNumber = isset($input['po_number']) ? trim((string)$input['po_number']) : '';
         $color = isset($input['color']) ? trim((string)$input['color']) : '';
         $targetQty = isset($input['target_qty']) && is_numeric($input['target_qty']) ? (float)$input['target_qty'] : 0;
+        $dyeingMcno = isset($input['dymcno']) ? trim((string)$input['dymcno']) : '';
         $rolls = isset($input['rolls']) && is_array($input['rolls']) ? $input['rolls'] : [];
 
         $rolls = array_values(array_unique(array_filter(array_map(function ($roll) {
@@ -157,14 +171,35 @@ switch ($action) {
             return $roll !== '';
         })));
 
-        if ($poNumber === '' || $color === '' || !is_finite($targetQty) || $targetQty <= 0 || count($rolls) === 0) {
-            echo json_encode(['success' => false, 'message' => 'Select a PO Number, Color, target QTY and at least one roll']);
+        if ($poNumber === '' || $color === '' || $dyeingMcno === '' ||
+            !is_finite($targetQty) || $targetQty <= 0 || count($rolls) === 0) {
+            echo json_encode(['success' => false, 'message' => 'Select a PO Number, Color, target QTY, Dyeing MC No and at least one roll']);
             exit;
         }
         if (count($rolls) > 500) {
             echo json_encode(['success' => false, 'message' => 'Too many rolls selected']);
             exit;
         }
+
+        $machineStmt = $db->prepare("SELECT DMCNO FROM dyeing_mcno WHERE DMCNO = ? LIMIT 1");
+        if (!$machineStmt) {
+            echo json_encode(['success' => false, 'message' => 'Could not validate dyeing machine: ' . $db->error]);
+            exit;
+        }
+        $machineStmt->bind_param('s', $dyeingMcno);
+        if (!$machineStmt->execute()) {
+            echo json_encode(['success' => false, 'message' => 'Could not validate dyeing machine: ' . $machineStmt->error]);
+            $machineStmt->close();
+            exit;
+        }
+        $machineResult = $machineStmt->get_result();
+        $machine = $machineResult ? $machineResult->fetch_assoc() : null;
+        $machineStmt->close();
+        if (!$machine) {
+            echo json_encode(['success' => false, 'message' => 'Selected Dyeing MC No is not available. Please choose again.']);
+            exit;
+        }
+        $dyeingMcno = trim((string)$machine['DMCNO']);
 
         $placeholders = implode(',', array_fill(0, count($rolls), '?'));
         $stmt = $db->prepare(
@@ -234,6 +269,7 @@ switch ($action) {
 
         $_SESSION['dyeing_batch']['rolls'] = $selectedRolls;
         $_SESSION['dyeing_batch']['target_qty'] = $targetQty;
+        $_SESSION['dyeing_batch']['dymcno'] = $dyeingMcno;
         echo json_encode([
             'success' => true,
             'count' => count($selectedRolls),

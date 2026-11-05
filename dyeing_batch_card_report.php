@@ -290,7 +290,7 @@
             { key: 'BUYER', label: 'Buyer' },
             { key: 'STYLE', label: 'Style' },
             { key: 'COLOR', label: 'Color' },
-            { key: 'MCNO', label: 'Machine No' },
+            { key: 'DYMCNO', label: 'Dyeing MC No' },
             { key: 'MCDIA', label: 'MC Dia' },
             { key: 'CUSTOMER', label: 'Customer' },
             { key: 'YTYPE', label: 'Yarn Type' },

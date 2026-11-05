@@ -541,6 +541,12 @@ unset($_SESSION['dyeing_batch']['saved']);
                     <label for="targetQtyInput">Target QTY (KG)</label>
                     <input type="number" id="targetQtyInput" class="qty-input" min="0.001" step="0.001" placeholder="Enter target QTY">
                 </div>
+                <div class="filter-field target-qty-field">
+                    <label for="dyeingMcnoSelect">Dyeing MC No</label>
+                    <select id="dyeingMcnoSelect" class="filter-select" disabled>
+                        <option value="">Loading dyeing machines...</option>
+                    </select>
+                </div>
                 <button class="btn btn-blue" id="searchBtn" type="button" disabled>
                     <i class="fa-solid fa-magnifying-glass"></i> Search
                 </button>
@@ -625,6 +631,7 @@ unset($_SESSION['dyeing_batch']['saved']);
         var colorSelect = document.getElementById('colorSelect');
         var searchBtn = document.getElementById('searchBtn');
         var targetQtyInput = document.getElementById('targetQtyInput');
+        var dyeingMcnoSelect = document.getElementById('dyeingMcnoSelect');
         var confirmCreateBtn = document.getElementById('confirmCreateBtn');
 
         function showMsg(message, type) {
@@ -831,7 +838,8 @@ unset($_SESSION['dyeing_batch']['saved']);
                 'is-hidden',
                 candidateRolls.length === 0 || qty <= 0
             );
-            confirmCreateBtn.disabled = !selected.length || selectedTotal < minimum || selectedTotal > maximum;
+            confirmCreateBtn.disabled = !selected.length || !dyeingMcnoSelect.value ||
+                selectedTotal < minimum || selectedTotal > maximum;
 
             var status = document.getElementById('resultsStatus');
             if (candidateRolls.length === 0) {
@@ -1053,6 +1061,7 @@ unset($_SESSION['dyeing_batch']['saved']);
                 po_number: poNumberSelect.value,
                 color: colorSelect.value,
                 target_qty: Number(targetQtyInput.value),
+                dymcno: dyeingMcnoSelect.value,
                 rolls: selected.map(function(row) { return row.ROLL; })
             };
 
@@ -1080,6 +1089,31 @@ unset($_SESSION['dyeing_batch']['saved']);
                 showBatchPopup('Batch Card was NOT created. ' + error.message, 'error');
                 confirmCreateBtn.disabled = false;
                 confirmCreateBtn.innerHTML = '<i class="fa-solid fa-check"></i> Confirm &amp; Create Batch Card';
+            });
+        }
+
+        function loadDyeingMachines() {
+            dyeingMcnoSelect.disabled = true;
+            dyeingMcnoSelect.innerHTML = '<option value="">Loading dyeing machines...</option>';
+            apiGet('dyeing_machines').then(function(response) {
+                if (!response.success) throw new Error(response.message || 'Could not load dyeing machines');
+                dyeingMcnoSelect.innerHTML = '<option value="">Select Dyeing MC No</option>';
+                (response.machines || []).forEach(function(machine) {
+                    var option = document.createElement('option');
+                    option.value = machine.DMCNO;
+                    option.textContent = machine.DMCNO + ' | ' + machine.DCAPACITY;
+                    dyeingMcnoSelect.appendChild(option);
+                });
+                dyeingMcnoSelect.disabled = !response.machines || response.machines.length === 0;
+                if (!response.machines || response.machines.length === 0) {
+                    dyeingMcnoSelect.innerHTML = '<option value="">No dyeing machines found</option>';
+                    showMsg('No dyeing machines found in dyeing_mcno.', 'error');
+                }
+                updateCreateButton();
+            }).catch(function(error) {
+                dyeingMcnoSelect.innerHTML = '<option value="">Unable to load dyeing machines</option>';
+                dyeingMcnoSelect.disabled = true;
+                showMsg(error.message, 'error');
             });
         }
 
@@ -1156,6 +1190,7 @@ unset($_SESSION['dyeing_batch']['saved']);
                 }
             }
         });
+        dyeingMcnoSelect.addEventListener('change', updateCreateButton);
         confirmCreateBtn.addEventListener('click', confirmCreate);
         document.getElementById('backBtn').addEventListener('click', function(event) {
             event.preventDefault();
@@ -1171,6 +1206,7 @@ unset($_SESSION['dyeing_batch']['saved']);
             showMsg(error.message, 'error');
         });
         loadPoNumbers();
+        loadDyeingMachines();
     </script>
 </body>
 

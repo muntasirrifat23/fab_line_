@@ -18,10 +18,38 @@ if (!isset($_SESSION['dyeing_batch']['rolls']) || !is_array($_SESSION['dyeing_ba
 }
 
 $rolls = array_values($_SESSION['dyeing_batch']['rolls']);
+$dyeingMcno = isset($_SESSION['dyeing_batch']['dymcno'])
+    ? trim((string)$_SESSION['dyeing_batch']['dymcno'])
+    : '';
 
-if (count($rolls) === 0) {
-    echo json_encode(['success' => false, 'message' => 'Select at least one roll to create a batch card']);
+if (count($rolls) === 0 || $dyeingMcno === '') {
+    echo json_encode(['success' => false, 'message' => 'Select at least one roll and a Dyeing MC No to create a batch card']);
     exit;
+}
+
+$batchColumnsResult = $db->query("SHOW COLUMNS FROM dyeing_batch_card");
+if (!$batchColumnsResult) {
+    echo json_encode(['success' => false, 'message' => 'Could not inspect batch card columns: ' . $db->error]);
+    exit;
+}
+$batchColumns = [];
+while ($column = $batchColumnsResult->fetch_assoc()) {
+    $batchColumns[] = strtoupper($column['Field']);
+}
+if (in_array('MCNO', $batchColumns, true) && in_array('DYMCNO', $batchColumns, true)) {
+    echo json_encode(['success' => false, 'message' => 'Both MCNO and DYMCNO columns exist in dyeing_batch_card. Resolve the schema before inserting.']);
+    exit;
+}
+if (in_array('MCNO', $batchColumns, true)) {
+    if (!$db->query("ALTER TABLE dyeing_batch_card CHANGE COLUMN MCNO DYMCNO VARCHAR(100) DEFAULT NULL")) {
+        echo json_encode(['success' => false, 'message' => 'Could not rename MCNO to DYMCNO: ' . $db->error]);
+        exit;
+    }
+} elseif (!in_array('DYMCNO', $batchColumns, true)) {
+    if (!$db->query("ALTER TABLE dyeing_batch_card ADD COLUMN DYMCNO VARCHAR(100) DEFAULT NULL AFTER COLOR")) {
+        echo json_encode(['success' => false, 'message' => 'Could not add DYMCNO column: ' . $db->error]);
+        exit;
+    }
 }
 
 foreach ([
@@ -64,7 +92,7 @@ foreach ($rolls as $row) {
     $stmt = $db->prepare(
         "INSERT INTO dyeing_batch_card
          (BUDAT, BCARD, ROLL, PO_NUMBER, RACK, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
-          MCNO, MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
+          DYMCNO, MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
           YTYPE, YCOUNT, YBRAND, CATEGORY, TPOINT, UNAME)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
@@ -82,7 +110,6 @@ foreach ($rolls as $row) {
     $vBUYER = isset($row['BUYER']) ? $row['BUYER'] : null;
     $vSTYLE = isset($row['STYLE']) ? $row['STYLE'] : null;
     $vCOLOR = isset($row['COLOR']) ? $row['COLOR'] : null;
-    $vMCNO = isset($row['MCNO']) ? $row['MCNO'] : null;
     $vMCDIA = isset($row['MCDIA']) ? $row['MCDIA'] : null;
     $vCUSTOMER = isset($row['CUSTOMER']) ? $row['CUSTOMER'] : null;
     $vYTYPE = isset($row['YTYPE']) ? $row['YTYPE'] : null;
@@ -112,7 +139,7 @@ foreach ($rolls as $row) {
         $vBUYER,
         $vSTYLE,
         $vCOLOR,
-        $vMCNO,
+        $dyeingMcno,
         $vMCDIA,
         $vCUSTOMER,
         $vO_T,
@@ -151,6 +178,7 @@ if ($inserted === count($rolls)) {
     unset($_SESSION['dyeing_batch']['card_no']);
     unset($_SESSION['dyeing_batch']['created_at']);
     unset($_SESSION['dyeing_batch']['target_qty']);
+    unset($_SESSION['dyeing_batch']['dymcno']);
     $_SESSION['dyeing_batch']['seq'] = $seq + 1;
 
     echo json_encode([
