@@ -481,7 +481,7 @@ if (empty($_SESSION['batch_split_authorized'])) {
                 return;
             }
             var matched = allCards.filter(function(c) {
-                return String(c.BCMTID).toLowerCase().indexOf(val) !== -1;
+                return String(c.BCARD).toLowerCase().indexOf(val) !== -1;
             }).slice(0, 8);
 
             if (!matched.length) {
@@ -490,8 +490,8 @@ if (empty($_SESSION['batch_split_authorized'])) {
             }
             var html = '';
             matched.forEach(function(c) {
-                html += '<div class="sugg-item" data-card="' + esc(c.BCMTID) + '" style="padding:10px 14px; cursor:pointer; border-bottom:1px solid #eef2f7; font-weight:600;">' +
-                    '<i class="fa-solid fa-clipboard"></i> ' + esc(c.BCMTID) +
+                html += '<div class="sugg-item" data-card="' + esc(c.BCARD) + '" style="padding:10px 14px; cursor:pointer; border-bottom:1px solid #eef2f7; font-weight:600;">' +
+                    '<i class="fa-solid fa-clipboard"></i> ' + esc(c.BCARD) +
                     ' <span style="color:#94a3b8; font-weight:500;">(' + c.roll_count + ' roll' + (c.roll_count > 1 ? 's' : '') + ', qty ' + c.total_qty + ')</span>' +
                     '</div>';
             });

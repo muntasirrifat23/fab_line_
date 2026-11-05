@@ -18,7 +18,7 @@ if (!isset($_SESSION['dyeing_batch']['rolls']) || !is_array($_SESSION['dyeing_ba
 }
 
 function nextCardNoFromDb($db) {
-    $r = mysqli_query($db, "SELECT COALESCE(MAX(CAST(BCMTID AS UNSIGNED)), 4000000000) + 1 AS nxt FROM dyeing_batch_card");
+    $r = mysqli_query($db, "SELECT COALESCE(MAX(CAST(BCARD AS UNSIGNED)), 4000000000) + 1 AS nxt FROM dyeing_batch_card");
     if (!$r) return 4000000001;
     $row = mysqli_fetch_assoc($r);
     return $row && isset($row['nxt']) ? (int)$row['nxt'] : 4000000001;
@@ -395,14 +395,14 @@ if ($row = $result->fetch_assoc()) {
 
     // Return already-created batch cards from DB
     case 'saved_cards':
-        $result = mysqli_query($db, "SELECT * FROM dyeing_batch_card ORDER BY BCMTID DESC, DBCTID ASC LIMIT 500");
+        $result = mysqli_query($db, "SELECT * FROM dyeing_batch_card ORDER BY BCARD DESC, DBCTID ASC LIMIT 500");
         if (!$result) {
             echo json_encode(['success' => false, 'message' => 'Database error: ' . mysqli_error($db)]);
             exit;
         }
         $cards = [];
         while ($row = mysqli_fetch_assoc($result)) {
-            $bc = $row['BCMTID'];
+            $bc = $row['BCARD'];
             if (!isset($cards[$bc])) {
                 $cards[$bc] = [
                     'card_no' => $bc,

@@ -361,7 +361,8 @@ if (!isset($_SESSION['username'])) {
                         if (response.delivery) {
                             delivered = true;
                             alreadyDeliveredMessage = 'Batch Card ' + response.card_no + ' was already delivered on ' +
-                                response.delivery.DELIVERED_AT + ' by ' + response.delivery.UNAME + '.';
+                                response.delivery.BUDAT + ' by ' + response.delivery.DOP +
+                                ' (ID: ' + response.delivery.DID + ').';
                             showScanPopup(alreadyDeliveredMessage, 'Batch Already Delivered', 'error');
                         } else {
                             showMessage('Batch Card ' + response.card_no + ' found. Scan its remaining rolls.', 'info');

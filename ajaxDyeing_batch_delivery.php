@@ -18,17 +18,59 @@ if (!isset($_SESSION['username'])) {
 try {
     if (!$db->query(
         "CREATE TABLE IF NOT EXISTS dyeing_batch_delivery (
-            ID BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            BCMTID VARCHAR(30) NOT NULL,
-            DELIVERED_QTY DECIMAL(12,3) NOT NULL,
-            ROLL_COUNT INT UNSIGNED NOT NULL,
-            UNAME VARCHAR(100) DEFAULT NULL,
-            DELIVERED_AT TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (ID),
-            UNIQUE KEY uq_dyeing_batch_delivery_bcmtid (BCMTID)
+            DBDTID INT(11) NOT NULL AUTO_INCREMENT,
+            BUDAT DATE DEFAULT NULL,
+            BCARD VARCHAR(30) DEFAULT NULL,
+            ROLL VARCHAR(50) NOT NULL,
+            PO_NUMBER VARCHAR(50) DEFAULT NULL,
+            QTY VARCHAR(50) DEFAULT NULL,
+            SONO VARCHAR(50) DEFAULT NULL,
+            SHIFT VARCHAR(50) DEFAULT NULL,
+            BUYER VARCHAR(100) DEFAULT NULL,
+            STYLE VARCHAR(100) DEFAULT NULL,
+            COLOR VARCHAR(100) DEFAULT NULL,
+            MCNO VARCHAR(100) DEFAULT NULL,
+            MCDIA VARCHAR(100) DEFAULT NULL,
+            CUSTOMER VARCHAR(100) DEFAULT NULL,
+            O_T VARCHAR(20) DEFAULT NULL,
+            SL VARCHAR(100) DEFAULT NULL,
+            FTYPE VARCHAR(50) DEFAULT NULL,
+            FGSM VARCHAR(20) DEFAULT NULL,
+            FDIA VARCHAR(20) DEFAULT NULL,
+            FEEDER_PLAN VARCHAR(100) DEFAULT NULL,
+            LOT_NO VARCHAR(100) DEFAULT NULL,
+            YTYPE VARCHAR(50) DEFAULT NULL,
+            YCOUNT VARCHAR(100) DEFAULT NULL,
+            YBRAND VARCHAR(100) DEFAULT NULL,
+            CATEGORY VARCHAR(100) DEFAULT NULL,
+            DOP VARCHAR(100) DEFAULT NULL,
+            DID VARCHAR(100) DEFAULT NULL,
+            PRIMARY KEY (DBDTID),
+            UNIQUE KEY uq_dyeing_delivery_bcard_roll (BCARD, ROLL)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
     )) {
         respond(['success' => false, 'message' => 'Could not initialize delivery records: ' . $db->error], 500);
+    }
+    $requiredDeliveryColumns = [
+        'DBDTID', 'BUDAT', 'BCARD', 'ROLL', 'PO_NUMBER', 'QTY', 'SONO', 'SHIFT',
+        'BUYER', 'STYLE', 'COLOR', 'MCNO', 'MCDIA', 'CUSTOMER', 'O_T', 'SL',
+        'FTYPE', 'FGSM', 'FDIA', 'FEEDER_PLAN', 'LOT_NO', 'YTYPE', 'YCOUNT',
+        'YBRAND', 'CATEGORY', 'DOP', 'DID'
+    ];
+    $deliveryColumnsResult = $db->query("SHOW COLUMNS FROM dyeing_batch_delivery");
+    if (!$deliveryColumnsResult) {
+        respond(['success' => false, 'message' => 'Could not inspect delivery table: ' . $db->error], 500);
+    }
+    $deliveryColumns = [];
+    while ($column = $deliveryColumnsResult->fetch_assoc()) {
+        $deliveryColumns[] = strtoupper($column['Field']);
+    }
+    $missingDeliveryColumns = array_diff($requiredDeliveryColumns, $deliveryColumns);
+    if ($missingDeliveryColumns) {
+        respond([
+            'success' => false,
+            'message' => 'Delivery table schema is missing required columns: ' . implode(', ', $missingDeliveryColumns)
+        ], 500);
     }
 } catch (Throwable $error) {
     respond(['success' => false, 'message' => 'Could not initialize delivery records: ' . $error->getMessage()], 500);
@@ -39,16 +81,9 @@ function fetchDeliveryBatchRows($db, $cardNo, $forUpdate = false)
     $sql = "SELECT dbc.ROLL, dbc.RACK, dbc.QTY, dbc.PO_NUMBER, dbc.SONO, dbc.BUYER,
                    dbc.STYLE, dbc.COLOR, dbc.MCDIA, dbc.CUSTOMER, dbc.O_T, dbc.SL,
                    dbc.FTYPE, dbc.FGSM, dbc.FDIA, dbc.YTYPE, dbc.YCOUNT,
-                   COALESCE((SELECT ks.YBRAND FROM knitting_store ks
-                             WHERE TRIM(ks.ROLL) = TRIM(dbc.ROLL)
-                             ORDER BY ks.KSTID DESC LIMIT 1), '') AS YBRAND,
-                   dbc.FEEDER_PLAN, dbc.LOT_NO,
-                   COALESCE((SELECT ks.CATEGORY FROM knitting_store ks
-                             WHERE TRIM(ks.ROLL) = TRIM(dbc.ROLL)
-                             ORDER BY ks.KSTID DESC LIMIT 1), '') AS CATEGORY,
-                   dbc.BCMTID
+                   dbc.FEEDER_PLAN, dbc.LOT_NO, dbc.YBRAND, dbc.CATEGORY, dbc.BCARD
             FROM dyeing_batch_card dbc
-            WHERE TRIM(dbc.BCMTID) = ?
+            WHERE TRIM(dbc.BCARD) = ?
             ORDER BY dbc.DBCTID ASC";
     if ($forUpdate) {
         $sql .= " FOR UPDATE";
@@ -112,8 +147,8 @@ try {
         }
 
         $stmt = $db->prepare(
-            "SELECT DELIVERED_QTY, ROLL_COUNT, UNAME, DELIVERED_AT
-             FROM dyeing_batch_delivery WHERE BCMTID = ? LIMIT 1"
+            "SELECT BUDAT, DOP, DID
+             FROM dyeing_batch_delivery WHERE BCARD = ? ORDER BY DBDTID ASC LIMIT 1"
         );
         if (!$stmt) {
             respond(['success' => false, 'message' => 'Database error: ' . $db->error], 500);
@@ -145,7 +180,7 @@ try {
         }
 
         $stmt = $db->prepare(
-            "SELECT BCMTID
+            "SELECT BCARD
              FROM dyeing_batch_card
              WHERE TRIM(ROLL) = ?
              ORDER BY DBCTID DESC
@@ -166,15 +201,15 @@ try {
             respond(['success' => false, 'message' => 'Roll ' . $roll . ' was not found in any Dyeing Batch Card.'], 404);
         }
 
-        $cardNo = trim((string)$card['BCMTID']);
+        $cardNo = trim((string)$card['BCARD']);
         $batch = fetchDeliveryBatchRows($db, $cardNo);
         if (!$batch['rows']) {
             respond(['success' => false, 'message' => 'No rolls found for Batch Card ' . $cardNo . '.'], 404);
         }
 
         $stmt = $db->prepare(
-            "SELECT DELIVERED_QTY, ROLL_COUNT, UNAME, DELIVERED_AT
-             FROM dyeing_batch_delivery WHERE BCMTID = ? LIMIT 1"
+            "SELECT BUDAT, DOP, DID
+             FROM dyeing_batch_delivery WHERE BCARD = ? ORDER BY DBDTID ASC LIMIT 1"
         );
         if (!$stmt) {
             respond(['success' => false, 'message' => 'Database error: ' . $db->error], 500);
@@ -235,7 +270,7 @@ try {
             respond(['success' => false, 'message' => 'Batch Target QTY changed after it was loaded. Reload the batch before confirming delivery.'], 409);
         }
 
-        $stmt = $db->prepare("SELECT ID FROM dyeing_batch_delivery WHERE BCMTID = ? LIMIT 1 FOR UPDATE");
+        $stmt = $db->prepare("SELECT DBDTID FROM dyeing_batch_delivery WHERE BCARD = ? LIMIT 1 FOR UPDATE");
         if (!$stmt) {
             throw new RuntimeException('Database error: ' . $db->error);
         }
@@ -302,20 +337,69 @@ try {
             ], 422);
         }
 
-        $user = isset($_SESSION['username']) ? (string)$_SESSION['username'] : '';
+        $dop = isset($_SESSION['user_name']) ? (string)$_SESSION['user_name']
+            : (isset($_SESSION['operator_name']) ? (string)$_SESSION['operator_name'] : (string)$_SESSION['username']);
+        $did = isset($_SESSION['user_id']) ? (string)$_SESSION['user_id']
+            : (isset($_SESSION['operator_id']) ? (string)$_SESSION['operator_id']
+                : (isset($_SESSION['knitting_qc_id']) ? (string)$_SESSION['knitting_qc_id'] : (string)$_SESSION['username']));
+        $deliveryDate = date('Y-m-d');
         $stmt = $db->prepare(
-            "INSERT INTO dyeing_batch_delivery (BCMTID, DELIVERED_QTY, ROLL_COUNT, UNAME)
-             VALUES (?, ?, ?, ?)"
+            "INSERT INTO dyeing_batch_delivery
+             (BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR, MCNO,
+              MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO, YTYPE,
+              YCOUNT, YBRAND, CATEGORY, DOP, DID)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
         if (!$stmt) {
             throw new RuntimeException('Database error: ' . $db->error);
         }
         $rollCount = count($scannedRolls);
-        $stmt->bind_param('sdis', $cardNo, $scannedQty, $rollCount, $user);
-        if (!$stmt->execute()) {
-            $error = $stmt->error;
-            $stmt->close();
-            throw new RuntimeException('Could not confirm delivery: ' . $error);
+        foreach ($scannedRolls as $roll) {
+            $row = null;
+            foreach ($batch['rows'] as $batchRow) {
+                if ($batchRow['ROLL'] === $roll) {
+                    $row = $batchRow;
+                    break;
+                }
+            }
+            if ($row === null) {
+                $stmt->close();
+                throw new RuntimeException('Roll ' . $roll . ' was not found in the loaded batch.');
+            }
+            $stmt->bind_param(
+                'ssssssssssssssssssssssssss',
+                $deliveryDate,
+                $cardNo,
+                $row['ROLL'],
+                $row['PO_NUMBER'],
+                $row['QTY'],
+                $row['SONO'],
+                $row['SHIFT'],
+                $row['BUYER'],
+                $row['STYLE'],
+                $row['COLOR'],
+                $row['MCNO'],
+                $row['MCDIA'],
+                $row['CUSTOMER'],
+                $row['O_T'],
+                $row['SL'],
+                $row['FTYPE'],
+                $row['FGSM'],
+                $row['FDIA'],
+                $row['FEEDER_PLAN'],
+                $row['LOT_NO'],
+                $row['YTYPE'],
+                $row['YCOUNT'],
+                $row['YBRAND'],
+                $row['CATEGORY'],
+                $dop,
+                $did
+            );
+            if (!$stmt->execute()) {
+                $error = $stmt->error;
+                $stmt->close();
+                throw new RuntimeException('Could not save delivery for roll ' . $roll . ': ' . $error);
+            }
         }
         $stmt->close();
         if (!$db->commit()) {

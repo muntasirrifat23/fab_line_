@@ -40,7 +40,7 @@ foreach ([
 }
 
 // Assign next card number from DB
-$r = mysqli_query($db, "SELECT COALESCE(MAX(CAST(BCMTID AS UNSIGNED)), 4000000000) + 1 AS nxt FROM dyeing_batch_card");
+$r = mysqli_query($db, "SELECT COALESCE(MAX(CAST(BCARD AS UNSIGNED)), 4000000000) + 1 AS nxt FROM dyeing_batch_card");
 if (!$r) {
     echo json_encode(['success' => false, 'message' => 'Could not generate the next batch card number: ' . $db->error]);
     exit;
@@ -63,7 +63,7 @@ $db->autocommit(false);
 foreach ($rolls as $row) {
     $stmt = $db->prepare(
         "INSERT INTO dyeing_batch_card
-         (BUDAT, BCMTID, ROLL, PO_NUMBER, RACK, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
+         (BUDAT, BCARD, ROLL, PO_NUMBER, RACK, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
           MCNO, MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
           YTYPE, YCOUNT, YBRAND, CATEGORY, TPOINT, UNAME)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"

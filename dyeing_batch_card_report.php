@@ -280,7 +280,7 @@
     <script>
         var COLS = [
             { key: 'BUDAT', label: 'Date' },
-            { key: 'BCMTID', label: 'Batch Card' },
+            { key: 'BCARD', label: 'Batch Card' },
             { key: 'ROLL', label: 'Roll No' },
             { key: 'RACK', label: 'Rack' },
             { key: 'PO_NUMBER', label: 'PO Number' },
@@ -315,7 +315,7 @@
         function downloadPDF(bcmtid) {
             var rows = [];
             for (var i = 0; i < currentData.length; i++) {
-                if (String(currentData[i].BCMTID) === String(bcmtid)) { rows.push(currentData[i]); }
+                if (String(currentData[i].BCARD) === String(bcmtid)) { rows.push(currentData[i]); }
             }
             if (!rows.length) { alert('Data not found for this batch card.'); return; }
             var first = rows[0];
@@ -332,7 +332,7 @@
                     '<div class="pdf-page">' +
                     '<div class="pdf-head">Dyeing Batch Card Report</div>' +
                     '<div class="pdf-meta">' +
-                    '<span>Batch Card : ' + (first.BCMTID || '') + '</span>' +
+                    '<span>Batch Card : ' + (first.BCARD || '') + '</span>' +
                     '<span>User : ' + (first.UNAME || '') + '</span>' +
                     '</div>' +
                     '<div class="pdf-part-label">Part - ' + (idx + 1) + ' of ' + rows.length + '</div>' +
@@ -458,7 +458,7 @@
                     if (i > 0) pdf.addPage();
                     pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
                 });
-                pdf.save('Dyeing_Batch_Card_' + (first.BCMTID || 'Card') + '.pdf');
+                pdf.save('Dyeing_Batch_Card_' + (first.BCARD || 'Card') + '.pdf');
                 document.body.removeChild(tempDiv);
                 document.body.removeChild(style);
                 showToast('PDF downloaded');
@@ -495,7 +495,7 @@
             var groups = {};
             var order = [];
             currentData.forEach(function(row) {
-                var key = (row.BCMTID !== null && row.BCMTID !== undefined) ? String(row.BCMTID) : '';
+                var key = (row.BCARD !== null && row.BCARD !== undefined) ? String(row.BCARD) : '';
                 if (!groups.hasOwnProperty(key)) {
                     groups[key] = [];
                     order.push(key);
@@ -507,10 +507,10 @@
                 var first = groupRows[0];
                 var tr = $('<tr>');
                 tr.append($('<td>').html(
-                    '<button class="btn-print-row" onclick="downloadPDF(\'' + esc(first.BCMTID).replace(/'/g, '&#39;') + '\')"><i class="fa-solid fa-file-pdf"></i> PDF</button>'
+                    '<button class="btn-print-row" onclick="downloadPDF(\'' + esc(first.BCARD).replace(/'/g, '&#39;') + '\')"><i class="fa-solid fa-file-pdf"></i> PDF</button>'
                 ));
                 COLS.forEach(function(c) {
-                    if (c.key === 'BCMTID') {
+                    if (c.key === 'BCARD') {
                         tr.append($('<td>').text(first[c.key] || ''));
                     } else if (groupRows.length > 1) {
                         var linesHTML = groupRows.map(function(r) {

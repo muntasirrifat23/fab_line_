@@ -10,7 +10,7 @@ $conditions = [];
 if ($search !== '') {
     $s = mysqli_real_escape_string($db, $search);
     $conditions[] = "(
-        BCMTID LIKE '%$s%'
+        BCARD LIKE '%$s%'
         OR ROLL LIKE '%$s%'
         OR PO_NUMBER LIKE '%$s%'
         OR SONO LIKE '%$s%'
@@ -26,12 +26,12 @@ if (count($conditions) > 0) {
     $where = 'WHERE ' . implode(' AND ', $conditions);
 }
 
-$query = "SELECT BCMTID, BUDAT, RACK, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
+$query = "SELECT BCARD, BUDAT, RACK, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
                  MCNO, MCDIA, CUSTOMER, YTYPE, YCOUNT, O_T, SL, FTYPE, FGSM, FDIA,
                  FEEDER_PLAN, LOT_NO, TPOINT, UNAME
           FROM dyeing_batch_card
           $where
-          ORDER BY BCMTID DESC, DBCTID ASC
+          ORDER BY BCARD DESC, DBCTID ASC
           LIMIT 500";
 
 $result = mysqli_query($db, $query);

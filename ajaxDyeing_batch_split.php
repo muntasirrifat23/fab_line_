@@ -44,7 +44,7 @@ function insertSplitRow($db, $budat, $bcmtid, $rollNo, $row) {
 
     $stmt = $db->prepare(
         "INSERT INTO dyeing_batch_card
-         (BUDAT, BCMTID, ROLL, PO_NUMBER, RACK, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
+         (BUDAT, BCARD, ROLL, PO_NUMBER, RACK, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
           MCNO, MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
           YTYPE, YCOUNT, YBRAND, CATEGORY, TPOINT, UNAME)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
@@ -101,11 +101,11 @@ switch ($action) {
     // List all non-split batch cards
     case 'list_cards':
         $result = mysqli_query($db,
-            "SELECT BCMTID, COUNT(*) AS roll_count, ROUND(SUM(CAST(QTY AS DECIMAL(12,2))), 2) AS total_qty
+            "SELECT BCARD, COUNT(*) AS roll_count, ROUND(SUM(CAST(QTY AS DECIMAL(12,2))), 2) AS total_qty
              FROM dyeing_batch_card
-             WHERE BCMTID NOT LIKE '%-%'
-             GROUP BY BCMTID
-             ORDER BY CAST(BCMTID AS UNSIGNED) DESC");
+             WHERE BCARD NOT LIKE '%-%'
+             GROUP BY BCARD
+             ORDER BY CAST(BCARD AS UNSIGNED) DESC");
         if (!$result) {
             echo json_encode(['success' => false, 'message' => 'Database error: ' . mysqli_error($db)]);
             exit;
@@ -124,7 +124,7 @@ switch ($action) {
             echo json_encode(['success' => false, 'message' => 'Card number is required']);
             exit;
         }
-        $stmt = $db->prepare("SELECT * FROM dyeing_batch_card WHERE BCMTID = ? ORDER BY DBCTID ASC");
+        $stmt = $db->prepare("SELECT * FROM dyeing_batch_card WHERE BCARD = ? ORDER BY DBCTID ASC");
         if (!$stmt) {
             echo json_encode(['success' => false, 'message' => 'Database error: ' . $db->error]);
             exit;
@@ -158,7 +158,7 @@ switch ($action) {
         }
 
         // Load all rows of this card
-        $stmt = $db->prepare("SELECT * FROM dyeing_batch_card WHERE BCMTID = ? ORDER BY DBCTID ASC");
+        $stmt = $db->prepare("SELECT * FROM dyeing_batch_card WHERE BCARD = ? ORDER BY DBCTID ASC");
         $stmt->bind_param('s', $card);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -205,7 +205,7 @@ switch ($action) {
         $cardB = $card . '-B';
 
         // Refuse if this card was already split
-        $chk = mysqli_query($db, "SELECT COUNT(*) AS c FROM dyeing_batch_card WHERE BCMTID IN ('" . mysqli_real_escape_string($db, $cardA) . "', '" . mysqli_real_escape_string($db, $cardB) . "')");
+        $chk = mysqli_query($db, "SELECT COUNT(*) AS c FROM dyeing_batch_card WHERE BCARD IN ('" . mysqli_real_escape_string($db, $cardA) . "', '" . mysqli_real_escape_string($db, $cardB) . "')");
         if ($chk) {
             $crow = mysqli_fetch_assoc($chk);
             if ((int)$crow['c'] > 0) {
@@ -230,7 +230,7 @@ switch ($action) {
             }
         }
 
-        // Part B: keep each remaining roll as its own row under card-B (same data, only BCMTID changes)
+        // Part B: keep each remaining roll as its own row under card-B (same data, only BCARD changes)
         if ($ok) {
             foreach ($remRolls as $row) {
                 $res = insertSplitRow($db, $budat, $cardB, strval($row['ROLL']), $row);
@@ -244,7 +244,7 @@ switch ($action) {
 
         // Remove the original card
         if ($ok) {
-            $dl = $db->prepare("DELETE FROM dyeing_batch_card WHERE BCMTID = ?");
+            $dl = $db->prepare("DELETE FROM dyeing_batch_card WHERE BCARD = ?");
             $dl->bind_param('s', $card);
             if (!$dl->execute()) {
                 $ok = false;

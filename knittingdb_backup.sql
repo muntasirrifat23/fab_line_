@@ -49,7 +49,7 @@ DROP TABLE IF EXISTS `dyeing_batch_card`;
 CREATE TABLE `dyeing_batch_card` (
   `DBCTID` int(11) NOT NULL AUTO_INCREMENT,
   `BUDAT` date DEFAULT NULL,
-  `BCMTID` varchar(30) DEFAULT NULL,
+  `BCARD` varchar(30) DEFAULT NULL,
   `ROLL` varchar(50) NOT NULL,
   `PO_NUMBER` varchar(50) DEFAULT NULL,
   `RACK` varchar(50) DEFAULT NULL,

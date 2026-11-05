@@ -12,7 +12,7 @@
 2. **Fabric Defect & Quality Control:** Standardizes defect recording (ASTM 4-Point System) and automated roll grading (`Grade A`, `Grade B`, `Grade C`, `Reject`) to prevent defective rolls from entering the dyeing process.
 3. **Inventory & Warehouse Transparency:** Provides real-time rack location tracking (`RACKNO`, `RACKLOCATION`) for grey fabric in warehouses and monitors inter-rack transfers.
 4. **Planning vs. Execution Visibility:** Dynamically compares planned program weight against cumulative production weight per shift, machine, and operator to calculate remaining production quotas.
-5. **Dyeing Batch Management:** Enables batching of inspected rolls into single Dyeing Batch Cards (`BCMTID`) with batch splitting capabilities to accommodate dyeing vessel capacities.
+5. **Dyeing Batch Management:** Enables batching of inspected rolls into single Dyeing Batch Cards (`BCARD`) with batch splitting capabilities to accommodate dyeing vessel capacities.
 
 ---
 
@@ -216,10 +216,11 @@ The database `knittingdb` consists of 15 relational and transaction tables. Belo
 * **Columns:**
   * `DBCTID`: `INT(11)` | `NOT NULL` | `AUTO_INCREMENT` | **PRIMARY KEY**
   * `BUDAT`: `DATE` | `NULL`
-  * `BCMTID`: `VARCHAR(30)` | `NULL` (Batch Card Master ID e.g., `4000000001`)
+  * `BCARD`: `VARCHAR(30)` | `NULL` (Batch Card ID e.g., `4000000001`)
   * `ROLL`: `VARCHAR(50)` | `NOT NULL`
-  * `PO_NUMBER`, `RACK`, `QTY`, `SONO`, `SHIFT`, `BUYER`, `STYLE`, `COLOR`, `MCNO`, `MCDIA`, `CUSTOMER`, `YTYPE`, `YCOUNT`, `O_T`, `SL`, `FTYPE`, `FGSM`, `FDIA`, `GGSM`, `FEEDER_PLAN`, `LOT_NO`, `TPOINT`, `MCODE`, `MDESCRIPTION`, `UNAME`: Batch card roll specs
+  * `PO_NUMBER`, `RACK`, `QTY`, `SONO`, `SHIFT`, `BUYER`, `STYLE`, `COLOR`, `MCNO`, `MCDIA`, `CUSTOMER`, `O_T`, `SL`, `FTYPE`, `FGSM`, `FDIA`, `FEEDER_PLAN`, `LOT_NO`, `YTYPE`, `YCOUNT`, `YBRAND`, `TPOINT`, `UNAME`, `CATEGORY`: Batch card roll specs
   * `CREATED_DATE`: `TIMESTAMP` | `NOT NULL` | `DEFAULT CURRENT_TIMESTAMP`
+* Delivery confirmation copies each delivered roll from this table into `dyeing_batch_delivery`; `DOP` and `DID` record the logged-in user's name and ID.
 
 #### 11. `dyeing_batch_split`
 * **Purpose:** Audit log of dyeing batches split into sub-batches.
@@ -263,7 +264,7 @@ The database `knittingdb` consists of 15 relational and transaction tables. Belo
                          [knitting_store] (ROLL, RACKNO, RACKLOCATION)
                                   │
                                   ▼
-                         [dyeing_batch_card] (BCMTID, ROLL)
+                         [dyeing_batch_card] (BCARD, ROLL)
                                   │
                                   ▼
                          [dyeing_batch_split] (ORIGINAL_BCMTID -> CARD_A, CARD_B)
@@ -318,7 +319,7 @@ The database `knittingdb` consists of 15 relational and transaction tables. Belo
 
 ### 5.7 Dyeing Batch Card & Batch Splitting
 * **Key Files:** [dyeing_batch_card.php](file:///C:/Users/Bayzid/fab_line/fab_line_-main/dyeing_batch_card.php), [ajaxDyeing_batch_card_Insert.php](file:///C:/Users/Bayzid/fab_line/fab_line_-main/ajaxDyeing_batch_card_Insert.php), [dyeing_batch_split.php](file:///C:/Users/Bayzid/fab_line/fab_line_-main/dyeing_batch_split.php), [ajaxDyeing_batch_split.php](file:///C:/Users/Bayzid/fab_line/fab_line_-main/ajaxDyeing_batch_split.php).
-* **Role/Responsibility:** Groups multiple inspected grey rolls from `knitting_store` into a unified Dyeing Batch Master ID (`BCMTID`) for dyeing house dispatch. Allows splitting batches into sub-cards (`CARD_A`, `CARD_B`).
+* **Role/Responsibility:** Groups multiple inspected grey rolls from `knitting_store` into a unified Dyeing Batch ID (`BCARD`) for dyeing house dispatch. Allows splitting batches into sub-cards (`CARD_A`, `CARD_B`).
 * **Database Tables:** `dyeing_batch_card`, `dyeing_batch_split`.
 
 ### 5.8 Reporting & Master Uploads
@@ -362,7 +363,8 @@ Below is a complete registry of all server-side AJAX endpoints handling asynchro
 | `ajaxKnittingStore_Insert.php` | POST | `ROLL`, `RACKNO`, `RACKLOCATION`, `QTY`, etc. | `JSON: {success: bool}` | Stores inspected roll into `knitting_store` with rack location |
 | `ajaxKnitting_rack_transfer.php` | POST | `ROLL`, `NEW_RACKNO`, `NEW_RACKLOCATION` | `JSON: {success: bool}` | Updates rack location for an existing roll in store |
 | `ajaxKnitting_store.php` | GET | `roll` | `JSON` | Searches stored roll details by barcode |
-| `ajaxDyeing_batch_card_Insert.php` | POST | `BCMTID`, `ROLL`, `BUYER`, `COLOR`, `QTY`, etc. | `JSON: {success: bool}` | Groups selected stored rolls into a new Dyeing Batch |
+| `ajaxDyeing_batch_card_Insert.php` | POST | `BCARD`, `ROLL`, `BUYER`, `COLOR`, `QTY`, etc. | `JSON: {success: bool}` | Groups selected stored rolls into a new Dyeing Batch |
+| `ajaxDyeing_batch_delivery.php` | POST | `BCARD`, scanned `ROLL` values | `JSON: {success: bool}` | Validates all batch rolls and saves one delivery row per roll with `DOP`/`DID` |
 | `ajaxDyeing_batch_split.php` | POST | `ORIGINAL_BCMTID`, `QTY_A`, `QTY_B`, `ROLL_A_COUNT`, `ROLL_B_COUNT` | `JSON: {success: bool}` | Records a dyeing batch split into `dyeing_batch_split` |
 | `fetch_card_details.php` | GET | `card_id` | `JSON` | Fetches master specs for a knit card or batch card |
 | `create_user_ajax.php` | POST | `USER_NAME`, `USER_ID`, `email`, `password` | `JSON: {success: bool}` | Creates a new system user |
