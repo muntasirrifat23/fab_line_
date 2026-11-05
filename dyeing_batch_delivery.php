@@ -167,8 +167,8 @@ if (!isset($_SESSION['username'])) {
                 <table>
                     <thead>
                         <tr>
-                            <th>Roll</th><th>Rack</th><th>QTY</th><th>PO Number</th><th>SONO</th>
-                            <th>Buyer</th><th>Style</th><th>Color</th><th>MC Dia</th><th>Customer</th>
+                            <th>Roll</th><th>PO Number</th><th>Color</th><th>QTY</th><th>DYMC NO</th>
+                            <th>SONO</th><th>Buyer</th><th>Style</th><th>MC Dia</th><th>Customer</th>
                             <th>Open / Tube</th><th>SL/VQ</th><th>Fabrics Type</th><th>Finish GSM</th>
                             <th>Finish Dia</th><th>Yarn Type</th><th>Yarn Count</th><th>Yarn Brand</th>
                             <th>Feeder Plan</th><th>Lot No</th><th>Category</th>
@@ -296,8 +296,8 @@ if (!isset($_SESSION['username'])) {
                 document.getElementById('expectedQty').textContent = formatQty(targetQty);
                 remainingQtyInput.value = batch ? formatQty(Math.max(0, targetQty - total)) : '-';
                 document.getElementById('scannedFooter').innerHTML =
-                    '<tr><th colspan="2">Scanned total QTY</th><th>' + formatQty(total) +
-                    ' KG</th><th colspan="18"></th></tr>';
+                    '<tr><th colspan="3">Scanned total QTY</th><th>' + formatQty(total) +
+                    ' KG</th><th colspan="17"></th></tr>';
 
                 var allRollsScanned = batch && scannedRolls.size === batch.rows.length;
                 var isOverQty = batch && total - targetQty > 0.0005;
@@ -310,13 +310,13 @@ if (!isset($_SESSION['username'])) {
                     ? rows.map(function(row) {
                         return '<tr>' +
                             '<td><span class="roll-badge">' + escapeHtml(row.ROLL) + '</span></td>' +
-                            '<td>' + escapeHtml(row.RACK) + '</td>' +
-                            '<td>' + escapeHtml(row.QTY) + '</td>' +
                             '<td>' + escapeHtml(row.PO_NUMBER) + '</td>' +
+                            '<td>' + escapeHtml(row.COLOR) + '</td>' +
+                            '<td>' + escapeHtml(row.QTY) + '</td>' +
+                            '<td>' + escapeHtml(row.DYMCNO) + '</td>' +
                             '<td>' + escapeHtml(row.SONO) + '</td>' +
                             '<td>' + escapeHtml(row.BUYER) + '</td>' +
                             '<td>' + escapeHtml(row.STYLE) + '</td>' +
-                            '<td>' + escapeHtml(row.COLOR) + '</td>' +
                             '<td>' + escapeHtml(row.MCDIA) + '</td>' +
                             '<td>' + escapeHtml(row.CUSTOMER) + '</td>' +
                             '<td>' + escapeHtml(row.O_T) + '</td>' +

@@ -29,7 +29,7 @@ try {
             BUYER VARCHAR(100) DEFAULT NULL,
             STYLE VARCHAR(100) DEFAULT NULL,
             COLOR VARCHAR(100) DEFAULT NULL,
-            MCNO VARCHAR(100) DEFAULT NULL,
+            DYMCNO VARCHAR(100) DEFAULT NULL,
             MCDIA VARCHAR(100) DEFAULT NULL,
             CUSTOMER VARCHAR(100) DEFAULT NULL,
             O_T VARCHAR(20) DEFAULT NULL,
@@ -51,12 +51,7 @@ try {
     )) {
         respond(['success' => false, 'message' => 'Could not initialize delivery records: ' . $db->error], 500);
     }
-    $requiredDeliveryColumns = [
-        'DBDTID', 'BUDAT', 'BCARD', 'ROLL', 'PO_NUMBER', 'QTY', 'SONO', 'SHIFT',
-        'BUYER', 'STYLE', 'COLOR', 'MCNO', 'MCDIA', 'CUSTOMER', 'O_T', 'SL',
-        'FTYPE', 'FGSM', 'FDIA', 'FEEDER_PLAN', 'LOT_NO', 'YTYPE', 'YCOUNT',
-        'YBRAND', 'CATEGORY', 'DOP', 'DID'
-    ];
+
     $deliveryColumnsResult = $db->query("SHOW COLUMNS FROM dyeing_batch_delivery");
     if (!$deliveryColumnsResult) {
         respond(['success' => false, 'message' => 'Could not inspect delivery table: ' . $db->error], 500);
@@ -65,6 +60,34 @@ try {
     while ($column = $deliveryColumnsResult->fetch_assoc()) {
         $deliveryColumns[] = strtoupper($column['Field']);
     }
+    if (in_array('MCNO', $deliveryColumns, true) && in_array('DYMCNO', $deliveryColumns, true)) {
+        respond(['success' => false, 'message' => 'Both MCNO and DYMCNO columns exist in dyeing_batch_delivery. Resolve the schema before continuing.'], 500);
+    }
+    if (in_array('MCNO', $deliveryColumns, true)) {
+        if (!$db->query("ALTER TABLE dyeing_batch_delivery CHANGE COLUMN MCNO DYMCNO VARCHAR(100) DEFAULT NULL")) {
+            respond(['success' => false, 'message' => 'Could not rename MCNO to DYMCNO: ' . $db->error], 500);
+        }
+        $deliveryColumns[array_search('MCNO', $deliveryColumns, true)] = 'DYMCNO';
+    } elseif (!in_array('DYMCNO', $deliveryColumns, true)) {
+        if (!$db->query("ALTER TABLE dyeing_batch_delivery ADD COLUMN DYMCNO VARCHAR(100) DEFAULT NULL AFTER COLOR")) {
+            respond(['success' => false, 'message' => 'Could not add DYMCNO: ' . $db->error], 500);
+        }
+        $deliveryColumns[] = 'DYMCNO';
+    }
+    if (in_array('RACK', $deliveryColumns, true) && !$db->query("ALTER TABLE dyeing_batch_delivery DROP COLUMN RACK")) {
+        respond(['success' => false, 'message' => 'Could not remove RACK from dyeing_batch_delivery: ' . $db->error], 500);
+    }
+    $rackIndex = array_search('RACK', $deliveryColumns, true);
+    if ($rackIndex !== false) {
+        unset($deliveryColumns[$rackIndex]);
+    }
+
+    $requiredDeliveryColumns = [
+        'DBDTID', 'BUDAT', 'BCARD', 'ROLL', 'PO_NUMBER', 'QTY', 'SONO', 'SHIFT',
+        'BUYER', 'STYLE', 'COLOR', 'DYMCNO', 'MCDIA', 'CUSTOMER', 'O_T', 'SL',
+        'FTYPE', 'FGSM', 'FDIA', 'FEEDER_PLAN', 'LOT_NO', 'YTYPE', 'YCOUNT',
+        'YBRAND', 'CATEGORY', 'DOP', 'DID'
+    ];
     $missingDeliveryColumns = array_diff($requiredDeliveryColumns, $deliveryColumns);
     if ($missingDeliveryColumns) {
         respond([
@@ -78,8 +101,8 @@ try {
 
 function fetchDeliveryBatchRows($db, $cardNo, $forUpdate = false)
 {
-    $sql = "SELECT dbc.ROLL, dbc.RACK, dbc.QTY, dbc.PO_NUMBER, dbc.SONO, dbc.BUYER,
-                   dbc.STYLE, dbc.COLOR, dbc.DYMCNO AS MCNO, dbc.MCDIA, dbc.CUSTOMER, dbc.O_T, dbc.SL,
+    $sql = "SELECT dbc.ROLL, dbc.PO_NUMBER, dbc.COLOR, dbc.QTY, dbc.DYMCNO, dbc.SONO, dbc.BUYER,
+                   dbc.STYLE, dbc.MCDIA, dbc.CUSTOMER, dbc.O_T, dbc.SL,
                    dbc.FTYPE, dbc.FGSM, dbc.FDIA, dbc.YTYPE, dbc.YCOUNT,
                    dbc.FEEDER_PLAN, dbc.LOT_NO, dbc.YBRAND, dbc.CATEGORY, dbc.BCARD
             FROM dyeing_batch_card dbc
@@ -345,7 +368,7 @@ try {
         $deliveryDate = date('Y-m-d');
         $stmt = $db->prepare(
             "INSERT INTO dyeing_batch_delivery
-             (BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR, MCNO,
+             (BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR, DYMCNO,
               MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO, YTYPE,
               YCOUNT, YBRAND, CATEGORY, DOP, DID)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
@@ -378,7 +401,7 @@ try {
                 $row['BUYER'],
                 $row['STYLE'],
                 $row['COLOR'],
-                $row['MCNO'],
+                $row['DYMCNO'],
                 $row['MCDIA'],
                 $row['CUSTOMER'],
                 $row['O_T'],
