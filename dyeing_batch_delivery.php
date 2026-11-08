@@ -53,6 +53,12 @@ if (!isset($_SESSION['username'])) {
         .panel-title { margin: 0 0 14px; font-size: 1.08rem; font-weight: 800; }
         .batch-form, .scan-form { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; }
         .field { flex: 1; min-width: 220px; }
+        .roll-input-group { display: flex; width: 100%; }
+        .roll-input-group input { flex: 1; min-width: 0; border-radius: 8px 0 0 8px; }
+        .roll-input-group button {
+            flex: 0 0 auto;
+            border-radius: 0 8px 8px 0;
+        }
         label { display: block; margin-bottom: 6px; font-weight: 700; }
         input {
             width: 100%;
@@ -77,6 +83,7 @@ if (!isset($_SESSION['username'])) {
         button:hover { filter: brightness(.94); }
         button:disabled { background: #94a3b8; cursor: not-allowed; }
         .scan-button { background: #2563eb; }
+        .add-roll-button { flex: 0 0 auto; }
         .confirm-button { background: #059669; }
         .message { display: none; padding: 11px 13px; margin-top: 12px; border-radius: 8px; font-weight: 700; }
         .message.info { display: block; color: #075985; background: #e0f2fe; }
@@ -151,7 +158,10 @@ if (!isset($_SESSION['username'])) {
                     <form class="scan-form" id="rollForm">
                         <div class="field">
                             <label for="rollInput">Roll Number</label>
-                            <input type="text" id="rollInput" autocomplete="off" placeholder="Scan or enter roll number, then press Enter">
+                            <div class="roll-input-group">
+                                <input type="text" id="rollInput" autocomplete="off" placeholder="Scan or enter roll number">
+                                <button type="submit" id="addRollBtn">Add</button>
+                            </div>
                         </div>
                         <div class="field">
                             <label for="remainingQtyInput">Remaining QTY (KG)</label>
@@ -215,6 +225,7 @@ if (!isset($_SESSION['username'])) {
             var alreadyDeliveredMessage = '';
             var cameraFacingMode = 'environment';
             var cameraSwitching = false;
+            var resumeCameraAfterRollRemoval = false;
 
             function showMessage(text, type) {
                 message.textContent = text;
@@ -309,6 +320,7 @@ if (!isset($_SESSION['username'])) {
                     ' KG</th><th colspan="17"></th></tr>';
 
                 var allRollsScanned = batch && scannedRolls.size === batch.rows.length;
+                deliveryPanel.classList.toggle('is-hidden', Boolean(allRollsScanned));
                 var isOverQty = batch && total - targetQty > 0.0005;
                 confirmBtn.disabled = delivered || !allRollsScanned || isOverQty;
             }
@@ -355,12 +367,19 @@ if (!isset($_SESSION['username'])) {
                 scannedRolls.delete(String(row.ROLL));
                 renderScannedRows();
                 showMessage('Roll ' + row.ROLL + ' removed. You can scan or enter it again.', 'info');
-                rollInput.focus();
+                if (!deliveryPanel.classList.contains('is-hidden')) {
+                    rollInput.focus();
+                    if (resumeCameraAfterRollRemoval) {
+                        resumeCameraAfterRollRemoval = false;
+                        startCamera();
+                    }
+                }
             }
 
             function addScannedRoll(rawRoll) {
                 var roll = extractRollValue(rawRoll);
                 if (!roll || processingRoll || scanPopupActive) return;
+                if (batch && scannedRolls.size >= batch.rows.length) return;
                 if (delivered) {
                     showScanPopup(alreadyDeliveredMessage, 'Batch Already Delivered', 'error');
                     return;
@@ -420,9 +439,16 @@ if (!isset($_SESSION['username'])) {
                     scannedRolls.set(roll, row);
                     scannedPanel.classList.remove('is-hidden');
                     renderScannedRows();
+                    var batchComplete = scannedRolls.size === batch.rows.length;
+                    if (batchComplete) {
+                        resumeCameraAfterRollRemoval = Boolean(qrScanner && qrScanner.isScanning);
+                        stopCamera();
+                    }
                     showScanPopup(
-                        'Roll ' + roll + ' added successfully to Batch Card ' + batch.card_no + '.',
-                        'Roll Added Successfully',
+                        batchComplete
+                            ? 'All rolls have been scanned successfully for Batch Card ' + batch.card_no + '.'
+                            : 'Roll ' + roll + ' added successfully to Batch Card ' + batch.card_no + '.',
+                        batchComplete ? 'Batch Scan Complete' : 'Roll Added Successfully',
                         'success',
                         1000
                     );
@@ -538,11 +564,15 @@ if (!isset($_SESSION['username'])) {
                     alreadyDeliveredMessage = 'Batch Card ' + batch.card_no + ' was already delivered.';
                     rollInput.disabled = true;
                     confirmBtn.textContent = 'Delivery Confirmed';
-                    showMessage(confirmationMessage + ' Refreshing...', 'success');
+                    showMessage(
+                        'Batch Card ' + response.card_no + ' successfully delivered. ' +
+                        response.roll_count + ' roll(s), ' + formatQty(response.total_qty) + ' KG.',
+                        'success'
+                    );
                     return stopCamera().then(function() {
                         window.setTimeout(function() {
                             window.location.reload();
-                        }, 1200);
+                        }, 3000);
                     });
                 }).catch(function(error) {
                     showScanPopup(error.message, 'Batch Delivery Error', 'error');
