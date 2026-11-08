@@ -898,25 +898,29 @@ mysqli_close($db);
                 });
             }
 
-            batchSplitButton.addEventListener('click', function(event) {
-                event.preventDefault();
-                openBatchSplitAuth({
-                    label: 'Batch Split',
-                    verificationUrl: 'dyeing_batch_split.php',
-                    verifyAction: 'verify_batch_split_password',
-                    formAction: 'dyeing_batch_split'
+            if (batchSplitButton) {
+                batchSplitButton.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    openBatchSplitAuth({
+                        label: 'Batch Split',
+                        verificationUrl: 'dyeing_batch_split.php',
+                        verifyAction: 'verify_batch_split_password',
+                        formAction: 'dyeing_batch_split'
+                    });
                 });
-            });
+            }
             var knittingRollSplitButton = document.getElementById('knitting_roll_split');
-            knittingRollSplitButton.addEventListener('click', function(event) {
-                event.preventDefault();
-                openBatchSplitAuth({
-                    label: 'Knitting Roll Split',
-                    verificationUrl: 'knitting_roll_split.php',
-                    verifyAction: 'verify_knitting_roll_split_password',
-                    formAction: 'knitting_roll_split'
+            if (knittingRollSplitButton) {
+                knittingRollSplitButton.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    openBatchSplitAuth({
+                        label: 'Knitting Roll Split',
+                        verificationUrl: 'knitting_roll_split.php',
+                        verifyAction: 'verify_knitting_roll_split_password',
+                        formAction: 'knitting_roll_split'
+                    });
                 });
-            });
+            }
             document.getElementById('verifyBatchSplitAuth').addEventListener('click', verifyBatchSplitPassword);
             document.getElementById('cancelBatchSplitAuth').addEventListener('click', closeBatchSplitAuth);
             document.getElementById('closeBatchSplitAuth').addEventListener('click', closeBatchSplitAuth);
