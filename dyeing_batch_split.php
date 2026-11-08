@@ -54,8 +54,8 @@ if (empty($_SESSION['batch_split_authorized'])) {
         }
 
         .wrap {
-            width: 90%;
-            max-width: 1400px;
+            width: 100%;
+            max-width: none;
             margin: 0 auto;
         }
 
@@ -386,14 +386,26 @@ if (empty($_SESSION['batch_split_authorized'])) {
                 <table>
                     <thead>
                         <tr>
-                            <th>#</th>
                             <th>ROLL</th>
-                            <th>PO_NUMBER</th>
-                            <th>RACK</th>
+                            <th>PO Number</th>
                             <th>QTY</th>
-                            <th>BUYER</th>
-                            <th>STYLE</th>
-                            <th>COLOR</th>
+                            <th>Color</th>
+                            <th>SONO</th>
+                            <th>Buyer</th>
+                            <th>Style</th>
+                            <th>MC Dia</th>
+                            <th>Customer</th>
+                            <th>Open / Tube</th>
+                            <th>SL/VQ</th>
+                            <th>Fabrics Type</th>
+                            <th>Finish GSM</th>
+                            <th>Finish Dia</th>
+                            <th>Yarn Type</th>
+                            <th>Yarn Count</th>
+                            <th>Yarn Brand</th>
+                            <th>Feeder Plan</th>
+                            <th>Lot No</th>
+                            <th>Category</th>
                         </tr>
                     </thead>
                     <tbody id="cardRollsBody"></tbody>
@@ -542,26 +554,39 @@ if (empty($_SESSION['batch_split_authorized'])) {
         function renderCardRolls(rolls, total) {
             var tbody = document.getElementById('cardRollsBody');
             if (!rolls.length) {
-                tbody.innerHTML = '<tr class="empty-row"><td colspan="8">No rolls found.</td></tr>';
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="20">No delivered rolls found for this batch card.</td></tr>';
+                document.getElementById('cardTotal').textContent = total || 0;
                 return;
             }
             var html = '';
             rolls.forEach(function(row, i) {
                 html += '<tr>' +
-                    '<td><strong>' + (i + 1) + '</strong></td>' +
                     '<td><span class="roll-badge">' + esc(row.ROLL) + '</span></td>' +
                     '<td>' + esc(row.PO_NUMBER) + '</td>' +
-                    '<td>' + esc(row.RACK) + '</td>' +
                     '<td><strong>' + esc(row.QTY) + '</strong></td>' +
+                    '<td>' + esc(row.COLOR) + '</td>' +
+                    '<td>' + esc(row.SONO) + '</td>' +
                     '<td>' + esc(row.BUYER) + '</td>' +
                     '<td>' + esc(row.STYLE) + '</td>' +
-                    '<td>' + esc(row.COLOR) + '</td>' +
+                    '<td>' + esc(row.MCDIA) + '</td>' +
+                    '<td>' + esc(row.CUSTOMER) + '</td>' +
+                    '<td>' + esc(row.O_T) + '</td>' +
+                    '<td>' + esc(row.SL) + '</td>' +
+                    '<td>' + esc(row.FTYPE) + '</td>' +
+                    '<td>' + esc(row.FGSM) + '</td>' +
+                    '<td>' + esc(row.FDIA) + '</td>' +
+                    '<td>' + esc(row.YTYPE) + '</td>' +
+                    '<td>' + esc(row.YCOUNT) + '</td>' +
+                    '<td>' + esc(row.YBRAND) + '</td>' +
+                    '<td>' + esc(row.FEEDER_PLAN) + '</td>' +
+                    '<td>' + esc(row.LOT_NO) + '</td>' +
+                    '<td>' + esc(row.CATEGORY) + '</td>' +
                     '</tr>';
             });
             html += '<tr style="background:#ccfbf1; font-weight:800; border-top:2px solid #0f766e;">' +
-                '<td colspan="4" style="text-align:right; color:#065f46;">Total QTY</td>' +
+                '<td colspan="2" style="text-align:right; color:#065f46;">Total QTY</td>' +
                 '<td style="color:#065f46;">' + esc(total) + '</td>' +
-                '<td colspan="3"></td>' +
+                '<td colspan="17"></td>' +
                 '</tr>';
             tbody.innerHTML = html;
             document.getElementById('cardTotal').textContent = total;

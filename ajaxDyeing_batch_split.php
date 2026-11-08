@@ -102,7 +102,7 @@ switch ($action) {
     case 'list_cards':
         $result = mysqli_query($db,
             "SELECT BCARD, COUNT(*) AS roll_count, ROUND(SUM(CAST(QTY AS DECIMAL(12,2))), 2) AS total_qty
-             FROM dyeing_batch_card
+             FROM dyeing_batch_delivery
              WHERE BCARD NOT LIKE '%-%'
              GROUP BY BCARD
              ORDER BY CAST(BCARD AS UNSIGNED) DESC");
@@ -124,7 +124,14 @@ switch ($action) {
             echo json_encode(['success' => false, 'message' => 'Card number is required']);
             exit;
         }
-        $stmt = $db->prepare("SELECT * FROM dyeing_batch_card WHERE BCARD = ? ORDER BY DBCTID ASC");
+        $stmt = $db->prepare(
+            "SELECT ROLL, PO_NUMBER, QTY, COLOR, SONO, BUYER, STYLE, MCDIA, CUSTOMER,
+                    O_T, SL, FTYPE, FGSM, FDIA, YTYPE, YCOUNT, YBRAND, FEEDER_PLAN,
+                    LOT_NO, CATEGORY
+             FROM dyeing_batch_delivery
+             WHERE BCARD = ?
+             ORDER BY DBDTID ASC"
+        );
         if (!$stmt) {
             echo json_encode(['success' => false, 'message' => 'Database error: ' . $db->error]);
             exit;
@@ -213,6 +220,25 @@ switch ($action) {
                 exit;
             }
         }
+        $deliveryCheck = $db->prepare("SELECT COUNT(*) AS c FROM dyeing_batch_delivery WHERE BCARD IN (?, ?)");
+        if (!$deliveryCheck) {
+            echo json_encode(['success' => false, 'message' => 'Could not verify delivery cards: ' . $db->error]);
+            exit;
+        }
+        $deliveryCheck->bind_param('ss', $cardA, $cardB);
+        if (!$deliveryCheck->execute()) {
+            $error = $deliveryCheck->error;
+            $deliveryCheck->close();
+            echo json_encode(['success' => false, 'message' => 'Could not verify delivery cards: ' . $error]);
+            exit;
+        }
+        $deliveryCheckResult = $deliveryCheck->get_result();
+        $deliveryCheckRow = $deliveryCheckResult->fetch_assoc();
+        $deliveryCheck->close();
+        if ((int)$deliveryCheckRow['c'] > 0) {
+            echo json_encode(['success' => false, 'message' => 'This card was already split (' . $cardA . ' / ' . $cardB . ').']);
+            exit;
+        }
 
         $budat = date('Y-m-d');
 
@@ -251,6 +277,33 @@ switch ($action) {
                 $errorMsg = 'Delete original card error: ' . $dl->error;
             }
             $dl->close();
+        }
+
+        // Keep delivered rows associated with the newly split card numbers.
+        if ($ok) {
+            $deliveryUpdate = $db->prepare(
+                "UPDATE dyeing_batch_delivery SET BCARD = ? WHERE BCARD = ? AND ROLL = ?"
+            );
+            if (!$deliveryUpdate) {
+                $ok = false;
+                $errorMsg = 'Delivery card update prepare error: ' . $db->error;
+            } else {
+                $deliveryCard = '';
+                $deliveryRoll = '';
+                $deliveryUpdate->bind_param('sss', $deliveryCard, $card, $deliveryRoll);
+                foreach ([[$selRolls, $cardA], [$remRolls, $cardB]] as $group) {
+                    foreach ($group[0] as $row) {
+                        $deliveryCard = $group[1];
+                        $deliveryRoll = strval($row['ROLL']);
+                        if (!$deliveryUpdate->execute()) {
+                            $ok = false;
+                            $errorMsg = 'Delivery card update error for roll ' . $deliveryRoll . ': ' . $deliveryUpdate->error;
+                            break 2;
+                        }
+                    }
+                }
+                $deliveryUpdate->close();
+            }
         }
 
         // Log the split operation

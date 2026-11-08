@@ -12,7 +12,7 @@ if (!isset($_SESSION['username'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dyeing Batch Delivery</title>
+    <title>Dyeing | Batch Delivery</title>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
@@ -270,6 +270,20 @@ if (!isset($_SESSION['username'])) {
                 return Number.isFinite(qty) ? qty.toFixed(3) : '0.000';
             }
 
+            function extractRollValue(value) {
+                var text = String(value || '').trim();
+                if (!text) return '';
+
+                if (text.indexOf('|') !== -1) {
+                    text = text.split('|')[0].trim();
+                }
+
+                var match = text.match(/ROLL\s*:\s*([^\r\n]+)/i);
+                if (match && match[1]) return match[1].trim();
+
+                return text;
+            }
+
             function api(action, payload, queryParams) {
                 var options = payload
                     ? {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)}
@@ -337,7 +351,7 @@ if (!isset($_SESSION['username'])) {
             }
 
             function addScannedRoll(rawRoll) {
-                var roll = String(rawRoll || '').trim();
+                var roll = extractRollValue(rawRoll);
                 if (!roll || processingRoll || scanPopupActive) return;
                 if (delivered) {
                     showScanPopup(alreadyDeliveredMessage, 'Batch Already Delivered', 'error');

@@ -25,7 +25,6 @@ try {
             PO_NUMBER VARCHAR(50) DEFAULT NULL,
             QTY VARCHAR(50) DEFAULT NULL,
             SONO VARCHAR(50) DEFAULT NULL,
-            SHIFT VARCHAR(50) DEFAULT NULL,
             BUYER VARCHAR(100) DEFAULT NULL,
             STYLE VARCHAR(100) DEFAULT NULL,
             COLOR VARCHAR(100) DEFAULT NULL,
@@ -83,7 +82,7 @@ try {
     }
 
     $requiredDeliveryColumns = [
-        'DBDTID', 'BUDAT', 'BCARD', 'ROLL', 'PO_NUMBER', 'QTY', 'SONO', 'SHIFT',
+        'DBDTID', 'BUDAT', 'BCARD', 'ROLL', 'PO_NUMBER', 'QTY', 'SONO',
         'BUYER', 'STYLE', 'COLOR', 'DYMCNO', 'MCDIA', 'CUSTOMER', 'O_T', 'SL',
         'FTYPE', 'FGSM', 'FDIA', 'FEEDER_PLAN', 'LOT_NO', 'YTYPE', 'YCOUNT',
         'YBRAND', 'CATEGORY', 'DOP', 'DID'
@@ -368,10 +367,10 @@ try {
         $deliveryDate = date('Y-m-d');
         $stmt = $db->prepare(
             "INSERT INTO dyeing_batch_delivery
-             (BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR, DYMCNO,
+             (BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, BUYER, STYLE, COLOR, DYMCNO,
               MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO, YTYPE,
               YCOUNT, YBRAND, CATEGORY, DOP, DID)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
         if (!$stmt) {
             throw new RuntimeException('Database error: ' . $db->error);
@@ -390,14 +389,13 @@ try {
                 throw new RuntimeException('Roll ' . $roll . ' was not found in the loaded batch.');
             }
             $stmt->bind_param(
-                'ssssssssssssssssssssssssss',
+                'sssssssssssssssssssssssss',
                 $deliveryDate,
                 $cardNo,
                 $row['ROLL'],
                 $row['PO_NUMBER'],
                 $row['QTY'],
                 $row['SONO'],
-                $row['SHIFT'],
                 $row['BUYER'],
                 $row['STYLE'],
                 $row['COLOR'],
