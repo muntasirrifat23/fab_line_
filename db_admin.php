@@ -1,5 +1,5 @@
 <?php
-// db_admin.php - Database Viewer & Management for knittingdb
+// db_admin.php - Database Viewer & Management for fablinedb
 require_once 'config.php';
 
 $current_table = isset($_GET['table']) ? trim($_GET['table']) : '';
@@ -32,7 +32,7 @@ foreach ($tables as $t) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>knittingdb - Database Manager</title>
+    <title>fablinedb - Database Manager</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -71,7 +71,7 @@ foreach ($tables as $t) {
 
 <div class="sidebar">
     <div class="sidebar-header">
-        <h2><i class="fa-solid fa-database"></i> knittingdb</h2>
+        <h2><i class="fa-solid fa-database"></i> fablinedb</h2>
         <p>MySQL Database Viewer</p>
     </div>
     <ul class="table-list">
@@ -212,7 +212,7 @@ foreach ($tables as $t) {
     <?php else: ?>
         <div class="card" style="text-align:center; padding:40px 20px;">
             <i class="fa-solid fa-database" style="font-size:3rem; color:#0284c7; margin-bottom:16px;"></i>
-            <h2>Welcome to knittingdb Database Manager</h2>
+            <h2>Welcome to fablinedb Database Manager</h2>
             <p style="color:#64748b; margin-top:8px;">Select a table from the sidebar to view data and structure, or use the SQL Console above to run queries.</p>
         </div>
     <?php endif; ?>

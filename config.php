@@ -69,7 +69,7 @@ if (
 $hostname = "localhost";
 $username = "root";
 $password = "pgadmin";
-$databaseName = "knittingdb";
+$databaseName = "fablinedb";
 
 // Connect to mysql database with error handling
 $db = mysqli_connect($hostname, $username, $password, $databaseName);

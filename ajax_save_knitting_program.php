@@ -19,7 +19,7 @@ $uname = isset($_SESSION['username']) ? strtoupper(trim($_SESSION['username'])) 
 $hostname = 'localhost';
 $username = 'root';
 $password = 'pgadmin';
-$databaseName = 'knittingdb';
+$databaseName = 'fablinedb';
 
 $db = mysqli_connect($hostname, $username, $password, $databaseName);
 
