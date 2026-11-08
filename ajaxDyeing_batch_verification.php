@@ -298,64 +298,26 @@ if (!(($passCount >= 2 && $passCount > $failCount) || ($failCount >= 2 && $failC
 
 $inTransaction = false;
 try {
-    $createTableSql = "CREATE TABLE IF NOT EXISTS dyeing_batch_verification (
-        DBVTID INT(11) NOT NULL AUTO_INCREMENT,
-        BUDAT DATE DEFAULT NULL,
-        BCARD VARCHAR(30) DEFAULT NULL,
-        ROLL VARCHAR(50) NOT NULL,
-        PO_NUMBER VARCHAR(50) DEFAULT NULL,
-        QTY VARCHAR(50) DEFAULT NULL,
-        SONO VARCHAR(50) DEFAULT NULL,
-        BUYER VARCHAR(100) DEFAULT NULL,
-        STYLE VARCHAR(100) DEFAULT NULL,
-        COLOR VARCHAR(100) DEFAULT NULL,
-        DYMCNO VARCHAR(100) DEFAULT NULL,
-        MCDIA VARCHAR(100) DEFAULT NULL,
-        CUSTOMER VARCHAR(100) DEFAULT NULL,
-        O_T VARCHAR(20) DEFAULT NULL,
-        SL VARCHAR(100) DEFAULT NULL,
-        FTYPE VARCHAR(50) DEFAULT NULL,
-        FGSM VARCHAR(20) DEFAULT NULL,
-        FDIA VARCHAR(20) DEFAULT NULL,
-        FEEDER_PLAN VARCHAR(100) DEFAULT NULL,
-        LOT_NO VARCHAR(100) DEFAULT NULL,
-        YTYPE VARCHAR(50) DEFAULT NULL,
-        YCOUNT VARCHAR(100) DEFAULT NULL,
-        YBRAND VARCHAR(100) DEFAULT NULL,
-        CATEGORY VARCHAR(100) DEFAULT NULL,
-        SINCHARGE VARCHAR(100) DEFAULT NULL,
-        SUPERVISOR VARCHAR(100) DEFAULT NULL,
-        BINCHARGE VARCHAR(100) DEFAULT NULL,
-        BMANAGER VARCHAR(100) DEFAULT NULL,
-        DOP VARCHAR(100) DEFAULT NULL,
-        DID VARCHAR(100) DEFAULT NULL,
-        CREATEDAT DATETIME DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (DBVTID)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci";
-    if (!$db->query($createTableSql)) {
-        throw new RuntimeException('Could not initialize batch verification table: ' . $db->error);
-    }
-
     $insertSql = "INSERT INTO dyeing_batch_verification (
         BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, BUYER, STYLE, COLOR, DYMCNO,
         MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
         YTYPE, YCOUNT, YBRAND, CATEGORY, SINCHARGE, SUPERVISOR, BINCHARGE,
         BMANAGER, DOP, DID
     )
-    SELECT BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, BUYER, STYLE, COLOR, DYMCNO,
-           MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
-           YTYPE, YCOUNT, YBRAND, CATEGORY, ?, ?, ?, ?, DOP, DID
-    FROM dyeing_batch_delivery
-    WHERE BCARD = ?";
+    SELECT d.BUDAT, d.BCARD, d.ROLL, d.PO_NUMBER, d.QTY, d.SONO, d.BUYER,
+           d.STYLE, d.COLOR, d.DYMCNO, d.MCDIA, d.CUSTOMER, d.O_T, d.SL,
+           d.FTYPE, d.FGSM, d.FDIA, d.FEEDER_PLAN, d.LOT_NO, d.YTYPE,
+           d.YCOUNT, d.YBRAND, d.CATEGORY, ?, ?, ?, ?, d.DOP, d.DID
+    FROM dyeing_batch_delivery d
+    WHERE d.BCARD = ?
+      AND NOT EXISTS (
+          SELECT 1
+          FROM dyeing_batch_verification v
+          WHERE v.BCARD = d.BCARD AND v.ROLL = d.ROLL
+      )";
     $insertStmt = $db->prepare($insertSql);
     if (!$insertStmt) {
         throw new RuntimeException('Could not prepare verification insert: ' . $db->error);
-    }
-
-    $deleteStmt = $db->prepare('DELETE FROM dyeing_batch_verification WHERE BCARD = ?');
-    if (!$deleteStmt) {
-        $insertStmt->close();
-        throw new RuntimeException('Could not prepare verification update: ' . $db->error);
     }
 
     if (!$db->begin_transaction()) {
@@ -364,11 +326,6 @@ try {
     $inTransaction = true;
     $savedCards = [];
     foreach ($batchIds as $batchId) {
-        $deleteStmt->bind_param('s', $batchId);
-        if (!$deleteStmt->execute()) {
-            throw new RuntimeException('Could not replace prior verification for ' . $batchId . ': ' . $deleteStmt->error);
-        }
-
         $shiftIncharge = isset($decisions['SINCHARGE']) ? strtoupper($decisions['SINCHARGE']) : null;
         $supervisor = isset($decisions['SUPERVISOR']) ? strtoupper($decisions['SUPERVISOR']) : null;
         $batchIncharge = isset($decisions['BINCHARGE']) ? strtoupper($decisions['BINCHARGE']) : null;
@@ -385,14 +342,18 @@ try {
             throw new RuntimeException('Could not save verification for ' . $batchId . ': ' . $insertStmt->error);
         }
         if ($insertStmt->affected_rows < 1) {
-            throw new RuntimeException('No delivery rolls were found for Batch Card ' . $batchId . '.');
+            throw new RuntimeException(
+                'No new verification rows were inserted for Batch Card ' . $batchId .
+                '. Delivery rolls may already have verification records.'
+            );
         }
         $savedCards[] = $batchId;
     }
 
     $insertStmt->close();
-    $deleteStmt->close();
-    $db->commit();
+    if (!$db->commit()) {
+        throw new RuntimeException('Could not complete batch verification save: ' . $db->error);
+    }
     $inTransaction = false;
     respond([
         'success' => true,

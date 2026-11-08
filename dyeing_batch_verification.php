@@ -261,7 +261,7 @@ function h($value)
         .clear { color: #334155; background: #e2e8f0; }
         .status { margin: 14px 0 0; font-weight: 700; }
         .error { color: #991b1b; }
-        .table-wrap { width: 100%; overflow: auto; max-height: calc(100vh - 270px); }
+        .table-wrap { width: 100%; margin-top: 12px; overflow-x: auto; overflow-y: hidden; }
         table { width: 100%; min-width: 1750px; border-collapse: collapse; font-size: .88rem; }
         th, td { padding: 10px 9px; border-bottom: 1px solid #dbe5e4; text-align: left; white-space: nowrap; }
         thead th { position: sticky; top: 0; z-index: 1; color: #fff; background: #134e4a; }
@@ -341,9 +341,19 @@ function h($value)
             .header { flex-wrap: wrap; padding: 12px; }
             h1 { font-size: 1.25rem; }
             .filters { grid-template-columns: 1fr; }
-            .approvals { grid-template-columns: 1fr; }
-            .decision-editor { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            .decision-edit-row { align-items: flex-start; flex-direction: column; }
+            .approval-panel { width: 100%; min-width: 0; }
+            .approvals {
+                width: 100%;
+                min-width: 0;
+                grid-template-columns: minmax(0, 1fr);
+                gap: 8px;
+            }
+            .approval-item { min-width: 0; align-items: center; flex-direction: row; padding: 8px; gap: 6px; }
+            .approval-item > span { min-width: 0; font-size: .82rem; }
+            .approval-options { gap: 4px; }
+            .approval-options .button { flex: 1; min-width: 0; padding: 6px 7px; font-size: .78rem; }
+            .decision-editor { width: 100%; min-width: 0; grid-template-columns: minmax(0, 1fr); }
+            .decision-edit-row { align-items: center; flex-direction: row; }
             .decision-edit-actions { grid-column: auto; }
             .approval-footer { align-items: stretch; flex-direction: column; }
         }
@@ -413,6 +423,31 @@ function h($value)
 
         <?php if ($errorMessage === ''): ?>
             <section class="panel">
+                <?php if ($rows): ?>
+                    <div class="approval-panel" id="roleDecisionPanel" hidden>
+                        <h2 class="approval-title">Edit Batch Approval</h2>
+                        <div class="decision-editor" id="decisionEditor"></div>
+                    </div>
+                    <div class="approval-panel" id="approvalPanel" hidden>
+                        <h2 class="approval-title">Batch Approval</h2>
+                        <div class="approvals">
+                            <?php foreach (['Shift Incharge', 'Supervisor', 'Batch Incharge', 'Batch Manager'] as $index => $role): ?>
+                                <div class="approval-item">
+                                    <span><?php echo h($role); ?></span>
+                                    <div class="approval-options">
+                                        <button class="button approval-choice" type="button" data-approval="<?php echo $index; ?>" data-decision="pass" aria-pressed="false">PASS</button>
+                                        <button class="button approval-choice" type="button" data-approval="<?php echo $index; ?>" data-decision="fail" aria-pressed="false">FAIL</button>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <div class="approval-footer">
+                            <p class="approval-count" id="approvalCount" aria-live="polite">0 PASS, 0 FAIL. At least 2 matching decisions with no tie are required.</p>
+                            <button class="button" type="button" id="verificationDoneButton" disabled>Verification Done</button>
+                        </div>
+                        <p class="verification-result" id="verificationResult" role="status" hidden></p>
+                    </div>
+                <?php endif; ?>
                 <div class="table-wrap">
                     <table>
                         <thead>
@@ -482,31 +517,6 @@ function h($value)
                         </tbody>
                     </table>
                 </div>
-                <?php if ($rows): ?>
-                    <div class="approval-panel" id="roleDecisionPanel" hidden>
-                        <h2 class="approval-title">Edit Batch Approval</h2>
-                        <div class="decision-editor" id="decisionEditor"></div>
-                    </div>
-                    <div class="approval-panel" id="approvalPanel">
-                        <h2 class="approval-title">Batch Approval</h2>
-                        <div class="approvals">
-                            <?php foreach (['Shift Incharge', 'Supervisor', 'Batch Incharge', 'Batch Manager'] as $index => $role): ?>
-                                <div class="approval-item">
-                                    <span><?php echo h($role); ?></span>
-                                    <div class="approval-options">
-                                        <button class="button approval-choice" type="button" data-approval="<?php echo $index; ?>" data-decision="pass" aria-pressed="false">PASS</button>
-                                        <button class="button approval-choice" type="button" data-approval="<?php echo $index; ?>" data-decision="fail" aria-pressed="false">FAIL</button>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                        <div class="approval-footer">
-                            <p class="approval-count" id="approvalCount" aria-live="polite">0 PASS, 0 FAIL. At least 2 matching decisions with no tie are required.</p>
-                            <button class="button" type="button" id="verificationDoneButton" disabled>Verification Done</button>
-                        </div>
-                        <p class="verification-result" id="verificationResult" role="status" hidden></p>
-                    </div>
-                <?php endif; ?>
             </section>
         <?php endif; ?>
     </main>
@@ -522,7 +532,6 @@ function h($value)
                 var rows = Array.from(document.querySelectorAll('.delivery-row'));
                 var emptyTabRow = document.getElementById('emptyTabRow');
                 var approvalPanel = document.getElementById('approvalPanel');
-                var actionHeader = document.querySelector('[data-action-header]');
                 var roleDecisionPanel = document.getElementById('roleDecisionPanel');
                 var decisionEditor = document.getElementById('decisionEditor');
                 var passwordDialog = document.getElementById('editPasswordDialog');
@@ -535,6 +544,7 @@ function h($value)
                 var decisions = {};
                 var completed = false;
                 var activeApprovalBatch = null;
+                var activeEditBatch = null;
                 var activeStatus = 'verification';
                 var statuses = {};
                 rows.forEach(function(row) {
@@ -596,12 +606,13 @@ function h($value)
                         var status = statuses[rowKey(row)] || 'verification';
                         if (Object.prototype.hasOwnProperty.call(counts, status)) counts[status]++;
                     });
-                    actionHeader.hidden = false;
                     document.querySelectorAll('[data-approval-column]').forEach(function(cell) {
                         cell.hidden = activeStatus === 'verification';
                     });
-                    if (activeEditButton && statuses[rowKey(activeEditButton.closest('.delivery-row'))] !== activeStatus) {
+                    if (activeEditButton &&
+                        statuses[rowKey(activeEditButton.closest('.delivery-row'))] !== activeStatus) {
                         roleDecisionPanel.hidden = true;
+                        activeEditBatch = null;
                     }
                     rows.forEach(function(row) {
                         var status = statuses[rowKey(row)] || 'verification';
@@ -621,6 +632,12 @@ function h($value)
                     var visibleRows = rows.filter(function(row) {
                         return !row.hidden;
                     });
+                    approvalPanel.hidden = activeStatus !== 'verification' ||
+                        counts.verification === 0 || !activeApprovalBatch;
+                    roleDecisionPanel.hidden = activeStatus === 'verification' ||
+                        !activeEditBatch || !visibleRows.some(function(row) {
+                            return row.dataset.batch === activeEditBatch;
+                        });
                     for (var index = 0; index < visibleRows.length;) {
                         var groupEnd = index + 1;
                         while (groupEnd < visibleRows.length &&
@@ -643,8 +660,6 @@ function h($value)
                     tabs.forEach(function(tab) {
                         tab.setAttribute('aria-pressed', tab.dataset.status === activeStatus ? 'true' : 'false');
                     });
-                    approvalPanel.hidden = activeStatus !== 'verification' ||
-                        counts.verification === 0 || !activeApprovalBatch;
                 }
 
                 function updateApprovals() {
@@ -691,10 +706,10 @@ function h($value)
                             approvalButton.setAttribute('aria-pressed', 'false');
                         });
                         result.hidden = true;
-                        approvalPanel.hidden = false;
                         approvalPanel.querySelector('.approval-title').textContent =
-                            'Batch Approval - ' + activeApprovalBatch;
+                            'Batch Approval (' + activeApprovalBatch + ')';
                         updateApprovals();
+                        updateTabs();
                         approvalPanel.scrollIntoView({behavior: 'smooth', block: 'center'});
                     });
                 });
@@ -879,16 +894,23 @@ function h($value)
                         actions.appendChild(cancelButton);
                         editor.appendChild(actions);
                         activeEditButton = editButton;
+                        activeEditBatch = row.dataset.batch;
                         authorizedPassword = passwordInput.value;
                         passwordInput.value = '';
                         roleDecisionPanel.hidden = false;
+                        roleDecisionPanel.querySelector('.approval-title').textContent =
+                            'Edit Batch Approval (' + activeEditBatch + ')';
+                        updateTabs();
                         passwordDialog.close();
+                        roleDecisionPanel.scrollIntoView({behavior: 'smooth', block: 'center'});
 
                         cancelButton.addEventListener('click', function() {
                             roleDecisionPanel.hidden = true;
                             delete editButton.dataset.authorized;
                             activeEditButton = null;
+                            activeEditBatch = null;
                             authorizedPassword = null;
+                            updateTabs();
                         });
                         saveButton.addEventListener('click', async function() {
                             var editedDecisions = {};
@@ -940,6 +962,7 @@ function h($value)
                                 roleDecisionPanel.hidden = true;
                                 delete editButton.dataset.authorized;
                                 activeEditButton = null;
+                                activeEditBatch = null;
                                 authorizedPassword = null;
                                 updateTabs();
                                 showSuccessAndReload(
