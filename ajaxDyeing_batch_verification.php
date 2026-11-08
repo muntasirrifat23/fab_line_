@@ -24,6 +24,13 @@ if (!is_array($input)) {
     respond(['success' => false, 'message' => 'Invalid verification request.'], 400);
 }
 
+require_once 'batch_verification_schema.php';
+try {
+    ensureDyeingBatchVerificationDymcnoColumn($db);
+} catch (Throwable $error) {
+    respond(['success' => false, 'message' => $error->getMessage()], 500);
+}
+
 $action = isset($input['action']) && is_string($input['action']) ? $input['action'] : '';
 if ($action === 'update_decisions') {
     $password = isset($input['password']) && is_string($input['password']) ? $input['password'] : '';
@@ -127,7 +134,7 @@ if ($action === 'update_decisions') {
         }
         $insertMissingStmt = $db->prepare(
             "INSERT INTO dyeing_batch_verification (
-                BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, BUYER, STYLE, COLOR, MCNO,
+                BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, BUYER, STYLE, COLOR, DYMCNO,
                 MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
                 YTYPE, YCOUNT, YBRAND, CATEGORY, SINCHARGE, SUPERVISOR, BINCHARGE,
                 BMANAGER, DOP, DID
@@ -309,7 +316,7 @@ try {
         BUYER VARCHAR(100) DEFAULT NULL,
         STYLE VARCHAR(100) DEFAULT NULL,
         COLOR VARCHAR(100) DEFAULT NULL,
-        MCNO VARCHAR(100) DEFAULT NULL,
+        DYMCNO VARCHAR(100) DEFAULT NULL,
         MCDIA VARCHAR(100) DEFAULT NULL,
         CUSTOMER VARCHAR(100) DEFAULT NULL,
         O_T VARCHAR(20) DEFAULT NULL,
@@ -337,7 +344,7 @@ try {
     }
 
     $insertSql = "INSERT INTO dyeing_batch_verification (
-        BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, BUYER, STYLE, COLOR, MCNO,
+        BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, BUYER, STYLE, COLOR, DYMCNO,
         MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
         YTYPE, YCOUNT, YBRAND, CATEGORY, SINCHARGE, SUPERVISOR, BINCHARGE,
         BMANAGER, DOP, DID

@@ -34,6 +34,15 @@ $errorMessage = '';
         $verificationTableResult->free();
     }
 
+    if ($errorMessage === '' && $hasVerificationTable) {
+        try {
+            require_once 'batch_verification_schema.php';
+            ensureDyeingBatchVerificationDymcnoColumn($db);
+        } catch (Throwable $error) {
+            $errorMessage = 'Could not update verification table schema: ' . $error->getMessage();
+        }
+    }
+
     if ($errorMessage === '') {
         $filterExpressions = [
             'batch' => 'd.BCARD',
@@ -58,6 +67,7 @@ $errorMessage = '';
                                COALESCE(v.PO_NUMBER, d.PO_NUMBER) AS PO_NUMBER,
                                COALESCE(v.COLOR, d.COLOR) AS COLOR,
                                COALESCE(v.QTY, d.QTY) AS QTY,
+                               COALESCE(v.DYMCNO, d.DYMCNO) AS DYMCNO,
                                COALESCE(v.SONO, d.SONO) AS SONO,
                                COALESCE(v.BUYER, d.BUYER) AS BUYER,
                                COALESCE(v.STYLE, d.STYLE) AS STYLE,
@@ -105,7 +115,7 @@ $errorMessage = '';
                         LEFT JOIN dyeing_batch_verification v
                             ON v.BCARD = d.BCARD AND v.ROLL = d.ROLL";
         } else {
-            $sql = "SELECT d.ROLL, d.BCARD, d.PO_NUMBER, d.COLOR, d.QTY, d.SONO,
+            $sql = "SELECT d.ROLL, d.BCARD, d.PO_NUMBER, d.COLOR, d.QTY, d.DYMCNO, d.SONO,
                                d.BUYER, d.STYLE, d.MCDIA, d.CUSTOMER, d.O_T, d.SL,
                                d.FTYPE, d.FGSM, d.FDIA, d.YTYPE, d.YCOUNT, d.YBRAND,
                                d.FEEDER_PLAN, d.LOT_NO, d.CATEGORY,
@@ -199,6 +209,7 @@ function h($value)
             text-decoration: none;
             cursor: pointer;
         }
+        .button[hidden] { display: none; }
         .back { background: #111827; }
         .panel { padding: 18px; margin-bottom: 14px; }
         .filters {
@@ -376,16 +387,16 @@ function h($value)
                     <table>
                         <thead>
                             <tr>
-                                <th>Roll</th><th>Batch</th><th>PO Number</th><th>Color</th><th>QTY</th><th>SONO</th>
+                                <th data-action-header>Action</th><th>Roll</th><th>Batch</th><th>PO Number</th><th>Color</th><th>QTY</th><th>MC NO</th><th>SONO</th>
                                 <th>Buyer</th><th>Style</th><th>MC Dia</th><th>Customer</th><th>O / T</th>
-                                <th>SL/VQ</th><th>Fabrics Type</th><th>GSM</th><th>Finish Dia</th>
+                                <th>SL/VQ</th><th>Fabrics Type</th><th>GSM</th><th>Dia</th>
                                 <th>Yarn Type</th><th>Yarn Count</th><th>Yarn Brand</th><th>Feeder Plan</th>
-                                <th>Lot No</th><th>Category</th><th data-action-header hidden>Action</th>
+                                <th>Lot No</th><th>Category</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if (!$rows): ?>
-                                <tr><td class="empty" colspan="22">No matching delivery records found.</td></tr>
+                                <tr><td class="empty" colspan="23">No matching delivery records found.</td></tr>
                             <?php else: ?>
                                 <?php foreach ($rows as $row): ?>
                                     <tr class="delivery-row"
@@ -396,11 +407,16 @@ function h($value)
                                         data-supervisor="<?php echo h($row['SUPERVISOR'] ?? ''); ?>"
                                         data-bincharge="<?php echo h($row['BINCHARGE'] ?? ''); ?>"
                                         data-bmanager="<?php echo h($row['BMANAGER'] ?? ''); ?>">
+                                        <td data-action-cell>
+                                            <button class="button approve-batch" type="button" hidden>Approval</button>
+                                            <button class="button edit-verification" type="button" hidden>Edit</button>
+                                        </td>
                                         <td><?php echo h($row['ROLL']); ?></td>
                                         <td data-batch-cell><?php echo h($row['BCARD']); ?></td>
                                         <td data-column="PO_NUMBER"><?php echo h($row['PO_NUMBER']); ?></td>
                                         <td data-column="COLOR"><?php echo h($row['COLOR']); ?></td>
                                         <td data-column="QTY"><?php echo h($row['QTY']); ?></td>
+                                        <td data-column="DYMCNO"><?php echo h($row['DYMCNO']); ?></td>
                                         <td data-column="SONO"><?php echo h($row['SONO']); ?></td>
                                         <td data-column="BUYER"><?php echo h($row['BUYER']); ?></td>
                                         <td data-column="STYLE"><?php echo h($row['STYLE']); ?></td>
@@ -417,15 +433,12 @@ function h($value)
                                         <td data-column="FEEDER_PLAN"><?php echo h($row['FEEDER_PLAN']); ?></td>
                                         <td data-column="LOT_NO"><?php echo h($row['LOT_NO']); ?></td>
                                         <td data-column="CATEGORY"><?php echo h($row['CATEGORY']); ?></td>
-                                        <td data-action-cell hidden>
-                                            <button class="button edit-verification" type="button">Edit</button>
-                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php endif; ?>
                             <?php if ($rows): ?>
                                 <tr id="emptyTabRow" hidden>
-                                    <td class="empty" colspan="22">There are no batches in this status.</td>
+                                    <td class="empty" colspan="23">There are no batches in this status.</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
@@ -463,6 +476,7 @@ function h($value)
         <script>
             (function() {
                 var approvalButtons = Array.from(document.querySelectorAll('.approval-choice'));
+                var approvalBatchButtons = Array.from(document.querySelectorAll('.approve-batch'));
                 var approvalCount = document.getElementById('approvalCount');
                 var doneButton = document.getElementById('verificationDoneButton');
                 var result = document.getElementById('verificationResult');
@@ -482,10 +496,8 @@ function h($value)
                 var authorizedPassword = null;
                 var decisions = {};
                 var completed = false;
+                var activeApprovalBatch = null;
                 var activeStatus = 'verification';
-                var batchIds = Array.from(new Set(rows.map(function(row) {
-                    return row.dataset.batch;
-                })));
                 var statuses = {};
                 rows.forEach(function(row) {
                     statuses[rowKey(row)] = row.dataset.status || 'verification';
@@ -495,7 +507,14 @@ function h($value)
                     return row.dataset.batch + '\u0000' + row.dataset.roll;
                 }
 
-                function showSuccessAndReload(title, message) {
+                function showSuccessAndReload(title, message, clearSearch) {
+                    var reloadPage = function() {
+                        if (clearSearch) {
+                            window.location.replace(window.location.pathname);
+                            return;
+                        }
+                        window.location.reload();
+                    };
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
                             icon: 'success',
@@ -506,7 +525,7 @@ function h($value)
                             showConfirmButton: false,
                             allowOutsideClick: false
                         }).then(function() {
-                            window.location.reload();
+                            reloadPage();
                         });
                         return;
                     }
@@ -514,7 +533,7 @@ function h($value)
                     result.textContent = message;
                     result.hidden = false;
                     window.setTimeout(function() {
-                        window.location.reload();
+                        reloadPage();
                     }, 3000);
                 }
 
@@ -539,7 +558,7 @@ function h($value)
                         var status = statuses[rowKey(row)] || 'verification';
                         if (Object.prototype.hasOwnProperty.call(counts, status)) counts[status]++;
                     });
-                    actionHeader.hidden = activeStatus === 'verification';
+                    actionHeader.hidden = false;
                     if (activeEditButton && statuses[rowKey(activeEditButton.closest('.delivery-row'))] !== activeStatus) {
                         roleDecisionPanel.hidden = true;
                     }
@@ -547,9 +566,12 @@ function h($value)
                         var status = statuses[rowKey(row)] || 'verification';
                         var isVisible = status === activeStatus;
                         row.hidden = !isVisible;
-                        row.querySelector('[data-action-cell]').hidden =
-                            !isVisible || (status !== 'pass' && status !== 'fail');
+                        var actionCell = row.querySelector('[data-action-cell]');
+                        actionCell.hidden = !isVisible;
                         row.querySelector('[data-action-cell]').rowSpan = 1;
+                        row.querySelector('.approve-batch').hidden = status !== 'verification';
+                        row.querySelector('.edit-verification').hidden =
+                            status !== 'pass' && status !== 'fail';
                         var batchCell = row.querySelector('[data-batch-cell]');
                         batchCell.hidden = false;
                         batchCell.rowSpan = 1;
@@ -567,14 +589,10 @@ function h($value)
                         var firstBatchCell = visibleRows[index].querySelector('[data-batch-cell]');
                         firstBatchCell.rowSpan = groupEnd - index;
                         var firstActionCell = visibleRows[index].querySelector('[data-action-cell]');
-                        if (activeStatus === 'pass' || activeStatus === 'fail') {
-                            firstActionCell.rowSpan = groupEnd - index;
-                        }
+                        firstActionCell.rowSpan = groupEnd - index;
                         for (var duplicateIndex = index + 1; duplicateIndex < groupEnd; duplicateIndex++) {
                             visibleRows[duplicateIndex].querySelector('[data-batch-cell]').hidden = true;
-                            if (activeStatus === 'pass' || activeStatus === 'fail') {
-                                visibleRows[duplicateIndex].querySelector('[data-action-cell]').hidden = true;
-                            }
+                            visibleRows[duplicateIndex].querySelector('[data-action-cell]').hidden = true;
                         }
                         index = groupEnd;
                     }
@@ -584,7 +602,8 @@ function h($value)
                     tabs.forEach(function(tab) {
                         tab.setAttribute('aria-pressed', tab.dataset.status === activeStatus ? 'true' : 'false');
                     });
-                    approvalPanel.hidden = activeStatus !== 'verification' || counts.verification === 0;
+                    approvalPanel.hidden = activeStatus !== 'verification' ||
+                        counts.verification === 0 || !activeApprovalBatch;
                 }
 
                 function updateApprovals() {
@@ -599,21 +618,49 @@ function h($value)
                     }).length;
                     approvalCount.textContent = passed + ' PASS, ' + failed +
                         ' FAIL. At least 2 matching decisions with no tie are required.';
-                    doneButton.disabled = completed ||
+                    doneButton.disabled = completed || !activeApprovalBatch ||
                         !((passed >= 2 && passed > failed) || (failed >= 2 && failed > passed));
                 }
 
                 tabs.forEach(function(tab) {
                     tab.addEventListener('click', function() {
                         activeStatus = this.dataset.status;
+                        if (activeStatus !== 'verification') {
+                            activeApprovalBatch = null;
+                            decisions = {};
+                            completed = false;
+                            approvalButtons.forEach(function(button) {
+                                button.setAttribute('aria-pressed', 'false');
+                            });
+                            updateApprovals();
+                        }
                         result.hidden = true;
                         updateTabs();
                     });
                 });
 
+                approvalBatchButtons.forEach(function(button) {
+                    button.addEventListener('click', function() {
+                        var row = this.closest('.delivery-row');
+                        if (!row || statuses[rowKey(row)] !== 'verification') return;
+                        activeApprovalBatch = row.dataset.batch;
+                        decisions = {};
+                        completed = false;
+                        approvalButtons.forEach(function(approvalButton) {
+                            approvalButton.setAttribute('aria-pressed', 'false');
+                        });
+                        result.hidden = true;
+                        approvalPanel.hidden = false;
+                        approvalPanel.querySelector('.approval-title').textContent =
+                            'Batch Approval - ' + activeApprovalBatch;
+                        updateApprovals();
+                        approvalPanel.scrollIntoView({behavior: 'smooth', block: 'center'});
+                    });
+                });
+
                 approvalButtons.forEach(function(button) {
                     button.addEventListener('click', function() {
-                        if (completed) return;
+                        if (completed || !activeApprovalBatch) return;
                         var role = this.dataset.approval;
                         var decision = this.dataset.decision;
                         decisions[role] = decision;
@@ -639,12 +686,7 @@ function h($value)
                         return decisions[role] === 'fail';
                     }).length;
                     var finalStatus = passed > failed ? 'pass' : 'fail';
-                    var pendingBatchIds = batchIds.filter(function(batchId) {
-                        return rows.some(function(row) {
-                            return row.dataset.batch === batchId &&
-                                statuses[rowKey(row)] === 'verification';
-                        });
-                    });
+                    var pendingBatchIds = activeApprovalBatch ? [activeApprovalBatch] : [];
                     var roleColumns = ['SINCHARGE', 'SUPERVISOR', 'BINCHARGE', 'BMANAGER'];
                     var savedDecisions = {};
                     roleColumns.forEach(function(column, index) {
@@ -695,7 +737,8 @@ function h($value)
                         updateTabs();
                         showSuccessAndReload(
                             'Verification Saved',
-                            'Batch verification data was saved successfully.'
+                            'Batch verification data was saved successfully.',
+                            true
                         );
                     } catch (error) {
                         result.textContent = 'Verification was not saved: ' + error.message;
