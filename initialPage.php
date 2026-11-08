@@ -93,6 +93,10 @@ if (isset($_POST['dyeing_batch_split'])) {
     header('location:dyeing_batch_split.php');
     exit();
 }
+if (isset($_POST['batch_verification'])) {
+    header('Location: dyeing_batch_verification.php');
+    exit();
+}
 if (isset($_POST['user_management'])) {
     $_SESSION['lineNo'] = $_POST['option'];
     header('location:user_management.php');
@@ -675,6 +679,10 @@ mysqli_close($db);
 
                     <button class="w3-button w3-teal" name="dyeing_batch_split" id="dyeing_batch_split">
                         <i class="fas fa-scissors"></i> Batch Split
+                    </button>
+
+                    <button class="w3-button w3-teal" name="batch_verification" id="batch_verification">
+                        <i class="fas fa-clipboard-check"></i> Batch Verification
                     </button>
                     <?php endif; ?>
                     <button class="w3-button w3-teal" name="user_management" id="user_management">
