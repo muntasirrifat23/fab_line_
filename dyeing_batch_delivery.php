@@ -108,6 +108,12 @@ if (!isset($_SESSION['username'])) {
         tfoot th { padding: 12px 9px; background: #ecfdf5; color: #065f46; text-align: right; white-space: nowrap; }
         .actions { display: flex; justify-content: flex-end; margin-top: 14px; }
         .roll-badge { display: inline-block; padding: 4px 9px; border-radius: 20px; color: #065f46; background: #ccfbf1; font-weight: 800; }
+        .remove-roll-button {
+            min-height: 32px;
+            padding: 5px 9px;
+            background: #fee2e2;
+            color: #b91c1c;
+        }
         @media (max-width: 800px) {
             body { padding: 9px; }
             .header { flex-wrap: wrap; }
@@ -130,7 +136,7 @@ if (!isset($_SESSION['username'])) {
                 <div class="summary-item">Batch: <span id="summaryCardNo">-</span></div>
                 <div class="summary-item">Rolls scanned: <span id="scannedCount">0</span> / <span id="expectedCount">0</span></div>
                 <div class="summary-item">Scanned QTY: <span id="scannedQty">0.000</span> KG</div>
-                <div class="summary-item">Batch total QTY: <span id="expectedQty">0.000</span> KG</div>
+                <div class="summary-item">Batch Total QTY: <span id="expectedQty">0.000</span> KG</div>
             </div>
             <div class="camera-layout">
                 <div class="scanner-stage">
@@ -145,7 +151,7 @@ if (!isset($_SESSION['username'])) {
                     <form class="scan-form" id="rollForm">
                         <div class="field">
                             <label for="rollInput">Roll Number</label>
-                            <input type="text" id="rollInput" autocomplete="off" placeholder="Scan or enter roll number">
+                            <input type="text" id="rollInput" autocomplete="off" placeholder="Scan or enter roll number, then press Enter">
                         </div>
                         <div class="field">
                             <label for="remainingQtyInput">Remaining QTY (KG)</label>
@@ -155,7 +161,6 @@ if (!isset($_SESSION['username'])) {
                             <label for="requestQtyInput">Request QTY (KG)</label>
                             <input type="number" id="requestQtyInput" min="0" step="0.001" value="0" placeholder="Extra quantity requested">
                         </div>
-                        <button type="submit" id="addRollBtn">Add Roll</button>
                     </form>
                 </div>
             </div>
@@ -167,15 +172,15 @@ if (!isset($_SESSION['username'])) {
                 <table>
                     <thead>
                         <tr>
-                            <th>Roll</th><th>PO Number</th><th>Color</th><th>QTY</th><th>DYMC NO</th>
+                            <th>Action</th><th>Roll</th><th>PO NO</th><th>Color</th><th>QTY</th><th>MC NO</th>
                             <th>SONO</th><th>Buyer</th><th>Style</th><th>MC Dia</th><th>Customer</th>
-                            <th>Open / Tube</th><th>SL/VQ</th><th>Fabrics Type</th><th>Finish GSM</th>
+                            <th>O / T</th><th>SL/VQ</th><th>Fabrics Type</th><th>GSM</th>
                             <th>Finish Dia</th><th>Yarn Type</th><th>Yarn Count</th><th>Yarn Brand</th>
                             <th>Feeder Plan</th><th>Lot No</th><th>Category</th>
                         </tr>
                     </thead>
                     <tbody id="scannedRows">
-                        <tr><td colspan="21">Scan rolls after loading a batch card.</td></tr>
+                        <tr><td colspan="22">Scan rolls after loading a batch card.</td></tr>
                     </tbody>
                     <tfoot id="scannedFooter"></tfoot>
                 </table>
@@ -195,7 +200,6 @@ if (!isset($_SESSION['username'])) {
             var rollForm = document.getElementById('rollForm');
             var rollInput = document.getElementById('rollInput');
             var remainingQtyInput = document.getElementById('remainingQtyInput');
-            var addRollBtn = document.getElementById('addRollBtn');
             var confirmBtn = document.getElementById('confirmBtn');
             var cameraBtn = document.getElementById('cameraBtn');
             var switchCameraBtn = document.getElementById('switchCameraBtn');
@@ -222,7 +226,6 @@ if (!isset($_SESSION['username'])) {
                 message.className = 'message';
                 scanPopupActive = true;
                 rollInput.disabled = true;
-                addRollBtn.disabled = true;
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         icon: icon || 'warning',
@@ -235,28 +238,20 @@ if (!isset($_SESSION['username'])) {
                         allowEscapeKey: false
                     }).then(function() {
                         scanPopupActive = false;
-                        rollInput.disabled = false;
-                        addRollBtn.disabled = false;
-                        rollInput.focus();
+                        rollInput.disabled = delivered;
+                        if (!delivered) rollInput.focus();
                     });
                     return;
                 }
 
-                showMessage(text, 'error');
+                showMessage(text, icon === 'success' ? 'success' : 'error');
                 window.setTimeout(function() {
                     message.textContent = '';
                     message.className = 'message';
                     scanPopupActive = false;
-                    rollInput.disabled = false;
-                    addRollBtn.disabled = false;
-                    rollInput.focus();
+                    rollInput.disabled = delivered;
+                    if (!delivered) rollInput.focus();
                 }, duration || 3000);
-            }
-
-            function wait(milliseconds) {
-                return new Promise(function(resolve) {
-                    window.setTimeout(resolve, milliseconds);
-                });
             }
 
             function escapeHtml(value) {
@@ -310,7 +305,7 @@ if (!isset($_SESSION['username'])) {
                 document.getElementById('expectedQty').textContent = formatQty(targetQty);
                 remainingQtyInput.value = batch ? formatQty(Math.max(0, targetQty - total)) : '-';
                 document.getElementById('scannedFooter').innerHTML =
-                    '<tr><th colspan="3">Scanned total QTY</th><th>' + formatQty(total) +
+                    '<tr><th colspan="4">Scanned total QTY</th><th>' + formatQty(total) +
                     ' KG</th><th colspan="17"></th></tr>';
 
                 var allRollsScanned = batch && scannedRolls.size === batch.rows.length;
@@ -321,8 +316,11 @@ if (!isset($_SESSION['username'])) {
             function renderScannedRows() {
                 var rows = Array.from(scannedRolls.values());
                 document.getElementById('scannedRows').innerHTML = rows.length
-                    ? rows.map(function(row) {
+                    ? rows.map(function(row, index) {
                         return '<tr>' +
+                            '<td><button class="remove-roll-button" type="button" data-remove-roll-index="' +
+                            index + '" aria-label="Remove this roll" title="Remove roll"' +
+                            (delivered ? ' disabled' : '') + '>🗑</button></td>' +
                             '<td><span class="roll-badge">' + escapeHtml(row.ROLL) + '</span></td>' +
                             '<td>' + escapeHtml(row.PO_NUMBER) + '</td>' +
                             '<td>' + escapeHtml(row.COLOR) + '</td>' +
@@ -346,8 +344,18 @@ if (!isset($_SESSION['username'])) {
                             '<td>' + escapeHtml(row.CATEGORY) + '</td>' +
                             '</tr>';
                     }).join('')
-                    : '<tr><td colspan="21">Scan rolls after loading a batch card.</td></tr>';
+                    : '<tr><td colspan="22">Scan rolls after loading a batch card.</td></tr>';
                 updateSummary();
+            }
+
+            function removeScannedRoll(index) {
+                if (delivered) return;
+                var row = Array.from(scannedRolls.values())[index];
+                if (!row) return;
+                scannedRolls.delete(String(row.ROLL));
+                renderScannedRows();
+                showMessage('Roll ' + row.ROLL + ' removed. You can scan or enter it again.', 'info');
+                rollInput.focus();
             }
 
             function addScannedRoll(rawRoll) {
@@ -359,7 +367,6 @@ if (!isset($_SESSION['username'])) {
                 }
                 processingRoll = true;
                 rollInput.disabled = true;
-                addRollBtn.disabled = true;
 
                 var resolveBatch = batch
                     ? Promise.resolve(batch)
@@ -413,14 +420,12 @@ if (!isset($_SESSION['username'])) {
                     scannedRolls.set(roll, row);
                     scannedPanel.classList.remove('is-hidden');
                     renderScannedRows();
-                    return wait(2000).then(function() {
-                        showScanPopup(
-                            'Roll ' + roll + ' added successfully to Batch Card ' + batch.card_no + '.',
-                            'Roll Added Successfully',
-                            'success',
-                            1000
-                        );
-                    });
+                    showScanPopup(
+                        'Roll ' + roll + ' added successfully to Batch Card ' + batch.card_no + '.',
+                        'Roll Added Successfully',
+                        'success',
+                        1000
+                    );
                 }).catch(function(error) {
                     showScanPopup(error.message);
                 }).then(function() {
@@ -432,8 +437,7 @@ if (!isset($_SESSION['username'])) {
                 processingRoll = false;
                 rollInput.value = '';
                 rollInput.disabled = delivered || scanPopupActive;
-                addRollBtn.disabled = delivered || scanPopupActive;
-                rollInput.focus();
+                if (!delivered && !scanPopupActive) rollInput.focus();
             }
 
             function stopCamera() {
@@ -500,6 +504,17 @@ if (!isset($_SESSION['username'])) {
                 event.preventDefault();
                 addScannedRoll(rollInput.value);
             });
+            rollInput.addEventListener('keydown', function(event) {
+                if (event.key !== 'Enter') return;
+                event.preventDefault();
+                addScannedRoll(rollInput.value);
+            });
+
+            document.getElementById('scannedRows').addEventListener('click', function(event) {
+                var button = event.target.closest('[data-remove-roll-index]');
+                if (!button || !this.contains(button)) return;
+                removeScannedRoll(Number(button.dataset.removeRollIndex));
+            });
 
             cameraBtn.addEventListener('click', startCamera);
             switchCameraBtn.addEventListener('click', switchCamera);
@@ -517,12 +532,18 @@ if (!isset($_SESSION['username'])) {
                     total_qty: Number(batch.target_qty)
                 }).then(function(response) {
                     delivered = true;
+                    renderScannedRows();
                     var confirmationMessage = response.message + ' ' + response.roll_count + ' roll(s), ' +
                         formatQty(response.total_qty) + ' KG.';
                     alreadyDeliveredMessage = 'Batch Card ' + batch.card_no + ' was already delivered.';
-                    showScanPopup(confirmationMessage, 'Delivery Confirmed', 'success');
+                    rollInput.disabled = true;
                     confirmBtn.textContent = 'Delivery Confirmed';
-                    stopCamera();
+                    showMessage(confirmationMessage + ' Refreshing...', 'success');
+                    return stopCamera().then(function() {
+                        window.setTimeout(function() {
+                            window.location.reload();
+                        }, 1200);
+                    });
                 }).catch(function(error) {
                     showScanPopup(error.message, 'Batch Delivery Error', 'error');
                     confirmBtn.disabled = false;
