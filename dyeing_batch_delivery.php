@@ -222,6 +222,7 @@ if (!isset($_SESSION['username'])) {
             var processingRoll = false;
             var scanPopupActive = false;
             var delivered = false;
+            var batchAlreadyDelivered = false;
             var alreadyDeliveredMessage = '';
             var cameraFacingMode = 'environment';
             var cameraSwitching = false;
@@ -322,7 +323,7 @@ if (!isset($_SESSION['username'])) {
                 var allRollsScanned = batch && scannedRolls.size === batch.rows.length;
                 deliveryPanel.classList.toggle('is-hidden', Boolean(allRollsScanned));
                 var isOverQty = batch && total - targetQty > 0.0005;
-                confirmBtn.disabled = delivered || !allRollsScanned || isOverQty;
+                confirmBtn.disabled = delivered || batchAlreadyDelivered || !allRollsScanned || isOverQty;
             }
 
             function renderScannedRows() {
@@ -384,6 +385,10 @@ if (!isset($_SESSION['username'])) {
                     showScanPopup(alreadyDeliveredMessage, 'Batch Already Delivered', 'error');
                     return;
                 }
+                if (batchAlreadyDelivered) {
+                    showScanPopup(alreadyDeliveredMessage, 'Batch Already Delivered', 'error');
+                    return;
+                }
                 processingRoll = true;
                 rollInput.disabled = true;
 
@@ -397,21 +402,24 @@ if (!isset($_SESSION['username'])) {
                         document.getElementById('summaryCardNo').textContent = response.card_no;
                         document.getElementById('expectedCount').textContent = String(response.roll_count);
                         document.getElementById('expectedQty').textContent = formatQty(response.target_qty);
-                        updateSummary();
                         if (response.delivery) {
-                            delivered = true;
+                            batchAlreadyDelivered = true;
                             alreadyDeliveredMessage = 'Batch Card ' + response.card_no + ' was already delivered on ' +
                                 response.delivery.BUDAT + ' by ' + response.delivery.DOP +
                                 ' (ID: ' + response.delivery.DID + ').';
-                            showScanPopup(alreadyDeliveredMessage, 'Batch Already Delivered', 'error');
                         } else {
                             showMessage('Batch Card ' + response.card_no + ' found. Scan its remaining rolls.', 'info');
                         }
+                        updateSummary();
                         return response;
                     });
 
                 resolveBatch.then(function() {
                     if (delivered) return;
+                    if (batchAlreadyDelivered) {
+                        showScanPopup(alreadyDeliveredMessage, 'Batch Already Delivered', 'error');
+                        return;
+                    }
                     if (!expectedByRoll.has(roll)) {
                         showScanPopup('Not match this roll for this batch: ' + roll);
                         return;
