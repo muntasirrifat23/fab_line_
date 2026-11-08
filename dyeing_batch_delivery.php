@@ -559,16 +559,13 @@ if (!isset($_SESSION['username'])) {
                 }).then(function(response) {
                     delivered = true;
                     renderScannedRows();
-                    var confirmationMessage = response.message + ' ' + response.roll_count + ' roll(s), ' +
-                        formatQty(response.total_qty) + ' KG.';
                     alreadyDeliveredMessage = 'Batch Card ' + batch.card_no + ' was already delivered.';
                     rollInput.disabled = true;
                     confirmBtn.textContent = 'Delivery Confirmed';
-                    showMessage(
-                        'Batch Card ' + response.card_no + ' successfully delivered. ' +
-                        response.roll_count + ' roll(s), ' + formatQty(response.total_qty) + ' KG.',
-                        'success'
-                    );
+                    var confirmationMessage = 'Batch Card ' + response.card_no +
+                        ' successfully delivered. ' +
+                        response.roll_count + ' roll(s), ' + formatQty(response.total_qty) + ' KG.';
+                    showScanPopup(confirmationMessage, 'Delivery Confirmed', 'success', 3000);
                     return stopCamera().then(function() {
                         window.setTimeout(function() {
                             window.location.reload();
