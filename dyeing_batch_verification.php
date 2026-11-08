@@ -150,6 +150,16 @@ function h($value)
         thead th { position: sticky; top: 0; z-index: 1; color: #fff; background: #134e4a; }
         tbody tr:nth-child(even) { background: #f8fafc; }
         .empty { padding: 24px; text-align: center; color: #64748b; }
+        .verification-tabs { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+        .verification-tab { min-width: 120px; background: #e2e8f0; color: #334155; }
+        .verification-tab[data-status="verification"] { background: #dbeafe; color: #1d4ed8; }
+        .verification-tab[data-status="pass"] { background: #bbf7d0; color: #065f46; }
+        .verification-tab[data-status="fail"] { background: #fee2e2; color: #991b1b; }
+        .verification-tab[aria-pressed="true"][data-status="verification"] { background: #2563eb; color: #fff; }
+        .verification-tab[aria-pressed="true"][data-status="pass"] { background: #047857; color: #fff; }
+        .verification-tab[aria-pressed="true"][data-status="fail"] { background: #dc2626; color: #fff; }
+        .move-to-pass { min-height: 34px; padding: 6px 10px; background: #047857; }
+        .move-to-pass[hidden] { display: none; }
         .approval-panel { margin-top: 16px; padding-top: 16px; border-top: 1px solid #dbe5e4; }
         .approval-title { margin: 0 0 12px; color: #134e4a; font-size: 1rem; }
         .approvals { display: grid; grid-template-columns: repeat(4, minmax(150px, 1fr)); gap: 12px; }
@@ -195,6 +205,18 @@ function h($value)
             <h1><i class="fas fa-clipboard-check"></i> Batch Verification</h1>
         </header>
 
+        <nav class="verification-tabs" aria-label="Verification status">
+            <button class="button verification-tab" type="button" data-status="verification" aria-pressed="true"<?php echo (!$searched || $errorMessage !== '' || !$rows) ? ' disabled' : ''; ?>>
+                Verification
+            </button>
+            <button class="button verification-tab" type="button" data-status="pass" aria-pressed="false"<?php echo (!$searched || $errorMessage !== '' || !$rows) ? ' disabled' : ''; ?>>
+                Pass
+            </button>
+            <button class="button verification-tab" type="button" data-status="fail" aria-pressed="false"<?php echo (!$searched || $errorMessage !== '' || !$rows) ? ' disabled' : ''; ?>>
+                Fail
+            </button>
+        </nav>
+
         <section class="panel">
             <form method="get" class="filters">
                 <div>
@@ -235,15 +257,15 @@ function h($value)
                                 <th>Buyer</th><th>Style</th><th>MC Dia</th><th>Customer</th><th>Open / Tube</th>
                                 <th>SL/VQ</th><th>Fabrics Type</th><th>Finish GSM</th><th>Finish Dia</th>
                                 <th>Yarn Type</th><th>Yarn Count</th><th>Yarn Brand</th><th>Feeder Plan</th>
-                                <th>Lot No</th><th>Category</th>
+                                <th>Lot No</th><th>Category</th><th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if (!$rows): ?>
-                                <tr><td class="empty" colspan="20">No matching delivery records found.</td></tr>
+                                <tr><td class="empty" colspan="21">No matching delivery records found.</td></tr>
                             <?php else: ?>
                                 <?php foreach ($rows as $row): ?>
-                                    <tr>
+                                    <tr class="delivery-row" data-batch="<?php echo h($row['BCARD']); ?>">
                                         <td><?php echo h($row['BCARD']); ?></td>
                                         <td><?php echo h($row['PO_NUMBER']); ?></td>
                                         <td><?php echo h($row['COLOR']); ?></td>
@@ -264,8 +286,14 @@ function h($value)
                                         <td><?php echo h($row['FEEDER_PLAN']); ?></td>
                                         <td><?php echo h($row['LOT_NO']); ?></td>
                                         <td><?php echo h($row['CATEGORY']); ?></td>
+                                        <td><button class="button move-to-pass" type="button" hidden>Move to Pass</button></td>
                                     </tr>
                                 <?php endforeach; ?>
+                            <?php endif; ?>
+                            <?php if ($rows): ?>
+                                <tr id="emptyTabRow" hidden>
+                                    <td class="empty" colspan="21">There are no batches in this status.</td>
+                                </tr>
                             <?php endif; ?>
                         </tbody>
                     </table>
@@ -285,7 +313,7 @@ function h($value)
                             <?php endforeach; ?>
                         </div>
                         <div class="approval-footer">
-                            <p class="approval-count" id="approvalCount" aria-live="polite">0 PASS, 0 FAIL. At least 2 PASS approvals are required.</p>
+                            <p class="approval-count" id="approvalCount" aria-live="polite">0 PASS, 0 FAIL. At least 2 matching decisions with no tie are required.</p>
                             <button class="button" type="button" id="verificationDoneButton" disabled>Verification Done</button>
                         </div>
                         <p class="verification-result" id="verificationResult" role="status" hidden></p>
@@ -297,12 +325,79 @@ function h($value)
     <?php if ($searched && $errorMessage === '' && $rows): ?>
         <script>
             (function() {
+                var storageKey = 'fablineBatchVerificationStatus';
                 var approvalButtons = Array.from(document.querySelectorAll('.approval-choice'));
                 var approvalCount = document.getElementById('approvalCount');
                 var doneButton = document.getElementById('verificationDoneButton');
                 var result = document.getElementById('verificationResult');
+                var tabs = Array.from(document.querySelectorAll('.verification-tab'));
+                var rows = Array.from(document.querySelectorAll('.delivery-row'));
+                var emptyTabRow = document.getElementById('emptyTabRow');
+                var approvalPanel = document.getElementById('approvalPanel');
                 var decisions = {};
                 var completed = false;
+                var activeStatus = 'verification';
+                var statuses;
+
+                try {
+                    statuses = JSON.parse(window.localStorage.getItem(storageKey) || '{}');
+                    if (!statuses || typeof statuses !== 'object' || Array.isArray(statuses)) {
+                        statuses = {};
+                    }
+                    Object.keys(statuses).forEach(function(batchId) {
+                        if (statuses[batchId] !== 'verification' &&
+                            statuses[batchId] !== 'pass' &&
+                            statuses[batchId] !== 'fail') {
+                            delete statuses[batchId];
+                        }
+                    });
+                } catch (error) {
+                    statuses = {};
+                    result.hidden = false;
+                    result.textContent = 'Could not read saved verification statuses: ' + error.message;
+                }
+
+                var batchIds = Array.from(new Set(rows.map(function(row) {
+                    return row.dataset.batch;
+                })));
+
+                function saveStatuses() {
+                    try {
+                        window.localStorage.setItem(storageKey, JSON.stringify(statuses));
+                        return true;
+                    } catch (error) {
+                        result.hidden = false;
+                        result.textContent = 'Could not save verification status in this browser: ' + error.message;
+                        return false;
+                    }
+                }
+
+                function updateTabs() {
+                    var counts = {verification: 0, pass: 0, fail: 0};
+                    batchIds.forEach(function(batchId) {
+                        var status = statuses[batchId] || 'verification';
+                        if (Object.prototype.hasOwnProperty.call(counts, status)) counts[status]++;
+                    });
+                    var failActionAdded = {};
+                    rows.forEach(function(row) {
+                        var status = statuses[row.dataset.batch] || 'verification';
+                        var isVisible = status === activeStatus;
+                        row.hidden = !isVisible;
+                        var moveButton = row.querySelector('.move-to-pass');
+                        var hasFailAction = Boolean(failActionAdded[row.dataset.batch]);
+                        moveButton.hidden = !isVisible || status !== 'fail' || hasFailAction;
+                        if (isVisible && status === 'fail') {
+                            failActionAdded[row.dataset.batch] = true;
+                        }
+                    });
+                    emptyTabRow.hidden = rows.some(function(row) {
+                        return !row.hidden;
+                    });
+                    tabs.forEach(function(tab) {
+                        tab.setAttribute('aria-pressed', tab.dataset.status === activeStatus ? 'true' : 'false');
+                    });
+                    approvalPanel.hidden = activeStatus !== 'verification' || counts.verification === 0;
+                }
 
                 function updateApprovals() {
                     var decisionValues = Object.keys(decisions).map(function(role) {
@@ -315,9 +410,18 @@ function h($value)
                         return decision === 'fail';
                     }).length;
                     approvalCount.textContent = passed + ' PASS, ' + failed +
-                        ' FAIL. At least 2 PASS approvals are required.';
-                    doneButton.disabled = completed || passed < 2;
+                        ' FAIL. At least 2 matching decisions with no tie are required.';
+                    doneButton.disabled = completed ||
+                        !((passed >= 2 && passed > failed) || (failed >= 2 && failed > passed));
                 }
+
+                tabs.forEach(function(tab) {
+                    tab.addEventListener('click', function() {
+                        activeStatus = this.dataset.status;
+                        result.hidden = true;
+                        updateTabs();
+                    });
+                });
 
                 approvalButtons.forEach(function(button) {
                     button.addEventListener('click', function() {
@@ -340,17 +444,46 @@ function h($value)
 
                 doneButton.addEventListener('click', function() {
                     if (this.disabled) return;
+                    var passed = Object.keys(decisions).filter(function(role) {
+                        return decisions[role] === 'pass';
+                    }).length;
+                    var failed = Object.keys(decisions).filter(function(role) {
+                        return decisions[role] === 'fail';
+                    }).length;
+                    var finalStatus = passed > failed ? 'pass' : 'fail';
+                    batchIds.forEach(function(batchId) {
+                        if (!statuses[batchId] || statuses[batchId] === 'verification') {
+                            statuses[batchId] = finalStatus;
+                        }
+                    });
+                    if (!saveStatuses()) return;
                     completed = true;
                     approvalButtons.forEach(function(button) {
                         button.disabled = true;
                     });
-                    this.textContent = 'Verification Done';
-                    result.textContent = 'Verification PASS: at least 2 roles approved the displayed delivery records.';
+                    this.textContent = 'Verification ' + finalStatus.toUpperCase();
+                    activeStatus = finalStatus;
+                    result.textContent = 'Verification ' + finalStatus.toUpperCase() +
+                        ': displayed batch cards have been moved to the ' + finalStatus.toUpperCase() + ' tab.';
                     result.hidden = false;
                     updateApprovals();
+                    updateTabs();
+                });
+
+                document.querySelectorAll('.move-to-pass').forEach(function(button) {
+                    button.addEventListener('click', function() {
+                        var row = this.closest('.delivery-row');
+                        if (!row) return;
+                        statuses[row.dataset.batch] = 'pass';
+                        if (!saveStatuses()) return;
+                        result.hidden = false;
+                        result.textContent = 'Batch Card ' + row.dataset.batch + ' moved from FAIL to PASS.';
+                        updateTabs();
+                    });
                 });
 
                 updateApprovals();
+                updateTabs();
             })();
         </script>
     <?php endif; ?>
