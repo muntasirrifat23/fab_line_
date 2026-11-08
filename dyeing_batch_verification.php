@@ -35,11 +35,41 @@ $errorMessage = '';
     }
 
     if ($errorMessage === '' && $hasVerificationTable) {
-        try {
-            require_once 'batch_verification_schema.php';
-            ensureDyeingBatchVerificationDymcnoColumn($db);
-        } catch (Throwable $error) {
-            $errorMessage = 'Could not update verification table schema: ' . $error->getMessage();
+        $columnsStmt = $db->prepare(
+            "SELECT COLUMN_NAME
+             FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE()
+               AND TABLE_NAME = 'dyeing_batch_verification'
+               AND COLUMN_NAME IN ('MCNO', 'DYMCNO')"
+        );
+        if (!$columnsStmt || !$columnsStmt->execute()) {
+            $columnError = $columnsStmt ? $columnsStmt->error : $db->error;
+            if ($columnsStmt) {
+                $columnsStmt->close();
+            }
+            $errorMessage = 'Could not inspect verification table columns: ' . $columnError;
+        } else {
+            $verificationColumns = [];
+            $columnResult = $columnsStmt->get_result();
+            while ($column = $columnResult->fetch_assoc()) {
+                $verificationColumns[] = $column['COLUMN_NAME'];
+            }
+            $columnsStmt->close();
+
+            if (in_array('MCNO', $verificationColumns, true) &&
+                !in_array('DYMCNO', $verificationColumns, true)) {
+                if (!$db->query(
+                    'ALTER TABLE dyeing_batch_verification
+                     CHANGE COLUMN MCNO DYMCNO VARCHAR(100) DEFAULT NULL'
+                )) {
+                    $errorMessage = 'Could not rename MCNO to DYMCNO: ' . $db->error;
+                }
+            } elseif (!$verificationColumns && !$db->query(
+                'ALTER TABLE dyeing_batch_verification
+                 ADD COLUMN DYMCNO VARCHAR(100) DEFAULT NULL'
+            )) {
+                $errorMessage = 'Could not add DYMCNO to verification table: ' . $db->error;
+            }
         }
     }
 
@@ -392,11 +422,15 @@ function h($value)
                                 <th>SL/VQ</th><th>Fabrics Type</th><th>GSM</th><th>Dia</th>
                                 <th>Yarn Type</th><th>Yarn Count</th><th>Yarn Brand</th><th>Feeder Plan</th>
                                 <th>Lot No</th><th>Category</th>
+                                <th data-approval-column hidden>Shift Incharge</th>
+                                <th data-approval-column hidden>Supervisor</th>
+                                <th data-approval-column hidden>Batch Incharge</th>
+                                <th data-approval-column hidden>Batch Manager</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if (!$rows): ?>
-                                <tr><td class="empty" colspan="23">No matching delivery records found.</td></tr>
+                                <tr><td class="empty" colspan="27">No matching delivery records found.</td></tr>
                             <?php else: ?>
                                 <?php foreach ($rows as $row): ?>
                                     <tr class="delivery-row"
@@ -433,12 +467,16 @@ function h($value)
                                         <td data-column="FEEDER_PLAN"><?php echo h($row['FEEDER_PLAN']); ?></td>
                                         <td data-column="LOT_NO"><?php echo h($row['LOT_NO']); ?></td>
                                         <td data-column="CATEGORY"><?php echo h($row['CATEGORY']); ?></td>
+                                        <td data-approval-column hidden><?php echo h($row['SINCHARGE'] ?? ''); ?></td>
+                                        <td data-approval-column hidden><?php echo h($row['SUPERVISOR'] ?? ''); ?></td>
+                                        <td data-approval-column hidden><?php echo h($row['BINCHARGE'] ?? ''); ?></td>
+                                        <td data-approval-column hidden><?php echo h($row['BMANAGER'] ?? ''); ?></td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php endif; ?>
                             <?php if ($rows): ?>
                                 <tr id="emptyTabRow" hidden>
-                                    <td class="empty" colspan="23">There are no batches in this status.</td>
+                                    <td class="empty" colspan="27">There are no batches in this status.</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
@@ -559,6 +597,9 @@ function h($value)
                         if (Object.prototype.hasOwnProperty.call(counts, status)) counts[status]++;
                     });
                     actionHeader.hidden = false;
+                    document.querySelectorAll('[data-approval-column]').forEach(function(cell) {
+                        cell.hidden = activeStatus === 'verification';
+                    });
                     if (activeEditButton && statuses[rowKey(activeEditButton.closest('.delivery-row'))] !== activeStatus) {
                         roleDecisionPanel.hidden = true;
                     }

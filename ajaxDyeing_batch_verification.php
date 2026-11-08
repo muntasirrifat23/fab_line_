@@ -24,13 +24,6 @@ if (!is_array($input)) {
     respond(['success' => false, 'message' => 'Invalid verification request.'], 400);
 }
 
-require_once 'batch_verification_schema.php';
-try {
-    ensureDyeingBatchVerificationDymcnoColumn($db);
-} catch (Throwable $error) {
-    respond(['success' => false, 'message' => $error->getMessage()], 500);
-}
-
 $action = isset($input['action']) && is_string($input['action']) ? $input['action'] : '';
 if ($action === 'update_decisions') {
     $password = isset($input['password']) && is_string($input['password']) ? $input['password'] : '';
