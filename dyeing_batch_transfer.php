@@ -61,6 +61,8 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
             cursor: pointer;
         }
         .button.clear { color: #334155; background: #e2e8f0; }
+        .button.back-button { color: #fff; background: #000; border: 2px solid #000; }
+        .button.back-button:hover { color: #000; background: #fff; border-color: #000; }
         .button:disabled { background: #94a3b8; cursor: not-allowed; }
         .panel { padding: 18px; margin-bottom: 14px; }
         .filters {
@@ -160,7 +162,7 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
 <body>
     <main class="page">
         <header class="header">
-            <a class="button clear" href="initialPage.php"><i class="fas fa-arrow-left"></i> Back</a>
+            <a class="button back-button" href="initialPage.php"><i class="fas fa-arrow-left"></i> Back</a>
             <h1><i class="fas fa-right-left"></i> Batch Transfer</h1>
             <span></span>
         </header>

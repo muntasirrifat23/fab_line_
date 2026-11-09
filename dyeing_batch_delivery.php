@@ -43,12 +43,15 @@ if (!isset($_SESSION['username'])) {
             display: inline-block;
             padding: 9px 14px;
             color: #fff;
-            background: #111827;
+            background: #000;
+            border: 2px solid #000;
             border-radius: 8px;
             text-decoration: none;
             font-weight: 700;
             white-space: nowrap;
+            transition: 0.2s ease;
         }
+        .back:hover { color: #000; background: #fff; border-color: #000; }
         .panel { padding: 18px; margin-bottom: 14px; }
         .panel-title { margin: 0 0 14px; font-size: 1.08rem; font-weight: 800; }
         .batch-form, .scan-form { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; }

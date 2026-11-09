@@ -240,7 +240,13 @@ function h($value)
             cursor: pointer;
         }
         .button[hidden] { display: none; }
-        .back { background: #111827; }
+        .back {
+            color: #fff;
+            background: #000;
+            border: 2px solid #000;
+            transition: 0.2s ease;
+        }
+        .back:hover { color: #000; background: #fff; border-color: #000; }
         .panel { padding: 18px; margin-bottom: 14px; }
         .filters {
             display: grid;

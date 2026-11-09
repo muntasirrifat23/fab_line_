@@ -508,7 +508,7 @@ unset($_SESSION['dyeing_batch']['saved']);
 <body>
     <div class="wrap">
         <div class="top-bar">
-            <a href="initialPage.php" class="back-btn" id="backBtn"><i class="fas fa-arrow-left"></i> Back to Report</a>
+            <a href="initialPage.php" class="back-btn" id="backBtn"><i class="fas fa-arrow-left"></i> Back</a>
 
             <h1><i class="fa-solid fa-vial-circle-check"></i> Dyeing Batch Card</h1>
             <span class="card-no-badge"><i class="fa-solid fa-hashtag"></i> Batch Card: <span id="cardNo">-</span></span>
