@@ -75,9 +75,9 @@ unset($_SESSION['roll_manual_entry_authorized']);
         .message.show { display: flex; }
         .message-card {
             position: relative;
-            width: min(100%, 480px);
-            min-height: 280px;
-            padding: 48px 36px 36px;
+            width: min(100%, 420px);
+            min-height: 240px;
+            padding: 38px 28px 28px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -88,20 +88,20 @@ unset($_SESSION['roll_manual_entry_authorized']);
         }
         .message-icon {
             display: flex;
-            width: 76px;
-            height: 76px;
+            width: 66px;
+            height: 66px;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 20px;
+            margin: 0 auto 16px;
             border: 2px solid currentColor;
             border-radius: 50%;
-            font-size: 2rem;
+            font-size: 1.8rem;
         }
         .message.success .message-icon { color: #16a34a; }
         .message.warning .message-icon, .message.error .message-icon { color: #d97706; }
         .message.info .message-icon { color: #0284c7; }
-        .message-title { margin: 0 0 12px; color: #1f2937; font-size: 1.4rem; }
-        .message-text { margin: 0; color: #64748b; font-size: 1rem; line-height: 1.5; }
+        .message-title { margin: 0 0 10px; color: #1f2937; font-size: 1.3rem; }
+        .message-text { margin: 0; color: #64748b; line-height: 1.5; }
         .message-close {
             position: absolute;
             top: 8px;
@@ -248,7 +248,7 @@ unset($_SESSION['roll_manual_entry_authorized']);
                         <div class="field">
                             <label for="rollInput">Roll Number</label>
                             <div class="roll-input-group">
-                                <input type="text" id="rollInput" autocomplete="off" placeholder="Scan or enter roll number" disabled>
+                                <input type="text" id="rollInput" autocomplete="off" placeholder="Scan or enter roll number" readonly aria-disabled="true">
                                 <button class="button" type="submit" id="verifyButton" disabled>Verify Roll</button>
                             </div>
                         </div>
@@ -257,7 +257,7 @@ unset($_SESSION['roll_manual_entry_authorized']);
             </div>
         </section>
 
-        <section class="panel">
+        <section class="panel" id="batchPanel" hidden>
             <div class="batch-panel-heading"><h2 class="panel-title">Batch Rolls</h2></div>
             <div class="table-wrap">
                 <table>
@@ -298,6 +298,7 @@ unset($_SESSION['roll_manual_entry_authorized']);
             var messageText = document.getElementById('messageText');
             var messageIcon = document.getElementById('messageIcon');
             var batchRows = document.getElementById('batchRows');
+            var batchPanel = document.getElementById('batchPanel');
             var batch = null;
             var expectedByRoll = new Map();
             var fulfilled = new Set();
@@ -328,7 +329,7 @@ unset($_SESSION['roll_manual_entry_authorized']);
                 return match && match[1] ? match[1].trim() : text;
             }
 
-            function showMessage(text, kind, duration) {
+            function showMessage(text, kind, duration, title) {
                 var messageKind = kind || 'info';
                 var titles = {
                     success: 'Verification Successful',
@@ -343,7 +344,7 @@ unset($_SESSION['roll_manual_entry_authorized']);
                     info: 'fas fa-circle-info'
                 };
                 window.clearTimeout(messageTimer);
-                messageTitle.textContent = titles[messageKind] || titles.info;
+                messageTitle.textContent = title || titles[messageKind] || titles.info;
                 messageText.textContent = text;
                 messageIcon.className = icons[messageKind] || icons.info;
                 message.className = 'message show ' + messageKind;
@@ -386,10 +387,12 @@ unset($_SESSION['roll_manual_entry_authorized']);
 
             function renderRows() {
                 if (!batch || !batch.rows.length) {
+                    batchPanel.hidden = true;
                     batchRows.innerHTML = '<tr><td class="empty" colspan="20">Scan or enter a roll number to load its batch.</td></tr>';
                     updateSummary();
                     return;
                 }
+                batchPanel.hidden = false;
                 var details = [
                     'PO_NUMBER', 'COLOR', 'QTY', 'DYMCNO', 'SONO', 'BUYER', 'STYLE',
                     'MCDIA', 'CUSTOMER', 'O_T', 'SL', 'FTYPE', 'FGSM', 'FDIA',
@@ -455,7 +458,7 @@ unset($_SESSION['roll_manual_entry_authorized']);
                 var roll = extractRollValue(rawValue);
                 if (!roll || processing) return;
                 if (isManualEntry && !manualEntryAuthorized) {
-                    showMessage('Unlock manual entry with the password first.', 'warning');
+                    showMessage('Enter a valid password and select Unlock first.', 'warning', 2000, 'Manual Entry Locked');
                     return;
                 }
                 processing = true;
@@ -506,7 +509,8 @@ unset($_SESSION['roll_manual_entry_authorized']);
 
             function setManualEntryAuthorized(isAuthorized) {
                 manualEntryAuthorized = isAuthorized;
-                rollInput.disabled = !isAuthorized;
+                rollInput.readOnly = !isAuthorized;
+                rollInput.setAttribute('aria-disabled', isAuthorized ? 'false' : 'true');
                 verifyButton.disabled = !isAuthorized || processing;
                 document.querySelector('.manual-scan').classList.toggle('manual-entry-locked', !isAuthorized);
                 if (isAuthorized) rollInput.focus();
@@ -514,7 +518,7 @@ unset($_SESSION['roll_manual_entry_authorized']);
 
             rollInput.addEventListener('click', function() {
                 if (!manualEntryAuthorized) {
-                    showMessage('Enter valid Password for Unlock.', 'warning');
+                    showMessage('Enter a valid password and select Unlock first.', 'warning', 2000, 'Manual Entry Locked');
                 }
             });
 

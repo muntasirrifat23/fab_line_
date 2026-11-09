@@ -106,6 +106,10 @@ if (isset($_POST['roll_verification'])) {
     header('Location: dyeing_roll_verification.php');
     exit();
 }
+if (isset($_POST['dyeing_load'])) {
+    header('Location: dyeing_load.php');
+    exit();
+}
 if (isset($_POST['user_management'])) {
     $_SESSION['lineNo'] = $_POST['option'];
     header('location:user_management.php');
@@ -700,6 +704,10 @@ mysqli_close($db);
 
                     <button class="w3-button w3-teal" name="roll_verification" id="roll_verification">
                         <i class="fas fa-qrcode"></i> Roll Verification
+                    </button>
+
+                    <button class="w3-button w3-teal" name="dyeing_load" id="dyeing_load">
+                        <i class="fas fa-dolly"></i> Dyeing Load
                     </button>
                     <?php endif; ?>
                     <button class="w3-button w3-teal" name="user_management" id="user_management">
