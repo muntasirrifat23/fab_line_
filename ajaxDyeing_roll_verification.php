@@ -95,10 +95,10 @@ if ($action === 'save_verified_rolls') {
     }
     $insertStmt = $db->prepare(
         'INSERT INTO dyeing_roll_verification
-         (BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR, MCNO,
+         (BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, BUYER, STYLE, COLOR, MCNO,
           MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO, YTYPE,
           YCOUNT, YBRAND, CATEGORY, DOP, DID)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
     if (!$insertStmt) {
         $sourceStmt->close();
@@ -116,9 +116,6 @@ if ($action === 'save_verified_rolls') {
     $insertedRolls = [];
     $alreadySavedRolls = [];
     $saveError = '';
-    $shift = isset($_SESSION['shift']) && trim((string) $_SESSION['shift']) !== ''
-        ? trim((string) $_SESSION['shift'])
-        : null;
     $budat = date('Y-m-d');
 
     foreach ($rolls as $roll) {
@@ -180,8 +177,8 @@ if ($action === 'save_verified_rolls') {
         $dop = $value('DOP');
         $did = $value('DID');
         $insertStmt->bind_param(
-            'ssssssssssssssssssssssssss',
-            $budat, $sourceCard, $sourceRoll, $poNumber, $qty, $sono, $shift, $buyer,
+            'sssssssssssssssssssssssss',
+            $budat, $sourceCard, $sourceRoll, $poNumber, $qty, $sono, $buyer,
             $style, $color, $mcno, $mcDia, $customer, $openTube, $sl, $fabricType,
             $finishGsm, $finishDia, $feederPlan, $lotNo, $yarnType, $yarnCount,
             $yarnBrand, $category, $dop, $did

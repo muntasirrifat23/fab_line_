@@ -213,16 +213,17 @@ unset($_SESSION['roll_manual_entry_authorized']);
             <h1><i class="fas fa-qrcode"></i> Roll Verification</h1>
         </header>
 
+        <div class="message" id="message" role="status" aria-live="polite" aria-hidden="true">
+            <div class="message-card">
+                <button class="message-close" id="closeMessageButton" type="button" aria-label="Close message">&times;</button>
+                <div class="message-icon"><i id="messageIcon" class="fas fa-circle-check"></i></div>
+                <h3 class="message-title" id="messageTitle"></h3>
+                <p class="message-text" id="messageText"></p>
+            </div>
+        </div>
+
         <section class="panel" id="verificationPanel">
             <h2 class="panel-title">Scan or Enter a Roll to Find Its Batch, Then Verify Every Roll</h2>
-            <div class="message" id="message" role="status" aria-live="polite" aria-hidden="true">
-                <div class="message-card">
-                    <button class="message-close" id="closeMessageButton" type="button" aria-label="Close message">&times;</button>
-                    <div class="message-icon"><i id="messageIcon" class="fas fa-circle-check"></i></div>
-                    <h3 class="message-title" id="messageTitle"></h3>
-                    <p class="message-text" id="messageText"></p>
-                </div>
-            </div>
             <div class="summary">
                 <div class="summary-item">Batch: <span id="batchNumber">-</span></div>
                 <div class="summary-item">Total QTY: <span id="batchTotalQty">-</span></div>
@@ -291,6 +292,7 @@ unset($_SESSION['roll_manual_entry_authorized']);
             var unlockManualButton = document.getElementById('unlockManualButton');
             var manualEntryAuthorized = false;
             var saveVerifiedButton = document.getElementById('saveVerifiedButton');
+            var verificationPanel = document.getElementById('verificationPanel');
             var message = document.getElementById('message');
             var messageTitle = document.getElementById('messageTitle');
             var messageText = document.getElementById('messageText');
@@ -363,6 +365,8 @@ unset($_SESSION['roll_manual_entry_authorized']);
                     : verifiedQty.toLocaleString(undefined, {maximumFractionDigits: 3});
                 document.getElementById('verifiedCount').textContent = String(fulfilled.size);
                 document.getElementById('totalCount').textContent = batch ? String(batch.rows.length) : '0';
+                verificationPanel.hidden = Boolean(batch && batch.rows.length > 0 &&
+                    fulfilled.size === batch.rows.length);
                 saveVerifiedButton.disabled = savingVerifiedRolls || !batch ||
                     batch.rows.length === 0 || fulfilled.size !== batch.rows.length;
             }
@@ -611,7 +615,8 @@ unset($_SESSION['roll_manual_entry_authorized']);
             function handleScannerResult(decodedText) {
                 var roll = extractRollValue(decodedText);
                 var now = Date.now();
-                if (!roll || (roll === lastScannerRoll && now - lastScannerTime < 2000)) return;
+                if (!roll || fulfilled.has(roll) ||
+                    (roll === lastScannerRoll && now - lastScannerTime < 2000)) return;
                 lastScannerRoll = roll;
                 lastScannerTime = now;
                 verifyRoll(roll, false);
