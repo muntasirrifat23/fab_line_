@@ -95,7 +95,7 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
         thead th { color: #fff; background: #134e4a; }
         tbody tr:nth-child(even) { background: #f8fafc; }
         td[data-batch-cell], td[data-machine-cell] { text-align: center; vertical-align: middle; }
-        td select { min-width: 170px; }
+        td select[data-batch] { width: 130px; min-width: 0; padding: 8px; }
         .machine-change { display: flex; align-items: center; gap: 8px; }
         .update-button { min-height: 38px; padding: 7px 10px; white-space: nowrap; }
         .update-button:disabled { opacity: .65; }
@@ -288,7 +288,7 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
                     if (value === String(current || '')) found = true;
                     options += '<option value="' + escapeHtml(value) + '"' +
                         (value === String(current || '') ? ' selected' : '') + '>' +
-                        escapeHtml(value) + ' | ' + escapeHtml(machine.DCAPACITY) + '</option>';
+                        escapeHtml(value) + ' | ' + escapeHtml(machine.DCAPACITY) + ' KG</option>';
                 });
                 if (current && !found) {
                     options = '<option value="' + escapeHtml(current) + '" selected>' +
