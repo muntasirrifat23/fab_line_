@@ -136,7 +136,10 @@ if ($action === 'save' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         respond(['success' => false, 'message' => 'Could not start the transfer transaction: ' . $db->error], 500);
     }
     $updateStmt = $db->prepare('UPDATE dyeing_batch_delivery SET DYMCNO = ? WHERE BCARD = ?');
-    $countStmt = $db->prepare('SELECT COUNT(*) AS roll_count FROM dyeing_batch_delivery WHERE BCARD = ?');
+    $countStmt = $db->prepare(
+        'SELECT COUNT(*) AS roll_count, SUM(DYMCNO = ?) AS matching_count
+         FROM dyeing_batch_delivery WHERE BCARD = ?'
+    );
     if (!$updateStmt || !$countStmt) {
         $error = $db->error;
         if ($updateStmt) {
@@ -153,14 +156,7 @@ if ($action === 'save' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     foreach ($normalizedChanges as $change) {
         $batch = $change['batch'];
         $mcno = $change['mcno'];
-        if (!$updateStmt->bind_param('ss', $mcno, $batch) || !$updateStmt->execute()) {
-            $error = $updateStmt->error;
-            $updateStmt->close();
-            $countStmt->close();
-            $db->rollback();
-            respond(['success' => false, 'message' => 'Could not update machine assignment for batch ' . $batch . ': ' . $error], 500);
-        }
-        $countStmt->bind_param('s', $batch);
+        $countStmt->bind_param('ss', $mcno, $batch);
         if (!$countStmt->execute()) {
             $error = $countStmt->error;
             $updateStmt->close();
@@ -172,11 +168,25 @@ if ($action === 'save' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $countRow = $countResult->fetch_assoc();
         $countResult->free();
         $rollCount = (int) $countRow['roll_count'];
+        $matchingCount = (int) $countRow['matching_count'];
         if ($rollCount === 0) {
             $updateStmt->close();
             $countStmt->close();
             $db->rollback();
             respond(['success' => false, 'message' => 'Batch ' . $batch . ' was not found. No changes were saved.'], 404);
+        }
+        if ($matchingCount === $rollCount) {
+            $updateStmt->close();
+            $countStmt->close();
+            $db->rollback();
+            respond(['success' => false, 'message' => 'Batch ' . $batch . ' already uses MCNO ' . $mcno . '. No change was made.'], 409);
+        }
+        if (!$updateStmt->bind_param('ss', $mcno, $batch) || !$updateStmt->execute()) {
+            $error = $updateStmt->error;
+            $updateStmt->close();
+            $countStmt->close();
+            $db->rollback();
+            respond(['success' => false, 'message' => 'Could not update machine assignment for batch ' . $batch . ': ' . $error], 500);
         }
         $updated[] = ['batch' => $batch, 'mcno' => $mcno, 'roll_count' => $rollCount];
     }

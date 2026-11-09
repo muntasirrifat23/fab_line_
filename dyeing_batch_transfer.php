@@ -96,8 +96,58 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
         tbody tr:nth-child(even) { background: #f8fafc; }
         td[data-batch-cell], td[data-machine-cell] { text-align: center; vertical-align: middle; }
         td select { min-width: 170px; }
-        .actions { display: flex; justify-content: flex-end; margin-top: 14px; }
+        .machine-change { display: flex; align-items: center; gap: 8px; }
+        .update-button { min-height: 38px; padding: 7px 10px; white-space: nowrap; }
+        .update-button:disabled { opacity: .65; }
         .empty { padding: 24px; text-align: center; color: #64748b; }
+        .result-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: rgba(15, 23, 42, .45);
+        }
+        .result-overlay[hidden] { display: none; }
+        .result-card {
+            position: relative;
+            width: min(430px, 100%);
+            padding: 34px 28px 30px;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 20px 60px rgba(15, 23, 42, .25);
+            text-align: center;
+        }
+        .result-close {
+            position: absolute;
+            top: 8px;
+            right: 10px;
+            width: 34px;
+            height: 34px;
+            border: 0;
+            border-radius: 50%;
+            color: #64748b;
+            background: transparent;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .result-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 68px;
+            height: 68px;
+            margin: 0 auto 16px;
+            border: 3px solid #d9f3d0;
+            border-radius: 50%;
+            color: #80c967;
+            font-size: 2rem;
+        }
+        .result-card.error .result-icon { border-color: #fee2e2; color: #dc2626; }
+        .result-card h2 { margin: 0 0 10px; color: #475569; font-size: 1.35rem; }
+        .result-card p { margin: 0; color: #64748b; line-height: 1.5; }
         @media (max-width: 700px) {
             body { padding: 8px; }
             .header { align-items: flex-start; flex-direction: column; padding: 12px; }
@@ -152,11 +202,17 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
                     </tbody>
                 </table>
             </div>
-            <div class="actions">
-                <button class="button" type="button" id="saveButton" disabled><i class="fas fa-save"></i> Save MCNO Changes</button>
-            </div>
         </section>
     </main>
+
+    <div class="result-overlay" id="resultOverlay" hidden>
+        <section class="result-card" id="resultCard" role="alertdialog" aria-modal="true" aria-labelledby="resultTitle" aria-describedby="resultMessage">
+            <button type="button" class="result-close" id="closeResult" aria-label="Close">&times;</button>
+            <div class="result-icon" id="resultIcon" aria-hidden="true"><i class="fas fa-check"></i></div>
+            <h2 id="resultTitle">MCNO Updated</h2>
+            <p id="resultMessage"></p>
+        </section>
+    </div>
 
     <script>
         (function() {
@@ -169,7 +225,9 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
             var form = document.getElementById('searchForm');
             var results = document.getElementById('results');
             var status = document.getElementById('status');
-            var saveButton = document.getElementById('saveButton');
+            var resultOverlay = document.getElementById('resultOverlay');
+            var resultCard = document.getElementById('resultCard');
+            var resultTimer = null;
 
             function escapeHtml(value) {
                 var span = document.createElement('span');
@@ -205,12 +263,21 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
                 });
             }
 
-            function updateSaveButton() {
-                var changed = results.querySelectorAll('select[data-batch]').length > 0 &&
-                    Array.prototype.some.call(results.querySelectorAll('select[data-batch]'), function(select) {
-                        return select.value !== select.dataset.original;
-                    });
-                saveButton.disabled = !changed;
+            function showResult(title, message, isError) {
+                window.clearTimeout(resultTimer);
+                document.getElementById('resultTitle').textContent = title;
+                document.getElementById('resultMessage').textContent = message;
+                document.getElementById('resultIcon').innerHTML = isError
+                    ? '<i class="fas fa-exclamation"></i>'
+                    : '<i class="fas fa-check"></i>';
+                resultCard.classList.toggle('error', Boolean(isError));
+                resultOverlay.hidden = false;
+                resultTimer = window.setTimeout(hideResult, 3000);
+            }
+
+            function hideResult() {
+                window.clearTimeout(resultTimer);
+                resultOverlay.hidden = true;
             }
 
             function makeMachineOptions(current) {
@@ -233,7 +300,6 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
             function renderRows() {
                 if (!rows.length) {
                     results.innerHTML = '<tr><td class="empty" colspan="23">No matching delivery rolls were found.</td></tr>';
-                    saveButton.disabled = true;
                     return;
                 }
 
@@ -273,9 +339,13 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
                             html += '<td data-machine-cell rowspan="' + groupSize + '">' +
                                 escapeHtml(machineValues.length > 1 ? 'Multiple' : currentMachine) + '</td>' +
                                 '<td data-machine-cell rowspan="' + groupSize + '">' +
+                                '<div class="machine-change">' +
                                 '<select data-batch="' + escapeHtml(row.BCARD) +
                                 '" data-original="' + escapeHtml(currentMachine) + '">' +
-                                makeMachineOptions(currentMachine) + '</select></td>';
+                                makeMachineOptions(currentMachine) + '</select>' +
+                                '<button type="button" class="button update-button" data-update-batch="' +
+                                escapeHtml(row.BCARD) + '"><i class="fas fa-check"></i> Update</button>' +
+                                '</div></td>';
                         }
                         html += fields.slice(6).map(function(field) {
                             return '<td>' + escapeHtml(row[field]) + '</td>';
@@ -284,10 +354,6 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
                     start = end;
                 }
                 results.innerHTML = html;
-                Array.prototype.forEach.call(results.querySelectorAll('select[data-batch]'), function(select) {
-                    select.addEventListener('change', updateSaveButton);
-                });
-                updateSaveButton();
             }
 
             function loadRows() {
@@ -331,23 +397,31 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
                 }, 0);
             });
 
-            saveButton.addEventListener('click', function() {
-                var changes = Array.prototype.filter.call(results.querySelectorAll('select[data-batch]'), function(select) {
-                    return select.value !== '' && select.value !== select.dataset.original;
-                }).map(function(select) {
-                    return {
-                        batch: select.dataset.batch,
-                        mcno: select.value
-                    };
-                });
-                if (!changes.length) {
-                    showStatus('Choose a different machine for at least one roll before saving.', 'error');
+            results.addEventListener('click', function(event) {
+                var button = event.target.closest('[data-update-batch]');
+                if (!button) return;
+
+                var batch = button.dataset.updateBatch;
+                var select = Array.prototype.find.call(
+                    results.querySelectorAll('select[data-batch]'),
+                    function(candidate) { return candidate.dataset.batch === batch; }
+                );
+                if (!select || !select.value) {
+                    showResult('Machine Required', 'Select a machine for Batch ' + batch + ' before updating.', true);
+                    return;
+                }
+                if (select.value === select.dataset.original) {
+                    showResult('No Change Made', 'Batch ' + batch + ' already uses MCNO ' + select.value + '.', true);
                     return;
                 }
 
-                saveButton.disabled = true;
-                showStatus('Saving MCNO changes...');
-                request('save', {}, {csrf_token: csrfToken, changes: changes}).then(function(data) {
+                var newMcno = select.value;
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating';
+                request('save', {}, {
+                    csrf_token: csrfToken,
+                    changes: [{batch: batch, mcno: newMcno}]
+                }).then(function(data) {
                     var updated = {};
                     data.updated.forEach(function(item) { updated[String(item.batch)] = item.mcno; });
                     rows.forEach(function(row) {
@@ -356,11 +430,26 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
                         }
                     });
                     renderRows();
-                    showStatus(data.message, 'success');
+                    var visibleBatches = Object.create(null);
+                    rows.forEach(function(row) { visibleBatches[String(row.BCARD || '')] = true; });
+                    showStatus(Object.keys(visibleBatches).length + ' batch(es) found.' +
+                        (machineLoadError ? ' ' + machineLoadError : ''));
+                    showResult(
+                        'MCNO Updated',
+                        'Batch ' + batch + ' updated to MCNO ' + newMcno +
+                            ' for ' + data.updated[0].roll_count + ' roll(s).',
+                        false
+                    );
                 }).catch(function(error) {
-                    showStatus(error.message, 'error');
-                    updateSaveButton();
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fas fa-check"></i> Update';
+                    showResult('MCNO Not Updated', error.message, true);
                 });
+            });
+
+            document.getElementById('closeResult').addEventListener('click', hideResult);
+            resultOverlay.addEventListener('click', function(event) {
+                if (event.target === resultOverlay) hideResult();
             });
 
             request('machines').then(function(data) {
