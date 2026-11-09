@@ -13,6 +13,7 @@ if (!isset($_SESSION['username'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FabLine | Roll Verification</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         * { box-sizing: border-box; }
@@ -60,15 +61,56 @@ if (!isset($_SESSION['username'])) {
         .panel { padding: 18px; margin-bottom: 14px; }
         .panel-title { margin: 0 0 14px; font-size: 1.08rem; font-weight: 800; }
         .message {
+            position: fixed;
+            inset: 0;
+            z-index: 20;
             display: none;
-            padding: 11px 13px;
-            margin: 0 0 12px;
-            border-radius: 8px;
-            font-weight: 700;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: rgba(15, 23, 42, .48);
         }
-        .message.info { display: block; color: #075985; background: #e0f2fe; }
-        .message.error { display: block; color: #991b1b; background: #fee2e2; }
-        .message.success { display: block; color: #065f46; background: #d1fae5; }
+        .message.show { display: flex; }
+        .message-card {
+            position: relative;
+            width: min(100%, 480px);
+            min-height: 280px;
+            padding: 48px 36px 36px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 18px 48px rgba(15, 23, 42, .25);
+            text-align: center;
+        }
+        .message-icon {
+            display: flex;
+            width: 76px;
+            height: 76px;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            border: 2px solid currentColor;
+            border-radius: 50%;
+            font-size: 2rem;
+        }
+        .message.success .message-icon { color: #16a34a; }
+        .message.warning .message-icon, .message.error .message-icon { color: #d97706; }
+        .message.info .message-icon { color: #0284c7; }
+        .message-title { margin: 0 0 12px; color: #1f2937; font-size: 1.4rem; }
+        .message-text { margin: 0; color: #64748b; font-size: 1rem; line-height: 1.5; }
+        .message-close {
+            position: absolute;
+            top: 8px;
+            right: 10px;
+            padding: 4px 8px;
+            border: 0;
+            color: #64748b;
+            background: transparent;
+            font-size: 1.25rem;
+            cursor: pointer;
+        }
         .summary { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 14px; }
         .summary-item { padding: 9px 12px; border-radius: 8px; background: #ecfdf5; font-weight: 800; }
         .scanner-layout { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 16px; }
@@ -88,7 +130,9 @@ if (!isset($_SESSION['username'])) {
         #qr-reader video { display: block; width: 100% !important; height: 100% !important; border-radius: 24px; object-fit: cover; }
         .scanner-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 10px; }
         .scanner-controls .secondary { background: #475569; }
-        .manual-scan { width: min(100%, 1100px); }
+        #switchCameraButton { background: #2563eb; }
+        #anotherBatchButton { background: #7c3aed; }
+        .manual-scan { width: min(100%, 850px); }
         .scan-form { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; }
         .field { flex: 1; min-width: 220px; }
         label { display: block; margin-bottom: 6px; font-weight: 700; }
@@ -118,11 +162,26 @@ if (!isset($_SESSION['username'])) {
         }
         tbody td { padding: 9px 8px; border-bottom: 1px solid #dbe5e4; white-space: nowrap; }
         tbody tr:nth-child(even) { background: #f8fafc; }
-        tbody tr.fulfilled { background: #dcfce7; }
-        .roll-badge { display: inline-block; padding: 4px 9px; border-radius: 20px; color: #065f46; background: #ccfbf1; font-weight: 800; }
-        .pending-badge, .fulfilled-badge { display: inline-block; padding: 4px 9px; border-radius: 20px; font-weight: 800; }
-        .pending-badge { color: #92400e; background: #fef3c7; }
-        .fulfilled-badge { color: #065f46; background: #bbf7d0; }
+        td[data-batch-cell] { text-align: center; vertical-align: middle; }
+        .pending-badge, .fulfilled-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-width: 104px;
+            padding: 6px 9px;
+            border-radius: 7px;
+            font-weight: 800;
+        }
+        .pending-badge { color: #fff; background: #b45309; }
+        .fulfilled-badge { color: #fff; background: #047857; }
+        .pending-row td { color: #64748b; background: #fff; }
+        .pending-row td:first-child { background: #fff7ed; }
+        .fulfilled-row td { background: #dcfce7; }
+        .fulfilled-row td:first-child { background: #d1fae5; }
+        .pending-details { height: 36px; }
+        .batch-total-row td { color: #123b39; background: #ecfdf5; font-weight: 800; }
+        .batch-total-row td:first-child { text-align: right; }
         .empty { padding: 24px; text-align: center; color: #64748b; }
         @media (max-width: 700px) {
             body { padding: 8px; }
@@ -137,14 +196,22 @@ if (!isset($_SESSION['username'])) {
     <main class="page">
         <header class="header">
             <a class="back" href="initialPage.php"><i class="fas fa-arrow-left"></i> Back</a>
-            <h1><i class="fas fa-barcode"></i> Roll Verification</h1>
+            <h1><i class="fas fa-qrcode"></i> Roll Verification</h1>
         </header>
 
         <section class="panel" id="verificationPanel">
             <h2 class="panel-title">Scan or Enter a Roll to Find Its Batch, Then Verify Every Roll</h2>
-            <div class="message" id="message" role="status" aria-live="polite"></div>
+            <div class="message" id="message" role="status" aria-live="polite" aria-hidden="true">
+                <div class="message-card">
+                    <button class="message-close" id="closeMessageButton" type="button" aria-label="Close message">&times;</button>
+                    <div class="message-icon"><i id="messageIcon" class="fas fa-circle-check"></i></div>
+                    <h3 class="message-title" id="messageTitle"></h3>
+                    <p class="message-text" id="messageText"></p>
+                </div>
+            </div>
             <div class="summary">
                 <div class="summary-item">Batch: <span id="batchNumber">-</span></div>
+                <div class="summary-item">Total QTY: <span id="batchTotalQty">-</span></div>
                 <div class="summary-item">Rolls verified: <span id="verifiedCount">0</span> / <span id="totalCount">0</span></div>
             </div>
             <div class="scanner-layout">
@@ -152,8 +219,8 @@ if (!isset($_SESSION['username'])) {
                     <div id="qr-reader"></div>
                 </div>
                 <div class="scanner-controls">
-                    <button class="button secondary" type="button" id="switchCameraButton">Switch to Front Camera</button>
-                    <button class="button secondary" type="button" id="anotherBatchButton">Another Batch Scan</button>
+                    <button class="button secondary" type="button" id="switchCameraButton"><i class="fas fa-camera-rotate"></i> Switch to Front Camera</button>
+                    <button class="button secondary" type="button" id="anotherBatchButton"><i class="fas fa-arrows-rotate"></i> Another Batch Scan</button>
                 </div>
                 <div class="manual-scan">
                     <form class="scan-form" id="rollForm">
@@ -177,12 +244,12 @@ if (!isset($_SESSION['username'])) {
                         <tr>
                             <th>Action</th><th>Roll</th><th>Batch</th><th>PO Number</th><th>Color</th><th>QTY</th>
                             <th>MC NO</th><th>SONO</th><th>Buyer</th><th>Style</th><th>MC Dia</th><th>Customer</th>
-                            <th>O / T</th><th>SL/VQ</th><th>Fabrics Type</th><th>GSM</th><th>Finish Dia</th>
-                            <th>Yarn Type</th><th>Yarn Count</th><th>Yarn Brand</th><th>Feeder Plan</th><th>Lot No</th><th>Category</th>
+                            <th>O / T</th><th>SL/VQ</th><th>Fabrics Type</th><th>GSM</th><th>Dia</th>
+                            <th>Yarn Type</th><th>Yarn Count</th><th>Yarn Brand</th>
                         </tr>
                     </thead>
                     <tbody id="batchRows">
-                        <tr><td class="empty" colspan="23">Scan or enter a roll number to load its batch.</td></tr>
+                        <tr><td class="empty" colspan="20">Scan or enter a roll number to load its batch.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -196,10 +263,14 @@ if (!isset($_SESSION['username'])) {
             var rollInput = document.getElementById('rollInput');
             var verifyButton = document.getElementById('verifyButton');
             var message = document.getElementById('message');
+            var messageTitle = document.getElementById('messageTitle');
+            var messageText = document.getElementById('messageText');
+            var messageIcon = document.getElementById('messageIcon');
             var batchRows = document.getElementById('batchRows');
             var batch = null;
             var expectedByRoll = new Map();
             var fulfilled = new Set();
+            var messageTimer = null;
             var processing = false;
             var scanner = null;
             var scannerRunning = false;
@@ -208,6 +279,8 @@ if (!isset($_SESSION['username'])) {
             var cameraFacingMode = 'environment';
             var currentCameraId = '';
             var availableCameras = [];
+            var lastScannerRoll = '';
+            var lastScannerTime = 0;
 
             function escapeHtml(value) {
                 var span = document.createElement('span');
@@ -224,52 +297,105 @@ if (!isset($_SESSION['username'])) {
             }
 
             function showMessage(text, kind) {
-                message.textContent = text;
-                message.className = 'message ' + (kind || 'info');
+                var messageKind = kind || 'info';
+                var titles = {
+                    success: 'Verification Successful',
+                    warning: 'Roll Not Matched',
+                    error: 'Verification Error',
+                    info: 'Notice'
+                };
+                var icons = {
+                    success: 'fas fa-circle-check',
+                    warning: 'fas fa-triangle-exclamation',
+                    error: 'fas fa-triangle-exclamation',
+                    info: 'fas fa-circle-info'
+                };
+                window.clearTimeout(messageTimer);
+                messageTitle.textContent = titles[messageKind] || titles.info;
+                messageText.textContent = text;
+                messageIcon.className = icons[messageKind] || icons.info;
+                message.className = 'message show ' + messageKind;
+                message.setAttribute('aria-hidden', 'false');
+                messageTimer = window.setTimeout(hideMessage, 2000);
+            }
+
+            function hideMessage() {
+                window.clearTimeout(messageTimer);
+                message.className = 'message';
+                message.setAttribute('aria-hidden', 'true');
             }
 
             function updateSummary() {
                 document.getElementById('batchNumber').textContent = batch ? batch.card_no : '-';
+                var verifiedQty = batch ? calculateVerifiedQty(batch.rows) : null;
+                document.getElementById('batchTotalQty').textContent = verifiedQty === null
+                    ? '-'
+                    : verifiedQty.toLocaleString(undefined, {maximumFractionDigits: 3});
                 document.getElementById('verifiedCount').textContent = String(fulfilled.size);
                 document.getElementById('totalCount').textContent = batch ? String(batch.rows.length) : '0';
             }
 
+            function calculateVerifiedQty(rows) {
+                var total = 0;
+                rows.forEach(function(row) {
+                    if (!fulfilled.has(String(row.ROLL))) return;
+                    var qtyText = String(row.QTY || '').replace(/,/g, '').trim();
+                    var qtyValue = Number(qtyText);
+                    if (qtyText !== '' && Number.isFinite(qtyValue)) {
+                        total += qtyValue;
+                    }
+                });
+                return total;
+            }
+
             function renderRows() {
                 if (!batch || !batch.rows.length) {
-                    batchRows.innerHTML = '<tr><td class="empty" colspan="23">Scan or enter a roll number to load its batch.</td></tr>';
+                    batchRows.innerHTML = '<tr><td class="empty" colspan="20">Scan or enter a roll number to load its batch.</td></tr>';
                     updateSummary();
                     return;
                 }
-                batchRows.innerHTML = batch.rows.map(function(row) {
-                    var isFulfilled = fulfilled.has(String(row.ROLL));
-                    return '<tr class="' + (isFulfilled ? 'fulfilled' : '') + '">' +
-                        '<td>' + (isFulfilled
-                            ? '<span class="fulfilled-badge">FULFILLED</span>'
-                            : '<span class="pending-badge">PENDING</span>') + '</td>' +
-                        '<td><span class="roll-badge">' + escapeHtml(row.ROLL) + '</span></td>' +
-                        '<td>' + escapeHtml(row.BCARD) + '</td>' +
-                        '<td>' + escapeHtml(row.PO_NUMBER) + '</td>' +
-                        '<td>' + escapeHtml(row.COLOR) + '</td>' +
-                        '<td>' + escapeHtml(row.QTY) + '</td>' +
-                        '<td>' + escapeHtml(row.DYMCNO) + '</td>' +
-                        '<td>' + escapeHtml(row.SONO) + '</td>' +
-                        '<td>' + escapeHtml(row.BUYER) + '</td>' +
-                        '<td>' + escapeHtml(row.STYLE) + '</td>' +
-                        '<td>' + escapeHtml(row.MCDIA) + '</td>' +
-                        '<td>' + escapeHtml(row.CUSTOMER) + '</td>' +
-                        '<td>' + escapeHtml(row.O_T) + '</td>' +
-                        '<td>' + escapeHtml(row.SL) + '</td>' +
-                        '<td>' + escapeHtml(row.FTYPE) + '</td>' +
-                        '<td>' + escapeHtml(row.FGSM) + '</td>' +
-                        '<td>' + escapeHtml(row.FDIA) + '</td>' +
-                        '<td>' + escapeHtml(row.YTYPE) + '</td>' +
-                        '<td>' + escapeHtml(row.YCOUNT) + '</td>' +
-                        '<td>' + escapeHtml(row.YBRAND) + '</td>' +
-                        '<td>' + escapeHtml(row.FEEDER_PLAN) + '</td>' +
-                        '<td>' + escapeHtml(row.LOT_NO) + '</td>' +
-                        '<td>' + escapeHtml(row.CATEGORY) + '</td>' +
+                var details = [
+                    'PO_NUMBER', 'COLOR', 'QTY', 'DYMCNO', 'SONO', 'BUYER', 'STYLE',
+                    'MCDIA', 'CUSTOMER', 'O_T', 'SL', 'FTYPE', 'FGSM', 'FDIA',
+                    'YTYPE', 'YCOUNT', 'YBRAND'
+                ];
+                var html = '';
+                for (var start = 0; start < batch.rows.length;) {
+                    var end = start + 1;
+                    while (end < batch.rows.length &&
+                        String(batch.rows[end].BCARD) === String(batch.rows[start].BCARD)) {
+                        end++;
+                    }
+                    var totalQty = calculateVerifiedQty(batch.rows.slice(start, end));
+                    for (var index = start; index < end; index++) {
+                        var row = batch.rows[index];
+                        var isFulfilled = fulfilled.has(String(row.ROLL));
+                        html += '<tr class="' + (isFulfilled ? 'fulfilled-row' : 'pending-row') + '">' +
+                            '<td>' + (isFulfilled
+                                ? '<span class="fulfilled-badge"><i class="fas fa-circle-check"></i> FULFILLED</span>'
+                                : '<span class="pending-badge"><i class="fas fa-hourglass-half"></i> PENDING</span>') + '</td>' +
+                            '<td>' + escapeHtml(row.ROLL) + '</td>';
+                        if (index === start) {
+                            html += '<td data-batch-cell rowspan="' + (end - start) + '">' +
+                                escapeHtml(row.BCARD) + '</td>';
+                        }
+                        if (isFulfilled) {
+                            html += details.map(function(field) {
+                                return '<td>' + escapeHtml(row[field]) + '</td>';
+                            }).join('');
+                        } else {
+                            html += '<td class="pending-details" colspan="' + details.length + '"></td>';
+                        }
+                        html += '</tr>';
+                    }
+                    html += '<tr class="batch-total-row">' +
+                        '<td colspan="5">Total QTY :</td>' +
+                        '<td>' + escapeHtml(totalQty.toLocaleString(undefined, {maximumFractionDigits: 3})) + '</td>' +
+                        '<td colspan="14"></td>' +
                         '</tr>';
-                }).join('');
+                    start = end;
+                }
+                batchRows.innerHTML = html;
                 updateSummary();
             }
 
@@ -302,22 +428,25 @@ if (!isset($_SESSION['username'])) {
                     }
                     var row = expectedByRoll.get(roll);
                     if (!row) {
-                        showMessage('Roll ' + roll + ' does not belong to Batch ' + batch.card_no + '.', 'error');
+                        showMessage('Roll ' + roll + ': not matched with this batch.', 'warning');
                         return;
                     }
                     if (fulfilled.has(roll)) {
-                        showMessage('Roll ' + roll + ' has already been verified.', 'error');
+                        showMessage('Roll ' + roll + ': already verified.', 'warning');
                         return;
                     }
                     fulfilled.add(roll);
                     renderRows();
                     if (fulfilled.size === batch.rows.length) {
-                        showMessage('All ' + fulfilled.size + ' rolls in Batch ' + batch.card_no + ' have been verified.', 'success');
+                        showMessage('Roll ' + roll + ' verified. All rolls in this batch are complete.', 'success');
                     } else {
-                        showMessage('Roll ' + roll + ' verified for Batch ' + batch.card_no + '.', 'success');
+                        showMessage('Roll ' + roll + ' verified successfully.', 'success');
                     }
                 }).catch(function(error) {
-                    showMessage(error.message, 'error');
+                    var errorMessage = error.message || 'Could not verify this roll.';
+                    showMessage(errorMessage.indexOf(roll) !== -1
+                        ? errorMessage
+                        : 'Roll ' + roll + ': ' + errorMessage, 'error');
                 }).finally(function() {
                     processing = false;
                     verifyButton.disabled = false;
@@ -330,6 +459,20 @@ if (!isset($_SESSION['username'])) {
                 event.preventDefault();
                 verifyRoll(rollInput.value);
             });
+
+            document.getElementById('closeMessageButton').addEventListener('click', hideMessage);
+            message.addEventListener('click', function(event) {
+                if (event.target === message) hideMessage();
+            });
+
+            function handleScannerResult(decodedText) {
+                var roll = extractRollValue(decodedText);
+                var now = Date.now();
+                if (!roll || (roll === lastScannerRoll && now - lastScannerTime < 2000)) return;
+                lastScannerRoll = roll;
+                lastScannerTime = now;
+                verifyRoll(roll);
+            }
 
             document.getElementById('anotherBatchButton').addEventListener('click', function() {
                 window.location.reload();
@@ -406,7 +549,7 @@ if (!isset($_SESSION['username'])) {
                     return scanner.start(
                         cameraConfig,
                         scannerConfig(),
-                        function(decodedText) { verifyRoll(decodedText); },
+                        handleScannerResult,
                         function() {}
                     ).then(function() {
                         currentCameraId = selectedCamera ? selectedCamera.id : '';
@@ -450,17 +593,22 @@ if (!isset($_SESSION['username'])) {
                 });
             });
 
-            document.addEventListener('visibilitychange', function() {
-                if (document.hidden && scannerRunning) {
-                    stopCamera().catch(function(error) {
-                        showMessage('Could not stop the camera while the page is hidden: ' + error, 'error');
-                    });
+            function resumeCameraIfNeeded() {
+                if (document.hidden || cameraStarting || cameraSwitching) return;
+                if (!scannerRunning || (scanner && !scanner.isScanning)) {
+                    scannerRunning = false;
+                    startCamera(cameraFacingMode);
                 }
-            });
+            }
+
+            document.addEventListener('visibilitychange', resumeCameraIfNeeded);
+            window.addEventListener('pageshow', resumeCameraIfNeeded);
             window.addEventListener('pagehide', function() {
                 if (scannerRunning) {
                     scanner.stop().catch(function(error) {
                         console.error('Could not release camera while leaving Roll Verification:', error);
+                    }).finally(function() {
+                        scannerRunning = false;
                     });
                 }
             });
