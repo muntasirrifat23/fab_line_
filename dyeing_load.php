@@ -77,6 +77,7 @@ if (!isset($_SESSION['username'])) {
         .scan-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
         #switchCameraButton { background: #2563eb; }
         #resetBatchButton { background: #7c3aed; }
+        #resetBatchScanButton { background: #7c3aed; }
         .manual-password-row { display: flex; gap: 6px; }
         .manual-password-row input {
             width: 135px;
@@ -88,7 +89,6 @@ if (!isset($_SESSION['username'])) {
             font: inherit;
         }
         #unlockManualButton { flex: 0 0 auto; padding-right: 12px; padding-left: 12px; }
-        .scan-entry.locked input, .scan-entry.locked button[type="submit"] { cursor: not-allowed; }
         .scan-state {
             width: min(100%, 620px);
             padding: 12px 14px;
@@ -112,7 +112,7 @@ if (!isset($_SESSION['username'])) {
         .operator-summary { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
         .summary-item { padding: 9px 12px; border-radius: 8px; background: #ecfdf5; font-weight: 800; }
         .table-wrap { width: 100%; overflow: auto; max-height: calc(100vh - 220px); }
-        table { width: 100%; min-width: 2200px; border-collapse: collapse; font-size: .86rem; }
+        table { width: 100%; min-width: 1950px; border-collapse: collapse; font-size: .86rem; }
         thead th {
             position: sticky;
             top: 0;
@@ -125,7 +125,11 @@ if (!isset($_SESSION['username'])) {
         }
         tbody td { padding: 9px 8px; border-bottom: 1px solid #dbe5e4; white-space: nowrap; }
         tbody tr:nth-child(even) td { background: #f8fafc; }
+        td[data-batch-cell] { text-align: center; vertical-align: middle; font-weight: 800; }
         .empty { padding: 24px; text-align: center; color: #64748b; }
+        .load-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+        #startDyeingLoadButton { background: #047857; }
+        [hidden] { display: none !important; }
         .message {
             position: fixed;
             inset: 0;
@@ -201,7 +205,7 @@ if (!isset($_SESSION['username'])) {
             </div>
         </div>
 
-        <section class="panel">
+        <section class="panel" id="scanPanel">
             <h2 class="panel-title">Scan Dyeing Operator ID, Then Batch Card</h2>
             <div class="scanner-layout">
                 <div class="scanner-stage"><div id="qr-reader"></div></div>
@@ -209,7 +213,7 @@ if (!isset($_SESSION['username'])) {
                     <button class="button" type="button" id="switchCameraButton">
                         <i class="fas fa-camera"></i> <span>Switch Camera</span>
                     </button>
-                    <button class="button" type="button" id="resetBatchButton">
+                    <button class="button" type="button" id="resetBatchScanButton">
                         <i class="fas fa-arrows-rotate"></i> Scan Another Batch
                     </button>
                     <div class="manual-password-row">
@@ -220,7 +224,7 @@ if (!isset($_SESSION['username'])) {
                 <div class="scan-state" id="scanState">First scan or enter a Dyeing Operator ID.</div>
                 <form class="scan-entry locked" id="scanForm">
                     <input type="text" id="scanInput" autocomplete="off" placeholder="Dyeing Operator ID" aria-label="Dyeing Operator ID" readonly>
-                    <button class="button" type="submit" id="scanButton" disabled>Verify Operator</button>
+                    <button class="button" type="submit" id="scanButton">Verify Operator</button>
                 </form>
             </div>
         </section>
@@ -241,6 +245,14 @@ if (!isset($_SESSION['username'])) {
                     </tbody>
                 </table>
             </div>
+            <div class="load-actions">
+                <button class="button" type="button" id="startDyeingLoadButton" disabled>
+                    <i class="fas fa-play"></i> Dyeing Load Start
+                </button>
+                <button class="button" type="button" id="resetBatchButton">
+                    <i class="fas fa-arrows-rotate"></i> Scan Another Batch
+                </button>
+            </div>
         </section>
     </main>
 
@@ -255,6 +267,8 @@ if (!isset($_SESSION['username'])) {
             var scanState = document.getElementById('scanState');
             var batchRows = document.getElementById('batchRows');
             var batchPanel = document.getElementById('batchPanel');
+            var scanPanel = document.getElementById('scanPanel');
+            var startDyeingLoadButton = document.getElementById('startDyeingLoadButton');
             var operatorSummary = document.getElementById('operatorSummary');
             var message = document.getElementById('message');
             var messageTitle = document.getElementById('messageTitle');
@@ -266,19 +280,21 @@ if (!isset($_SESSION['username'])) {
             var scanner = null;
             var scannerRunning = false;
             var scannerStarting = false;
+            var scannerStartPromise = null;
+            var scannerStopPromise = null;
             var processing = false;
             var messageTimer = null;
             var lastScanValue = '';
             var lastScanTime = 0;
             var cameraFacingMode = 'environment';
+            var loadStarted = false;
             var columns = [
-                ['BUDAT', 'Date'], ['BCARD', 'Batch'], ['ROLL', 'Roll'], ['PO_NUMBER', 'PO Number'],
-                ['QTY', 'QTY'], ['SONO', 'SONO'], ['BUYER', 'Buyer'], ['STYLE', 'Style'],
-                ['COLOR', 'Color'], ['MCNO', 'MC NO'], ['MCDIA', 'MC Dia'], ['CUSTOMER', 'Customer'],
-                ['O_T', 'Open / Tube'], ['SL', 'SL/VQ'], ['FTYPE', 'Fabrics Type'], ['FGSM', 'Finish GSM'],
-                ['FDIA', 'Finish Dia'], ['FEEDER_PLAN', 'Feeder Plan'], ['LOT_NO', 'Lot No'],
-                ['YTYPE', 'Yarn Type'], ['YCOUNT', 'Yarn Count'], ['YBRAND', 'Yarn Brand'],
-                ['CATEGORY', 'Category'], ['DOP', 'DOP'], ['DID', 'DID'], ['CREATEDAT', 'Created At']
+                ['ROLL', 'Roll'], ['BCARD', 'Batch'], ['PO_NUMBER', 'PO Number'], ['COLOR', 'Color'],
+                ['QTY', 'QTY'], ['MCNO', 'MC NO'], ['SONO', 'SONO'], ['BUYER', 'Buyer'],
+                ['STYLE', 'Style'], ['MCDIA', 'MC Dia'], ['CUSTOMER', 'Customer'], ['O_T', 'O / T'],
+                ['SL', 'SL/VQ'], ['FTYPE', 'Fabrics Type'], ['FGSM', 'GSM'], ['FDIA', 'Dia'],
+                ['FEEDER_PLAN', 'Feeder Plan'], ['LOT_NO', 'Lot No'], ['YTYPE', 'Yarn Type'],
+                ['YCOUNT', 'Yarn Count'], ['YBRAND', 'Yarn Brand'], ['CATEGORY', 'Category']
             ];
 
             function escapeHtml(value) {
@@ -337,13 +353,55 @@ if (!isset($_SESSION['username'])) {
                 document.getElementById('tableHead').innerHTML = columns.map(function(column) {
                     return '<th>' + escapeHtml(column[1]) + '</th>';
                 }).join('');
-                batchRows.innerHTML = data.rows.map(function(row) {
-                    return '<tr>' + columns.map(function(column) {
-                        return '<td>' + escapeHtml(row[column[0]]) + '</td>';
-                    }).join('') + '</tr>';
-                }).join('');
+                var html = '';
+                for (var start = 0; start < data.rows.length;) {
+                    var end = start + 1;
+                    while (end < data.rows.length &&
+                        String(data.rows[end].BCARD) === String(data.rows[start].BCARD)) {
+                        end++;
+                    }
+                    for (var index = start; index < end; index++) {
+                        var row = data.rows[index];
+                        html += '<tr>' + columns.map(function(column) {
+                            if (column[0] === 'BCARD') {
+                                return index === start
+                                    ? '<td data-batch-cell rowspan="' + (end - start) + '">' + escapeHtml(row.BCARD) + '</td>'
+                                    : '';
+                            }
+                            return '<td>' + escapeHtml(row[column[0]]) + '</td>';
+                        }).join('') + '</tr>';
+                    }
+                    start = end;
+                }
+                batchRows.innerHTML = html;
                 loadedBatch = String(data.card_no);
+                loadStarted = false;
+                startDyeingLoadButton.disabled = false;
+                startDyeingLoadButton.innerHTML = '<i class="fas fa-play"></i> Dyeing Load Start';
                 batchPanel.hidden = false;
+                scanPanel.hidden = true;
+            }
+
+            function stopScanner() {
+                if (scannerStopPromise) return scannerStopPromise;
+                if (scannerStarting && scannerStartPromise) {
+                    return scannerStartPromise.then(function() {
+                        return stopScanner();
+                    });
+                }
+                if (!scanner || !scannerRunning) return Promise.resolve();
+                scannerStopPromise = scanner.stop().then(function() {
+                    scannerRunning = false;
+                    return scanner.clear();
+                }).then(function() {
+                    scanner = null;
+                    scannerStopPromise = null;
+                }).catch(function(error) {
+                    scannerRunning = false;
+                    scannerStopPromise = null;
+                    throw error;
+                });
+                return scannerStopPromise;
             }
 
             function request(action, parameters) {
@@ -361,6 +419,45 @@ if (!isset($_SESSION['username'])) {
                     });
                 });
             }
+
+            function startDyeingLoad() {
+                if (!operator || !loadedBatch || loadStarted) return;
+                loadStarted = true;
+                startDyeingLoadButton.disabled = true;
+                fetch('ajaxDyeing_load.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        action: 'start_load',
+                        operator_id: operator.DY_OP_ID,
+                        card_no: loadedBatch
+                    })
+                }).then(function(response) {
+                    return response.json().then(function(data) {
+                        if (!response.ok || !data.success) {
+                            throw new Error(data.message || 'Could not start Dyeing Load.');
+                        }
+                        return data;
+                    });
+                }).then(function(data) {
+                    startDyeingLoadButton.innerHTML = '<i class="fas fa-circle-check"></i> Load Started';
+                    showMessage(
+                        'Dyeing Load Started',
+                        'Batch ' + data.card_no + ' started for ' + data.roll_count + ' roll(s). Operator: ' +
+                            data.operator.DY_OP_NAME + ' (' + data.operator.DY_OP_ID + ').',
+                        'success'
+                    );
+                    window.setTimeout(function() {
+                        window.location.reload();
+                    }, 2000);
+                }).catch(function(error) {
+                    loadStarted = false;
+                    startDyeingLoadButton.disabled = false;
+                    showMessage('Dyeing Load Failed', error.message || 'Could not start Dyeing Load.', 'error');
+                });
+            }
+
+            startDyeingLoadButton.addEventListener('click', startDyeingLoad);
 
             function processScan(rawValue, manual) {
                 var value = normalizeScan(rawValue);
@@ -398,19 +495,23 @@ if (!isset($_SESSION['username'])) {
                     card_no: value,
                     manual: manual ? '1' : '0'
                 }).then(function(data) {
-                    renderBatch(data);
+                    return stopScanner().then(function() {
+                        renderBatch(data);
+                        return data;
+                    });
+                }).then(function(data) {
                     showMessage(
                         'Dyeing Load Ready',
                         'Batch ' + data.card_no + ' loaded with ' + data.roll_count + ' verified roll(s).',
                         'success'
                     );
                 }).catch(function(error) {
-                    showMessage('Batch Not Found', error.message, 'error');
+                    showMessage('Batch Load Failed', error.message || 'Could not load batch.', 'error');
                 }).finally(function() {
                     processing = false;
                     scanButton.disabled = !manualEntryAuthorized;
                     scanInput.value = '';
-                    scanInput.focus();
+                    if (!scanPanel.hidden) scanInput.focus();
                 });
             }
 
@@ -436,7 +537,6 @@ if (!isset($_SESSION['username'])) {
                 manualEntryAuthorized = isAuthorized;
                 scanInput.readOnly = !isAuthorized;
                 scanButton.disabled = !isAuthorized || processing;
-                scanForm.classList.toggle('locked', !isAuthorized);
                 if (isAuthorized) scanInput.focus();
             }
 
@@ -482,9 +582,13 @@ if (!isset($_SESSION['username'])) {
                 if (event.target === message) hideMessage();
             });
 
-            document.getElementById('resetBatchButton').addEventListener('click', function() {
+            function resetBatchScan() {
                 loadedBatch = '';
                 batchPanel.hidden = true;
+                scanPanel.hidden = false;
+                startDyeingLoadButton.disabled = true;
+                startDyeingLoadButton.innerHTML = '<i class="fas fa-play"></i> Dyeing Load Start';
+                loadStarted = false;
                 batchRows.innerHTML = '<tr><td class="empty" colspan="' + columns.length + '">Scan a batch card to load its verified rolls.</td></tr>';
                 document.getElementById('tableHead').innerHTML = '';
                 document.getElementById('batchNumber').textContent = '-';
@@ -492,7 +596,15 @@ if (!isset($_SESSION['username'])) {
                 scanInput.value = '';
                 updateScanStep();
                 scanInput.focus();
-            });
+                stopScanner().then(function() {
+                    startScanner(cameraFacingMode);
+                }).catch(function(error) {
+                    showMessage('Camera Could Not Restart', error.message || String(error), 'error');
+                });
+            }
+
+            document.getElementById('resetBatchButton').addEventListener('click', resetBatchScan);
+            document.getElementById('resetBatchScanButton').addEventListener('click', resetBatchScan);
 
             function scannerConfig() {
                 return {
@@ -506,14 +618,15 @@ if (!isset($_SESSION['username'])) {
             }
 
             function startScanner(facingMode) {
-                if (scannerStarting || scannerRunning) return;
+                if (scannerRunning) return Promise.resolve();
+                if (scannerStarting) return scannerStartPromise || Promise.resolve();
                 if (typeof Html5Qrcode === 'undefined') {
                     showMessage('Camera Unavailable', 'The QR scanner could not be loaded. Refresh the page and try again.', 'error');
-                    return;
+                    return Promise.resolve();
                 }
                 scannerStarting = true;
                 cameraFacingMode = facingMode || cameraFacingMode;
-                Html5Qrcode.getCameras().then(function(cameras) {
+                scannerStartPromise = Html5Qrcode.getCameras().then(function(cameras) {
                     if (!cameras || !cameras.length) throw new Error('No camera devices were found.');
                     var preferred = cameras.find(function(camera) {
                         return cameraFacingMode === 'user'
@@ -547,7 +660,9 @@ if (!isset($_SESSION['username'])) {
                     showMessage('Camera Unavailable', error.message || String(error), 'error');
                 }).finally(function() {
                     scannerStarting = false;
+                    scannerStartPromise = null;
                 });
+                return scannerStartPromise;
             }
 
             document.getElementById('switchCameraButton').addEventListener('click', function() {
@@ -572,10 +687,10 @@ if (!isset($_SESSION['username'])) {
             });
 
             document.addEventListener('visibilitychange', function() {
-                if (!document.hidden && !scannerRunning) startScanner(cameraFacingMode);
+                if (!document.hidden && !scanPanel.hidden && !scannerRunning) startScanner(cameraFacingMode);
             });
             window.addEventListener('pageshow', function() {
-                if (!document.hidden && !scannerRunning) startScanner(cameraFacingMode);
+                if (!document.hidden && !scanPanel.hidden && !scannerRunning) startScanner(cameraFacingMode);
             });
             window.addEventListener('pagehide', function() {
                 if (scannerRunning && scanner) {
@@ -588,6 +703,7 @@ if (!isset($_SESSION['username'])) {
             });
 
             updateScanStep();
+            setManualEntryAuthorized(false);
             startScanner('environment');
         })();
     </script>
