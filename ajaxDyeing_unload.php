@@ -160,8 +160,6 @@ if ($action === 'load_batch') {
     $result = $batchStmt->get_result();
     $rows = [];
     while ($result && ($row = $result->fetch_assoc())) {
-        $row['DID'] = $operator['DY_OP_ID'];
-        $row['DOP'] = $operator['DY_OP_NAME'];
         $rawStart = $row['DYSTART'];
         if ($rawStart !== null && $rawStart !== '') {
             $timestamp = strtotime((string) $rawStart);

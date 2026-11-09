@@ -290,7 +290,7 @@ if (!isset($_SESSION['username'])) {
                 ['SL', 'SL/VQ'], ['FTYPE', 'Fabrics Type'], ['FGSM', 'GSM'], ['FDIA', 'Dia'],
                 ['FEEDER_PLAN', 'Feeder Plan'], ['LOT_NO', 'Lot No'], ['YTYPE', 'Yarn Type'],
                 ['YCOUNT', 'Yarn Count'], ['YBRAND', 'Yarn Brand'], ['CATEGORY', 'Category'],
-                ['DID', 'Operator'], ['START_TIME', 'Start Time']
+                ['DOP', 'Operator'], ['START_TIME', 'Start Time']
             ];
 
             function escapeHtml(value) {
