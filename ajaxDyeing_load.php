@@ -104,6 +104,31 @@ if ($action === 'load_batch') {
         respond(['success' => false, 'message' => 'Dyeing Operator ID ' . $operatorId . ' was not found.'], 404);
     }
 
+    $loadedBatchStmt = $db->prepare(
+        'SELECT DLTID FROM dyeing_load WHERE TRIM(BCARD) = ? LIMIT 1'
+    );
+    if (!$loadedBatchStmt) {
+        respond(['success' => false, 'message' => 'Could not check whether Batch ' . $card . ' was already loaded: ' . $db->error], 500);
+    }
+    $loadedBatchStmt->bind_param('s', $card);
+    if (!$loadedBatchStmt->execute()) {
+        $error = $loadedBatchStmt->error;
+        $loadedBatchStmt->close();
+        respond(['success' => false, 'message' => 'Could not check whether Batch ' . $card . ' was already loaded: ' . $error], 500);
+    }
+    $loadedBatchResult = $loadedBatchStmt->get_result();
+    $alreadyLoaded = $loadedBatchResult && $loadedBatchResult->num_rows > 0;
+    if ($loadedBatchResult) {
+        $loadedBatchResult->free();
+    }
+    $loadedBatchStmt->close();
+    if ($alreadyLoaded) {
+        respond([
+            'success' => false,
+            'message' => 'Batch ' . $card . ' has already been loaded. Please scan a different batch.'
+        ], 409);
+    }
+
     $batchStmt = $db->prepare(
         'SELECT DRVTID, BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, BUYER, STYLE, COLOR,
                 MCNO, MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN,

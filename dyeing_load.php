@@ -88,6 +88,7 @@ if (!isset($_SESSION['username'])) {
             border-radius: 8px;
             font: inherit;
         }
+        #manualPassword { -webkit-text-security: disc; }
         #unlockManualButton { flex: 0 0 auto; padding-right: 12px; padding-left: 12px; }
         .scan-state {
             width: min(100%, 620px);
@@ -216,10 +217,10 @@ if (!isset($_SESSION['username'])) {
                     <button class="button" type="button" id="resetBatchScanButton">
                         <i class="fas fa-arrows-rotate"></i> Scan Another Batch
                     </button>
-                    <div class="manual-password-row">
-                        <input type="password" id="manualPassword" autocomplete="off" placeholder="Pass For Entry" aria-label="Password for manual entry">
-                        <button class="button" type="button" id="unlockManualButton">Unlock</button>
-                    </div>
+                    <form class="manual-password-row" id="manualUnlockForm" autocomplete="off">
+                        <input type="text" id="manualPassword" name="manual_access_code" autocomplete="off" placeholder="Pass For Entry" aria-label="Password for manual entry">
+                        <button class="button" type="submit" id="unlockManualButton">Unlock</button>
+                    </form>
                 </div>
                 <div class="scan-state" id="scanState">First scan or enter a Dyeing Operator ID.</div>
                 <form class="scan-entry locked" id="scanForm">
@@ -413,7 +414,9 @@ if (!isset($_SESSION['username'])) {
                 return fetch(url.toString()).then(function(response) {
                     return response.json().then(function(data) {
                         if (!response.ok || !data.success) {
-                            throw new Error(data.message || 'Dyeing Load request failed.');
+                            var error = new Error(data.message || 'Dyeing Load request failed.');
+                            error.status = response.status;
+                            throw error;
                         }
                         return data;
                     });
@@ -435,7 +438,9 @@ if (!isset($_SESSION['username'])) {
                 }).then(function(response) {
                     return response.json().then(function(data) {
                         if (!response.ok || !data.success) {
-                            throw new Error(data.message || 'Could not start Dyeing Load.');
+                            var error = new Error(data.message || 'Could not start Dyeing Load.');
+                            error.status = response.status;
+                            throw error;
                         }
                         return data;
                     });
@@ -451,9 +456,18 @@ if (!isset($_SESSION['username'])) {
                         window.location.reload();
                     }, 2000);
                 }).catch(function(error) {
+                    if (error.status === 409) {
+                        resetBatchScan();
+                        showMessage('Batch Already Loaded', error.message || 'This batch has already been loaded.', 'error');
+                        return;
+                    }
                     loadStarted = false;
                     startDyeingLoadButton.disabled = false;
-                    showMessage('Dyeing Load Failed', error.message || 'Could not start Dyeing Load.', 'error');
+                    showMessage(
+                        'Dyeing Load Failed',
+                        error.message || 'Could not start Dyeing Load.',
+                        'error'
+                    );
                 });
             }
 
@@ -506,7 +520,11 @@ if (!isset($_SESSION['username'])) {
                         'success'
                     );
                 }).catch(function(error) {
-                    showMessage('Batch Load Failed', error.message || 'Could not load batch.', 'error');
+                    showMessage(
+                        error.status === 409 ? 'Batch Already Loaded' : 'Batch Load Failed',
+                        error.message || 'Could not load batch.',
+                        'error'
+                    );
                 }).finally(function() {
                     processing = false;
                     scanButton.disabled = !manualEntryAuthorized;
@@ -540,13 +558,15 @@ if (!isset($_SESSION['username'])) {
                 if (isAuthorized) scanInput.focus();
             }
 
-            unlockManualButton.addEventListener('click', function() {
+            document.getElementById('manualUnlockForm').addEventListener('submit', function(event) {
+                event.preventDefault();
                 var password = manualPassword.value;
                 if (!password) {
                     showMessage('Password Required', 'Enter the password to unlock manual entry.', 'error');
                     manualPassword.focus();
                     return;
                 }
+                manualPassword.value = '';
                 unlockManualButton.disabled = true;
                 fetch('ajaxDyeing_roll_verification.php', {
                     method: 'POST',
@@ -560,7 +580,6 @@ if (!isset($_SESSION['username'])) {
                         return data;
                     });
                 }).then(function() {
-                    manualPassword.value = '';
                     setManualEntryAuthorized(true);
                     showMessage('Manual Entry Unlocked', 'Manual operator and batch entry is ready.', 'success');
                 }).catch(function(error) {
@@ -568,13 +587,6 @@ if (!isset($_SESSION['username'])) {
                 }).finally(function() {
                     unlockManualButton.disabled = false;
                 });
-            });
-
-            manualPassword.addEventListener('keydown', function(event) {
-                if (event.key === 'Enter') {
-                    event.preventDefault();
-                    unlockManualButton.click();
-                }
             });
 
             document.getElementById('closeMessage').addEventListener('click', hideMessage);
