@@ -6,6 +6,8 @@ if (!isset($_SESSION['username'])) {
     header('Location: login.php');
     exit;
 }
+
+unset($_SESSION['roll_manual_entry_authorized']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -113,6 +115,11 @@ if (!isset($_SESSION['username'])) {
         }
         .summary { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 14px; }
         .summary-item { padding: 9px 12px; border-radius: 8px; background: #ecfdf5; font-weight: 800; }
+        .batch-panel-heading { margin-bottom: 12px; }
+        .batch-panel-heading .panel-title { margin: 0; }
+        #saveVerifiedButton { background: #047857; }
+        #saveVerifiedButton:disabled { background: #94a3b8; }
+        .verified-roll-actions { display: flex; justify-content: flex-start; margin-top: 12px; }
         .scanner-layout { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 16px; }
         .scanner-stage {
             position: relative;
@@ -128,13 +135,13 @@ if (!isset($_SESSION['username'])) {
         #qr-reader { width: 100%; height: 100%; padding: 0 !important; background: #f4f7fb; }
         #qr-reader > div { width: 100% !important; height: 100% !important; }
         #qr-reader video { display: block; width: 100% !important; height: 100% !important; border-radius: 24px; object-fit: cover; }
-        .scanner-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 10px; }
+        .scanner-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
         .scanner-controls .secondary { background: #475569; }
         #switchCameraButton { background: #2563eb; }
         #anotherBatchButton { background: #7c3aed; }
-        .manual-scan { width: min(100%, 850px); }
+        .manual-scan { width: min(100%, 620px); }
         .scan-form { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; }
-        .field { flex: 1; min-width: 220px; }
+        .field { flex: 1; min-width: 180px; }
         label { display: block; margin-bottom: 6px; font-weight: 700; }
         input {
             width: 100%;
@@ -148,6 +155,13 @@ if (!isset($_SESSION['username'])) {
         .roll-input-group { display: flex; width: 100%; }
         .roll-input-group input { flex: 1; min-width: 0; border-radius: 8px 0 0 8px; }
         .roll-input-group button { border-radius: 0 8px 8px 0; }
+        .manual-unlock { display: flex; align-items: center; gap: 7px; }
+        .manual-unlock label { margin: 0; white-space: nowrap; }
+        .manual-password-row { display: flex; gap: 6px; }
+        .manual-password-row input { width: 135px; min-width: 0; min-height: 42px; }
+        #unlockManualButton { flex: 0 0 auto; padding-right: 12px; padding-left: 12px; }
+        .manual-entry-locked { opacity: .7; }
+        .manual-entry-locked input, .manual-entry-locked button[type="submit"] { cursor: not-allowed; }
         .table-wrap { width: 100%; overflow: auto; max-height: calc(100vh - 360px); }
         table { width: 100%; min-width: 1950px; border-collapse: collapse; font-size: .86rem; }
         thead th {
@@ -219,16 +233,22 @@ if (!isset($_SESSION['username'])) {
                     <div id="qr-reader"></div>
                 </div>
                 <div class="scanner-controls">
-                    <button class="button secondary" type="button" id="switchCameraButton"><i class="fas fa-camera-rotate"></i> Switch to Front Camera</button>
+                    <button class="button secondary" type="button" id="switchCameraButton"><i class="fas fa-camera"></i> <span>Switch Camera</span></button>
                     <button class="button secondary" type="button" id="anotherBatchButton"><i class="fas fa-arrows-rotate"></i> Another Batch Scan</button>
+                    <div class="manual-unlock">
+                        <div class="manual-password-row">
+                            <input type="password" id="manualPassword" autocomplete="off" placeholder="Pass For Entry">
+                            <button class="button" type="button" id="unlockManualButton">Unlock</button>
+                        </div>
+                    </div>
                 </div>
                 <div class="manual-scan">
                     <form class="scan-form" id="rollForm">
                         <div class="field">
                             <label for="rollInput">Roll Number</label>
                             <div class="roll-input-group">
-                                <input type="text" id="rollInput" autocomplete="off" placeholder="Scan or enter roll number">
-                                <button class="button" type="submit" id="verifyButton">Verify Roll</button>
+                                <input type="text" id="rollInput" autocomplete="off" placeholder="Scan or enter roll number" disabled>
+                                <button class="button" type="submit" id="verifyButton" disabled>Verify Roll</button>
                             </div>
                         </div>
                     </form>
@@ -237,7 +257,7 @@ if (!isset($_SESSION['username'])) {
         </section>
 
         <section class="panel">
-            <h2 class="panel-title">Batch Rolls</h2>
+            <div class="batch-panel-heading"><h2 class="panel-title">Batch Rolls</h2></div>
             <div class="table-wrap">
                 <table>
                     <thead>
@@ -253,6 +273,11 @@ if (!isset($_SESSION['username'])) {
                     </tbody>
                 </table>
             </div>
+            <div class="verified-roll-actions">
+                <button class="button" type="button" id="saveVerifiedButton" disabled>
+                    <i class="fas fa-save"></i> Verified Rolls
+                </button>
+            </div>
         </section>
     </main>
 
@@ -262,6 +287,10 @@ if (!isset($_SESSION['username'])) {
             var rollForm = document.getElementById('rollForm');
             var rollInput = document.getElementById('rollInput');
             var verifyButton = document.getElementById('verifyButton');
+            var manualPassword = document.getElementById('manualPassword');
+            var unlockManualButton = document.getElementById('unlockManualButton');
+            var manualEntryAuthorized = false;
+            var saveVerifiedButton = document.getElementById('saveVerifiedButton');
             var message = document.getElementById('message');
             var messageTitle = document.getElementById('messageTitle');
             var messageText = document.getElementById('messageText');
@@ -272,6 +301,7 @@ if (!isset($_SESSION['username'])) {
             var fulfilled = new Set();
             var messageTimer = null;
             var processing = false;
+            var savingVerifiedRolls = false;
             var scanner = null;
             var scannerRunning = false;
             var cameraStarting = false;
@@ -296,7 +326,7 @@ if (!isset($_SESSION['username'])) {
                 return match && match[1] ? match[1].trim() : text;
             }
 
-            function showMessage(text, kind) {
+            function showMessage(text, kind, duration) {
                 var messageKind = kind || 'info';
                 var titles = {
                     success: 'Verification Successful',
@@ -316,7 +346,7 @@ if (!isset($_SESSION['username'])) {
                 messageIcon.className = icons[messageKind] || icons.info;
                 message.className = 'message show ' + messageKind;
                 message.setAttribute('aria-hidden', 'false');
-                messageTimer = window.setTimeout(hideMessage, 2000);
+                messageTimer = window.setTimeout(hideMessage, duration || 2000);
             }
 
             function hideMessage() {
@@ -333,6 +363,8 @@ if (!isset($_SESSION['username'])) {
                     : verifiedQty.toLocaleString(undefined, {maximumFractionDigits: 3});
                 document.getElementById('verifiedCount').textContent = String(fulfilled.size);
                 document.getElementById('totalCount').textContent = batch ? String(batch.rows.length) : '0';
+                saveVerifiedButton.disabled = savingVerifiedRolls || !batch ||
+                    batch.rows.length === 0 || fulfilled.size !== batch.rows.length;
             }
 
             function calculateVerifiedQty(rows) {
@@ -399,10 +431,12 @@ if (!isset($_SESSION['username'])) {
                 updateSummary();
             }
 
-            function loadBatchByRoll(roll) {
+            function loadBatchByRoll(roll, isManualEntry) {
                 var url = new URL('ajaxDyeing_roll_verification.php', window.location.href);
                 url.searchParams.set('action', 'load_batch_by_roll');
                 url.searchParams.set('roll', roll);
+                if (isManualEntry) url.searchParams.set('manual', '1');
+                if (batch) url.searchParams.set('current_batch', batch.card_no);
                 return fetch(url.toString()).then(function(response) {
                     return response.json().then(function(data) {
                         if (!response.ok || !data.success) {
@@ -413,26 +447,32 @@ if (!isset($_SESSION['username'])) {
                 });
             }
 
-            function verifyRoll(rawValue) {
+            function verifyRoll(rawValue, isManualEntry) {
                 var roll = extractRollValue(rawValue);
                 if (!roll || processing) return;
+                if (isManualEntry && !manualEntryAuthorized) {
+                    showMessage('Unlock manual entry with the password first.', 'warning');
+                    return;
+                }
                 processing = true;
                 verifyButton.disabled = true;
-                var batchPromise = batch ? Promise.resolve(batch) : loadBatchByRoll(roll);
-                batchPromise.then(function(foundBatch) {
-                    if (!batch) {
-                        batch = foundBatch;
-                        batch.rows.forEach(function(row) {
-                            expectedByRoll.set(String(row.ROLL), row);
-                        });
+                loadBatchByRoll(roll, isManualEntry).then(function(foundBatch) {
+                    var isDifferentBatch = !batch || String(foundBatch.card_no) !== String(batch.card_no);
+                    if (isDifferentBatch) {
+                        fulfilled.clear();
                     }
+                    batch = foundBatch;
+                    expectedByRoll.clear();
+                    batch.rows.forEach(function(batchRow) {
+                        expectedByRoll.set(String(batchRow.ROLL), batchRow);
+                    });
                     var row = expectedByRoll.get(roll);
                     if (!row) {
-                        showMessage('Roll ' + roll + ': not matched with this batch.', 'warning');
+                        showMessage('Roll ' + roll + ' not matched with this batch.', 'warning');
                         return;
                     }
                     if (fulfilled.has(roll)) {
-                        showMessage('Roll ' + roll + ': already verified.', 'warning');
+                        showMessage('Roll ' + roll + ' already verified.', 'warning');
                         return;
                     }
                     fulfilled.add(roll);
@@ -449,15 +489,118 @@ if (!isset($_SESSION['username'])) {
                         : 'Roll ' + roll + ': ' + errorMessage, 'error');
                 }).finally(function() {
                     processing = false;
-                    verifyButton.disabled = false;
+                    verifyButton.disabled = !manualEntryAuthorized;
                     rollInput.value = '';
-                    rollInput.focus();
+                    if (manualEntryAuthorized) rollInput.focus();
                 });
             }
 
             rollForm.addEventListener('submit', function(event) {
                 event.preventDefault();
-                verifyRoll(rollInput.value);
+                verifyRoll(rollInput.value, true);
+            });
+
+            function setManualEntryAuthorized(isAuthorized) {
+                manualEntryAuthorized = isAuthorized;
+                rollInput.disabled = !isAuthorized;
+                verifyButton.disabled = !isAuthorized || processing;
+                document.querySelector('.manual-scan').classList.toggle('manual-entry-locked', !isAuthorized);
+                if (isAuthorized) rollInput.focus();
+            }
+
+            rollInput.addEventListener('click', function() {
+                if (!manualEntryAuthorized) {
+                    showMessage('Enter valid Password for Unlock.', 'warning');
+                }
+            });
+
+            unlockManualButton.addEventListener('click', function() {
+                var password = manualPassword.value;
+                if (!password) {
+                    showMessage('Enter the password to unlock manual roll entry.', 'warning');
+                    manualPassword.focus();
+                    return;
+                }
+                unlockManualButton.disabled = true;
+                fetch('ajaxDyeing_roll_verification.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({action: 'authorize_manual_entry', password: password})
+                }).then(function(response) {
+                    return response.json().then(function(data) {
+                        if (!response.ok || !data.success) {
+                            throw new Error(data.message || 'Could not unlock manual entry.');
+                        }
+                        return data;
+                    });
+                }).then(function() {
+                    manualPassword.value = '';
+                    setManualEntryAuthorized(true);
+                    showMessage('Manual roll entry unlocked.', 'success');
+                }).catch(function(error) {
+                    showMessage(error.message || 'Incorrect password.', 'error');
+                }).finally(function() {
+                    unlockManualButton.disabled = false;
+                });
+            });
+
+            manualPassword.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    unlockManualButton.click();
+                }
+            });
+
+            saveVerifiedButton.addEventListener('click', function() {
+                if (!batch || batch.rows.length === 0 || fulfilled.size !== batch.rows.length || savingVerifiedRolls) return;
+                var cardNo = batch.card_no;
+                var rollsToSave = Array.from(fulfilled);
+                savingVerifiedRolls = true;
+                saveVerifiedButton.disabled = true;
+                fetch('ajaxDyeing_roll_verification.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        action: 'save_verified_rolls',
+                        card_no: cardNo,
+                        rolls: rollsToSave
+                    })
+                }).then(function(response) {
+                    return response.json().then(function(data) {
+                        if (!response.ok || !data.success) {
+                            throw new Error(data.message || 'Could not save verified rolls.');
+                        }
+                        return data;
+                    });
+                }).then(function(data) {
+                    if (data.inserted_rolls && data.inserted_rolls.length) {
+                        showMessage(
+                            'Batch ' + cardNo + ': verified rolls saved successfully. Rolls: ' +
+                                data.inserted_rolls.join(', ') + '.',
+                            'success',
+                            3000
+                        );
+                    } else {
+                        showMessage(
+                            'Batch ' + cardNo + ': these rolls were already saved. Rolls: ' +
+                                rollsToSave.join(', ') + '.',
+                            'warning',
+                            3000
+                        );
+                    }
+                }).catch(function(error) {
+                    showMessage(
+                        'Batch ' + cardNo + ': could not save verified rolls (' +
+                            rollsToSave.join(', ') + '). ' + (error.message || 'Please try again.') ,
+                        'error',
+                        3000
+                    );
+                }).finally(function() {
+                    savingVerifiedRolls = false;
+                    window.setTimeout(function() {
+                        window.location.reload();
+                    }, 3000);
+                });
             });
 
             document.getElementById('closeMessageButton').addEventListener('click', hideMessage);
@@ -471,7 +614,7 @@ if (!isset($_SESSION['username'])) {
                 if (!roll || (roll === lastScannerRoll && now - lastScannerTime < 2000)) return;
                 lastScannerRoll = roll;
                 lastScannerTime = now;
-                verifyRoll(roll);
+                verifyRoll(roll, false);
             }
 
             document.getElementById('anotherBatchButton').addEventListener('click', function() {
@@ -557,8 +700,7 @@ if (!isset($_SESSION['username'])) {
                     });
                 }).then(function() {
                     scannerRunning = true;
-                    document.getElementById('switchCameraButton').textContent =
-                        cameraFacingMode === 'environment' ? 'Switch to Front Camera' : 'Switch to Back Camera';
+                    document.querySelector('#switchCameraButton span').textContent = 'Switch Camera';
                 }).catch(function(error) {
                     if (scanner && scanner.isScanning) {
                         scanner.stop().catch(function(stopError) {
@@ -613,7 +755,7 @@ if (!isset($_SESSION['username'])) {
                 }
             });
 
-            rollInput.focus();
+            setManualEntryAuthorized(manualEntryAuthorized);
             startCamera('environment');
         })();
     </script>

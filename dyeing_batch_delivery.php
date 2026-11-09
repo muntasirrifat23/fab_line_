@@ -525,8 +525,8 @@ if (!isset($_SESSION['username'])) {
                     }
                     cameraFacingMode = cameraFacingMode === 'environment' ? 'user' : 'environment';
                     switchCameraBtn.textContent = cameraFacingMode === 'environment'
-                        ? 'Switch to Front Camera'
-                        : 'Switch to Back Camera';
+                        ? 'Switch Camera'
+                        : 'Switch Camera';
                     cameraSwitching = false;
                     switchCameraBtn.disabled = false;
                     if (wasScanning) startCamera();
