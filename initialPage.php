@@ -102,6 +102,10 @@ if (isset($_POST['batch_verification'])) {
     header('Location: dyeing_batch_verification.php');
     exit();
 }
+if (isset($_POST['roll_verification'])) {
+    header('Location: dyeing_roll_verification.php');
+    exit();
+}
 if (isset($_POST['user_management'])) {
     $_SESSION['lineNo'] = $_POST['option'];
     header('location:user_management.php');
@@ -692,6 +696,10 @@ mysqli_close($db);
 
                     <button class="w3-button w3-teal" name="batch_verification" id="batch_verification">
                         <i class="fas fa-clipboard-check"></i> Batch Verification
+                    </button>
+
+                    <button class="w3-button w3-teal" name="roll_verification" id="roll_verification">
+                        <i class="fas fa-barcode"></i> Roll Verification
                     </button>
                     <?php endif; ?>
                     <button class="w3-button w3-teal" name="user_management" id="user_management">
