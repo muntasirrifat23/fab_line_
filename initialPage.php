@@ -110,6 +110,10 @@ if (isset($_POST['dyeing_load'])) {
     header('Location: dyeing_load.php');
     exit();
 }
+if (isset($_POST['dyeing_unload'])) {
+    header('Location: dyeing_unload.php');
+    exit();
+}
 if (isset($_POST['user_management'])) {
     $_SESSION['lineNo'] = $_POST['option'];
     header('location:user_management.php');
@@ -708,6 +712,9 @@ mysqli_close($db);
 
                     <button class="w3-button w3-teal" name="dyeing_load" id="dyeing_load">
                         <i class="fas fa-dolly"></i> Dyeing Load
+                    </button>
+                    <button class="w3-button w3-teal" name="dyeing_unload" id="dyeing_unload">
+                        <i class="fas fa-box-open"></i> Dyeing Unload
                     </button>
                     <?php endif; ?>
                     <button class="w3-button w3-teal" name="user_management" id="user_management">
