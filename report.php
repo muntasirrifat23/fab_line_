@@ -197,6 +197,86 @@ $isKnittingUser = $user === 'k01';
     .card-bg {
       background: linear-gradient(135deg, #4b0082, #8a2be2);
     }
+
+    .dyeing-report-card {
+      background: linear-gradient(135deg, var(--report-bg-start), var(--report-bg-end));
+      background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--report-bg-start) 90%, transparent),
+        color-mix(in srgb, var(--report-bg-end) 84%, transparent)
+      );
+      border: 1px solid color-mix(in srgb, var(--report-border) 82%, white);
+      backdrop-filter: blur(14px) saturate(145%);
+      -webkit-backdrop-filter: blur(14px) saturate(145%);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7),
+        0 9px 20px rgba(15, 23, 42, 0.11);
+    }
+
+    .dyeing-report-card .btn-report {
+      color: var(--report-ink);
+      background: transparent;
+    }
+
+    .dyeing-report-card .card-btn {
+      color: var(--report-ink);
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .dyeing-report-card--card {
+      --report-bg-start: #dbeafe;
+      --report-bg-end: #bfdbfe;
+      --report-border: #93c5fd;
+      --report-ink: #1e40af;
+    }
+
+    .dyeing-report-card--delivery {
+      --report-bg-start: #d1fae5;
+      --report-bg-end: #a7f3d0;
+      --report-border: #6ee7b7;
+      --report-ink: #047857;
+    }
+
+    .dyeing-report-card--split {
+      --report-bg-start: #ffedd5;
+      --report-bg-end: #fed7aa;
+      --report-border: #fdba74;
+      --report-ink: #c2410c;
+    }
+
+    .dyeing-report-card--transfer {
+      --report-bg-start: #ede9fe;
+      --report-bg-end: #ddd6fe;
+      --report-border: #c4b5fd;
+      --report-ink: #6d28d9;
+    }
+
+    .dyeing-report-card--verification {
+      --report-bg-start: #cffafe;
+      --report-bg-end: #a5f3fc;
+      --report-border: #67e8f9;
+      --report-ink: #0e7490;
+    }
+
+    .dyeing-report-card--roll-verification {
+      --report-bg-start: #fce7f3;
+      --report-bg-end: #fbcfe8;
+      --report-border: #f9a8d4;
+      --report-ink: #be185d;
+    }
+
+    .dyeing-report-card--load {
+      --report-bg-start: #ecfccb;
+      --report-bg-end: #d9f99d;
+      --report-border: #bef264;
+      --report-ink: #4d7c0f;
+    }
+
+    .dyeing-report-card--unload {
+      --report-bg-start: #ffe4e6;
+      --report-bg-end: #fecdd3;
+      --report-border: #fda4af;
+      --report-ink: #be123c;
+    }
   </style>
 </head>
 
@@ -310,9 +390,9 @@ $isKnittingUser = $user === 'k01';
 
         <!-- Dyeing Part Start -->
         <?php if (!$isKnittingUser): ?>
-        <!-- 8. Dyeing Batch Card Report -->
-        <div class="col-md-4 mb-3 d-flex">
-          <div class="report-card w-100 card-bg">
+        <!-- Dyeing workflow reports -->
+        <div class="col-6 col-md-4 mb-3 d-flex">
+          <div class="report-card w-100 dyeing-report-card dyeing-report-card--card">
             <form method="POST" action="dyeing_batch_card_report.php" class="h-100 w-100">
               <button type="submit" class="btn btn-report">
                 <i class="fa-solid fa-id-card card-btn"></i>
@@ -324,9 +404,8 @@ $isKnittingUser = $user === 'k01';
           </div>
         </div>
 
-        <!-- 9. Dyeing Batch Delivery Report -->
-        <div class="col-md-4 mb-3 d-flex">
-          <div class="report-card w-100 card-bg">
+        <div class="col-6 col-md-4 mb-3 d-flex">
+          <div class="report-card w-100 dyeing-report-card dyeing-report-card--delivery">
             <form method="POST" action="dyeing_batch_delivery_report.php" class="h-100 w-100">
               <button type="submit" class="btn btn-report">
                 <i class="fa-solid fa-truck card-btn"></i>
@@ -337,6 +416,31 @@ $isKnittingUser = $user === 'k01';
             </form>
           </div>
         </div>
+
+        <?php
+        $dyeingReports = [
+          ['dyeing_batch_split_report.php', 'Batch Split Report', 'fa-scissors', 'split'],
+          ['dyeing_batch_transfer_report.php', 'Batch Transfer Report', 'fa-right-left', 'transfer'],
+          ['dyeing_batch_verification_report.php', 'Batch Verification Report', 'fa-clipboard-check', 'verification'],
+          ['dyeing_roll_verification_report.php', 'Roll Verification Report', 'fa-qrcode', 'roll-verification'],
+          ['dyeing_load_report.php', 'Load Report', 'fa-dolly', 'load'],
+          ['dyeing_unload_report.php', 'Unload Report', 'fa-box-open', 'unload']
+        ];
+        foreach ($dyeingReports as $dyeingReport):
+        ?>
+        <div class="col-6 col-md-4 mb-3 d-flex">
+          <div class="report-card w-100 dyeing-report-card dyeing-report-card--<?php echo htmlspecialchars($dyeingReport[3], ENT_QUOTES, 'UTF-8'); ?>">
+            <form method="POST" action="<?php echo htmlspecialchars($dyeingReport[0], ENT_QUOTES, 'UTF-8'); ?>" class="h-100 w-100">
+              <button type="submit" class="btn btn-report">
+                <i class="fa-solid <?php echo htmlspecialchars($dyeingReport[2], ENT_QUOTES, 'UTF-8'); ?> card-btn"></i>
+                <span class="floor-text">
+                  <span><?php echo htmlspecialchars($dyeingReport[1], ENT_QUOTES, 'UTF-8'); ?></span>
+                </span>
+              </button>
+            </form>
+          </div>
+        </div>
+        <?php endforeach; ?>
         <?php endif; ?>
 
 

@@ -443,7 +443,7 @@ if (empty($_SESSION['batch_split_authorized'])) {
 <body>
     <div class="wrap">
         <div class="top-bar">
-            <a href="initialPage.php" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Report</a>
+            <a href="initialPage.php" class="back-btn"><i class="fas fa-arrow-left"></i> Back</a>
             <h1><i class="fa-solid fa-scissors"></i> Dyeing Batch Split</h1>
             <span class="badge" id="cardBadge" style="background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.35);">Select a card</span>
         </div>
