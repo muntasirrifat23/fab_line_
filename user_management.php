@@ -248,7 +248,20 @@ session_start();
               <button type="submit" class="btn-report-style">
                 <i class="fa-solid fa-user-tie"></i>
                 <span class="floor-text">
-                  <span>Knitting All Operators</span>
+                  <span>Knitting Operators</span>
+                </span>
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 d-flex">
+          <div class="report-card-item w-100" style="background: linear-gradient(135deg, #2563eb, #7c3aed);">
+            <form method="POST" action="users_dyeing_operator.php" class="h-100 w-100">
+              <button type="submit" class="btn-report-style">
+                <i class="fa-solid fa-user-gear"></i>
+                <span class="floor-text">
+                  <span>Dyeing Operators</span>
                 </span>
               </button>
             </form>

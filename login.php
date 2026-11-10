@@ -237,15 +237,6 @@
       border: 1px solid #e0d4f0;
     }
 
-    /* Operator hint style */
-    .operator-hint {
-      font-size: 12px;
-      color: #7a6a9a;
-      text-align: center;
-      margin-top: 5px;
-      opacity: 0.7;
-    }
-
     @media (max-width: 380px) {
       .login-action {
         gap: 7px;
@@ -286,9 +277,7 @@
             <span>Login For Production Apps</span>
           </button>
           <input type="button" style="display: none;" value="Login For Graphically Apps" onclick="login(2)" class="w3-blue-grey">
-          <div class="operator-hint">
-            <i class="fas fa-info-circle"></i> Use USER ID or OPERATOR ID to login
-          </div>
+      
           <br>
           <button type="button" class="login-action change-password-toggle" onclick="toggleChangePwd()" aria-controls="changePwdBox" aria-expanded="false">
             <i class="fa-solid fa-key" aria-hidden="true"></i>
