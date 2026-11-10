@@ -479,6 +479,7 @@ function kcr_page_url($page, $per_page) {
         .custom-pagination .page-item-custom.disabled .page-link-custom { color: #94a3b8; cursor: not-allowed; pointer-events: none; opacity: 0.6; }
         .custom-pagination .page-ellipsis { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 30px; color: #94a3b8; font-size: 12px; }
     </style>
+    <link rel="stylesheet" href="css/knitting-report-theme.css">
 </head>
 
 <body>
@@ -487,7 +488,7 @@ function kcr_page_url($page, $per_page) {
 
         <!-- ═══ HEADER BANNER ═══ -->
         <div class="top-banner">
-            <div class="banner-inner">
+            <div class="banner-inner knitting-report-header">
                 <!-- Left: icon + title -->
                 <div class="banner-title-group">
                     <div class="banner-icon-wrap">

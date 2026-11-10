@@ -591,6 +591,7 @@ if (isset($db) && $db) {
             }
         }
     </style>
+    <link rel="stylesheet" href="css/knitting-report-theme.css">
 </head>
 
 <body>
@@ -647,7 +648,7 @@ if (isset($db) && $db) {
     <div class="container-fluid p-0">
 
         <!-- Top Header Row -->
-        <div class="head-row">
+        <div class="head-row knitting-report-header">
             <button class="btn" id="backBtn">
                 <i class="fa-solid fa-arrow-left"></i> Back to Report
             </button>

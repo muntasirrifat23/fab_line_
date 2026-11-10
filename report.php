@@ -277,6 +277,65 @@ $isKnittingUser = $user === 'k01';
       --report-border: #fda4af;
       --report-ink: #be123c;
     }
+
+    .knitting-report-card {
+      border: 1px solid var(--knit-card-border);
+      background: linear-gradient(135deg, var(--knit-card-start), var(--knit-card-end));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        0 8px 18px rgba(15, 23, 42, 0.12);
+    }
+
+    .knitting-report-card .btn-report {
+      color: #fff;
+      background: transparent;
+    }
+
+    .knitting-report-card .card-btn {
+      color: var(--knit-card-end);
+      background: rgba(255, 255, 255, 0.96);
+    }
+
+    .knitting-report-card--input {
+      --knit-card-start: #0f3b73;
+      --knit-card-end: #2563eb;
+      --knit-card-border: #60a5fa;
+    }
+
+    .knitting-report-card--program {
+      --knit-card-start: #075e54;
+      --knit-card-end: #0f9f8f;
+      --knit-card-border: #5eead4;
+    }
+
+    .knitting-report-card--status {
+      --knit-card-start: #713f12;
+      --knit-card-end: #d97706;
+      --knit-card-border: #fbbf24;
+    }
+
+    .knitting-report-card--card {
+      --knit-card-start: #43308a;
+      --knit-card-end: #7c3aed;
+      --knit-card-border: #c4b5fd;
+    }
+
+    .knitting-report-card--production {
+      --knit-card-start: #164e63;
+      --knit-card-end: #0891b2;
+      --knit-card-border: #67e8f9;
+    }
+
+    .knitting-report-card--inspection {
+      --knit-card-start: #881337;
+      --knit-card-end: #e11d48;
+      --knit-card-border: #fda4af;
+    }
+
+    .knitting-report-card--store {
+      --knit-card-start: #365314;
+      --knit-card-end: #65a30d;
+      --knit-card-border: #bef264;
+    }
   </style>
 </head>
 
@@ -291,7 +350,7 @@ $isKnittingUser = $user === 'k01';
         <?php if (!$isDyeingUser): ?>
         <!-- 1. Knitting Input Details Report -->
         <div class="col-md-4 mb-3 d-flex">
-          <div class="report-card w-100 card-bg">
+          <div class="report-card w-100 knitting-report-card knitting-report-card--input">
             <form method="POST" action="knitting_input.php" class="h-100 w-100">
               <button type="submit" class="btn btn-report">
                 <i class="fa-solid fa-file-import card-btn"></i>
@@ -305,7 +364,7 @@ $isKnittingUser = $user === 'k01';
 
         <!-- 2. Knitting Program Report -->
         <div class="col-md-4 mb-3 d-flex">
-          <div class="report-card w-100 card-bg">
+          <div class="report-card w-100 knitting-report-card knitting-report-card--program">
             <form method="POST" action="knitting_program_report.php" class="h-100 w-100">
               <button type="submit" class="btn btn-report">
                 <i class="fa-solid fa-clipboard-list card-btn"></i>
@@ -319,7 +378,7 @@ $isKnittingUser = $user === 'k01';
 
         <!-- 3. Knitting Program Status -->
         <div class="col-md-4 mb-3 d-flex">
-          <div class="report-card w-100 card-bg">
+          <div class="report-card w-100 knitting-report-card knitting-report-card--status">
             <form method="POST" action="knitting_program_status.php" class="h-100 w-100">
               <button type="submit" class="btn btn-report">
                 <i class="fa-solid fa-clipboard-list card-btn"></i>
@@ -333,7 +392,7 @@ $isKnittingUser = $user === 'k01';
 
         <!-- 4. Knit Card Report -->
         <div class="col-md-4 mb-3 d-flex">
-          <div class="report-card w-100 card-bg">
+          <div class="report-card w-100 knitting-report-card knitting-report-card--card">
             <form method="POST" action="knit_card_report.php" class="h-100 w-100">
               <button type="submit" class="btn btn-report">
                 <i class="fa-solid fa-id-card-clip card-btn"></i>
@@ -347,7 +406,7 @@ $isKnittingUser = $user === 'k01';
 
         <!-- 5. Knitting production Report -->
         <div class="col-md-4 mb-3 d-flex">
-          <div class="report-card w-100 card-bg">
+          <div class="report-card w-100 knitting-report-card knitting-report-card--production">
             <form method="POST" action="knitting_production_report.php" class="h-100 w-100">
               <button type="submit" class="btn btn-report">
                 <i class="fa-solid fa-chart-line card-btn"></i>
@@ -361,7 +420,7 @@ $isKnittingUser = $user === 'k01';
 
         <!-- 6. Knitting Inspection Report -->
         <div class="col-md-4 mb-3 d-flex">
-          <div class="report-card w-100 card-bg">
+          <div class="report-card w-100 knitting-report-card knitting-report-card--inspection">
             <form method="POST" action="knitting_inspection_report.php" class="h-100 w-100">
               <button type="submit" class="btn btn-report">
                 <i class="fa-solid fa-clipboard-check card-btn"></i>
@@ -375,7 +434,7 @@ $isKnittingUser = $user === 'k01';
 
         <!-- 7. Knitting Store Report -->
         <div class="col-md-4 mb-3 d-flex">
-          <div class="report-card w-100 card-bg">
+          <div class="report-card w-100 knitting-report-card knitting-report-card--store">
             <form method="POST" action="knitting_store_report.php" class="h-100 w-100">
               <button type="submit" class="btn btn-report">
                 <i class="fa-solid fa-warehouse  card-btn"></i>

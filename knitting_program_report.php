@@ -505,6 +505,7 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="css/knitting-report-theme.css">
 </head>
 
 <body>
@@ -513,7 +514,7 @@
 
         <!-- Header Banner -->
         <div class="top-banner">
-            <div class="banner-inner">
+            <div class="banner-inner knitting-report-header">
                 <button class="btn nav-btn btn-glass" id="backBtn">
                     <i class="fa-solid fa-arrow-left"></i> Back to Report
                 </button>

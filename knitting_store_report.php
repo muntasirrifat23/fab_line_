@@ -573,13 +573,14 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="css/knitting-report-theme.css">
 </head>
 
 <body>
 
     <div class="container-fluid p-0">
 
-        <div class="head-row">
+        <div class="head-row knitting-report-header knitting-report-header--tabs">
             <button class="btn" id="backBtn">
                 <i class="fa-solid fa-arrow-left" ></i> Back to Report
             </button>

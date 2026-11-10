@@ -406,12 +406,13 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="css/knitting-report-theme.css">
 </head>
 
 <body>
 
     <div class="container-fluid">
-        <div class="page-header d-flex justify-content-between align-items-center mb-3">
+        <div class="page-header d-flex justify-content-between align-items-center mb-3 knitting-report-header">
             <button class="back-btn" id="backBtn">
                 <i class="fa-solid fa-arrow-left" style="margin-right:6px;background:none;border:none;box-shadow:none;transform:none;"></i>
                 Back To Report
