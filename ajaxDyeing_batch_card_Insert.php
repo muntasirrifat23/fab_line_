@@ -21,6 +21,14 @@ $rolls = array_values($_SESSION['dyeing_batch']['rolls']);
 $dyeingMcno = isset($_SESSION['dyeing_batch']['dymcno'])
     ? trim((string)$_SESSION['dyeing_batch']['dymcno'])
     : '';
+$selectedProcesses = isset($_SESSION['dyeing_batch']['processes']) &&
+    is_array($_SESSION['dyeing_batch']['processes'])
+    ? $_SESSION['dyeing_batch']['processes']
+    : [];
+$processFields = [
+    'SILICON', 'NONSILICON', 'NWASH', 'EWASH', 'ENZYME', 'NONENZYME',
+    'PEACH', 'BRUSH', 'AOP', 'SOFTENER', 'NONSOFTENER', 'OTHERS'
+];
 
 if (count($rolls) === 0 || $dyeingMcno === '') {
     echo json_encode(['success' => false, 'message' => 'Select at least one roll and a Dyeing MC No to create a batch card']);
@@ -67,6 +75,23 @@ foreach ([
     }
 }
 
+$processFields = [
+    'SILICON', 'NONSILICON', 'NWASH', 'EWASH', 'ENZYME', 'NONENZYME',
+    'PEACH', 'BRUSH', 'AOP', 'SOFTENER', 'NONSOFTENER', 'OTHERS'
+];
+foreach ($processFields as $column) {
+    $columnResult = $db->query("SHOW COLUMNS FROM dyeing_batch_card LIKE '$column'");
+    if (!$columnResult) {
+        echo json_encode(['success' => false, 'message' => 'Could not check batch card column ' . $column . ': ' . $db->error]);
+        exit;
+    }
+    if ($columnResult->num_rows === 0 &&
+        !$db->query("ALTER TABLE dyeing_batch_card ADD COLUMN `$column` VARCHAR(100) DEFAULT NULL")) {
+        echo json_encode(['success' => false, 'message' => 'Could not add batch card column ' . $column . ': ' . $db->error]);
+        exit;
+    }
+}
+
 // Assign next card number from DB
 $r = mysqli_query($db, "SELECT COALESCE(MAX(CAST(BCARD AS UNSIGNED)), 4000000000) + 1 AS nxt FROM dyeing_batch_card");
 if (!$r) {
@@ -93,8 +118,10 @@ foreach ($rolls as $row) {
         "INSERT INTO dyeing_batch_card
          (BUDAT, BCARD, ROLL, PO_NUMBER, RACK, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
           DYMCNO, MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
-          YTYPE, YCOUNT, YBRAND, CATEGORY, TPOINT, UNAME)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+          YTYPE, YCOUNT, YBRAND, CATEGORY, TPOINT, UNAME, SILICON, NONSILICON, NWASH,
+          EWASH, ENZYME, NONENZYME, PEACH, BRUSH, AOP, SOFTENER, NONSOFTENER, OTHERS)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
 
     if (!$stmt) {
@@ -125,9 +152,13 @@ foreach ($rolls as $row) {
     $vCATEGORY = isset($row['CATEGORY']) ? $row['CATEGORY'] : null;
     $vTPOINT = isset($row['TPOINT']) ? $row['TPOINT'] : null;
     $vROLL = isset($row['ROLL']) ? $row['ROLL'] : '';
+    $processValues = [];
+    foreach ($processFields as $processField) {
+        $processValues[$processField] = isset($selectedProcesses[$processField]) ? $processField : '';
+    }
 
     $stmt->bind_param(
-        'sssssssssssssssssssssssssss',
+        str_repeat('s', 39),
         $budat,
         $cardNo,
         $vROLL,
@@ -154,7 +185,19 @@ foreach ($rolls as $row) {
         $vYBRAND,
         $vCATEGORY,
         $vTPOINT,
-        $uname
+        $uname,
+        $processValues['SILICON'],
+        $processValues['NONSILICON'],
+        $processValues['NWASH'],
+        $processValues['EWASH'],
+        $processValues['ENZYME'],
+        $processValues['NONENZYME'],
+        $processValues['PEACH'],
+        $processValues['BRUSH'],
+        $processValues['AOP'],
+        $processValues['SOFTENER'],
+        $processValues['NONSOFTENER'],
+        $processValues['OTHERS']
     );
 
     if (!$stmt->execute()) {
@@ -179,6 +222,7 @@ if ($inserted === count($rolls)) {
     unset($_SESSION['dyeing_batch']['created_at']);
     unset($_SESSION['dyeing_batch']['target_qty']);
     unset($_SESSION['dyeing_batch']['dymcno']);
+    unset($_SESSION['dyeing_batch']['processes']);
     $_SESSION['dyeing_batch']['seq'] = $seq + 1;
 
     echo json_encode([

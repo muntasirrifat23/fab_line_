@@ -15,6 +15,7 @@ $_SESSION['dyeing_batch']['rolls'] = [];
 unset($_SESSION['dyeing_batch']['card_no']);
 unset($_SESSION['dyeing_batch']['created_at']);
 unset($_SESSION['dyeing_batch']['target_qty']);
+unset($_SESSION['dyeing_batch']['processes']);
 unset($_SESSION['dyeing_batch']['saved']);
 ?>
 
@@ -111,13 +112,90 @@ unset($_SESSION['dyeing_batch']['saved']);
             margin-bottom: 14px;
         }
 
+        .batch-search-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 2.5fr) minmax(300px, 1fr);
+            align-items: stretch;
+            gap: 16px;
+        }
+
+        #batchSearchPanel {
+            container-type: inline-size;
+        }
+
+        .search-controls {
+            display: grid;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .search-po-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .search-action-row {
+            display: grid;
+            grid-template-columns: minmax(150px, 1fr) minmax(170px, 1fr) auto;
+            align-items: end;
+            gap: 10px;
+        }
+
+        .process-panel {
+            min-width: 0;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            background: #f8fffd;
+        }
+
+        .process-panel h3 {
+            margin: 0 0 10px;
+            color: #134e4a;
+            font-size: .95rem;
+        }
+
+        .process-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px 10px;
+        }
+
+        .process-option {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            min-width: 0;
+            color: #334155;
+            font-size: .8rem;
+            font-weight: 650;
+            line-height: 1.3;
+            cursor: pointer;
+        }
+
+        .process-option input {
+            flex: 0 0 auto;
+            width: 16px;
+            height: 16px;
+            margin: 0;
+            accent-color: #0d9488;
+        }
+
+        .process-panel:disabled {
+            opacity: .58;
+        }
+
+        .process-panel:disabled .process-option {
+            cursor: not-allowed;
+        }
+
         .filter-field {
-            flex: 1;
-            min-width: 220px;
+            min-width: 0;
         }
 
         .filter-field.target-qty-field {
-            flex: 0 1 220px;
+            min-width: 0;
         }
 
         .filter-field label {
@@ -199,8 +277,18 @@ unset($_SESSION['dyeing_batch']['saved']);
         }
 
         @media (max-width: 720px) {
-            .filter-field.target-qty-field {
-                flex: 1;
+            .batch-search-layout {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        @container (max-width: 850px) {
+            .batch-search-layout {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .process-panel {
+                width: 100%;
             }
         }
 
@@ -213,8 +301,17 @@ unset($_SESSION['dyeing_batch']['saved']);
                 padding: 12px;
             }
 
-            .filter-field {
-                min-width: 100%;
+            .search-po-row,
+            .search-action-row {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .search-action-row > .btn {
+                width: 100%;
+            }
+
+            .process-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
         }
 
@@ -235,7 +332,7 @@ unset($_SESSION['dyeing_batch']['saved']);
         .search-row > .btn {
             min-height: 42px;
             justify-content: center;
-            align-self: flex-end;
+            align-self: end;
             white-space: nowrap;
         }
 
@@ -516,34 +613,57 @@ unset($_SESSION['dyeing_batch']['saved']);
 
         <div id="msgBox" class="msg-box" role="status" aria-live="polite"></div>
 
-        <div class="panel">
+        <div class="panel" id="batchSearchPanel">
             <div class="panel-title"><i class="fa-solid fa-filter"></i> Find Rolls for Batch Card</div>
-            <div class="search-row">
-                <div class="filter-field">
-                    <label for="poNumberSelect">PO Number</label>
-                    <input type="text" id="poNumberSelect" class="filter-select po-input"
-                        list="poNumberOptions" autocomplete="off" placeholder="Enter or select PO Number">
-                    <datalist id="poNumberOptions"></datalist>
+            <div class="batch-search-layout">
+                <div class="search-controls">
+                    <div class="search-po-row">
+                        <div class="filter-field">
+                            <label for="poNumberSelect">PO Number</label>
+                            <input type="text" id="poNumberSelect" class="filter-select po-input"
+                                list="poNumberOptions" autocomplete="off" placeholder="Enter or select PO Number">
+                            <datalist id="poNumberOptions"></datalist>
+                        </div>
+                        <div class="filter-field">
+                            <label for="colorSelect">Color</label>
+                            <select id="colorSelect" class="filter-select" disabled>
+                                <option value="">Select a PO Number first</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="search-action-row search-row">
+                        <div class="filter-field target-qty-field">
+                            <label for="targetQtyInput">Target QTY (KG)</label>
+                            <input type="number" id="targetQtyInput" class="qty-input" min="0.001" step="0.001" placeholder="Enter target QTY">
+                        </div>
+                        <div class="filter-field target-qty-field">
+                            <label for="dyeingMcnoSelect">Dyeing MC No (Required)</label>
+                            <select id="dyeingMcnoSelect" class="filter-select" disabled>
+                                <option value="">Loading dyeing machines...</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-blue" id="searchBtn" type="button" disabled>
+                            <i class="fa-solid fa-magnifying-glass"></i> Search
+                        </button>
+                    </div>
                 </div>
-                <div class="filter-field">
-                    <label for="colorSelect">Color</label>
-                    <select id="colorSelect" class="filter-select" disabled>
-                        <option value="">Select a PO Number first</option>
-                    </select>
-                </div>
-                <div class="filter-field target-qty-field">
-                    <label for="targetQtyInput">Target QTY (KG)</label>
-                    <input type="number" id="targetQtyInput" class="qty-input" min="0.001" step="0.001" placeholder="Enter target QTY">
-                </div>
-                <div class="filter-field target-qty-field">
-                    <label for="dyeingMcnoSelect">Dyeing MC No</label>
-                    <select id="dyeingMcnoSelect" class="filter-select" disabled>
-                        <option value="">Loading dyeing machines...</option>
-                    </select>
-                </div>
-                <button class="btn btn-blue" id="searchBtn" type="button" disabled>
-                    <i class="fa-solid fa-magnifying-glass"></i> Search
-                </button>
+                <fieldset class="process-panel" id="processPanel" disabled>
+                    <h3>Dyeing Process</h3>
+                    <div class="process-grid">
+                        <label class="process-option"><input type="checkbox" data-process-field="SILICON"> Silicon</label>
+                        <label class="process-option"><input type="checkbox" data-process-field="ENZYME"> Enzyme</label>
+                        <label class="process-option"><input type="checkbox" data-process-field="AOP"> AOP</label>
+                        <label class="process-option"><input type="checkbox" data-process-field="NONSILICON"> Non-Silicon</label>
+                        <label class="process-option"><input type="checkbox" data-process-field="NONENZYME"> Non-Enzyme</label>
+                        <label class="process-option"><input type="checkbox" data-process-field="SOFTENER"> Softener</label>
+                        <label class="process-option"><input type="checkbox" data-process-field="NWASH"> Normal Wash (YD)</label>
+                        <label class="process-option"><input type="checkbox" data-process-field="PEACH"> Peach</label>
+                        <label class="process-option"><input type="checkbox" data-process-field="NONSOFTENER"> Non-Softener</label>
+                        <label class="process-option"><input type="checkbox" data-process-field="EWASH"> Enzyme Wash (YD)</label>
+                        <label class="process-option"><input type="checkbox" data-process-field="BRUSH"> Brush</label>
+                        <label class="process-option"><input type="checkbox" data-process-field="OTHERS"> Others</label>
+                    </div>
+                </fieldset>
             </div>
         </div>
 
@@ -626,7 +746,7 @@ unset($_SESSION['dyeing_batch']['saved']);
         var targetQtyInput = document.getElementById('targetQtyInput');
         var dyeingMcnoSelect = document.getElementById('dyeingMcnoSelect');
         var confirmCreateBtn = document.getElementById('confirmCreateBtn');
-
+        var processPanel = document.getElementById('processPanel');
         function showMsg(message, type) {
             var box = document.getElementById('msgBox');
             box.className = 'msg-box ' + (type === 'error' ? 'msg-error' : 'msg-success');
@@ -699,11 +819,26 @@ unset($_SESSION['dyeing_batch']['saved']);
             }).then(readJson);
         }
 
+        function setProcessSelectionEnabled(enabled) {
+            processPanel.disabled = !enabled;
+            if (!enabled) {
+                processPanel.querySelectorAll('input[type="checkbox"]').forEach(function(checkbox) {
+                    checkbox.checked = false;
+                });
+            }
+        }
+
+        function getSelectedProcesses() {
+            return Array.from(processPanel.querySelectorAll('input[data-process-field]:checked'))
+                .map(function(checkbox) { return checkbox.dataset.processField; });
+        }
+
         function resetResults(preserveTargetQty) {
             searchRequestId++;
             searchInProgress = false;
             candidateRolls = [];
             selectedRolls.clear();
+            setProcessSelectionEnabled(false);
             document.getElementById('searchResults').classList.add('is-hidden');
             document.getElementById('suggestionPanel').classList.add('is-hidden');
             document.getElementById('storeBody').innerHTML =
@@ -843,8 +978,14 @@ unset($_SESSION['dyeing_batch']['saved']);
                 'is-hidden',
                 candidateRolls.length === 0 || qty <= 0
             );
-            confirmCreateBtn.disabled = !selected.length || !dyeingMcnoSelect.value ||
-                selectedTotal < minimum || selectedTotal > maximum;
+            var hasValidSelectedQty = selected.length > 0 &&
+                selectedTotal >= minimum && selectedTotal <= maximum;
+            confirmCreateBtn.disabled = !hasValidSelectedQty || !dyeingMcnoSelect.value;
+            confirmCreateBtn.title = !dyeingMcnoSelect.value
+                ? 'Select a Dyeing MC No to enable batch creation. Dyeing Process selections are optional.'
+                : !hasValidSelectedQty
+                    ? 'Select rolls whose total QTY is within 5 KG of the target.'
+                    : 'Create the batch card. Dyeing Process selections are optional.';
 
             var status = document.getElementById('resultsStatus');
             if (candidateRolls.length === 0) {
@@ -969,6 +1110,7 @@ unset($_SESSION['dyeing_batch']['saved']);
                 if (!response.success) throw new Error(response.message || 'Could not search rolls');
                 candidateRolls = response.rolls || [];
                 renderRolls(candidateRolls);
+                setProcessSelectionEnabled(candidateRolls.length > 0);
                 if (targetUnits()) {
                     suggestRollsForTarget();
                 } else {
@@ -1044,6 +1186,10 @@ unset($_SESSION['dyeing_batch']['saved']);
 
         function confirmCreate() {
             var selected = Array.from(selectedRolls.values());
+            if (!dyeingMcnoSelect.value) {
+                showMsg('Select a Dyeing MC No before creating the batch card. Dyeing Process selections are optional.', 'error');
+                return;
+            }
             if (!selected.length || confirmCreateBtn.disabled) {
                 showMsg('Select rolls whose total is within 5 KG of the target QTY.', 'error');
                 return;
@@ -1056,6 +1202,7 @@ unset($_SESSION['dyeing_batch']['saved']);
                 color: colorSelect.value,
                 target_qty: Number(targetQtyInput.value),
                 dymcno: dyeingMcnoSelect.value,
+                processes: getSelectedProcesses(),
                 rolls: selected.map(function(row) { return row.ROLL; })
             };
 
@@ -1190,7 +1337,7 @@ unset($_SESSION['dyeing_batch']['saved']);
         confirmCreateBtn.addEventListener('click', confirmCreate);
         document.getElementById('backBtn').addEventListener('click', function(event) {
             event.preventDefault();
-            window.location.href = 'dyeing_batch_card_report.php';
+            window.location.href = 'initialPage.php';
         });
 
         apiGet('get_batch').then(function(response) {

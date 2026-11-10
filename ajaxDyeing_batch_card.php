@@ -159,11 +159,30 @@ switch ($action) {
 
     case 'select_rolls':
         $input = json_decode(file_get_contents('php://input'), true);
+        if (!is_array($input)) {
+            echo json_encode(['success' => false, 'message' => 'Invalid batch card selection data']);
+            exit;
+        }
         $poNumber = isset($input['po_number']) ? trim((string)$input['po_number']) : '';
         $color = isset($input['color']) ? trim((string)$input['color']) : '';
         $targetQty = isset($input['target_qty']) && is_numeric($input['target_qty']) ? (float)$input['target_qty'] : 0;
         $dyeingMcno = isset($input['dymcno']) ? trim((string)$input['dymcno']) : '';
         $rolls = isset($input['rolls']) && is_array($input['rolls']) ? $input['rolls'] : [];
+        $allowedProcessFields = [
+            'SILICON', 'NONSILICON', 'NWASH', 'EWASH', 'ENZYME', 'NONENZYME',
+            'PEACH', 'BRUSH', 'AOP', 'SOFTENER', 'NONSOFTENER', 'OTHERS'
+        ];
+        $requestedProcesses = isset($input['processes']) && is_array($input['processes'])
+            ? $input['processes']
+            : [];
+        $selectedProcesses = [];
+        foreach ($requestedProcesses as $processField) {
+            if (!is_string($processField) || !in_array($processField, $allowedProcessFields, true)) {
+                echo json_encode(['success' => false, 'message' => 'Invalid Dyeing Process selection']);
+                exit;
+            }
+            $selectedProcesses[$processField] = true;
+        }
 
         $rolls = array_values(array_unique(array_filter(array_map(function ($roll) {
             return is_scalar($roll) ? trim((string)$roll) : '';
@@ -270,6 +289,7 @@ switch ($action) {
         $_SESSION['dyeing_batch']['rolls'] = $selectedRolls;
         $_SESSION['dyeing_batch']['target_qty'] = $targetQty;
         $_SESSION['dyeing_batch']['dymcno'] = $dyeingMcno;
+        $_SESSION['dyeing_batch']['processes'] = $selectedProcesses;
         echo json_encode([
             'success' => true,
             'count' => count($selectedRolls),
@@ -480,6 +500,7 @@ if ($row = $result->fetch_assoc()) {
         unset($_SESSION['dyeing_batch']['card_no']);
         unset($_SESSION['dyeing_batch']['created_at']);
         unset($_SESSION['dyeing_batch']['saved']);
+        unset($_SESSION['dyeing_batch']['processes']);
         $_SESSION['dyeing_batch']['seq'] = nextCardNoFromDb($db);
         echo json_encode([
             'success' => true,
