@@ -15,7 +15,6 @@
         :root {
             --surface-bg: #f8fafc;
             --card-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
-            --header-bg: #d8d4d6;
             --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
         }
 
@@ -45,13 +44,13 @@
         /* ============ HEADER BANNER ============ */
         .top-banner {
             position: relative;
-            background: var(--header-bg);
+            background: transparent;
             color: white;
-            padding: 30px 36px 0 36px;
-            border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
+            padding: 0;
+            border-radius: 0;
+            box-shadow: none;
             margin-bottom: 24px;
-            overflow: hidden;
+            overflow: visible;
         }
 
         .top-banner::before {
@@ -128,8 +127,10 @@
             z-index: 2;
             background: #111827;
             border-top: 1px solid #374151;
-            margin: 0 -36px;
-            padding: 13px 36px;
+            margin: 0;
+            padding: 13px 18px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
             display: flex;
             align-items: center;
             gap: 28px;
@@ -250,8 +251,8 @@
         }
 
         .report-search-input {
-            width: 25%;
-            flex: 0 0 25%;
+            width: auto;
+            flex: 1 1 320px;
             min-width: 0;
         }
 
@@ -485,24 +486,213 @@
             }
         }
 
+        .knitting-report-header.knitting-program-report-header {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
+            align-items: center !important;
+            gap: 12px !important;
+            padding-bottom: 22px !important;
+        }
+
+        .knitting-report-header.knitting-program-report-header .banner-title-center {
+            grid-column: 2;
+            min-width: 0;
+        }
+
+        .knitting-report-header.knitting-program-report-header h1 {
+            position: static !important;
+            width: auto !important;
+            margin: 0 !important;
+            padding: 0 8px;
+            transform: none !important;
+            color: #fff !important;
+            font-size: clamp(1.2rem, 2.4vw, 1.65rem) !important;
+            line-height: 1.2;
+            text-align: center;
+        }
+
+        .knitting-report-header.knitting-program-report-header .report-header-spacer {
+            grid-column: 3;
+        }
+
+        .report-search-row {
+            flex-wrap: wrap;
+        }
+
+        .program-status-summary-layout {
+            display: grid;
+            grid-template-columns: minmax(280px, 0.9fr) minmax(0, 2fr);
+            grid-template-areas: "search stats";
+            align-items: stretch;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .program-status-summary-layout .search-panel {
+            grid-area: search;
+            height: 100%;
+            margin: 0;
+            padding: 18px;
+            border-radius: 8px;
+        }
+
+        .program-search-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #111827;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .program-report-stat-cards {
+            grid-area: stats;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .program-report-stat-card {
+            min-width: 0;
+            min-height: 82px;
+            padding: 14px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            background: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        }
+
+        .program-report-stat-label {
+            margin-bottom: 6px;
+            color: #64748b;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .program-report-stat-value {
+            color: #2563eb;
+            font-size: clamp(18px, 2vw, 26px);
+            font-weight: 800;
+            line-height: 1.15;
+            overflow-wrap: anywhere;
+        }
+
+        .program-report-stat-card.qty .program-report-stat-value {
+            color: #16a34a;
+        }
+
+        .program-report-stat-card.date .program-report-stat-value {
+            color: #475569;
+            font-size: clamp(14px, 1.5vw, 18px);
+        }
+
+        .knitting-report-header.knitting-program-report-header > #backBtn {
+            justify-self: start;
+            align-self: center;
+            width: max-content;
+            max-width: 100%;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 1100px) {
+            .program-status-summary-layout {
+                grid-template-columns: minmax(0, 1fr);
+                grid-template-areas:
+                    "stats"
+                    "search";
+            }
+
+            .program-report-stat-cards {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 14px;
             }
 
             .top-banner {
-                padding: 22px 20px 0 20px;
-                border-radius: 18px;
+                padding: 0;
+                border-radius: 0;
             }
 
             .banner-info-strip {
-                margin: 0 -20px;
-                padding: 12px 20px;
+                margin: 0;
+                padding: 12px 14px;
             }
 
             .top-banner h1 {
                 font-size: 1.4rem;
             }
+
+            .knitting-report-header.knitting-program-report-header {
+                grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, 1fr);
+                gap: 8px !important;
+            }
+
+            .knitting-report-header.knitting-program-report-header .nav-btn {
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+
+            .report-search-input {
+                flex-basis: 100%;
+            }
+
+            .program-status-summary-layout .search-panel {
+                padding: 14px;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .knitting-report-header.knitting-program-report-header {
+                grid-template-columns: minmax(0, 1fr) auto;
+                grid-template-areas:
+                    "back spacer"
+                    "title title";
+                row-gap: 12px !important;
+                padding-bottom: 14px !important;
+            }
+
+            .knitting-report-header.knitting-program-report-header > #backBtn {
+                grid-area: back;
+                justify-self: start;
+                max-width: 100%;
+                padding: 7px 9px;
+                font-size: 12px;
+            }
+
+            .knitting-report-header.knitting-program-report-header .banner-title-center {
+                grid-area: title;
+                grid-column: 1 / -1;
+            }
+
+            .knitting-report-header.knitting-program-report-header .report-header-spacer {
+                display: block !important;
+                grid-area: spacer;
+                grid-column: 2;
+                width: 1px !important;
+            }
+
+            .knitting-report-header.knitting-program-report-header h1 {
+                font-size: 1.2rem !important;
+            }
+
+            .report-search-row {
+                align-items: stretch;
+            }
+
+            .report-search-actions {
+                flex-wrap: wrap;
+            }
+
+            .program-report-stat-card {
+                min-height: 74px;
+                padding: 12px;
+            }
+
         }
     </style>
     <link rel="stylesheet" href="css/knitting-report-theme.css">
@@ -514,32 +704,25 @@
 
         <!-- Header Banner -->
         <div class="top-banner">
-            <div class="banner-inner knitting-report-header">
+            <div class="banner-inner knitting-report-header knitting-program-report-header">
                 <button class="btn nav-btn btn-glass" id="backBtn">
                     <i class="fa-solid fa-arrow-left"></i> Back to Report
                 </button>
                 <div class="banner-title-center">
-                    <h1 style="font-size: x-large; font-weight: 800; color: #1f2937;">Knitting Program Report</h1>
+                    <h1>Knitting Program Report</h1>
                 </div>
-                <div class="d-none d-xl-block" style="width: 190px; flex-shrink: 0;"></div>
-            </div>
-            <div class="banner-info-strip">
-                <span class="strip-item"><span class="strip-dot"></span><span id="stripTotal">Total Programs :</span></span>
-                <span class="strip-item"><span class="strip-dot" style="background:#34d399;box-shadow:0 0 8px #34d399;"></span><span id="stripQty">Total QTY :</span></span>
-                <span class="strip-item ms-auto hint-text" style="color:#cbd5e1;">
-                    <i class="fa-regular fa-calendar me-1"></i><?php echo date('d M Y'); ?>
-                </span>
+                <div class="report-header-spacer" aria-hidden="true"></div>
             </div>
         </div>
 
-        <!-- Data Table -->
-        <div class="table-panel">
-            <div class="search-panel mt-3">
+        <div class="program-status-summary-layout">
+            <div class="search-panel">
+                <label class="program-search-label" for="bookingInput">Search Program No / PO No</label>
                 <div class="report-search-row">
                     <div class="input-group report-search-input">
                         <input type="text" id="bookingInput" class="form-control border-start-0"
                             style="border-radius: 0 12px 12px 0;"
-                            placeholder="Search by Program NO or PO NO" autofocus>
+                            placeholder="Enter Program Number or PO Number" autofocus>
                     </div>
                     <div class="report-search-actions">
                         <button type="button" class="btn btn-search px-4" id="searchBtn" style="white-space: nowrap;">
@@ -552,7 +735,24 @@
                 </div>
             </div>
 
+            <div class="program-report-stat-cards">
+                <div class="program-report-stat-card">
+                    <div class="program-report-stat-label">Total Programs</div>
+                    <div class="program-report-stat-value" id="statPrograms">0</div>
+                </div>
+                <div class="program-report-stat-card qty">
+                    <div class="program-report-stat-label">Total QTY</div>
+                    <div class="program-report-stat-value"><span id="statQty">0</span> <small>KG</small></div>
+                </div>
+                <div class="program-report-stat-card date">
+                    <div class="program-report-stat-label">Report Date</div>
+                    <div class="program-report-stat-value"><?php echo date('d M Y'); ?></div>
+                </div>
+            </div>
+        </div>
 
+        <!-- Data Table -->
+        <div class="table-panel">
             <div class="table-toolbar">
                 <div class="record-count">
                     <i class="fa-solid fa-table-list me-1 text-primary"></i> Showing <span id="rowCount">0</span> record(s)
@@ -620,13 +820,9 @@
             });
 
             $('#statPrograms').text(rows.length.toLocaleString());
-            $('#statQty').html(rows.length ? totalQty.toLocaleString(undefined, {
+            $('#statQty').text(totalQty.toLocaleString(undefined, {
                 maximumFractionDigits: 2
-            }) + ' <span class="fs-6 text-muted">KG</span>' : '');
-            $('#stripTotal').text('Total Programs : ' + rows.length.toLocaleString());
-            $('#stripQty').text('Total QTY : ' + totalQty.toLocaleString(undefined, {
-                maximumFractionDigits: 2
-            }) + ' KG');
+            }));
             $('#rowCount').text(rows.length.toLocaleString());
         }
 

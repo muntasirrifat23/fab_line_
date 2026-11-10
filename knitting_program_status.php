@@ -63,7 +63,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
         .stat-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 18px; }
         .stat-card { background: #fff; border-radius: 10px; padding: 16px 18px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
         .stat-card .stat-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #64748b; margin-bottom: 6px; }
-        .stat-card .stat-value { font-size: 26px; font-weight: 800; }
+        .stat-card .stat-value { font-size: clamp(18px, 2vw, 26px); font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; }
         .stat-card.blue  .stat-value { color: #2563eb; }
         .stat-card.green .stat-value { color: #16a34a; }
         .stat-card.red   .stat-value { color: #dc2626; }
@@ -76,13 +76,13 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
         .status-search-row .btn { margin: 0 !important; }
         .program-status-header i,
         .status-search-row i { border: 0 !important; border-width: 0 !important; padding: 0 !important; box-shadow: none !important; }
-        @media (max-width: 850px) {
+        @media (max-width: 1100px) {
             .status-summary-layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: "stats" "search"; }
+            .status-summary-layout .stat-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
         @media (max-width: 560px) {
-            .status-summary-layout .stat-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .status-summary-layout .stat-card { min-width: 0; padding: 12px; }
-            .status-summary-layout .stat-card .stat-value { font-size: clamp(18px, 5vw, 24px); }
+            .status-summary-layout .stat-card .stat-value { font-size: clamp(17px, 5vw, 22px); }
             .program-status-header { display: grid !important; grid-template-columns: auto minmax(0, 1fr); gap: 12px !important; }
             .program-status-header h1.title { position: static !important; width: auto; margin: 0 !important; padding: 0; transform: none !important; text-align: left !important; font-size: clamp(.85rem, 3.4vw, 1.1rem) !important; }
             .program-status-header #backBtn { max-width: 100%; padding: 7px 9px !important; font-size: .75rem !important; }
@@ -140,31 +140,31 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
                 <table class="table table-bordered table-striped table-hover table-sm">
                     <thead class="table-dark">
                         <tr>
-                            <th>DATE</th>
-                            <th>PROGRAM NO</th>
-                            <th>PO NUMBER</th>
-                            <th>SONO</th>
-                            <th>BUYER</th>
-                            <th>STYLE</th>
-                            <th>COLOR</th>
-                            <th>CATEGORY</th>
-                            <th>FGSM</th>
-                            <th>FDIA</th>
+                            <th>Date</th>
+                            <th>Program No</th>
+                            <th>PO number</th>
+                            <th>Sono</th>
+                            <th>Buyer</th>
+                            <th>Style</th>
+                            <th>Color</th>
+                            <th>Category</th>
+                            <th>Fgsm</th>
+                            <th>Fdia</th>
                             <th>O/T</th>
-                            <th>F TYPE</th>
-                            <th>Y TYPE</th>
-                            <th>CUSTOMER</th>
-                            <th>Y COUNT</th>
-                            <th>Y BRAND</th>
+                            <th>F Type</th>
+                            <th>Y Type</th>
+                            <th>Customer</th>
+                            <th>Y Count</th>
+                            <th>Y Brand</th>
                             <th>SL</th>
-                            <th>MC DIA</th>
+                            <th>MC Dia</th>
                             
-                            <th>FEEDER PLAN</th>
-                            <th>LOT</th>
-                            <th>SHIFT</th>
-                            <th>INPUT QTY</th>
-                            <th>QTY (Program)</th>
-                            <th>REMAINING</th>
+                            <th>Feeder Plan</th>
+                            <th>Lot</th>
+                            <th>Shift</th>
+                            <th>Input Qty</th>
+                            <th>Qty (Program)</th>
+                            <th>Remaining</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -201,8 +201,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
                     tProg += qty;
                     if (!inputAdded[r.PO_NUMBER]) { inputAdded[r.PO_NUMBER] = true; tInput += input; }
 
-                    var remClass = rem <= 0 ? 'text-success fw-bold' : (rem < input * 0.3 ? 'text-danger fw-bold' : 'text-warning fw-bold');
-
                     tbody += '<tr>' +
                         '<td>' + esc(r.BUDAT) + '</td>' +
                         '<td>' + esc(r.PROGRAM_NO) + '</td>' +
@@ -211,7 +209,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
                         '<td>' + esc(r.BUYER) + '</td>' +
                         '<td>' + esc(r.STYLE) + '</td>' +
                         '<td>' + esc(r.COLOR) + '</td>' +
-                        '<td><span class="badge bg-light text-dark border">' + esc(r.CATEGORY || 'N/A') + '</span></td>' +
+                        '<td><span class="badge text-white" style="background-color:#111827;">' + esc(r.CATEGORY || 'N/A') + '</span></td>' +
                         '<td>' + esc(r.FGSM) + '</td>' +
                         '<td>' + esc(r.FDIA) + '</td>' +
                         '<td>' + esc(r.O_T) + '</td>' +
@@ -225,9 +223,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
                                                 '<td>' + esc(r.FEEDER_PLAN) + '</td>' +
                         '<td>' + esc(r.LOT) + '</td>' +
                         '<td>' + esc(r.SHIFT) + '</td>' +
-                        '<td class="text-center">' + input + '</td>' +
-                        '<td class="text-center fw-bold text-primary">' + qty + '</td>' +
-                        '<td class="text-center ' + remClass + '">' + rem + '</td>' +
+                        '<td class="text-center text-dark">' + input + '</td>' +
+                        '<td class="text-center fw-bold text-dark">' + qty + '</td>' +
+                        '<td class="text-center text-danger fw-bold">' + rem + '</td>' +
                         '</tr>';
                 });
 
