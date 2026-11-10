@@ -52,7 +52,43 @@
             gap: 12px;
             flex-wrap: wrap;
             justify-content: center;
-            margin-bottom: 8px;
+            align-items: center;
+            margin: 0;
+        }
+
+        .store-report-controls {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            grid-template-areas: "search tabs";
+            align-items: stretch;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .store-report-controls .search-panel {
+            grid-area: search;
+            min-width: 0;
+            margin: 0;
+        }
+
+        .store-report-controls .tab-bar {
+            grid-area: tabs;
+            align-self: stretch;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            background: #fff;
+        }
+
+        .store-report-controls .tab-btn {
+            flex: 1 1 0;
+            justify-content: center;
+            min-width: 0;
+            font-size: 1.15rem;
+        }
+
+        .store-report-controls .tab-btn i {
+            font-size: 1.15em;
         }
 
         .tab-btn {
@@ -320,11 +356,11 @@
         }
 
         .pdf-item {
-            font-size: 17px;
-            line-height: 1.6;
+            font-size: 15px;
+            line-height: 1.5;
             border-bottom: 1px solid #d1d5db;
             border-right: 1px solid #d1d5db;
-            padding: 9px 12px;
+            padding: 8px 10px;
             word-break: break-word;
             background: #ffffff;
             color: #000000;
@@ -348,13 +384,13 @@
             position: absolute;
             left: 24px;
             right: 24px;
-            bottom: 55px;
+            bottom: 38px;
             display: grid;
             grid-template-columns: 1fr 1fr 1fr 1fr;
             gap: 20px;
             padding: 0 10px;
             text-align: center;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
             color: #000000;
         }
@@ -368,7 +404,7 @@
         }
 
         .pdf-sign-line {
-            width: 80%;
+            width: 72%;
             border-top: 1px solid #000000;
             margin-top: 0;
         }
@@ -484,6 +520,20 @@
 
         /* ---- Tablet ---- */
         @media (max-width: 992px) {
+            .store-report-controls {
+                grid-template-columns: minmax(0, 1fr);
+                grid-template-areas:
+                    "tabs"
+                    "search";
+            }
+
+            .store-report-controls .tab-bar {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 8px;
+                padding: 8px;
+            }
+
             table {
                 min-width: 2000px;
             }
@@ -535,15 +585,6 @@
                 justify-content: center;
             }
 
-            .tab-bar {
-                gap: 8px;
-            }
-
-            .tab-btn {
-                padding: 9px 14px;
-                font-size: .95rem;
-            }
-
             thead th:first-child,
             tbody td:first-child {
                 padding-left: 6px;
@@ -571,6 +612,13 @@
             .preview-foot {
                 padding: 10px 12px;
             }
+
+            .store-report-controls .tab-btn {
+                padding: 10px 6px;
+                font-size: 1rem;
+                gap: 4px;
+                white-space: nowrap;
+            }
         }
     </style>
     <link rel="stylesheet" href="css/knitting-report-theme.css">
@@ -586,20 +634,23 @@
             </button>
             <div class="title-tabs">
                 <h1>Knitting Store Report</h1>
-                <div class="tab-bar" id="tabBar">
-                    <button type="button" class="tab-btn active" data-tab="receive"><i class="fa-solid fa-inbox"></i> Receive</button>
-                    <button type="button" class="tab-btn" data-tab="hold"><i class="fa-solid fa-pause-circle"></i> Hold</button>
-                    <button type="button" class="tab-btn" data-tab="pending"><i class="fa-solid fa-hourglass-half"></i> Pending</button>
-                </div>
             </div>
             <div aria-hidden="true"></div>
         </div>
 
-        <div class="search-panel">
-            <div class="search-row">
-                <input type="text" id="bookingInput" placeholder="Search Roll / PO Number / SONO / Buyer / Style / Rack">
-                <button class="btn btn-search" id="searchBtn"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-                <button class="btn btn-clear" id="clearBtn"><i class="fa-solid fa-rotate-left"></i> Clear</button>
+        <div class="store-report-controls">
+            <div class="search-panel">
+                <div class="search-row">
+                    <input type="text" id="bookingInput" placeholder="Search Roll / PO Number / SONO / Buyer / Style / Rack">
+                    <button class="btn btn-search" id="searchBtn"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+                    <button class="btn btn-clear" id="clearBtn"><i class="fa-solid fa-rotate-left"></i> Clear</button>
+                </div>
+            </div>
+
+            <div class="tab-bar" id="tabBar">
+                <button type="button" class="tab-btn active" data-tab="receive"><i class="fa-solid fa-inbox"></i> Receive</button>
+                <button type="button" class="tab-btn" data-tab="hold"><i class="fa-solid fa-pause-circle"></i> Hold</button>
+                <button type="button" class="tab-btn" data-tab="pending"><i class="fa-solid fa-hourglass-half"></i> Pending</button>
             </div>
         </div>
 
@@ -842,15 +893,12 @@
             }).join('');
 
             var content = '' +
-                '<div id="rowPdfCard" style="position:relative;width:760px;min-height:1050px;padding:24px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">' +
+                '<div id="rowPdfCard" style="position:relative;width:760px;min-height:1050px;padding:24px 24px 72px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">' +
                 '<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:3px solid #2563eb;padding-bottom:12px;margin-bottom:18px;">' +
-                '<div style="flex:1;text-align:center;font-size:27px;font-weight:bold;color:#1e3a8a;">Knitting Store Report</div>' +
-                '<div class="row-qr-box" style="flex:none;width:150px;height:150px;display:flex;align-items:center;justify-content:center;background:#ffffff;"></div>' +
+                '<div style="flex:1;text-align:center;font-size:24px;font-weight:bold;color:#1e3a8a;">Knitting Store Report</div>' +
+                '<div class="row-qr-box" style="flex:none;width:120px;height:120px;display:flex;align-items:center;justify-content:center;background:#ffffff;"></div>' +
                 '</div>' +
                 '<div class="pdf-grid">' + rowsHTML + '</div>' +
-                '<div style="text-align:center;font-size:14px;color: black; margin-top:18px;border-top:1px solid #e5e7eb;padding-top:10px;">' +
-                'Generated from Knitting Store Report - ' + new Date().toLocaleString() +
-                '</div>' +
 
                 '<div class="pdf-sign">' +
                 '<div class="pdf-sign-item"><div class="pdf-sign-line"></div><span>Supervisor</span></div>' +
@@ -881,8 +929,8 @@
 
             new QRCode(qrBox, {
                 text: roll,
-                width: 144,
-                height: 144,
+                width: 116,
+                height: 116,
                 colorDark: '#000000',
                 colorLight: '#ffffff',
                 correctLevel: QRCode.CorrectLevel.H
@@ -896,8 +944,8 @@
             var qrImage = document.createElement('img');
             qrImage.src = qrCanvas.toDataURL('image/png');
             qrImage.alt = 'QR code for roll ' + roll;
-            qrImage.width = 144;
-            qrImage.height = 144;
+            qrImage.width = 116;
+            qrImage.height = 116;
             qrBox.innerHTML = '';
             qrBox.appendChild(qrImage);
 
