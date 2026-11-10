@@ -38,6 +38,7 @@ if (empty($_SESSION['batch_split_authorized'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dyeing | Batch Split</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * {
@@ -134,6 +135,55 @@ if (empty($_SESSION['batch_split_authorized'])) {
             align-items: center;
         }
 
+        .split-row {
+            flex-wrap: nowrap;
+            justify-content: flex-start;
+        }
+
+        .split-row .qty-input {
+            flex: 0 1 240px;
+            width: min(240px, 38vw);
+            min-width: 0;
+        }
+
+        .split-row .btn {
+            flex: 0 0 auto;
+        }
+
+        .split-layout {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .split-layout .split-row {
+            flex: 0 0 auto;
+            margin: 0;
+        }
+
+        .split-results {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        .split-results .status-line {
+            margin: 0;
+        }
+
+        #suggestionsBox {
+            min-width: 0;
+            width: fit-content;
+            max-width: 100%;
+            margin: 0;
+        }
+
+        #suggestionsBox .suggestion {
+            margin: 0;
+        }
+
         .search-input,
         .qty-input {
             flex: 1;
@@ -206,11 +256,23 @@ if (empty($_SESSION['batch_split_authorized'])) {
             border-collapse: collapse;
             font-size: 0.82rem;
         }
-        .process-badges { display: grid; grid-template-columns: repeat(2, max-content); gap: 5px; }
+
+        .process-badges {
+            display: grid;
+            grid-template-columns: repeat(2, max-content);
+            gap: 5px;
+        }
+
         .process-badge {
-            display: inline-block; padding: 4px 8px; border: 1px solid #99d5c9;
-            border-radius: 6px; color: #075e54; background: #e6f8f3;
-            font-size: .78rem; font-weight: 750; white-space: nowrap;
+            display: inline-block;
+            padding: 4px 8px;
+            border: 1px solid #99d5c9;
+            border-radius: 6px;
+            color: #075e54;
+            background: #e6f8f3;
+            font-size: .78rem;
+            font-weight: 750;
+            white-space: nowrap;
         }
 
         thead th {
@@ -269,16 +331,18 @@ if (empty($_SESSION['batch_split_authorized'])) {
         }
 
         .suggestion {
+            display: inline-flex;
+            width: fit-content;
+            max-width: 100%;
             background: #f8fafc;
             border: 2px solid #cbd5e1;
             border-radius: 12px;
             padding: 12px 16px;
             margin-bottom: 10px;
             cursor: pointer;
-            display: flex;
             align-items: center;
             gap: 12px;
-            justify-content: space-between;
+            justify-content: flex-start;
             flex-wrap: wrap;
             transition: 0.2s;
         }
@@ -298,6 +362,7 @@ if (empty($_SESSION['batch_split_authorized'])) {
             font-weight: 700;
             color: #134e4a;
             font-size: 0.95rem;
+            overflow-wrap: anywhere;
         }
 
         .badge {
@@ -354,6 +419,24 @@ if (empty($_SESSION['batch_split_authorized'])) {
                 grid-template-columns: 1fr;
             }
         }
+
+        @media (max-width: 760px) {
+            .split-layout {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0;
+            }
+
+            .split-results {
+                flex-direction: column;
+                align-items: flex-start;
+                margin-top: 10px;
+            }
+
+            .split-results .status-line {
+                white-space: normal;
+            }
+        }
     </style>
 </head>
 
@@ -392,6 +475,7 @@ if (empty($_SESSION['batch_split_authorized'])) {
                 <table>
                     <thead>
                         <tr>
+                            <th>Batch</th>
                             <th>ROLL</th>
                             <th>PO Number</th>
                             <th>QTY</th>
@@ -419,13 +503,17 @@ if (empty($_SESSION['batch_split_authorized'])) {
 
         <div class="panel" id="splitPanel" style="display:none;">
             <div class="panel-title"><i class="fa-solid fa-scissors"></i> Split Qty &amp; Suggestions</div>
-            <div class="split-row">
-                <input type="number" id="splitQty" class="qty-input" min="0" step="0.01"
-                    placeholder="Enter Split Qty" style="max-width:280px;">
-                <button class="btn btn-green" id="suggestBtn"><i class="fa-solid fa-wand-magic-sparkles"></i> Suggest</button>
+            <div class="split-layout">
+                <div class="split-row">
+                    <input type="number" id="splitQty" class="qty-input" min="0" step="0.01"
+                        placeholder="Enter Split Qty">
+                    <button class="btn btn-green" id="suggestBtn"><i class="fa-solid fa-wand-magic-sparkles"></i> Suggest</button>
+                </div>
+                <div class="split-results">
+                    <div class="status-line" id="suggestStatus"></div>
+                    <div id="suggestionsBox"></div>
+                </div>
             </div>
-            <div class="status-line" id="suggestStatus"></div>
-            <div id="suggestionsBox"></div>
         </div>
 
         <div class="panel" id="previewPanel" style="display:none;">
@@ -442,8 +530,8 @@ if (empty($_SESSION['batch_split_authorized'])) {
                     <div class="preview-total" id="partBTotal"></div>
                 </div>
             </div>
-            <div class="search-row" style="justify-content:flex-end; margin-top:16px;">
-                <button class="btn btn-amber" id="splitBtn"><i class="fa-solid fa-scissors"></i> Split Now</button>
+            <div class="search-row" style="justify-content:flex-start; margin-top:16px;">
+                <button class="btn btn-amber" id="splitBtn"><i class="fa-solid fa-scissors"></i> Batch Split Now</button>
             </div>
         </div>
     </div>
@@ -466,21 +554,46 @@ if (empty($_SESSION['batch_split_authorized'])) {
             box.innerHTML = '';
         }
 
+        function showBatchUnavailablePopup(message) {
+            if (typeof Swal === 'undefined') {
+                showMsg(message, 'error');
+                window.setTimeout(hideMsg, 2000);
+                return;
+            }
+
+            Swal.fire({
+                icon: 'warning',
+                title: 'Batch Not Available',
+                text: message,
+                timer: 2000,
+                timerProgressBar: true,
+                showConfirmButton: false,
+                allowOutsideClick: false,
+                allowEscapeKey: false
+            });
+        }
+
         function esc(v) {
             if (v === null || v === undefined) return '-';
             return String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         }
 
         function apiGet(action, params) {
-            return fetch('ajaxDyeing_batch_split.php?action=' + action + '&' + params).then(function(r) { return r.json(); });
+            return fetch('ajaxDyeing_batch_split.php?action=' + action + '&' + params).then(function(r) {
+                return r.json();
+            });
         }
 
         function apiPost(action, payload) {
             return fetch('ajaxDyeing_batch_split.php?action=' + action, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(payload || {})
-            }).then(function(r) { return r.json(); });
+            }).then(function(r) {
+                return r.json();
+            });
         }
 
         function loadCards() {
@@ -535,6 +648,11 @@ if (empty($_SESSION['batch_split_authorized'])) {
             hideMsg();
             hideSuggestions();
             currentCard = card;
+            currentRolls = [];
+            selectedCombo = null;
+            document.getElementById('cardPanel').style.display = 'none';
+            document.getElementById('splitPanel').style.display = 'none';
+            document.getElementById('previewPanel').style.display = 'none';
             document.getElementById('cardBadge').textContent = card;
             document.getElementById('cardStatus').innerHTML = '<i class="fa-solid fa-circle-info"></i> Loading card ' + card + '...';
 
@@ -550,15 +668,21 @@ if (empty($_SESSION['batch_split_authorized'])) {
                     document.getElementById('cardStatus').innerHTML =
                         '<i class="fa-solid fa-circle-check"></i> ' + currentRolls.length + ' roll(s) loaded. Total: ' + resp.total;
                 } else {
-                    showMsg(resp.message || 'Could not load card', 'error');
+                    currentCard = '';
+                    document.getElementById('cardStatus').textContent = '';
+                    showBatchUnavailablePopup(resp.message || 'Could not load batch card.');
                 }
+            }).catch(function() {
+                currentCard = '';
+                document.getElementById('cardStatus').textContent = '';
+                showBatchUnavailablePopup('Could not load batch card. Please try again.');
             });
         }
 
         function renderCardRolls(rolls, total) {
             var tbody = document.getElementById('cardRollsBody');
             if (!rolls.length) {
-                tbody.innerHTML = '<tr class="empty-row"><td colspan="18">No delivered rolls found for this batch card.</td></tr>';
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="19">No delivered rolls found for this batch card.</td></tr>';
                 document.getElementById('cardTotal').textContent = total || 0;
                 return;
             }
@@ -567,9 +691,18 @@ if (empty($_SESSION['batch_split_authorized'])) {
                 'SILICON', 'NONSILICON', 'NWASH', 'EWASH', 'ENZYME', 'NONENZYME',
                 'PEACH', 'BRUSH', 'AOP', 'SOFTENER', 'NONSOFTENER', 'OTHERS'
             ];
+            var processBadges = processFields.filter(function(field) {
+                return String(rolls[0][field] || '').trim() !== '';
+            }).map(function(field) {
+                return '<span class="process-badge">' + esc(rolls[0][field]) + '</span>';
+            }).join('') || '-';
             rolls.forEach(function(row, i) {
-                html += '<tr>' +
-                    '<td><span class="roll-badge">' + esc(row.ROLL) + '</span></td>' +
+                html += '<tr>';
+                if (i === 0) {
+                    html += '<td rowspan="' + rolls.length + '" style="vertical-align:middle; font-weight:800;">' +
+                        '<span class="roll-badge">' + esc(currentCard) + '</span></td>';
+                }
+                html += '<td><span class="roll-badge">' + esc(row.ROLL) + '</span></td>' +
                     '<td>' + esc(row.PO_NUMBER) + '</td>' +
                     '<td><strong>' + esc(row.QTY) + '</strong></td>' +
                     '<td>' + esc(row.COLOR) + '</td>' +
@@ -585,16 +718,15 @@ if (empty($_SESSION['batch_split_authorized'])) {
                     '<td>' + esc(row.FDIA) + '</td>' +
                     '<td>' + esc(row.YTYPE) + '</td>' +
                     '<td>' + esc(row.YCOUNT) + '</td>' +
-                    '<td>' + esc(row.YBRAND) + '</td>' +
-                    '<td><div class="process-badges">' + (processFields.filter(function(field) {
-                        return String(row[field] || '').trim() !== '';
-                    }).map(function(field) {
-                        return '<span class="process-badge">' + esc(row[field]) + '</span>';
-                    }).join('') || '-') + '</div></td>' +
-                    '</tr>';
+                    '<td>' + esc(row.YBRAND) + '</td>';
+                if (i === 0) {
+                    html += '<td rowspan="' + rolls.length + '" style="vertical-align:middle;">' +
+                        '<div class="process-badges">' + processBadges + '</div></td>';
+                }
+                html += '</tr>';
             });
             html += '<tr style="background:#ccfbf1; font-weight:800; border-top:2px solid #0f766e;">' +
-                '<td colspan="2" style="text-align:right; color:#065f46;">Total QTY</td>' +
+                '<td colspan="3" style="text-align:right; color:#065f46;">Total QTY</td>' +
                 '<td style="color:#065f46;">' + esc(total) + '</td>' +
                 '<td colspan="15"></td>' +
                 '</tr>';
@@ -623,7 +755,11 @@ if (empty($_SESSION['batch_split_authorized'])) {
                 }
                 sum = Math.round(sum * 100) / 100;
                 if (Math.abs(sum - target) <= tol) {
-                    exact.push({ ids: ids, sum: sum, cnt: ids.length });
+                    exact.push({
+                        ids: ids,
+                        sum: sum,
+                        cnt: ids.length
+                    });
                 } else {
                     var d = Math.abs(sum - target);
                     if (d < minDiff) minDiff = d;
@@ -642,14 +778,25 @@ if (empty($_SESSION['batch_split_authorized'])) {
                     }
                     sum2 = Math.round(sum2 * 100) / 100;
                     if (Math.abs(sum2 - target) === minDiff) {
-                        sorted.push({ ids: ids2, sum: sum2, cnt: ids2.length });
+                        sorted.push({
+                            ids: ids2,
+                            sum: sum2,
+                            cnt: ids2.length
+                        });
                     }
                 }
-                sorted.sort(function(a, b) { return a.cnt - b.cnt; });
+                sorted.sort(function(a, b) {
+                    return a.cnt - b.cnt;
+                });
                 nearest = sorted.slice(0, 5);
             }
-            exact.sort(function(a, b) { return a.cnt - b.cnt; });
-            return { exact: exact, nearest: nearest };
+            exact.sort(function(a, b) {
+                return a.cnt - b.cnt;
+            });
+            return {
+                exact: exact,
+                nearest: nearest
+            };
         }
 
         function renderSuggestions() {
@@ -667,7 +814,9 @@ if (empty($_SESSION['batch_split_authorized'])) {
             document.getElementById('splitQty').value = qty;
 
             var total = 0;
-            currentRolls.forEach(function(r) { total += qtyOf(r); });
+            currentRolls.forEach(function(r) {
+                total += qtyOf(r);
+            });
             total = Math.round(total * 100) / 100;
 
             if (qty > total) {
@@ -699,10 +848,9 @@ if (empty($_SESSION['batch_split_authorized'])) {
                 return;
             }
 
-            document.getElementById('suggestStatus').innerHTML =
-                res.exact.length > 0
-                    ? '<i class="fa-solid fa-circle-check"></i> ' + res.exact.length + ' exact combination(s) found for qty ' + qty + '. Click one to select.'
-                    : '<i class="fa-solid fa-circle-info"></i> No exact match for ' + qty + '. Showing closest combination(s).';
+            document.getElementById('suggestStatus').innerHTML = res.exact.length > 0 ?
+                '<i class="fa-solid fa-circle-check"></i> ' + res.exact.length + ' exact combination(s) found for qty ' + qty + '. Click one to select.' :
+                '';
 
             var html = '';
             res.exact.forEach(function(c, idx) {
@@ -739,13 +887,19 @@ if (empty($_SESSION['batch_split_authorized'])) {
 
             selectedCombo = c;
             var suggs = document.querySelectorAll('.suggestion');
-            suggs.forEach(function(s) { s.classList.remove('selected'); });
+            suggs.forEach(function(s) {
+                s.classList.remove('selected');
+            });
             el.classList.add('selected');
 
             // Build preview
             var selIds = {};
-            c.ids.forEach(function(i) { selIds[i] = true; });
-            var total = currentRolls.reduce(function(s, r) { return s + qtyOf(r); }, 0);
+            c.ids.forEach(function(i) {
+                selIds[i] = true;
+            });
+            var total = currentRolls.reduce(function(s, r) {
+                return s + qtyOf(r);
+            }, 0);
             total = Math.round(total * 100) / 100;
 
             var aRolls = '';
@@ -783,26 +937,87 @@ if (empty($_SESSION['batch_split_authorized'])) {
                 showMsg('Select a suggestion first.', 'error');
                 return;
             }
-            var selRolls = selectedCombo.ids.map(function(i) { return currentRolls[i].ROLL; });
-            if (!confirm('Split batch card ' + currentCard + '?\n\nPart A: ' + currentCard + '-A (' + selectedCombo.sum + ' qty)\nPart B: ' + currentCard + '-B (remaining qty merged another batch card)')) return;
-
+            var selRolls = selectedCombo.ids.map(function(i) {
+                return currentRolls[i].ROLL;
+            });
             var btn = document.getElementById('splitBtn');
-            btn.disabled = true;
             var old = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Splitting...';
+            var confirmMessage = 'Part A: ' + currentCard + '-A (' + selectedCombo.sum +
+                ' qty)\nPart B: ' + currentCard + '-B (remaining quantity)';
+            var confirmation = typeof Swal !== 'undefined' ?
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Confirm Batch Split',
+                    text: confirmMessage,
+                    showCancelButton: true,
+                    confirmButtonText: 'Split Batch',
+                    cancelButtonText: 'Cancel',
+                    reverseButtons: false,
+                    confirmButtonColor: '#16a34a',
+                    cancelButtonColor: '#dc2626'
+                }) :
+                Promise.resolve({
+                    isConfirmed: confirm('Split batch card ' + currentCard + '?\n\n' + confirmMessage)
+                });
 
-            apiPost('split', { card: currentCard, rolls_sel: selRolls }).then(function(resp) {
-                if (resp && resp.success) {
-                    showMsg(resp.message, 'success');
-                    setTimeout(function() { location.reload(); }, 2500);
-                } else {
-                    showMsg(resp.message || 'Split failed', 'error');
-                }
-            }).catch(function() {
-                showMsg('Server Error during split.', 'error');
-            }).then(function() {
-                btn.disabled = false;
-                btn.innerHTML = old;
+            confirmation.then(function(result) {
+                if (!result.isConfirmed) return;
+
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Splitting...';
+
+                apiPost('split', {
+                    card: currentCard,
+                    rolls_sel: selRolls
+                }).then(function(resp) {
+                    if (resp && resp.success) {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Batch Split Successfully',
+                                text: resp.message,
+                                timer: 3000,
+                                timerProgressBar: true,
+                                showConfirmButton: false,
+                                allowOutsideClick: false,
+                                allowEscapeKey: false
+                            }).then(function() {
+                                location.reload();
+                            });
+                        } else {
+                            showMsg(resp.message, 'success');
+                            setTimeout(function() {
+                                location.reload();
+                            }, 3000);
+                        }
+                        return;
+                    }
+
+                    var errorMessage = resp && resp.message ? resp.message : 'Split failed.';
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Batch Split Failed',
+                            text: errorMessage
+                        });
+                    } else {
+                        showMsg(errorMessage, 'error');
+                    }
+                    btn.disabled = false;
+                    btn.innerHTML = old;
+                }).catch(function() {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Batch Split Failed',
+                            text: 'Server error during split.'
+                        });
+                    } else {
+                        showMsg('Server error during split.', 'error');
+                    }
+                    btn.disabled = false;
+                    btn.innerHTML = old;
+                });
             });
         }
 

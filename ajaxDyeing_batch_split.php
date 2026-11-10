@@ -64,7 +64,7 @@ function insertSplitRow($db, $budat, $bcmtid, $rollNo, $row) {
           NWASH, EWASH, ENZYME, NONENZYME, PEACH, BRUSH, AOP, SOFTENER,
           NONSOFTENER, OTHERS)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
 
     if (!$stmt) {
@@ -123,6 +123,50 @@ function insertSplitRow($db, $budat, $bcmtid, $rollNo, $row) {
     return ['ok' => true];
 }
 
+function splitFinalVerificationCondition($alias) {
+    $passCount = "(COALESCE({$alias}.SINCHARGE = 'PASS', 0) +
+                   COALESCE({$alias}.SUPERVISOR = 'PASS', 0) +
+                   COALESCE({$alias}.BINCHARGE = 'PASS', 0) +
+                   COALESCE({$alias}.BMANAGER = 'PASS', 0))";
+    $failCount = "(COALESCE({$alias}.SINCHARGE = 'FAIL', 0) +
+                   COALESCE({$alias}.SUPERVISOR = 'FAIL', 0) +
+                   COALESCE({$alias}.BINCHARGE = 'FAIL', 0) +
+                   COALESCE({$alias}.BMANAGER = 'FAIL', 0))";
+
+    return "(({$passCount} >= 2 AND {$passCount} > {$failCount}) OR
+             ({$failCount} >= 2 AND {$failCount} > {$passCount}))";
+}
+
+$finalVerificationCondition = splitFinalVerificationCondition('v');
+
+function splitHasFinalVerification($db, $card, $lock = false) {
+    global $finalVerificationCondition;
+
+    $sql = "SELECT 1
+            FROM dyeing_batch_verification v
+            WHERE v.BCARD = ?
+              AND {$finalVerificationCondition}
+            LIMIT 1";
+    if ($lock) {
+        $sql .= ' FOR UPDATE';
+    }
+
+    $stmt = $db->prepare($sql);
+    if (!$stmt) {
+        throw new RuntimeException('Could not check Batch Verification status: ' . $db->error);
+    }
+    $stmt->bind_param('s', $card);
+    if (!$stmt->execute()) {
+        $error = $stmt->error;
+        $stmt->close();
+        throw new RuntimeException('Could not check Batch Verification status: ' . $error);
+    }
+    $result = $stmt->get_result();
+    $verified = $result->num_rows > 0;
+    $stmt->close();
+    return $verified;
+}
+
 $action = isset($_GET['action']) ? trim($_GET['action']) : '';
 
 switch ($action) {
@@ -130,11 +174,17 @@ switch ($action) {
     // List all non-split batch cards
     case 'list_cards':
         $result = mysqli_query($db,
-            "SELECT BCARD, COUNT(*) AS roll_count, ROUND(SUM(CAST(QTY AS DECIMAL(12,2))), 2) AS total_qty
-             FROM dyeing_batch_delivery
-             WHERE BCARD NOT LIKE '%-%'
-             GROUP BY BCARD
-             ORDER BY CAST(BCARD AS UNSIGNED) DESC");
+            "SELECT d.BCARD, COUNT(*) AS roll_count, ROUND(SUM(CAST(d.QTY AS DECIMAL(12,2))), 2) AS total_qty
+             FROM dyeing_batch_delivery d
+             WHERE d.BCARD NOT LIKE '%-%'
+               AND NOT EXISTS (
+                   SELECT 1
+                   FROM dyeing_batch_verification v
+                   WHERE v.BCARD = d.BCARD
+                     AND {$finalVerificationCondition}
+               )
+             GROUP BY d.BCARD
+             ORDER BY CAST(d.BCARD AS UNSIGNED) DESC");
         if (!$result) {
             echo json_encode(['success' => false, 'message' => 'Database error: ' . mysqli_error($db)]);
             exit;
@@ -151,6 +201,20 @@ switch ($action) {
         $card = isset($_GET['card']) ? trim($_GET['card']) : '';
         if ($card === '') {
             echo json_encode(['success' => false, 'message' => 'Card number is required']);
+            exit;
+        }
+        try {
+            if (splitHasFinalVerification($db, $card)) {
+                http_response_code(404);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Batch card not found or already passed/failed in Batch Verification.'
+                ]);
+                exit;
+            }
+        } catch (RuntimeException $error) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => $error->getMessage()]);
             exit;
         }
         $stmt = $db->prepare(
@@ -185,12 +249,29 @@ switch ($action) {
 
     // Perform the split
     case 'split':
+        $splitTransactionStarted = false;
+        try {
         $input = json_decode(file_get_contents('php://input'), true);
         $card = isset($input['card']) ? trim($input['card']) : '';
         $sel = isset($input['rolls_sel']) && is_array($input['rolls_sel']) ? $input['rolls_sel'] : [];
 
         if ($card === '' || count($sel) === 0) {
             echo json_encode(['success' => false, 'message' => 'Select a batch card and choose rolls to split']);
+            exit;
+        }
+
+        try {
+            if (splitHasFinalVerification($db, $card)) {
+                http_response_code(409);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Batch card not found or already passed/failed in Batch Verification.'
+                ]);
+                exit;
+            }
+        } catch (RuntimeException $error) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => $error->getMessage()]);
             exit;
         }
 
@@ -273,8 +354,28 @@ switch ($action) {
         $budat = date('Y-m-d');
 
         $db->autocommit(false);
+        $splitTransactionStarted = true;
         $ok = true;
         $errorMsg = '';
+
+        try {
+            if (splitHasFinalVerification($db, $card, true)) {
+                $db->rollback();
+                $db->autocommit(true);
+                http_response_code(409);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Batch card not found or already passed/failed in Batch Verification.'
+                ]);
+                exit;
+            }
+        } catch (RuntimeException $error) {
+            $db->rollback();
+            $db->autocommit(true);
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => $error->getMessage()]);
+            exit;
+        }
 
         // Part A: keep each selected roll with its own ROLL number
         foreach ($selRolls as $row) {
@@ -309,67 +410,105 @@ switch ($action) {
             $dl->close();
         }
 
-        // Keep delivered rows associated with the newly split card numbers.
+        // Copy delivery rows to the split cards before removing the original rows.
         if ($ok) {
-            $deliveryUpdate = $db->prepare(
-                "UPDATE dyeing_batch_delivery SET BCARD = ? WHERE BCARD = ? AND ROLL = ?"
+            $deliveryInsert = $db->prepare(
+                "INSERT INTO dyeing_batch_delivery
+                 (BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, BUYER, STYLE, COLOR, DYMCNO,
+                  MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
+                  YTYPE, YCOUNT, YBRAND, CATEGORY, DOP, DID, SILICON, NONSILICON,
+                  NWASH, EWASH, ENZYME, NONENZYME, PEACH, BRUSH, AOP, SOFTENER,
+                  NONSOFTENER, OTHERS)
+                 SELECT BUDAT, ?, ROLL, PO_NUMBER, QTY, SONO, BUYER, STYLE, COLOR,
+                        DYMCNO, MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA,
+                        FEEDER_PLAN, LOT_NO, YTYPE, YCOUNT, YBRAND, CATEGORY, DOP,
+                        DID, SILICON, NONSILICON, NWASH, EWASH, ENZYME, NONENZYME,
+                        PEACH, BRUSH, AOP, SOFTENER, NONSOFTENER, OTHERS
+                 FROM dyeing_batch_delivery
+                 WHERE BCARD = ? AND ROLL = ?"
             );
-            if (!$deliveryUpdate) {
+            if (!$deliveryInsert) {
                 $ok = false;
-                $errorMsg = 'Delivery card update prepare error: ' . $db->error;
+                $errorMsg = 'Delivery row insert prepare error: ' . $db->error;
             } else {
                 $deliveryCard = '';
                 $deliveryRoll = '';
-                $deliveryUpdate->bind_param('sss', $deliveryCard, $card, $deliveryRoll);
+                $deliveryInsert->bind_param('sss', $deliveryCard, $card, $deliveryRoll);
+                $expectedDeliveryRows = count($selRolls) + count($remRolls);
+                $insertedDeliveryRows = 0;
                 foreach ([[$selRolls, $cardA], [$remRolls, $cardB]] as $group) {
                     foreach ($group[0] as $row) {
                         $deliveryCard = $group[1];
                         $deliveryRoll = strval($row['ROLL']);
-                        if (!$deliveryUpdate->execute()) {
+                        if (!$deliveryInsert->execute()) {
                             $ok = false;
-                            $errorMsg = 'Delivery card update error for roll ' . $deliveryRoll . ': ' . $deliveryUpdate->error;
+                            $errorMsg = 'Delivery row insert error for roll ' . $deliveryRoll . ': ' . $deliveryInsert->error;
                             break 2;
                         }
+                        if ($deliveryInsert->affected_rows !== 1) {
+                            $ok = false;
+                            $errorMsg = 'Delivery row was not found for original batch ' . $card . ', roll ' . $deliveryRoll . '.';
+                            break 2;
+                        }
+                        $insertedDeliveryRows += $deliveryInsert->affected_rows;
                     }
                 }
-                $deliveryUpdate->close();
-            }
-        }
+                $deliveryInsert->close();
 
-        // Log the split operation
-        if ($ok) {
-            $uname = isset($_SESSION['username']) ? $_SESSION['username'] : '';
-            $st = $db->prepare(
-                "INSERT INTO dyeing_batch_split (ORIGINAL_BCMTID, CARD_A, CARD_B, QTY_A, QTY_B, ROLL_A_COUNT, ROLL_B_COUNT, UNAME)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-            );
-            if (!$st) {
-                $ok = false;
-                $errorMsg = 'Split log prepare error: ' . $db->error;
-            } else {
-                $selCount = count($selRolls);
-                $remCount = count($remRolls);
-                $st->bind_param('sssddiis', $card, $cardA, $cardB, $selSum, $remSum, $selCount, $remCount, $uname);
-                // 'd' for ORIGINAL_BCMTID is intentional-string passed with 'd'? fix below
-                if (!$st->execute()) {
+                if ($ok && $insertedDeliveryRows !== $expectedDeliveryRows) {
                     $ok = false;
-                    $errorMsg = 'Split log insert error: ' . $st->error;
+                    $errorMsg = 'Not all split rolls were inserted into dyeing_batch_delivery.';
                 }
-                $st->close();
+
+                if ($ok) {
+                    $deliveryDelete = $db->prepare("DELETE FROM dyeing_batch_delivery WHERE BCARD = ?");
+                    if (!$deliveryDelete) {
+                        $ok = false;
+                        $errorMsg = 'Original delivery row delete prepare error: ' . $db->error;
+                    } else {
+                        $deliveryDelete->bind_param('s', $card);
+                        if (!$deliveryDelete->execute()) {
+                            $ok = false;
+                            $errorMsg = 'Original delivery row delete error: ' . $deliveryDelete->error;
+                        } elseif ($deliveryDelete->affected_rows !== $expectedDeliveryRows) {
+                            $ok = false;
+                            $errorMsg = 'Original delivery rows changed during split; no changes were saved.';
+                        }
+                        $deliveryDelete->close();
+                    }
+                }
             }
         }
 
         if ($ok) {
-            $db->commit();
-            echo json_encode([
-                'success' => true,
-                'message' => 'Batch card ' . $card . ' split into ' . $cardA . ' (' . count($selRolls) . ' roll(s), qty ' . number_format($selSum, 2) . ') and ' . $cardB . ' (' . count($remRolls) . ' roll(s), qty ' . number_format($remSum, 2) . ').'
-            ]);
-        } else {
+            if (!$db->commit()) {
+                $ok = false;
+                $errorMsg = 'Could not commit the batch split: ' . $db->error;
+            } else {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Batch card ' . $card . ' split into ' . $cardA . ' (' . count($selRolls) . ' roll(s), qty ' . number_format($selSum, 2) . ') and ' . $cardB . ' (' . count($remRolls) . ' roll(s), qty ' . number_format($remSum, 2) . ').'
+                ]);
+            }
+        }
+
+        if (!$ok) {
             $db->rollback();
             echo json_encode(['success' => false, 'message' => $errorMsg !== '' ? $errorMsg : 'Database error during split']);
         }
         $db->autocommit(true);
+        $splitTransactionStarted = false;
+        } catch (Throwable $error) {
+            if ($splitTransactionStarted) {
+                $db->rollback();
+                $db->autocommit(true);
+            }
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Batch split failed: ' . $error->getMessage()
+            ]);
+        }
         exit;
 
     default:

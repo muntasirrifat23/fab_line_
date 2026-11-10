@@ -126,7 +126,8 @@ if (!isset($_SESSION['username'])) {
         }
         tbody td { padding: 9px 8px; border-bottom: 1px solid #dbe5e4; white-space: nowrap; }
         tbody tr:nth-child(even) td { background: #f8fafc; }
-        td[data-batch-cell] { text-align: center; vertical-align: middle; font-weight: 800; }
+        td[data-batch-cell], td[data-process-cell] { text-align: center; vertical-align: middle; }
+        td[data-batch-cell] { font-weight: 800; }
         .empty { padding: 24px; text-align: center; color: #64748b; }
         .process-badges { display: grid; grid-template-columns: repeat(2, max-content); gap: 5px; }
         .process-badge {
@@ -380,13 +381,15 @@ if (!isset($_SESSION['username'])) {
                                     : '';
                             }
                             if (column[0] === 'PROCESS') {
+                                if (index !== start) return '';
                                 var selected = processFields.filter(function(field) {
                                     return String(row[field] || '').trim() !== '';
                                 });
                                 var badges = selected.map(function(field) {
                                     return '<span class="process-badge">' + escapeHtml(row[field]) + '</span>';
                                 }).join('');
-                                return '<td><div class="process-badges">' + (badges || '-') + '</div></td>';
+                                return '<td data-process-cell rowspan="' + (end - start) + '">' +
+                                    '<div class="process-badges">' + (badges || '-') + '</div></td>';
                             }
                             return '<td>' + escapeHtml(row[column[0]]) + '</td>';
                         }).join('') + '</tr>';
