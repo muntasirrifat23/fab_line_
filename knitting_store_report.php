@@ -18,24 +18,37 @@
 
         .head-row {
             display: grid;
-            grid-template-columns: 1fr minmax(0, 2fr) 1fr;
-            align-items: start;
+            grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+            align-items: center;
             gap: 12px;
             margin-bottom: 10px;
             position: relative;
         }
 
-        #backBtn {
+        .head-row.knitting-report-header--tabs #backBtn {
+            grid-column: 1;
             justify-self: start;
+            font-size: 1rem !important;
+            padding: 9px 14px !important;
         }
 
         .title-tabs {
             grid-column: 2;
+            grid-row: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 12px;
             min-width: 0;
+            width: max-content;
+            max-width: 100%;
+        }
+
+        .head-row.knitting-report-header--tabs .title-tabs h1 {
+            width: max-content !important;
+            max-width: 100%;
+            white-space: nowrap !important;
+            word-break: normal !important;
         }
 
         h1 {
@@ -542,16 +555,20 @@
         /* ---- Small tablet / large phone ---- */
         @media (max-width: 768px) {
             .search-row {
-                flex-direction: column;
+                flex-direction: row;
+                flex-wrap: nowrap;
+                align-items: center;
             }
 
             .search-panel input {
-                flex: 1 1 auto;
-                width: 100%;
+                flex: 1 1 0;
+                width: auto;
+                min-width: 0;
             }
 
             .search-row .btn {
-                width: 100%;
+                width: auto;
+                flex: 0 0 auto;
                 justify-content: center;
             }
 
@@ -566,23 +583,50 @@
 
         /* ---- Phone ---- */
         @media (max-width: 576px) {
-            .head-row {
-                grid-template-columns: 1fr;
-                justify-items: center;
+            .head-row.knitting-report-header--tabs {
+                display: grid !important;
+                grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) !important;
+                align-items: center !important;
+                justify-items: stretch !important;
+                gap: 6px;
             }
 
-            .title-tabs {
+            .head-row.knitting-report-header--tabs .title-tabs h1 {
+                width: max-content !important;
+                max-width: 100%;
+                font-size: clamp(.8rem, 3.5vw, 1.2rem) !important;
+                white-space: nowrap !important;
+                word-break: normal !important;
+            }
+
+            .head-row.knitting-report-header--tabs #backBtn {
                 grid-column: 1;
-                grid-row: 2;
+                grid-row: 1;
+                width: max-content;
+                max-width: 100%;
+                justify-self: start;
+                padding: 8px 10px !important;
+                font-size: .9rem !important;
             }
 
-            h1 {
-                font-size: 1.55rem;
+            .head-row > [aria-hidden="true"] {
+                grid-column: 3;
+                grid-row: 1;
             }
 
-            #backBtn {
-                width: 100%;
-                justify-content: center;
+            .search-row {
+                gap: 6px;
+            }
+
+            .search-panel input {
+                padding: 10px 8px;
+                font-size: .78rem;
+            }
+
+            .search-row .btn {
+                padding: 9px 8px;
+                font-size: .78rem;
+                gap: 4px;
             }
 
             thead th:first-child,

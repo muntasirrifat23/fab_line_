@@ -2,9 +2,9 @@
 include('config.php');
 
 if (isset($_POST['change_password'])) {
-  $username = isset($_POST['username']) ? trim(mysqli_real_escape_string($db, $_POST['username'])) : '';
-  $oldp = isset($_POST['oldpassword']) ? $_POST['oldpassword'] : '';
-  $newp = isset($_POST['newpassword']) ? $_POST['newpassword'] : '';
+  $username = isset($_POST['username']) && is_string($_POST['username']) ? trim($_POST['username']) : '';
+  $oldp = isset($_POST['oldpassword']) && is_string($_POST['oldpassword']) ? $_POST['oldpassword'] : '';
+  $newp = isset($_POST['newpassword']) && is_string($_POST['newpassword']) ? $_POST['newpassword'] : '';
 
   if (empty($username)) {
     echo 'Username is required';
@@ -27,17 +27,34 @@ if (isset($_POST['change_password'])) {
 
   function change_password_in_table($db, $table, $id_col, $pass_col, $username, $oldp, $newp)
   {
-    $query = "SELECT $pass_col FROM $table WHERE $id_col = '$username' LIMIT 1";
-    $res = mysqli_query($db, $query);
-    if (!$res) return 'server_error';
-    if (mysqli_num_rows($res) != 1) return 'not_found';
+    $select = $db->prepare("SELECT $pass_col FROM $table WHERE $id_col = ? LIMIT 1");
+    if (!$select) return 'server_error';
+    $select->bind_param('s', $username);
+    if (!$select->execute()) {
+      $select->close();
+      return 'server_error';
+    }
+    $res = $select->get_result();
+    if (!$res) {
+      $select->close();
+      return 'server_error';
+    }
+    if ($res->num_rows !== 1) {
+      $select->close();
+      return 'not_found';
+    }
 
-    $row = mysqli_fetch_assoc($res);
+    $row = $res->fetch_assoc();
+    $select->close();
     if (!check_password_match($row[$pass_col], $oldp)) return 'wrong_old';
 
     $new_md5 = md5($newp);
-    $update = "UPDATE $table SET $pass_col = '$new_md5' WHERE $id_col = '$username'";
-    return mysqli_query($db, $update) ? 'OK' : 'update_failed';
+    $update = $db->prepare("UPDATE $table SET $pass_col = ? WHERE $id_col = ?");
+    if (!$update) return 'update_failed';
+    $update->bind_param('ss', $new_md5, $username);
+    $updated = $update->execute();
+    $update->close();
+    return $updated ? 'OK' : 'update_failed';
   }
 
   // 1) users table
@@ -60,6 +77,15 @@ if (isset($_POST['change_password'])) {
 
   // 3) knitting_operator_qc table
   $result = change_password_in_table($db, 'knitting_operator_qc', 'KNITTING_QC_ID', 'KNITTING_QC_PASSWORD', $username, $oldp, $newp);
+  if ($result !== 'not_found') {
+    if ($result === 'OK') echo 'OK';
+    elseif ($result === 'wrong_old') echo 'Old password not correct';
+    else echo 'Failed to update password';
+    exit;
+  }
+
+  // 4) dyeing_operator table
+  $result = change_password_in_table($db, 'dyeing_operator', 'DY_OP_ID', 'DY_OP_PASSWORD', $username, $oldp, $newp);
   if ($result !== 'not_found') {
     if ($result === 'OK') echo 'OK';
     elseif ($result === 'wrong_old') echo 'Old password not correct';

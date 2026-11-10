@@ -74,25 +74,55 @@
       box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
     }
 
-    /* Login button – medium dark slate (less dark than before) */
-    input[value="Login For Production Apps"] {
-      background: linear-gradient(95deg, #295e31, #4b9b4a);
-      color: white;
+    .login-action {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      width: 100%;
+      min-width: 0;
+      margin-top: 10px;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 48px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.25;
+      letter-spacing: 0.3px;
+      text-align: center;
+      white-space: normal;
+      overflow-wrap: normal;
+      cursor: pointer;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+      transition: all 0.25s ease;
     }
 
-    input[value="Login For Production Apps"]:hover {
+    .login-action i {
+      flex: 0 0 auto;
+    }
+
+    .login-action span {
+      min-width: 0;
+    }
+
+    /* Login button – medium dark slate (less dark than before) */
+    .login-production {
+      background: linear-gradient(95deg, #295e31, #4b9b4a);
+    }
+
+    .login-production:hover {
       background: linear-gradient(95deg, #2f3b57, #3d4b6b);
       transform: translateY(-1px);
       box-shadow: 0 6px 14px rgba(59, 74, 107, 0.25);
     }
 
     /* Change Password button – medium grayish blue */
-    input[value="Change Password"] {
+    .change-password-toggle {
       background: linear-gradient(95deg, #4d2031, #743355);
-      color: white;
     }
 
-    input[value="Change Password"]:hover {
+    .change-password-toggle:hover {
       background: #3b4658;
       transform: translateY(-1px);
     }
@@ -215,6 +245,18 @@
       margin-top: 5px;
       opacity: 0.7;
     }
+
+    @media (max-width: 380px) {
+      .login-action {
+        gap: 7px;
+        padding: 10px 12px;
+        font-size: 13px;
+      }
+
+      .login-production span {
+        max-width: 18ch;
+      }
+    }
   </style>
 </head>
 
@@ -239,13 +281,19 @@
               <span class="remember-text">Remember ID & Password</span>
             </label>
           </div>
-          <input type="button" value="Login For Production Apps" onclick="login(1)">
+          <button type="button" class="login-action login-production" onclick="login(1)">
+            <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
+            <span>Login For Production Apps</span>
+          </button>
           <input type="button" style="display: none;" value="Login For Graphically Apps" onclick="login(2)" class="w3-blue-grey">
           <div class="operator-hint">
             <i class="fas fa-info-circle"></i> Use USER ID or OPERATOR ID to login
           </div>
           <br>
-          <input type="button" value="Change Password" onclick="toggleChangePwd()">
+          <button type="button" class="login-action change-password-toggle" onclick="toggleChangePwd()" aria-controls="changePwdBox" aria-expanded="false">
+            <i class="fa-solid fa-key" aria-hidden="true"></i>
+            <span>Change Password</span>
+          </button>
           <div id="changePwdBox" style="display:none;margin-top:12px;">
             <div style="position:relative;margin-top:8px;">
               <input type="password" id="oldpass_cp" placeholder="Old Password" style="width:100%;padding-right:34px;">
@@ -351,6 +399,7 @@
 
     function toggleChangePwd() {
       $('#changePwdBox').toggle();
+      $('[aria-controls="changePwdBox"]').attr('aria-expanded', $('#changePwdBox').is(':visible') ? 'true' : 'false');
     }
 
     function togglePasswordField(fieldId, iconId) {

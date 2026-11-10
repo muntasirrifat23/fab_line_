@@ -9,8 +9,54 @@ if (!isset($_SESSION['username'])) {
 
 $uname = $_SESSION['username'];
 $userId = strtolower(trim((string) $uname));
-$isDyeingUser = $userId === 'd01';
-$isKnittingUser = $userId === 'k01';
+$userType = isset($_SESSION['user_type']) ? strtolower(trim((string) $_SESSION['user_type'])) : '';
+$isKnittingUser = $userId === 'k01' || in_array($userType, array('operator', 'qc'), true);
+$isDyeingUser = $userId === 'd01' || $userType === 'dyeing_operator';
+
+if ($isKnittingUser) {
+    $restrictedActions = array(
+        'dyeing_batch_card',
+        'dyeing_batch_delivery',
+        'dyeing_batch_split',
+        'dyeing_batch_transfer',
+        'batch_verification',
+        'roll_verification',
+        'dyeing_load',
+        'dyeing_unload',
+        'user_management',
+        'users',
+        'users_update'
+    );
+    foreach ($restrictedActions as $action) {
+        if (isset($_POST[$action])) {
+            http_response_code(403);
+            exit('You are not authorized to access this action.');
+        }
+    }
+}
+if ($isDyeingUser) {
+    $restrictedActions = array(
+        'sew',
+        'knitting_input',
+        'subcontract_input',
+        'knitting_program',
+        'knitting_production',
+        'knit_card',
+        'knitting_inspection',
+        'knitting_store',
+        'knitting_rack_transfer',
+        'knitting_roll_split',
+        'user_management',
+        'users',
+        'users_update'
+    );
+    foreach ($restrictedActions as $action) {
+        if (isset($_POST[$action])) {
+            http_response_code(403);
+            exit('You are not authorized to access this action.');
+        }
+    }
+}
 
 $options = "";
 $lineNumbers = array();
@@ -717,9 +763,11 @@ mysqli_close($db);
                         <i class="fas fa-box-open"></i> Dyeing Unload
                     </button>
                     <?php endif; ?>
+                    <?php if (!$isKnittingUser && !$isDyeingUser): ?>
                     <button class="w3-button w3-teal" name="user_management" id="user_management">
                         <i class="fas fa-users-cog"></i> User Management
                     </button>
+                    <?php endif; ?>
 
                     <button class="w3-button w3-teal" name="report" id="report">
                         <i class="fas fa-chart-bar"></i> All Reports
@@ -1004,10 +1052,15 @@ mysqli_close($db);
             var urTYP = document.getElementById('idUSR').innerText.trim().toLowerCase();
             var idFLR = document.getElementById('sidFLOOR');
             var idLNE = document.getElementById('sidLINE');
+            var isDyeingOperator = <?php echo $isDyeingUser ? 'true' : 'false'; ?>;
 
             // Button visibility based on user type
             $("#uploadCSV").hide();
             $("#user_management").hide();
+
+            if (isDyeingOperator) {
+                $("#uploadCSV").show();
+            }
 
             if (urTYP === "admin" || urTYP === "siam" || urTYP === "abuhena" || urTYP === "test" || urTYP === "ppq30" || urTYP === "ppq34" || urTYP === "ppq70") {
                 // No direct action   just placeholder
