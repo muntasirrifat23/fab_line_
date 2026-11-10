@@ -27,8 +27,10 @@ if (count($conditions) > 0) {
 }
 
 $query = "SELECT BCARD, BUDAT, RACK, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
-                 DYMCNO, MCDIA, CUSTOMER, YTYPE, YCOUNT, O_T, SL, FTYPE, FGSM, FDIA,
-                 FEEDER_PLAN, LOT_NO, TPOINT, UNAME
+                 DYMCNO, MCDIA, CUSTOMER, YTYPE, YCOUNT, YBRAND, SILICON, NONSILICON,
+                 NWASH, EWASH, ENZYME, NONENZYME, PEACH, BRUSH, AOP, SOFTENER,
+                 NONSOFTENER, OTHERS, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN,
+                 LOT_NO, TPOINT, UNAME
           FROM dyeing_batch_card
           $where
           ORDER BY BCARD DESC, DBCTID ASC

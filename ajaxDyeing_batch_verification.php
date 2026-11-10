@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'config.php';
+require_once 'dyeing_process_fields.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -17,6 +18,14 @@ if (!isset($_SESSION['username'])) {
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     respond(['success' => false, 'message' => 'Use POST to save batch verification.'], 405);
+}
+
+try {
+    ensureDyeingProcessColumns($db, 'dyeing_batch_card');
+    ensureDyeingProcessColumns($db, 'dyeing_batch_delivery');
+    ensureDyeingProcessColumns($db, 'dyeing_batch_verification');
+} catch (Throwable $error) {
+    respond(['success' => false, 'message' => 'Could not initialize verification process fields: ' . $error->getMessage()], 500);
 }
 
 $input = json_decode(file_get_contents('php://input'), true);
@@ -130,12 +139,16 @@ if ($action === 'update_decisions') {
                 BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, BUYER, STYLE, COLOR, DYMCNO,
                 MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
                 YTYPE, YCOUNT, YBRAND, CATEGORY, SINCHARGE, SUPERVISOR, BINCHARGE,
-                BMANAGER, DOP, DID
+                BMANAGER, DOP, DID, SILICON, NONSILICON, NWASH, EWASH, ENZYME,
+                NONENZYME, PEACH, BRUSH, AOP, SOFTENER, NONSOFTENER, OTHERS
             )
             SELECT d.BUDAT, d.BCARD, d.ROLL, d.PO_NUMBER, d.QTY, d.SONO, d.BUYER,
                    d.STYLE, d.COLOR, d.DYMCNO, d.MCDIA, d.CUSTOMER, d.O_T, d.SL,
                    d.FTYPE, d.FGSM, d.FDIA, d.FEEDER_PLAN, d.LOT_NO, d.YTYPE,
-                   d.YCOUNT, d.YBRAND, d.CATEGORY, ?, ?, ?, ?, d.DOP, d.DID
+                   d.YCOUNT, d.YBRAND, d.CATEGORY, ?, ?, ?, ?, d.DOP, d.DID,
+                   d.SILICON, d.NONSILICON, d.NWASH, d.EWASH, d.ENZYME,
+                   d.NONENZYME, d.PEACH, d.BRUSH, d.AOP, d.SOFTENER,
+                   d.NONSOFTENER, d.OTHERS
             FROM dyeing_batch_delivery d
             LEFT JOIN dyeing_batch_verification v
                 ON v.BCARD = d.BCARD AND v.ROLL = d.ROLL
@@ -302,12 +315,16 @@ try {
         BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, BUYER, STYLE, COLOR, DYMCNO,
         MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
         YTYPE, YCOUNT, YBRAND, CATEGORY, SINCHARGE, SUPERVISOR, BINCHARGE,
-        BMANAGER, DOP, DID
+        BMANAGER, DOP, DID, SILICON, NONSILICON, NWASH, EWASH, ENZYME,
+        NONENZYME, PEACH, BRUSH, AOP, SOFTENER, NONSOFTENER, OTHERS
     )
     SELECT d.BUDAT, d.BCARD, d.ROLL, d.PO_NUMBER, d.QTY, d.SONO, d.BUYER,
            d.STYLE, d.COLOR, d.DYMCNO, d.MCDIA, d.CUSTOMER, d.O_T, d.SL,
            d.FTYPE, d.FGSM, d.FDIA, d.FEEDER_PLAN, d.LOT_NO, d.YTYPE,
-           d.YCOUNT, d.YBRAND, d.CATEGORY, ?, ?, ?, ?, d.DOP, d.DID
+           d.YCOUNT, d.YBRAND, d.CATEGORY, ?, ?, ?, ?, d.DOP, d.DID,
+           d.SILICON, d.NONSILICON, d.NWASH, d.EWASH, d.ENZYME,
+           d.NONENZYME, d.PEACH, d.BRUSH, d.AOP, d.SOFTENER,
+           d.NONSOFTENER, d.OTHERS
     FROM dyeing_batch_delivery d
     WHERE d.BCARD = ?
       AND NOT EXISTS (

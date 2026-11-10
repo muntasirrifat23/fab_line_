@@ -115,8 +115,27 @@ if (!isset($_SESSION['username'])) {
         }
         tbody td { padding: 10px 9px; border-bottom: 1px solid #dbe5e4; white-space: nowrap; }
         tbody tr:nth-child(even) { background: #f8fafc; }
+        td.batch-card-cell, td.process-cell { vertical-align: middle; text-align: center; }
+        .process-badges {
+            display: grid;
+            grid-template-columns: repeat(2, max-content);
+            justify-content: center;
+            gap: 5px;
+            min-width: 120px;
+        }
+        .process-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border: 1px solid #99d5c9;
+            border-radius: 6px;
+            color: #075e54;
+            background: #e6f8f3;
+            font-size: .78rem;
+            font-weight: 750;
+        }
         tfoot th { padding: 12px 9px; background: #ecfdf5; color: #065f46; text-align: right; white-space: nowrap; }
-        .actions { display: flex; justify-content: flex-end; margin-top: 14px; }
+        .actions { display: flex; justify-content: flex-start; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+        .another-batch-button { background: #334155; }
         .roll-badge { display: inline-block; padding: 4px 9px; border-radius: 20px; color: #065f46; background: #ccfbf1; font-weight: 800; }
         .remove-roll-button {
             min-height: 32px;
@@ -154,7 +173,6 @@ if (!isset($_SESSION['username'])) {
                     <div class="scanner-controls">
                         <button class="scan-button" id="cameraBtn" type="button">Start Camera Scanner</button>
                         <button type="button" id="switchCameraBtn">Switch to Front Camera</button>
-                        <button type="button" id="anotherBatchBtn">Another Batch Scan</button>
                     </div>
                 </div>
                 <div class="manual-scan">
@@ -185,21 +203,22 @@ if (!isset($_SESSION['username'])) {
                 <table>
                     <thead>
                         <tr>
-                            <th>Action</th><th>Roll</th><th>PO NO</th><th>Color</th><th>QTY</th><th>MC NO</th>
+                            <th>Action</th><th>Batch Card</th><th>Roll</th><th>PO NO</th><th>Color</th><th>QTY</th><th>MC NO</th>
                             <th>SONO</th><th>Buyer</th><th>Style</th><th>MC Dia</th><th>Customer</th>
                             <th>O / T</th><th>SL/VQ</th><th>Fabrics Type</th><th>GSM</th>
-                            <th>Finish Dia</th><th>Yarn Type</th><th>Yarn Count</th><th>Yarn Brand</th>
+                            <th>Finish Dia</th><th>Yarn Type</th><th>Yarn Count</th><th>Yarn Brand</th><th>Process</th>
                             <th>Feeder Plan</th><th>Lot No</th><th>Category</th>
                         </tr>
                     </thead>
                     <tbody id="scannedRows">
-                        <tr><td colspan="22">Scan rolls after loading a batch card.</td></tr>
+                        <tr><td colspan="24">Scan rolls after loading a batch card.</td></tr>
                     </tbody>
                     <tfoot id="scannedFooter"></tfoot>
                 </table>
             </div>
             <div class="actions">
                 <button class="confirm-button" id="confirmBtn" type="button" disabled>Confirm Batch Delivery</button>
+                <button class="another-batch-button" id="anotherBatchBtn" type="button">Scan Another Batch</button>
             </div>
         </section>
     </main>
@@ -320,8 +339,8 @@ if (!isset($_SESSION['username'])) {
                 document.getElementById('expectedQty').textContent = formatQty(targetQty);
                 remainingQtyInput.value = batch ? formatQty(Math.max(0, targetQty - total)) : '-';
                 document.getElementById('scannedFooter').innerHTML =
-                    '<tr><th colspan="4">Scanned total QTY</th><th>' + formatQty(total) +
-                    ' KG</th><th colspan="17"></th></tr>';
+                    '<tr><th colspan="5">Scanned total QTY</th><th>' + formatQty(total) +
+                    ' KG</th><th colspan="18"></th></tr>';
 
                 var allRollsScanned = batch && scannedRolls.size === batch.rows.length;
                 deliveryPanel.classList.toggle('is-hidden', Boolean(allRollsScanned));
@@ -331,12 +350,29 @@ if (!isset($_SESSION['username'])) {
 
             function renderScannedRows() {
                 var rows = Array.from(scannedRolls.values());
+                var processFields = [
+                    'SILICON', 'NONSILICON', 'NWASH', 'EWASH', 'ENZYME', 'NONENZYME',
+                    'PEACH', 'BRUSH', 'AOP', 'SOFTENER', 'NONSOFTENER', 'OTHERS'
+                ];
+                var selectedProcesses = rows.length
+                    ? processFields.filter(function(field) {
+                        return String(rows[0][field] || '').trim() !== '';
+                    })
+                    : [];
+                var processBadges = selectedProcesses.length
+                    ? '<div class="process-badges">' + selectedProcesses.map(function(field) {
+                        return '<span class="process-badge">' + escapeHtml(rows[0][field]) + '</span>';
+                    }).join('') + '</div>'
+                    : '<span>-</span>';
                 document.getElementById('scannedRows').innerHTML = rows.length
                     ? rows.map(function(row, index) {
                         return '<tr>' +
                             '<td><button class="remove-roll-button" type="button" data-remove-roll-index="' +
                             index + '" aria-label="Remove this roll" title="Remove roll"' +
                             (delivered ? ' disabled' : '') + '>🗑</button></td>' +
+                            (index === 0
+                                ? '<td class="batch-card-cell" rowspan="' + rows.length + '">' + escapeHtml(batch.card_no) + '</td>'
+                                : '') +
                             '<td><span class="roll-badge">' + escapeHtml(row.ROLL) + '</span></td>' +
                             '<td>' + escapeHtml(row.PO_NUMBER) + '</td>' +
                             '<td>' + escapeHtml(row.COLOR) + '</td>' +
@@ -355,12 +391,15 @@ if (!isset($_SESSION['username'])) {
                             '<td>' + escapeHtml(row.YTYPE) + '</td>' +
                             '<td>' + escapeHtml(row.YCOUNT) + '</td>' +
                             '<td>' + escapeHtml(row.YBRAND) + '</td>' +
+                            (index === 0
+                                ? '<td class="process-cell" rowspan="' + rows.length + '">' + processBadges + '</td>'
+                                : '') +
                             '<td>' + escapeHtml(row.FEEDER_PLAN) + '</td>' +
                             '<td>' + escapeHtml(row.LOT_NO) + '</td>' +
                             '<td>' + escapeHtml(row.CATEGORY) + '</td>' +
                             '</tr>';
                     }).join('')
-                    : '<tr><td colspan="22">Scan rolls after loading a batch card.</td></tr>';
+                    : '<tr><td colspan="24">Scan rolls after loading a batch card.</td></tr>';
                 updateSummary();
             }
 

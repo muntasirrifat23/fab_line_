@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'config.php';
+require_once 'dyeing_process_fields.php';
 header('Content-Type: application/json; charset=utf-8');
 
 function respond($payload, $statusCode = 200)
@@ -12,6 +13,14 @@ function respond($payload, $statusCode = 200)
 
 if (!isset($_SESSION['username'])) {
     respond(['success' => false, 'message' => 'Unauthorized. Please login.'], 401);
+}
+
+try {
+    ensureDyeingProcessColumns($db, 'dyeing_batch_card');
+    ensureDyeingProcessColumns($db, 'dyeing_batch_verification');
+    ensureDyeingProcessColumns($db, 'dyeing_load');
+} catch (Throwable $error) {
+    respond(['success' => false, 'message' => 'Could not initialize Dyeing Load process fields: ' . $error->getMessage()], 500);
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -232,13 +241,28 @@ if ($action === 'start_load') {
         respond(['success' => false, 'message' => 'Dyeing Load was already started for Batch ' . $card . '.'], 409);
     }
 
+    $processFields = dyeingProcessFieldNames();
+    $processProjection = [];
+    $processAggregate = [];
+    foreach ($processFields as $processField) {
+        $processProjection[] = "COALESCE(batch_processes.`$processField`, '') AS `$processField`";
+        $processAggregate[] = "MAX(`$processField`) AS `$processField`";
+    }
     $batchStmt = $db->prepare(
-        'SELECT BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, BUYER, STYLE, COLOR,
-                MCNO, MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN,
-                LOT_NO, YTYPE, YCOUNT, YBRAND, CATEGORY
-         FROM dyeing_roll_verification
-         WHERE TRIM(BCARD) = ?
-         ORDER BY DRVTID ASC'
+        'SELECT verified.BUDAT, verified.BCARD, verified.ROLL, verified.PO_NUMBER,
+                verified.QTY, verified.SONO, verified.BUYER, verified.STYLE, verified.COLOR,
+                verified.MCNO, verified.MCDIA, verified.CUSTOMER, verified.O_T, verified.SL,
+                verified.FTYPE, verified.FGSM, verified.FDIA, verified.FEEDER_PLAN,
+                verified.LOT_NO, verified.YTYPE, verified.YCOUNT, verified.YBRAND,
+                verified.CATEGORY, ' . implode(', ', $processProjection) . '
+         FROM dyeing_roll_verification verified
+         LEFT JOIN (
+             SELECT BCARD, ' . implode(', ', $processAggregate) . '
+             FROM dyeing_batch_card
+             GROUP BY BCARD
+         ) batch_processes ON TRIM(batch_processes.BCARD) = TRIM(verified.BCARD)
+         WHERE TRIM(verified.BCARD) = ?
+         ORDER BY verified.DRVTID ASC'
     );
     if (!$batchStmt) {
         $db->rollback();
@@ -269,8 +293,10 @@ if ($action === 'start_load') {
         'INSERT INTO dyeing_load
          (BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
           MCNO, MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
-          YTYPE, YCOUNT, YBRAND, CATEGORY, DOP, DID)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+          YTYPE, YCOUNT, YBRAND, CATEGORY, DOP, DID, SILICON, NONSILICON, NWASH,
+          EWASH, ENZYME, NONENZYME, PEACH, BRUSH, AOP, SOFTENER, NONSOFTENER, OTHERS)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
     if (!$insertStmt) {
         $db->rollback();
@@ -302,11 +328,15 @@ if ($action === 'start_load') {
         $yarnCount = $row['YCOUNT'];
         $yarnBrand = $row['YBRAND'];
         $category = $row['CATEGORY'];
+        $processValues = [];
+        foreach (dyeingProcessFieldNames() as $processField) {
+            $processValues[$processField] = isset($row[$processField]) ? $row[$processField] : '';
+        }
         $operatorName = $operator['DY_OP_NAME'];
         $verifiedOperatorId = $operator['DY_OP_ID'];
 
         if (!$insertStmt->bind_param(
-            'ssssssssssssssssssssssssss',
+            str_repeat('s', 38),
             $budat,
             $batchCard,
             $roll,
@@ -332,7 +362,19 @@ if ($action === 'start_load') {
             $yarnBrand,
             $category,
             $operatorName,
-            $verifiedOperatorId
+            $verifiedOperatorId,
+            $processValues['SILICON'],
+            $processValues['NONSILICON'],
+            $processValues['NWASH'],
+            $processValues['EWASH'],
+            $processValues['ENZYME'],
+            $processValues['NONENZYME'],
+            $processValues['PEACH'],
+            $processValues['BRUSH'],
+            $processValues['AOP'],
+            $processValues['SOFTENER'],
+            $processValues['NONSOFTENER'],
+            $processValues['OTHERS']
         ) || !$insertStmt->execute()) {
             $error = $insertStmt->error;
             $insertStmt->close();

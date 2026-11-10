@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'config.php';
+require_once 'dyeing_process_fields.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -50,6 +51,8 @@ try {
     )) {
         respond(['success' => false, 'message' => 'Could not initialize delivery records: ' . $db->error], 500);
     }
+    ensureDyeingProcessColumns($db, 'dyeing_batch_card');
+    ensureDyeingProcessColumns($db, 'dyeing_batch_delivery');
 
     $deliveryColumnsResult = $db->query("SHOW COLUMNS FROM dyeing_batch_delivery");
     if (!$deliveryColumnsResult) {
@@ -103,7 +106,10 @@ function fetchDeliveryBatchRows($db, $cardNo, $forUpdate = false)
     $sql = "SELECT dbc.ROLL, dbc.PO_NUMBER, dbc.COLOR, dbc.QTY, dbc.DYMCNO, dbc.SONO, dbc.BUYER,
                    dbc.STYLE, dbc.MCDIA, dbc.CUSTOMER, dbc.O_T, dbc.SL,
                    dbc.FTYPE, dbc.FGSM, dbc.FDIA, dbc.YTYPE, dbc.YCOUNT,
-                   dbc.FEEDER_PLAN, dbc.LOT_NO, dbc.YBRAND, dbc.CATEGORY, dbc.BCARD
+                   dbc.FEEDER_PLAN, dbc.LOT_NO, dbc.YBRAND, dbc.CATEGORY, dbc.BCARD,
+                   dbc.SILICON, dbc.NONSILICON, dbc.NWASH, dbc.EWASH, dbc.ENZYME,
+                   dbc.NONENZYME, dbc.PEACH, dbc.BRUSH, dbc.AOP, dbc.SOFTENER,
+                   dbc.NONSOFTENER, dbc.OTHERS
             FROM dyeing_batch_card dbc
             WHERE TRIM(dbc.BCARD) = ?
             ORDER BY dbc.DBCTID ASC";
@@ -369,8 +375,10 @@ try {
             "INSERT INTO dyeing_batch_delivery
              (BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, BUYER, STYLE, COLOR, DYMCNO,
               MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO, YTYPE,
-              YCOUNT, YBRAND, CATEGORY, DOP, DID)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+              YCOUNT, YBRAND, CATEGORY, DOP, DID, SILICON, NONSILICON, NWASH, EWASH,
+              ENZYME, NONENZYME, PEACH, BRUSH, AOP, SOFTENER, NONSOFTENER, OTHERS)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
         if (!$stmt) {
             throw new RuntimeException('Database error: ' . $db->error);
@@ -388,8 +396,12 @@ try {
                 $stmt->close();
                 throw new RuntimeException('Roll ' . $roll . ' was not found in the loaded batch.');
             }
+            $processValues = [];
+            foreach (dyeingProcessFieldNames() as $processField) {
+                $processValues[$processField] = isset($row[$processField]) ? $row[$processField] : '';
+            }
             $stmt->bind_param(
-                'sssssssssssssssssssssssss',
+                str_repeat('s', 37),
                 $deliveryDate,
                 $cardNo,
                 $row['ROLL'],
@@ -414,7 +426,19 @@ try {
                 $row['YBRAND'],
                 $row['CATEGORY'],
                 $dop,
-                $did
+                $did,
+                $processValues['SILICON'],
+                $processValues['NONSILICON'],
+                $processValues['NWASH'],
+                $processValues['EWASH'],
+                $processValues['ENZYME'],
+                $processValues['NONENZYME'],
+                $processValues['PEACH'],
+                $processValues['BRUSH'],
+                $processValues['AOP'],
+                $processValues['SOFTENER'],
+                $processValues['NONSOFTENER'],
+                $processValues['OTHERS']
             );
             if (!$stmt->execute()) {
                 $error = $stmt->error;

@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'config.php';
+require_once 'dyeing_process_fields.php';
 header('Content-Type: application/json; charset=utf-8');
 
 function respond($payload, $statusCode = 200)
@@ -12,6 +13,14 @@ function respond($payload, $statusCode = 200)
 
 if (!isset($_SESSION['username'])) {
     respond(['success' => false, 'message' => 'Unauthorized. Please login.'], 401);
+}
+
+try {
+    ensureDyeingProcessColumns($db, 'dyeing_batch_card');
+    ensureDyeingProcessColumns($db, 'dyeing_load');
+    ensureDyeingProcessColumns($db, 'dyeing_unload');
+} catch (Throwable $error) {
+    respond(['success' => false, 'message' => 'Could not initialize Dyeing Unload process fields: ' . $error->getMessage()], 500);
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -117,7 +126,9 @@ if ($card === '' || strlen($card) > 30) {
 
 $sourceFields = 'BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
                  MCNO, MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN,
-                 LOT_NO, YTYPE, YCOUNT, YBRAND, CATEGORY, DOP, DID, DYSTART';
+                 LOT_NO, YTYPE, YCOUNT, YBRAND, CATEGORY, DOP, DID, DYSTART,
+                 SILICON, NONSILICON, NWASH, EWASH, ENZYME, NONENZYME, PEACH,
+                 BRUSH, AOP, SOFTENER, NONSOFTENER, OTHERS';
 
 if ($action === 'load_batch') {
     $unloadedStmt = $db->prepare(
@@ -257,8 +268,11 @@ $insertStmt = $db->prepare(
     'INSERT INTO dyeing_unload
      (BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
       MCNO, MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
-      YTYPE, YCOUNT, YBRAND, CATEGORY, DOP, DID, DYSTART)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+      YTYPE, YCOUNT, YBRAND, CATEGORY, DOP, DID, DYSTART, SILICON, NONSILICON,
+      NWASH, EWASH, ENZYME, NONENZYME, PEACH, BRUSH, AOP, SOFTENER, NONSOFTENER,
+      OTHERS)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
 );
 if (!$insertStmt) {
     $db->rollback();
@@ -293,9 +307,13 @@ foreach ($rows as $row) {
     $operatorName = $operator['DY_OP_NAME'];
     $unloadOperatorId = $operator['DY_OP_ID'];
     $startTime = $row['DYSTART'];
+    $processValues = [];
+    foreach (dyeingProcessFieldNames() as $processField) {
+        $processValues[$processField] = isset($row[$processField]) ? $row[$processField] : '';
+    }
 
     if (!$insertStmt->bind_param(
-        str_repeat('s', 27),
+        str_repeat('s', 39),
         $budat,
         $batchCard,
         $roll,
@@ -322,7 +340,19 @@ foreach ($rows as $row) {
         $category,
         $operatorName,
         $unloadOperatorId,
-        $startTime
+        $startTime,
+        $processValues['SILICON'],
+        $processValues['NONSILICON'],
+        $processValues['NWASH'],
+        $processValues['EWASH'],
+        $processValues['ENZYME'],
+        $processValues['NONENZYME'],
+        $processValues['PEACH'],
+        $processValues['BRUSH'],
+        $processValues['AOP'],
+        $processValues['SOFTENER'],
+        $processValues['NONSOFTENER'],
+        $processValues['OTHERS']
     ) || !$insertStmt->execute()) {
         $error = $insertStmt->error;
         $insertStmt->close();

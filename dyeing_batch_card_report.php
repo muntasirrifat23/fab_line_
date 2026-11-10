@@ -118,6 +118,23 @@
             max-height: calc(100vh - 180px);
             overflow-y: auto;
         }
+        .process-chip-list {
+            display: grid;
+            grid-template-columns: repeat(2, max-content);
+            gap: 5px;
+            align-items: start;
+        }
+        .process-chip {
+            display: inline-block;
+            padding: 4px 8px;
+            border: 1px solid #99d5c9;
+            border-radius: 6px;
+            color: #075e54;
+            background: #e6f8f3;
+            font-size: .78rem;
+            font-weight: 750;
+            white-space: nowrap;
+        }
 
         table {
             width: 100%;
@@ -252,6 +269,8 @@
                             <th>CUSTOMER</th>
                             <th>YARN TYPE</th>
                             <th>YARN COUNT</th>
+                            <th>YARN BRAND</th>
+                            <th>PROCESS</th>
                             <th>OPEN / TUBE</th>
                             <th>SL/VQ</th>
                             <th>FABRICS TYPE</th>
@@ -264,7 +283,7 @@
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="25" class="loading-cell">Loading data...</td>
+                            <td colspan="27" class="loading-cell">Loading data...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -295,6 +314,8 @@
             { key: 'CUSTOMER', label: 'Customer' },
             { key: 'YTYPE', label: 'Yarn Type' },
             { key: 'YCOUNT', label: 'Yarn Count' },
+            { key: 'YBRAND', label: 'Yarn Brand' },
+            { key: 'PROCESS', label: 'Process' },
             { key: 'O_T', label: 'Open / Tube' },
             { key: 'SL', label: 'SL/VQ' },
             { key: 'FTYPE', label: 'Fabrics Type' },
@@ -306,10 +327,22 @@
         ];
 
         var currentData = [];
+        var PROCESS_FIELDS = [
+            'SILICON', 'NONSILICON', 'NWASH', 'EWASH', 'ENZYME', 'NONENZYME',
+            'PEACH', 'BRUSH', 'AOP', 'SOFTENER', 'NONSOFTENER', 'OTHERS'
+        ];
 
         function esc(v) {
             if (v === null || v === undefined) return '';
             return String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function processValues(row) {
+            return PROCESS_FIELDS.filter(function(field) {
+                return row[field] !== null && row[field] !== undefined && String(row[field]).trim() !== '';
+            }).map(function(field) {
+                return String(row[field]);
+            });
         }
 
         function downloadPDF(bcmtid) {
@@ -322,7 +355,7 @@
 
             var pagesHTML = rows.map(function(r, idx) {
                 var fieldHTML = COLS.map(function(c) {
-                    return [c.label, r[c.key]];
+                    return [c.label, c.key === 'PROCESS' ? processValues(r).join(', ') : r[c.key]];
                 });
                 var rowsHTML = fieldHTML.map(function(f) {
                     var val = (f[1] === null || f[1] === undefined) ? '' : f[1];
@@ -489,7 +522,7 @@
             tbody.empty();
             currentData = data || [];
             if (!currentData.length) {
-                tbody.append('<tr class="empty-row"><td colspan="25">No data found</td></tr>');
+                tbody.append('<tr class="empty-row"><td colspan="27">No data found</td></tr>');
                 return;
             }
             var groups = {};
@@ -512,6 +545,15 @@
                 COLS.forEach(function(c) {
                     if (c.key === 'BCARD') {
                         tr.append($('<td>').text(first[c.key] || ''));
+                    } else if (c.key === 'PROCESS') {
+                        var chips = processValues(first);
+                        var processCell = $('<td>');
+                        processCell.html(chips.length
+                            ? '<div class="process-chip-list">' + chips.map(function(process) {
+                                return '<span class="process-chip">' + esc(process) + '</span>';
+                            }).join('') + '</div>'
+                            : '-');
+                        tr.append(processCell);
                     } else if (groupRows.length > 1) {
                         var linesHTML = groupRows.map(function(r) {
                             return esc(r[c.key] || '');
@@ -538,11 +580,11 @@
                     if (resp && resp.success) {
                         renderTableRows(resp.data);
                     } else {
-                        $('#tableBody').html('<tr class="empty-row"><td colspan="25">No data found</td></tr>');
+                        $('#tableBody').html('<tr class="empty-row"><td colspan="27">No data found</td></tr>');
                     }
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr class="empty-row"><td colspan="25" style="color:#dc2626;">Error searching</td></tr>');
+                    $('#tableBody').html('<tr class="empty-row"><td colspan="27" style="color:#dc2626;">Error searching</td></tr>');
                 })
                 .always(function() {
                     $('#searchBtn').prop('disabled', false).html('<i class="fa-solid fa-magnifying-glass"></i> Search');
@@ -550,7 +592,7 @@
         }
 
         function loadAll() {
-            $('#tableBody').html('<tr><td colspan="25" class="loading-cell">Loading data...</td></tr>');
+            $('#tableBody').html('<tr><td colspan="27" class="loading-cell">Loading data...</td></tr>');
             $.ajax({
                     url: 'ajaxDyeing_batch_card_Report.php',
                     dataType: 'json',
@@ -560,11 +602,11 @@
                     if (resp && resp.success) {
                         renderTableRows(resp.data);
                     } else {
-                        $('#tableBody').html('<tr class="empty-row"><td colspan="25">No data returned</td></tr>');
+                        $('#tableBody').html('<tr class="empty-row"><td colspan="27">No data returned</td></tr>');
                     }
                 })
                 .fail(function() {
-                    $('#tableBody').html('<tr class="empty-row"><td colspan="25" style="color:#dc2626;">Error loading data</td></tr>');
+                    $('#tableBody').html('<tr class="empty-row"><td colspan="27" style="color:#dc2626;">Error loading data</td></tr>');
                 });
         }
 
