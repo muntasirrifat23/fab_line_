@@ -68,6 +68,25 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
         .stat-card.green .stat-value { color: #16a34a; }
         .stat-card.red   .stat-value { color: #dc2626; }
         .stat-card.gray  .stat-value { color: #475569; }
+        .status-summary-layout { display: grid; grid-template-columns: minmax(280px, 0.9fr) minmax(0, 2fr); grid-template-areas: "search stats"; align-items: start; gap: 12px; margin-bottom: 18px; }
+        .status-summary-layout .stat-cards { grid-area: stats; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0; }
+        .status-search-panel { grid-area: search; height: 100%; margin: 0; }
+        .status-search-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+        .status-search-row .form-control { flex: 1 1 100%; min-width: 0; }
+        .status-search-row .btn { margin: 0 !important; }
+        .program-status-header i,
+        .status-search-row i { border: 0 !important; border-width: 0 !important; padding: 0 !important; box-shadow: none !important; }
+        @media (max-width: 850px) {
+            .status-summary-layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: "stats" "search"; }
+        }
+        @media (max-width: 560px) {
+            .status-summary-layout .stat-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .status-summary-layout .stat-card { min-width: 0; padding: 12px; }
+            .status-summary-layout .stat-card .stat-value { font-size: clamp(18px, 5vw, 24px); }
+            .program-status-header { display: grid !important; grid-template-columns: auto minmax(0, 1fr); gap: 12px !important; }
+            .program-status-header h1.title { position: static !important; width: auto; margin: 0 !important; padding: 0; transform: none !important; text-align: left !important; font-size: clamp(.85rem, 3.4vw, 1.1rem) !important; }
+            .program-status-header #backBtn { max-width: 100%; padding: 7px 9px !important; font-size: .75rem !important; }
+        }
         #backBtn, .back-btn {
             background: #000000 !important;
             color: #ffffff !important;
@@ -92,7 +111,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
 </head>
 <body>
     <div class="container-fluid">
-        <div class="d-flex justify-content-between align-items-center mb-3 knitting-report-header">
+        <div class="d-flex justify-content-between align-items-center mb-3 knitting-report-header program-status-header">
             <button class="back-btn" id="backBtn">
                 <i class="fa-solid fa-arrow-left" style="margin-right:6px;"></i> Back to Initial Page
             </button>
@@ -100,18 +119,19 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status') {
             <div></div>
         </div>
 
-        <div class="stat-cards" id="statCards"></div>
-
-        <div class="panel mb-3">
-            <label class="form-label fw-semibold" style="font-size:larger;color:black;">Search PO / SO / Buyer / Style</label>
-            <div class="input-group input-group-sm d-flex align-items-center gap-2">
-                <input type="text" id="searchInput" class="form-control" placeholder="Enter PO Number, SO, Buyer..." autocomplete="off">
-                <button class="btn px-4" id="searchBtn" style="margin-top:8px;background:#2563eb;border:1px solid #2563eb;color:#fff;border-radius:8px;">
-                    <i class="fa-solid fa-magnifying-glass me-1" style="margin-right:6px;"></i> Search
-                </button>
-                <button class="btn px-4" id="clearBtn" style="margin-top:8px;margin-left:8px;background:#6b7280;border:1px solid #6b7280;color:#fff;border-radius:8px;">
-                    <i class="fa-solid fa-rotate-left me-1" style="margin-right:6px;"></i> Clear
-                </button>
+        <div class="status-summary-layout">
+            <div class="stat-cards" id="statCards"></div>
+            <div class="panel status-search-panel">
+                <label class="form-label fw-semibold" style="font-size:larger;color:black;">Search PO / SO / Buyer / Style</label>
+                <div class="status-search-row">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Enter PO Number, SO, Buyer..." autocomplete="off">
+                    <button class="btn px-4" id="searchBtn" style="background:#2563eb;border:1px solid #2563eb;color:#fff;border-radius:8px;">
+                        <i class="fa-solid fa-magnifying-glass me-1" style="margin-right:6px;"></i> Search
+                    </button>
+                    <button class="btn px-4" id="clearBtn" style="background:#6b7280;border:1px solid #6b7280;color:#fff;border-radius:8px;">
+                        <i class="fa-solid fa-rotate-left me-1" style="margin-right:6px;"></i> Clear
+                    </button>
+                </div>
             </div>
         </div>
 
