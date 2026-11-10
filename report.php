@@ -355,7 +355,7 @@ $isKnittingUser = $user === 'k01';
               <button type="submit" class="btn btn-report">
                 <i class="fa-solid fa-file-import card-btn"></i>
                 <span class="floor-text">
-                  <span>Knitting Input Details</span>
+                  <span>Input Details Report</span>
                 </span>
               </button>
             </form>
@@ -369,7 +369,7 @@ $isKnittingUser = $user === 'k01';
               <button type="submit" class="btn btn-report">
                 <i class="fa-solid fa-clipboard-list card-btn"></i>
                 <span class="floor-text">
-                  <span>Knitting Program Report</span>
+                  <span>Program Report</span>
                 </span>
               </button>
             </form>
@@ -383,7 +383,7 @@ $isKnittingUser = $user === 'k01';
               <button type="submit" class="btn btn-report">
                 <i class="fa-solid fa-clipboard-list card-btn"></i>
                 <span class="floor-text">
-                  <span>Knitting Program Status</span>
+                  <span>Program Status</span>
                 </span>
               </button>
             </form>
@@ -411,7 +411,7 @@ $isKnittingUser = $user === 'k01';
               <button type="submit" class="btn btn-report">
                 <i class="fa-solid fa-chart-line card-btn"></i>
                 <span class="floor-text">
-                  <span>Knitting Production Report</span>
+                  <span>Production Report</span>
                 </span>
               </button>
             </form>
@@ -425,7 +425,7 @@ $isKnittingUser = $user === 'k01';
               <button type="submit" class="btn btn-report">
                 <i class="fa-solid fa-clipboard-check card-btn"></i>
                 <span class="floor-text">
-                  <span>Knitting Inspection Report</span>
+                  <span>Inspection Report</span>
                 </span>
               </button>
             </form>
@@ -439,7 +439,7 @@ $isKnittingUser = $user === 'k01';
               <button type="submit" class="btn btn-report">
                 <i class="fa-solid fa-warehouse  card-btn"></i>
                 <span class="floor-text">
-                  <span>Knitting Store Report</span>
+                  <span>Store Report</span>
                 </span>
               </button>
             </form>
