@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'config.php';
+require_once 'dyeing_process_fields.php';
 header('Content-Type: application/json; charset=utf-8');
 
 function respond($payload, $statusCode = 200)
@@ -12,6 +13,12 @@ function respond($payload, $statusCode = 200)
 
 if (!isset($_SESSION['username'])) {
     respond(['success' => false, 'message' => 'Unauthorized. Please login.'], 401);
+}
+
+try {
+    ensureDyeingProcessColumns($db, 'dyeing_batch_delivery');
+} catch (Throwable $error) {
+    respond(['success' => false, 'message' => 'Could not initialize Roll Verification process fields: ' . $error->getMessage()], 500);
 }
 
 $requestData = [];
@@ -257,7 +264,8 @@ if ($card === '') {
 $rowsStmt = $db->prepare(
     'SELECT DBDTID, BCARD, ROLL, PO_NUMBER, COLOR, QTY, DYMCNO, SONO, BUYER, STYLE,
             MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, YTYPE, YCOUNT, YBRAND,
-            FEEDER_PLAN, LOT_NO, CATEGORY, DOP, DID
+            SILICON, NONSILICON, NWASH, EWASH, ENZYME, NONENZYME, PEACH, BRUSH,
+            AOP, SOFTENER, NONSOFTENER, OTHERS, DOP, DID
      FROM dyeing_batch_delivery
      WHERE BCARD = ?
      ORDER BY DBDTID ASC'

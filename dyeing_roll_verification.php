@@ -197,6 +197,12 @@ unset($_SESSION['roll_manual_entry_authorized']);
         .batch-total-row td { color: #123b39; background: #ecfdf5; font-weight: 800; }
         .batch-total-row td:first-child { text-align: right; }
         .empty { padding: 24px; text-align: center; color: #64748b; }
+        .process-badges { display: grid; grid-template-columns: repeat(2, max-content); gap: 5px; }
+        .process-badge {
+            display: inline-block; padding: 4px 8px; border: 1px solid #99d5c9;
+            border-radius: 6px; color: #075e54; background: #e6f8f3;
+            font-size: .78rem; font-weight: 750; white-space: nowrap;
+        }
         @media (max-width: 700px) {
             body { padding: 8px; }
             .header { flex-wrap: wrap; padding: 12px; }
@@ -266,11 +272,11 @@ unset($_SESSION['roll_manual_entry_authorized']);
                             <th>Action</th><th>Roll</th><th>Batch</th><th>PO Number</th><th>Color</th><th>QTY</th>
                             <th>MC NO</th><th>SONO</th><th>Buyer</th><th>Style</th><th>MC Dia</th><th>Customer</th>
                             <th>O / T</th><th>SL/VQ</th><th>Fabrics Type</th><th>GSM</th><th>Dia</th>
-                            <th>Yarn Type</th><th>Yarn Count</th><th>Yarn Brand</th>
+                            <th>Yarn Type</th><th>Yarn Count</th><th>Yarn Brand</th><th>Process</th>
                         </tr>
                     </thead>
                     <tbody id="batchRows">
-                        <tr><td class="empty" colspan="20">Scan or enter a roll number to load its batch.</td></tr>
+                        <tr><td class="empty" colspan="21">Scan or enter a roll number to load its batch.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -388,7 +394,7 @@ unset($_SESSION['roll_manual_entry_authorized']);
             function renderRows() {
                 if (!batch || !batch.rows.length) {
                     batchPanel.hidden = true;
-                    batchRows.innerHTML = '<tr><td class="empty" colspan="20">Scan or enter a roll number to load its batch.</td></tr>';
+                    batchRows.innerHTML = '<tr><td class="empty" colspan="21">Scan or enter a roll number to load its batch.</td></tr>';
                     updateSummary();
                     return;
                 }
@@ -396,7 +402,11 @@ unset($_SESSION['roll_manual_entry_authorized']);
                 var details = [
                     'PO_NUMBER', 'COLOR', 'QTY', 'DYMCNO', 'SONO', 'BUYER', 'STYLE',
                     'MCDIA', 'CUSTOMER', 'O_T', 'SL', 'FTYPE', 'FGSM', 'FDIA',
-                    'YTYPE', 'YCOUNT', 'YBRAND'
+                    'YTYPE', 'YCOUNT', 'YBRAND', 'PROCESS'
+                ];
+                var processFields = [
+                    'SILICON', 'NONSILICON', 'NWASH', 'EWASH', 'ENZYME', 'NONENZYME',
+                    'PEACH', 'BRUSH', 'AOP', 'SOFTENER', 'NONSOFTENER', 'OTHERS'
                 ];
                 var html = '';
                 for (var start = 0; start < batch.rows.length;) {
@@ -420,6 +430,15 @@ unset($_SESSION['roll_manual_entry_authorized']);
                         }
                         if (isFulfilled) {
                             html += details.map(function(field) {
+                                if (field === 'PROCESS') {
+                                    var selected = processFields.filter(function(processField) {
+                                        return String(row[processField] || '').trim() !== '';
+                                    });
+                                    var badges = selected.map(function(processField) {
+                                        return '<span class="process-badge">' + escapeHtml(row[processField]) + '</span>';
+                                    }).join('');
+                                    return '<td><div class="process-badges">' + (badges || '-') + '</div></td>';
+                                }
                                 return '<td>' + escapeHtml(row[field]) + '</td>';
                             }).join('');
                         } else {
@@ -430,7 +449,7 @@ unset($_SESSION['roll_manual_entry_authorized']);
                     html += '<tr class="batch-total-row">' +
                         '<td colspan="5">Total QTY :</td>' +
                         '<td>' + escapeHtml(totalQty.toLocaleString(undefined, {maximumFractionDigits: 3})) + '</td>' +
-                        '<td colspan="14"></td>' +
+                        '<td colspan="15"></td>' +
                         '</tr>';
                     start = end;
                 }

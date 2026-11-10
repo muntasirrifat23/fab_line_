@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'config.php';
+require_once 'dyeing_process_fields.php';
 
 if (!isset($_SESSION['username'])) {
     header('Location: login.php');
@@ -17,6 +18,12 @@ $searched = isset($_GET['search']);
 $rows = [];
 $errorMessage = '';
 
+try {
+    ensureDyeingProcessColumns($db, 'dyeing_batch_delivery');
+} catch (Throwable $error) {
+    $errorMessage = 'Could not initialize batch verification process fields: ' . $error->getMessage();
+}
+
 {
     $conditions = [];
     $values = [];
@@ -32,6 +39,13 @@ $errorMessage = '';
     } else {
         $hasVerificationTable = $verificationTableResult->num_rows > 0;
         $verificationTableResult->free();
+        if ($errorMessage === '' && $hasVerificationTable) {
+            try {
+                ensureDyeingProcessColumns($db, 'dyeing_batch_verification');
+            } catch (Throwable $error) {
+                $errorMessage = 'Could not initialize batch verification process fields: ' . $error->getMessage();
+            }
+        }
     }
 
     if ($errorMessage === '' && $hasVerificationTable) {
@@ -111,9 +125,18 @@ $errorMessage = '';
                                COALESCE(v.YTYPE, d.YTYPE) AS YTYPE,
                                COALESCE(v.YCOUNT, d.YCOUNT) AS YCOUNT,
                                COALESCE(v.YBRAND, d.YBRAND) AS YBRAND,
-                               COALESCE(v.FEEDER_PLAN, d.FEEDER_PLAN) AS FEEDER_PLAN,
-                               COALESCE(v.LOT_NO, d.LOT_NO) AS LOT_NO,
-                               COALESCE(v.CATEGORY, d.CATEGORY) AS CATEGORY,
+                               COALESCE(v.SILICON, d.SILICON) AS SILICON,
+                               COALESCE(v.NONSILICON, d.NONSILICON) AS NONSILICON,
+                               COALESCE(v.NWASH, d.NWASH) AS NWASH,
+                               COALESCE(v.EWASH, d.EWASH) AS EWASH,
+                               COALESCE(v.ENZYME, d.ENZYME) AS ENZYME,
+                               COALESCE(v.NONENZYME, d.NONENZYME) AS NONENZYME,
+                               COALESCE(v.PEACH, d.PEACH) AS PEACH,
+                               COALESCE(v.BRUSH, d.BRUSH) AS BRUSH,
+                               COALESCE(v.AOP, d.AOP) AS AOP,
+                               COALESCE(v.SOFTENER, d.SOFTENER) AS SOFTENER,
+                               COALESCE(v.NONSOFTENER, d.NONSOFTENER) AS NONSOFTENER,
+                               COALESCE(v.OTHERS, d.OTHERS) AS OTHERS,
                                v.SINCHARGE, v.SUPERVISOR, v.BINCHARGE, v.BMANAGER,
                                CASE
                                    WHEN v.DBVTID IS NULL THEN 'verification'
@@ -148,7 +171,9 @@ $errorMessage = '';
             $sql = "SELECT d.ROLL, d.BCARD, d.PO_NUMBER, d.COLOR, d.QTY, d.DYMCNO, d.SONO,
                                d.BUYER, d.STYLE, d.MCDIA, d.CUSTOMER, d.O_T, d.SL,
                                d.FTYPE, d.FGSM, d.FDIA, d.YTYPE, d.YCOUNT, d.YBRAND,
-                               d.FEEDER_PLAN, d.LOT_NO, d.CATEGORY,
+                               d.SILICON, d.NONSILICON, d.NWASH, d.EWASH, d.ENZYME,
+                               d.NONENZYME, d.PEACH, d.BRUSH, d.AOP, d.SOFTENER,
+                               d.NONSOFTENER, d.OTHERS,
                                'verification' AS VERIFICATION_STATUS
                         FROM dyeing_batch_delivery d";
         }
@@ -278,6 +303,12 @@ function h($value)
         tbody tr.delivery-row[data-status="fail"]:nth-child(even) { background: #fee2e2; }
         td[data-action-cell] { text-align: center; vertical-align: middle; }
         .empty { padding: 24px; text-align: center; color: #64748b; }
+        .process-badges { display: grid; grid-template-columns: repeat(2, max-content); gap: 5px; }
+        .process-badge {
+            display: inline-block; padding: 4px 8px; border: 1px solid #99d5c9;
+            border-radius: 6px; color: #075e54; background: #e6f8f3;
+            font-size: .78rem; font-weight: 750; white-space: nowrap;
+        }
         .verification-tabs { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
         .verification-tab { min-width: 120px; background: #e2e8f0; color: #334155; }
         .verification-tab[data-status="verification"] { background: #dbeafe; color: #1d4ed8; }
@@ -461,8 +492,7 @@ function h($value)
                                 <th data-action-header>Action</th><th>Roll</th><th>Batch</th><th>PO Number</th><th>Color</th><th>QTY</th><th>MC NO</th><th>SONO</th>
                                 <th>Buyer</th><th>Style</th><th>MC Dia</th><th>Customer</th><th>O / T</th>
                                 <th>SL/VQ</th><th>Fabrics Type</th><th>GSM</th><th>Dia</th>
-                                <th>Yarn Type</th><th>Yarn Count</th><th>Yarn Brand</th><th>Feeder Plan</th>
-                                <th>Lot No</th><th>Category</th>
+                                <th>Yarn Type</th><th>Yarn Count</th><th>Yarn Brand</th><th>Process</th>
                                 <th data-approval-column hidden>Shift Incharge</th>
                                 <th data-approval-column hidden>Supervisor</th>
                                 <th data-approval-column hidden>Batch Incharge</th>
@@ -471,7 +501,7 @@ function h($value)
                         </thead>
                         <tbody>
                             <?php if (!$rows): ?>
-                                <tr><td class="empty" colspan="27">No matching delivery records found.</td></tr>
+                                <tr><td class="empty" colspan="25">No matching delivery records found.</td></tr>
                             <?php else: ?>
                                 <?php foreach ($rows as $row): ?>
                                     <tr class="delivery-row"
@@ -505,9 +535,15 @@ function h($value)
                                         <td data-column="YTYPE"><?php echo h($row['YTYPE']); ?></td>
                                         <td data-column="YCOUNT"><?php echo h($row['YCOUNT']); ?></td>
                                         <td data-column="YBRAND"><?php echo h($row['YBRAND']); ?></td>
-                                        <td data-column="FEEDER_PLAN"><?php echo h($row['FEEDER_PLAN']); ?></td>
-                                        <td data-column="LOT_NO"><?php echo h($row['LOT_NO']); ?></td>
-                                        <td data-column="CATEGORY"><?php echo h($row['CATEGORY']); ?></td>
+                                        <td data-column="PROCESS" data-process-cell>
+                                            <div class="process-badges">
+                                                <?php foreach (['SILICON', 'NONSILICON', 'NWASH', 'EWASH', 'ENZYME', 'NONENZYME', 'PEACH', 'BRUSH', 'AOP', 'SOFTENER', 'NONSOFTENER', 'OTHERS'] as $processField): ?>
+                                                    <?php if (trim((string)($row[$processField] ?? '')) !== ''): ?>
+                                                        <span class="process-badge"><?php echo h($row[$processField]); ?></span>
+                                                    <?php endif; ?>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        </td>
                                         <td data-approval-column hidden><?php echo h($row['SINCHARGE'] ?? ''); ?></td>
                                         <td data-approval-column hidden><?php echo h($row['SUPERVISOR'] ?? ''); ?></td>
                                         <td data-approval-column hidden><?php echo h($row['BINCHARGE'] ?? ''); ?></td>
@@ -517,7 +553,7 @@ function h($value)
                             <?php endif; ?>
                             <?php if ($rows): ?>
                                 <tr id="emptyTabRow" hidden>
-                                    <td class="empty" colspan="27">There are no batches in this status.</td>
+                                    <td class="empty" colspan="25">There are no batches in this status.</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
@@ -633,6 +669,9 @@ function h($value)
                         var batchCell = row.querySelector('[data-batch-cell]');
                         batchCell.hidden = false;
                         batchCell.rowSpan = 1;
+                        var processCell = row.querySelector('[data-process-cell]');
+                        processCell.hidden = false;
+                        processCell.rowSpan = 1;
                     });
 
                     var visibleRows = rows.filter(function(row) {
@@ -652,10 +691,13 @@ function h($value)
                         }
                         var firstBatchCell = visibleRows[index].querySelector('[data-batch-cell]');
                         firstBatchCell.rowSpan = groupEnd - index;
+                        var firstProcessCell = visibleRows[index].querySelector('[data-process-cell]');
+                        firstProcessCell.rowSpan = groupEnd - index;
                         var firstActionCell = visibleRows[index].querySelector('[data-action-cell]');
                         firstActionCell.rowSpan = groupEnd - index;
                         for (var duplicateIndex = index + 1; duplicateIndex < groupEnd; duplicateIndex++) {
                             visibleRows[duplicateIndex].querySelector('[data-batch-cell]').hidden = true;
+                            visibleRows[duplicateIndex].querySelector('[data-process-cell]').hidden = true;
                             visibleRows[duplicateIndex].querySelector('[data-action-cell]').hidden = true;
                         }
                         index = groupEnd;

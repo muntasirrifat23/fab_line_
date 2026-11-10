@@ -206,6 +206,12 @@ if (empty($_SESSION['batch_split_authorized'])) {
             border-collapse: collapse;
             font-size: 0.82rem;
         }
+        .process-badges { display: grid; grid-template-columns: repeat(2, max-content); gap: 5px; }
+        .process-badge {
+            display: inline-block; padding: 4px 8px; border: 1px solid #99d5c9;
+            border-radius: 6px; color: #075e54; background: #e6f8f3;
+            font-size: .78rem; font-weight: 750; white-space: nowrap;
+        }
 
         thead th {
             background: #134e4a;
@@ -403,9 +409,7 @@ if (empty($_SESSION['batch_split_authorized'])) {
                             <th>Yarn Type</th>
                             <th>Yarn Count</th>
                             <th>Yarn Brand</th>
-                            <th>Feeder Plan</th>
-                            <th>Lot No</th>
-                            <th>Category</th>
+                            <th>Process</th>
                         </tr>
                     </thead>
                     <tbody id="cardRollsBody"></tbody>
@@ -554,11 +558,15 @@ if (empty($_SESSION['batch_split_authorized'])) {
         function renderCardRolls(rolls, total) {
             var tbody = document.getElementById('cardRollsBody');
             if (!rolls.length) {
-                tbody.innerHTML = '<tr class="empty-row"><td colspan="20">No delivered rolls found for this batch card.</td></tr>';
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="18">No delivered rolls found for this batch card.</td></tr>';
                 document.getElementById('cardTotal').textContent = total || 0;
                 return;
             }
             var html = '';
+            var processFields = [
+                'SILICON', 'NONSILICON', 'NWASH', 'EWASH', 'ENZYME', 'NONENZYME',
+                'PEACH', 'BRUSH', 'AOP', 'SOFTENER', 'NONSOFTENER', 'OTHERS'
+            ];
             rolls.forEach(function(row, i) {
                 html += '<tr>' +
                     '<td><span class="roll-badge">' + esc(row.ROLL) + '</span></td>' +
@@ -578,15 +586,17 @@ if (empty($_SESSION['batch_split_authorized'])) {
                     '<td>' + esc(row.YTYPE) + '</td>' +
                     '<td>' + esc(row.YCOUNT) + '</td>' +
                     '<td>' + esc(row.YBRAND) + '</td>' +
-                    '<td>' + esc(row.FEEDER_PLAN) + '</td>' +
-                    '<td>' + esc(row.LOT_NO) + '</td>' +
-                    '<td>' + esc(row.CATEGORY) + '</td>' +
+                    '<td><div class="process-badges">' + (processFields.filter(function(field) {
+                        return String(row[field] || '').trim() !== '';
+                    }).map(function(field) {
+                        return '<span class="process-badge">' + esc(row[field]) + '</span>';
+                    }).join('') || '-') + '</div></td>' +
                     '</tr>';
             });
             html += '<tr style="background:#ccfbf1; font-weight:800; border-top:2px solid #0f766e;">' +
                 '<td colspan="2" style="text-align:right; color:#065f46;">Total QTY</td>' +
                 '<td style="color:#065f46;">' + esc(total) + '</td>' +
-                '<td colspan="17"></td>' +
+                '<td colspan="15"></td>' +
                 '</tr>';
             tbody.innerHTML = html;
             document.getElementById('cardTotal').textContent = total;

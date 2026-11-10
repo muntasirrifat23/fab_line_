@@ -128,6 +128,12 @@ if (!isset($_SESSION['username'])) {
         tbody tr:nth-child(even) td { background: #f8fafc; }
         td[data-batch-cell] { text-align: center; vertical-align: middle; font-weight: 800; }
         .empty { padding: 24px; text-align: center; color: #64748b; }
+        .process-badges { display: grid; grid-template-columns: repeat(2, max-content); gap: 5px; }
+        .process-badge {
+            display: inline-block; padding: 4px 8px; border: 1px solid #99d5c9;
+            border-radius: 6px; color: #075e54; background: #e6f8f3;
+            font-size: .78rem; font-weight: 750; white-space: nowrap;
+        }
         .load-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
         #startDyeingLoadButton { background: #047857; }
         [hidden] { display: none !important; }
@@ -294,8 +300,12 @@ if (!isset($_SESSION['username'])) {
                 ['QTY', 'QTY'], ['MCNO', 'MC NO'], ['SONO', 'SONO'], ['BUYER', 'Buyer'],
                 ['STYLE', 'Style'], ['MCDIA', 'MC Dia'], ['CUSTOMER', 'Customer'], ['O_T', 'O / T'],
                 ['SL', 'SL/VQ'], ['FTYPE', 'Fabrics Type'], ['FGSM', 'GSM'], ['FDIA', 'Dia'],
-                ['FEEDER_PLAN', 'Feeder Plan'], ['LOT_NO', 'Lot No'], ['YTYPE', 'Yarn Type'],
-                ['YCOUNT', 'Yarn Count'], ['YBRAND', 'Yarn Brand'], ['CATEGORY', 'Category']
+                ['YTYPE', 'Yarn Type'], ['YCOUNT', 'Yarn Count'], ['YBRAND', 'Yarn Brand'],
+                ['PROCESS', 'Process']
+            ];
+            var processFields = [
+                'SILICON', 'NONSILICON', 'NWASH', 'EWASH', 'ENZYME', 'NONENZYME',
+                'PEACH', 'BRUSH', 'AOP', 'SOFTENER', 'NONSOFTENER', 'OTHERS'
             ];
 
             function escapeHtml(value) {
@@ -368,6 +378,15 @@ if (!isset($_SESSION['username'])) {
                                 return index === start
                                     ? '<td data-batch-cell rowspan="' + (end - start) + '">' + escapeHtml(row.BCARD) + '</td>'
                                     : '';
+                            }
+                            if (column[0] === 'PROCESS') {
+                                var selected = processFields.filter(function(field) {
+                                    return String(row[field] || '').trim() !== '';
+                                });
+                                var badges = selected.map(function(field) {
+                                    return '<span class="process-badge">' + escapeHtml(row[field]) + '</span>';
+                                }).join('');
+                                return '<td><div class="process-badges">' + (badges || '-') + '</div></td>';
                             }
                             return '<td>' + escapeHtml(row[column[0]]) + '</td>';
                         }).join('') + '</tr>';

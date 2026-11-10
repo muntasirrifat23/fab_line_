@@ -17,6 +17,7 @@ if (!isset($_SESSION['username'])) {
 
 try {
     ensureDyeingProcessColumns($db, 'dyeing_batch_card');
+    ensureDyeingProcessColumns($db, 'dyeing_batch_delivery');
     ensureDyeingProcessColumns($db, 'dyeing_batch_verification');
     ensureDyeingProcessColumns($db, 'dyeing_load');
 } catch (Throwable $error) {
@@ -38,6 +39,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $action = $_SERVER['REQUEST_METHOD'] === 'POST'
     ? (isset($requestData['action']) ? trim((string) $requestData['action']) : '')
     : (isset($_GET['action']) ? trim((string) $_GET['action']) : '');
+$processFields = dyeingProcessFieldNames();
+$processProjection = [];
+foreach ($processFields as $processField) {
+    $processProjection[] = "COALESCE(verified.`$processField`, '') AS `$processField`";
+}
+$passCount = "(COALESCE(UPPER(TRIM(verified.SINCHARGE)) = 'PASS', 0) +
+    COALESCE(UPPER(TRIM(verified.SUPERVISOR)) = 'PASS', 0) +
+    COALESCE(UPPER(TRIM(verified.BINCHARGE)) = 'PASS', 0) +
+    COALESCE(UPPER(TRIM(verified.BMANAGER)) = 'PASS', 0))";
+$failCount = "(COALESCE(UPPER(TRIM(verified.SINCHARGE)) = 'FAIL', 0) +
+    COALESCE(UPPER(TRIM(verified.SUPERVISOR)) = 'FAIL', 0) +
+    COALESCE(UPPER(TRIM(verified.BINCHARGE)) = 'FAIL', 0) +
+    COALESCE(UPPER(TRIM(verified.BMANAGER)) = 'FAIL', 0))";
+$passFilter = $passCount . ' > ' . $failCount;
 if ($action === 'verify_operator') {
     if (isset($_GET['manual']) && $_GET['manual'] === '1' && empty($_SESSION['roll_manual_entry_authorized'])) {
         respond(['success' => false, 'message' => 'Verify the manual-entry password before entering an operator ID.'], 403);
@@ -139,12 +154,17 @@ if ($action === 'load_batch') {
     }
 
     $batchStmt = $db->prepare(
-        'SELECT DRVTID, BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, BUYER, STYLE, COLOR,
-                MCNO, MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN,
-                LOT_NO, YTYPE, YCOUNT, YBRAND, CATEGORY, DOP, DID, CREATEDAT
-         FROM dyeing_roll_verification
-         WHERE TRIM(BCARD) = ?
-         ORDER BY DRVTID ASC'
+        'SELECT verified.DBVTID, verified.BUDAT, verified.BCARD, verified.ROLL,
+                verified.PO_NUMBER, verified.QTY, verified.SONO, verified.BUYER,
+                verified.STYLE, verified.COLOR, verified.DYMCNO AS MCNO, verified.MCDIA,
+                verified.CUSTOMER, verified.O_T, verified.SL, verified.FTYPE,
+                verified.FGSM, verified.FDIA, verified.YTYPE, verified.YCOUNT,
+                verified.YBRAND, ' . implode(', ', $processProjection) . ',
+                verified.DOP, verified.DID, verified.CREATEDAT
+         FROM dyeing_batch_verification verified
+         WHERE TRIM(verified.BCARD) = ?
+           AND ' . $passFilter . '
+         ORDER BY verified.DBVTID ASC'
     );
     if (!$batchStmt) {
         respond(['success' => false, 'message' => 'Could not prepare batch lookup: ' . $db->error], 500);
@@ -167,7 +187,7 @@ if ($action === 'load_batch') {
     $batchStmt->close();
 
     if (!$rows) {
-        respond(['success' => false, 'message' => 'No verified roll data was found for Batch ' . $card . '.'], 404);
+        respond(['success' => false, 'message' => 'No PASS verified roll data was found for Batch ' . $card . '.'], 404);
     }
     respond([
         'success' => true,
@@ -241,28 +261,17 @@ if ($action === 'start_load') {
         respond(['success' => false, 'message' => 'Dyeing Load was already started for Batch ' . $card . '.'], 409);
     }
 
-    $processFields = dyeingProcessFieldNames();
-    $processProjection = [];
-    $processAggregate = [];
-    foreach ($processFields as $processField) {
-        $processProjection[] = "COALESCE(batch_processes.`$processField`, '') AS `$processField`";
-        $processAggregate[] = "MAX(`$processField`) AS `$processField`";
-    }
     $batchStmt = $db->prepare(
         'SELECT verified.BUDAT, verified.BCARD, verified.ROLL, verified.PO_NUMBER,
                 verified.QTY, verified.SONO, verified.BUYER, verified.STYLE, verified.COLOR,
-                verified.MCNO, verified.MCDIA, verified.CUSTOMER, verified.O_T, verified.SL,
+                verified.DYMCNO AS MCNO, verified.MCDIA, verified.CUSTOMER, verified.O_T, verified.SL,
                 verified.FTYPE, verified.FGSM, verified.FDIA, verified.FEEDER_PLAN,
                 verified.LOT_NO, verified.YTYPE, verified.YCOUNT, verified.YBRAND,
                 verified.CATEGORY, ' . implode(', ', $processProjection) . '
-         FROM dyeing_roll_verification verified
-         LEFT JOIN (
-             SELECT BCARD, ' . implode(', ', $processAggregate) . '
-             FROM dyeing_batch_card
-             GROUP BY BCARD
-         ) batch_processes ON TRIM(batch_processes.BCARD) = TRIM(verified.BCARD)
+         FROM dyeing_batch_verification verified
          WHERE TRIM(verified.BCARD) = ?
-         ORDER BY verified.DRVTID ASC'
+           AND ' . $passFilter . '
+         ORDER BY verified.DBVTID ASC'
     );
     if (!$batchStmt) {
         $db->rollback();
@@ -286,7 +295,7 @@ if ($action === 'start_load') {
     $batchStmt->close();
     if (!$rows) {
         $db->rollback();
-        respond(['success' => false, 'message' => 'No verified roll data was found for Batch ' . $card . '.'], 404);
+        respond(['success' => false, 'message' => 'No PASS verified roll data was found for Batch ' . $card . '.'], 404);
     }
 
     $insertStmt = $db->prepare(

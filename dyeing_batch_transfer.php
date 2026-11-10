@@ -102,6 +102,12 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
         .update-button { min-height: 38px; padding: 7px 10px; white-space: nowrap; }
         .update-button:disabled { opacity: .65; }
         .empty { padding: 24px; text-align: center; color: #64748b; }
+        .process-badges { display: grid; grid-template-columns: repeat(2, max-content); gap: 5px; }
+        .process-badge {
+            display: inline-block; padding: 4px 8px; border: 1px solid #99d5c9;
+            border-radius: 6px; color: #075e54; background: #e6f8f3;
+            font-size: .78rem; font-weight: 750; white-space: nowrap;
+        }
         .result-overlay {
             position: fixed;
             inset: 0;
@@ -196,11 +202,11 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
                             <th>MCNO</th><th>Change MCNO</th><th>SONO</th><th>Buyer</th><th>Style</th>
                             <th>MC Dia</th><th>Customer</th><th>O /T</th><th>SL/VQ</th>
                             <th>Fabrics Type</th><th>GSM</th><th>Dia</th><th>Yarn Type</th>
-                            <th>Yarn Count</th><th>Yarn Brand</th><th>Feeder Plan</th><th>Lot No</th><th>Category</th>
+                            <th>Yarn Count</th><th>Yarn Brand</th><th>Process</th>
                         </tr>
                     </thead>
                     <tbody id="results">
-                        <tr><td class="empty" colspan="23">Loading delivery rolls...</td></tr>
+                        <tr><td class="empty" colspan="21">Loading delivery rolls...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -301,15 +307,18 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
 
             function renderRows() {
                 if (!rows.length) {
-                    results.innerHTML = '<tr><td class="empty" colspan="23">No matching delivery rolls were found.</td></tr>';
+                    results.innerHTML = '<tr><td class="empty" colspan="21">No matching delivery rolls were found.</td></tr>';
                     return;
                 }
 
                 var fields = [
                     'BCARD', 'ROLL', 'PO_NUMBER', 'COLOR', 'QTY', 'DYMCNO',
                     'SONO', 'BUYER', 'STYLE', 'MCDIA', 'CUSTOMER', 'O_T', 'SL',
-                    'FTYPE', 'FGSM', 'FDIA', 'YTYPE', 'YCOUNT', 'YBRAND',
-                    'FEEDER_PLAN', 'LOT_NO', 'CATEGORY'
+                    'FTYPE', 'FGSM', 'FDIA', 'YTYPE', 'YCOUNT', 'YBRAND', 'PROCESS'
+                ];
+                var processFields = [
+                    'SILICON', 'NONSILICON', 'NWASH', 'EWASH', 'ENZYME', 'NONENZYME',
+                    'PEACH', 'BRUSH', 'AOP', 'SOFTENER', 'NONSOFTENER', 'OTHERS'
                 ];
                 var html = '';
                 for (var start = 0; start < rows.length;) {
@@ -350,6 +359,17 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
                                 '</div></td>';
                         }
                         html += fields.slice(6).map(function(field) {
+                            if (field === 'PROCESS') {
+                                if (index !== start) return '';
+                                var selected = processFields.filter(function(processField) {
+                                    return String(row[processField] || '').trim() !== '';
+                                });
+                                return '<td data-process-cell rowspan="' + groupSize + '">' + (selected.length
+                                    ? '<div class="process-badges">' + selected.map(function(processField) {
+                                    return '<span class="process-badge">' + escapeHtml(row[processField]) + '</span>';
+                                    }).join('') + '</div>'
+                                    : '-') + '</td>';
+                            }
                             return '<td>' + escapeHtml(row[field]) + '</td>';
                         }).join('') + '</tr>';
                     }

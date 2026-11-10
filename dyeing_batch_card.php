@@ -696,13 +696,10 @@ unset($_SESSION['dyeing_batch']['saved']);
                             <th>Yarn Type</th>
                             <th>Yarn Count</th>
                             <th>Yarn Brand</th>
-                            <th>Feeder Plan</th>
-                            <th>Lot No</th>
-                            <th>Category</th>
                         </tr>
                     </thead>
                     <tbody id="storeBody">
-                        <tr class="empty-row"><td colspan="22">Select PO Number and Color, then search.</td></tr>
+                        <tr class="empty-row"><td colspan="19">Select PO Number and Color, then search.</td></tr>
                     </tbody>
                     <tfoot id="storeFoot"></tfoot>
                 </table>
@@ -930,8 +927,7 @@ unset($_SESSION['dyeing_batch']['saved']);
                 ['COLOR', 'COLOR'], ['SONO', 'SONO'], ['BUYER', 'BUYER'], ['STYLE', 'STYLE'],
                 ['MCDIA', 'MCDIA'], ['CUSTOMER', 'CUSTOMER'], ['O_T', 'O_T'], ['SL', 'SL'],
                 ['FTYPE', 'FTYPE'], ['FGSM', 'FGSM'], ['FDIA', 'FDIA'], ['YTYPE', 'YTYPE'],
-                ['YCOUNT', 'YCOUNT'], ['YBRAND', 'YBRAND'], ['FEEDER_PLAN', 'FEEDER_PLAN'],
-                ['LOT_NO', 'LOT_NO'], ['CATEGORY', 'CATEGORY']
+                ['YCOUNT', 'YCOUNT'], ['YBRAND', 'YBRAND']
             ];
             var html = '';
             rolls.forEach(function(row, index) {
@@ -948,14 +944,14 @@ unset($_SESSION['dyeing_batch']['saved']);
                 }).join('') + '</tr>';
             });
             document.getElementById('storeBody').innerHTML = html ||
-                '<tr class="empty-row"><td colspan="22">No available rolls found for this PO Number and Color.</td></tr>';
+                '<tr class="empty-row"><td colspan="19">No available rolls found for this PO Number and Color.</td></tr>';
             var availableTotal = rolls.reduce(function(total, row) {
                 return total + qtyUnits(row);
             }, 0);
             document.getElementById('storeFoot').innerHTML =
                 '<tr><th colspan="4" class="total-label">Available total QTY</th>' +
                 '<th id="availableQtyTotal">' + (availableTotal / 1000).toFixed(2) + ' KG</th>' +
-                '<th colspan="17"></th></tr>';
+                '<th colspan="14"></th></tr>';
             document.querySelectorAll('.roll-select-checkbox').forEach(function(checkbox) {
                 checkbox.addEventListener('change', function() {
                     var row = candidateRolls[Number(this.dataset.rollIndex)];

@@ -2,6 +2,7 @@
 // ajaxDyeing_batch_split.php - Split a dyeing batch card into Part A and Part B
 session_start();
 require_once 'config.php';
+require_once 'dyeing_process_fields.php';
 
 header('Content-Type: application/json');
 
@@ -13,6 +14,15 @@ if (!isset($_SESSION['username'])) {
 if (empty($_SESSION['batch_split_authorized'])) {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Batch Split password verification is required.']);
+    exit;
+}
+
+try {
+    ensureDyeingProcessColumns($db, 'dyeing_batch_card');
+    ensureDyeingProcessColumns($db, 'dyeing_batch_delivery');
+} catch (Throwable $error) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Could not initialize Batch Split process fields: ' . $error->getMessage()]);
     exit;
 }
 
@@ -41,13 +51,20 @@ function insertSplitRow($db, $budat, $bcmtid, $rollNo, $row) {
     $vLOT_NO = isset($row['LOT_NO']) ? $row['LOT_NO'] : null;
     $vTPOINT = isset($row['TPOINT']) ? $row['TPOINT'] : null;
     $uname = isset($_SESSION['username']) ? $_SESSION['username'] : '';
+    $processValues = [];
+    foreach (dyeingProcessFieldNames() as $processField) {
+        $processValues[$processField] = isset($row[$processField]) ? $row[$processField] : '';
+    }
 
     $stmt = $db->prepare(
         "INSERT INTO dyeing_batch_card
          (BUDAT, BCARD, ROLL, PO_NUMBER, RACK, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
           DYMCNO, MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
-          YTYPE, YCOUNT, YBRAND, CATEGORY, TPOINT, UNAME)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+          YTYPE, YCOUNT, YBRAND, CATEGORY, TPOINT, UNAME, SILICON, NONSILICON,
+          NWASH, EWASH, ENZYME, NONENZYME, PEACH, BRUSH, AOP, SOFTENER,
+          NONSOFTENER, OTHERS)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
 
     if (!$stmt) {
@@ -55,7 +72,7 @@ function insertSplitRow($db, $budat, $bcmtid, $rollNo, $row) {
     }
 
     $stmt->bind_param(
-        'sssssssssssssssssssssssssss',
+        str_repeat('s', 39),
         $budat,
         $bcmtid,
         $rollNo,
@@ -82,7 +99,19 @@ function insertSplitRow($db, $budat, $bcmtid, $rollNo, $row) {
         $vYBRAND,
         $vCATEGORY,
         $vTPOINT,
-        $uname
+        $uname,
+        $processValues['SILICON'],
+        $processValues['NONSILICON'],
+        $processValues['NWASH'],
+        $processValues['EWASH'],
+        $processValues['ENZYME'],
+        $processValues['NONENZYME'],
+        $processValues['PEACH'],
+        $processValues['BRUSH'],
+        $processValues['AOP'],
+        $processValues['SOFTENER'],
+        $processValues['NONSOFTENER'],
+        $processValues['OTHERS']
     );
 
     if (!$stmt->execute()) {
@@ -126,8 +155,9 @@ switch ($action) {
         }
         $stmt = $db->prepare(
             "SELECT ROLL, PO_NUMBER, QTY, COLOR, SONO, BUYER, STYLE, MCDIA, CUSTOMER,
-                    O_T, SL, FTYPE, FGSM, FDIA, YTYPE, YCOUNT, YBRAND, FEEDER_PLAN,
-                    LOT_NO, CATEGORY
+                    O_T, SL, FTYPE, FGSM, FDIA, YTYPE, YCOUNT, YBRAND, SILICON,
+                    NONSILICON, NWASH, EWASH, ENZYME, NONENZYME, PEACH, BRUSH, AOP,
+                    SOFTENER, NONSOFTENER, OTHERS
              FROM dyeing_batch_delivery
              WHERE BCARD = ?
              ORDER BY DBDTID ASC"
