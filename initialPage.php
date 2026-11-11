@@ -696,77 +696,78 @@ mysqli_close($db);
 
                 <div class="btn-grid">
                     <?php if (!$isDyeingUser): ?>
-                    <button class="w3-button w3-teal" name="subcontract_input" id="subcontract_input">
-                        <i class="fa-solid fa-clipboard-list"></i> Subcontract Input
-                    </button>
+                        <button class="w3-button w3-teal" name="subcontract_input" id="subcontract_input">
+                            <i class="fa-solid fa-clipboard-list"></i> Subcontract Input
+                        </button>
 
-                    <!-- Knitting Buttons -->
-                    <button class="w3-button w3-teal" name="knitting_program" id="knitting_program">
-                        <i class="fas fa-industry"></i> Knitting Program
-                    </button>
+                        <!-- Knitting Buttons -->
+                        <button class="w3-button w3-teal" name="knitting_program" id="knitting_program">
+                            <i class="fas fa-industry"></i> Knitting Program
+                        </button>
 
-                    <button class="w3-button w3-teal" name="knit_card" id="knit_card">
-                        <i class="fas fa-tag"></i> Knit Card
-                    </button>
+                        <button class="w3-button w3-teal" name="knit_card" id="knit_card">
+                            <i class="fas fa-tag"></i> Knit Card
+                        </button>
 
-                    <button class="w3-button w3-teal" name="knitting_production" id="knitting_production">
-                        <i class="fas fa-industry"></i> Knitting Production
-                    </button>
+                        <button class="w3-button w3-teal" name="knitting_production" id="knitting_production">
+                            <i class="fas fa-industry"></i> Knitting Production
+                        </button>
 
-                    <button class="w3-button w3-teal" name="knitting_inspection" id="knitting_inspection">
-                        <i class="fas fa-clipboard-check"></i> Knitting Inspection
-                    </button>
+                        <button class="w3-button w3-teal" name="knitting_inspection" id="knitting_inspection">
+                            <i class="fas fa-clipboard-check"></i> Knitting Inspection
+                        </button>
 
-                    <button class="w3-button w3-teal" name="knitting_store" id="knitting_store">
-                        <i class="fas fa-warehouse"></i> Knitting Store
-                    </button>
-                    
-                    <button class="w3-button w3-teal" name="knitting_rack_transfer" id="knitting_rack_transfer">
-                        <i class="fas fa-warehouse"></i> Knitting Rack Transfer
-                    </button>
+                        <button class="w3-button w3-teal" name="knitting_store" id="knitting_store">
+                            <i class="fas fa-warehouse"></i> Knitting Store
+                        </button>
 
-                    <button class="w3-button w3-teal" name="knitting_roll_split" id="knitting_roll_split">
-                        <i class="fas fa-warehouse"></i> Knitting Roll Split
-                    </button>
+                        <button class="w3-button w3-teal" name="knitting_rack_transfer" id="knitting_rack_transfer">
+                            <i class="fas fa-warehouse"></i> Knitting Rack Transfer
+                        </button>
+
+                        <button class="w3-button w3-teal" name="knitting_roll_split" id="knitting_roll_split">
+                            <i class="fas fa-warehouse"></i> Knitting Roll Split
+                        </button>
                     <?php endif; ?>
 
                     <!-- Dyeing Buttons -->
                     <?php if (!$isKnittingUser): ?>
-                    <button class="w3-button w3-teal" name="dyeing_batch_card" id="dyeing_batch_card">
-                        <i class="fas fa-id-card"></i> Batch Card
-                    </button>
-                    
-                    <button class="w3-button w3-teal" name="dyeing_batch_delivery" id="dyeing_batch_delivery">
-                        <i class="fas fa-truck"></i> Batch Delivery
-                    </button>
+                        <button class="w3-button w3-teal" name="dyeing_batch_card" id="dyeing_batch_card">
+                            <i class="fas fa-id-card"></i> Batch Card
+                        </button>
 
-                    <button class="w3-button w3-teal" name="dyeing_batch_split" id="dyeing_batch_split">
-                        <i class="fas fa-scissors"></i> Batch Split
-                    </button>
+                        <button class="w3-button w3-teal" name="dyeing_batch_delivery" id="dyeing_batch_delivery">
+                            <i class="fas fa-truck"></i> Batch Delivery
+                        </button>
 
-                    <button class="w3-button w3-teal" name="dyeing_batch_transfer" id="dyeing_batch_transfer">
-                        <i class="fas fa-right-left"></i> Batch Transfer
-                    </button>
+                        <button class="w3-button w3-teal" name="dyeing_batch_split" id="dyeing_batch_split">
+                            <i class="fas fa-scissors"></i> Batch Split
+                        </button>
 
-                    <button class="w3-button w3-teal" name="batch_verification" id="batch_verification">
-                        <i class="fas fa-clipboard-check"></i> Batch Verification
-                    </button>
+                        <button class="w3-button w3-teal" name="batch_verification" id="batch_verification">
+                            <i class="fas fa-clipboard-check"></i> Batch Verification
+                        </button>
 
-                    <button class="w3-button w3-teal" name="roll_verification" id="roll_verification">
-                        <i class="fas fa-qrcode"></i> Roll Verification
-                    </button>
+                        <button class="w3-button w3-teal" name="roll_verification" id="roll_verification">
+                            <i class="fas fa-qrcode"></i> Roll Verification
+                        </button>
 
-                    <button class="w3-button w3-teal" name="dyeing_load" id="dyeing_load">
-                        <i class="fas fa-dolly"></i> Dyeing Load
-                    </button>
-                    <button class="w3-button w3-teal" name="dyeing_unload" id="dyeing_unload">
-                        <i class="fas fa-box-open"></i> Dyeing Unload
-                    </button>
+                        <button class="w3-button w3-teal" name="dyeing_load" id="dyeing_load">
+                            <i class="fas fa-dolly"></i> Dyeing Load
+                        </button>
+
+                        <button class="w3-button w3-teal" name="dyeing_batch_transfer" id="dyeing_batch_transfer">
+                            <i class="fas fa-right-left"></i> Batch Transfer
+                        </button>
+
+                        <button class="w3-button w3-teal" name="dyeing_unload" id="dyeing_unload">
+                            <i class="fas fa-box-open"></i> Dyeing Unload
+                        </button>
                     <?php endif; ?>
                     <?php if (!$isKnittingUser && !$isDyeingUser): ?>
-                    <button class="w3-button w3-teal" name="user_management" id="user_management">
-                        <i class="fas fa-users-cog"></i> User Management
-                    </button>
+                        <button class="w3-button w3-teal" name="user_management" id="user_management">
+                            <i class="fas fa-users-cog"></i> User Management
+                        </button>
                     <?php endif; ?>
 
                     <button class="w3-button w3-teal" name="report" id="report">
@@ -923,9 +924,9 @@ mysqli_close($db);
 
             function showBatchSplitAuthError(message) {
                 authError.querySelector('strong').textContent = message || 'Wrong password';
-                authError.querySelector('span:last-child').textContent = message
-                    ? 'Please try again.'
-                    : 'Please enter a valid password.';
+                authError.querySelector('span:last-child').textContent = message ?
+                    'Please try again.' :
+                    'Please enter a valid password.';
                 authError.hidden = false;
                 window.clearTimeout(authErrorTimer);
                 authErrorTimer = window.setTimeout(function() {
@@ -947,43 +948,45 @@ mysqli_close($db);
                 verifyButton.textContent = 'Verifying...';
 
                 fetch(authConfig.verificationUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({
-                        action: authConfig.verifyAction,
-                        password: password
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: new URLSearchParams({
+                            action: authConfig.verifyAction,
+                            password: password
+                        })
                     })
-                })
-                .then(function(response) {
-                    return response.json();
-                })
-                .then(function(data) {
-                    if (!data.success) {
+                    .then(function(response) {
+                        return response.json();
+                    })
+                    .then(function(data) {
+                        if (!data.success) {
+                            authPassword.value = '';
+                            authPassword.focus();
+                            showBatchSplitAuthError();
+                            return;
+                        }
+
+                        var submitter = document.createElement('input');
+                        submitter.type = 'hidden';
+                        submitter.name = authConfig.formAction;
+                        submitter.value = '1';
+                        batchSplitForm.appendChild(submitter);
+                        closeBatchSplitAuth();
+                        batchSplitForm.submit();
+                    })
+                    .catch(function(error) {
+                        console.error(authConfig.label + ' password verification failed:', error);
                         authPassword.value = '';
                         authPassword.focus();
-                        showBatchSplitAuthError();
-                        return;
-                    }
-
-                    var submitter = document.createElement('input');
-                    submitter.type = 'hidden';
-                    submitter.name = authConfig.formAction;
-                    submitter.value = '1';
-                    batchSplitForm.appendChild(submitter);
-                    closeBatchSplitAuth();
-                    batchSplitForm.submit();
-                })
-                .catch(function(error) {
-                    console.error(authConfig.label + ' password verification failed:', error);
-                    authPassword.value = '';
-                    authPassword.focus();
-                    showBatchSplitAuthError('Verification failed');
-                })
-                .finally(function() {
-                    authSubmitting = false;
-                    verifyButton.disabled = false;
-                    verifyButton.textContent = 'Verify & Proceed';
-                });
+                        showBatchSplitAuthError('Verification failed');
+                    })
+                    .finally(function() {
+                        authSubmitting = false;
+                        verifyButton.disabled = false;
+                        verifyButton.textContent = 'Verify & Proceed';
+                    });
             }
 
             if (batchSplitButton) {

@@ -241,6 +241,7 @@ if (!isset($_SESSION['username'])) {
                 <div class="summary-item">Name: <span id="operatorName">-</span></div>
                 <div class="summary-item">Batch: <span id="batchNumber">-</span></div>
                 <div class="summary-item">Rolls: <span id="rollCount">0</span></div>
+                <div class="summary-item">Shift: <span id="shiftValue">-</span></div>
             </div>
             <h2 class="panel-title">Unloaded Batch Rolls</h2>
             <div class="table-wrap">
@@ -365,6 +366,7 @@ if (!isset($_SESSION['username'])) {
                 document.getElementById('operatorName').textContent = operator.DY_OP_NAME || '-';
                 document.getElementById('batchNumber').textContent = data.card_no;
                 document.getElementById('rollCount').textContent = String(data.roll_count);
+                document.getElementById('shiftValue').textContent = data.shift || '-';
                 document.getElementById('tableHead').innerHTML = columns.map(function(column) {
                     return '<th>' + escapeHtml(column[1]) + '</th>';
                 }).join('');
@@ -555,9 +557,11 @@ if (!isset($_SESSION['username'])) {
                         return data;
                     });
                 }).then(function(data) {
+                    document.getElementById('shiftValue').textContent = data.shift || '-';
                     showMessage(
                         'Batch Unloaded',
-                        'Batch ' + data.card_no + ' unloaded successfully. ' + data.roll_count + ' roll(s) saved.',
+                        'Batch ' + data.card_no + ' unloaded successfully. ' + data.roll_count +
+                            ' roll(s) saved. Shift: ' + data.shift + '.',
                         'success'
                     );
                     window.setTimeout(function() {

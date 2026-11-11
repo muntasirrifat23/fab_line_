@@ -96,8 +96,8 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
         }
         thead th { color: #fff; background: #134e4a; }
         tbody tr:nth-child(even) { background: #f8fafc; }
-        td[data-batch-cell], td[data-machine-cell] { text-align: center; vertical-align: middle; }
-        td select[data-batch] { width: 130px; min-width: 0; padding: 8px; }
+        td[data-batch-cell] { text-align: center; vertical-align: middle; }
+        td select[data-roll-id] { width: 130px; min-width: 0; padding: 8px; }
         .machine-change { display: flex; align-items: center; gap: 8px; }
         .update-button { min-height: 38px; padding: 7px 10px; white-space: nowrap; }
         .update-button:disabled { opacity: .65; }
@@ -190,7 +190,7 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
                 <button class="button" type="submit"><i class="fas fa-search"></i> Search</button>
                 <button class="button clear" type="reset">Clear</button>
             </form>
-            <p class="status" id="status" role="status" aria-live="polite">Loading all delivery rolls...</p>
+            <p class="status" id="status" role="status" aria-live="polite">Loading dyeing-loaded rolls...</p>
         </section>
 
         <section class="panel">
@@ -206,7 +206,7 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
                         </tr>
                     </thead>
                     <tbody id="results">
-                        <tr><td class="empty" colspan="21">Loading delivery rolls...</td></tr>
+                        <tr><td class="empty" colspan="21">Loading dyeing-loaded rolls...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -307,12 +307,12 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
 
             function renderRows() {
                 if (!rows.length) {
-                    results.innerHTML = '<tr><td class="empty" colspan="21">No matching delivery rolls were found.</td></tr>';
+                    results.innerHTML = '<tr><td class="empty" colspan="21">No matching dyeing-loaded rolls were found.</td></tr>';
                     return;
                 }
 
                 var fields = [
-                    'BCARD', 'ROLL', 'PO_NUMBER', 'COLOR', 'QTY', 'DYMCNO',
+                    'ROLL', 'PO_NUMBER', 'COLOR', 'QTY',
                     'SONO', 'BUYER', 'STYLE', 'MCDIA', 'CUSTOMER', 'O_T', 'SL',
                     'FTYPE', 'FGSM', 'FDIA', 'YTYPE', 'YCOUNT', 'YBRAND', 'PROCESS'
                 ];
@@ -327,14 +327,6 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
                         end++;
                     }
                     var groupSize = end - start;
-                    var machineValues = [];
-                    for (var machineIndex = start; machineIndex < end; machineIndex++) {
-                        var machineValue = String(rows[machineIndex].DYMCNO || '');
-                        if (machineValues.indexOf(machineValue) === -1) {
-                            machineValues.push(machineValue);
-                        }
-                    }
-                    var currentMachine = machineValues.length === 1 ? machineValues[0] : '';
                     for (var index = start; index < end; index++) {
                         var row = rows[index];
                         html += '<tr>';
@@ -342,29 +334,23 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
                             html += '<td data-batch-cell rowspan="' + groupSize + '">' +
                                 escapeHtml(row.BCARD) + '</td>';
                         }
-                        html += '<td>' + escapeHtml(row.ROLL) + '</td>' +
-                            '<td>' + escapeHtml(row.PO_NUMBER) + '</td>' +
-                            '<td>' + escapeHtml(row.COLOR) + '</td>' +
-                            '<td>' + escapeHtml(row.QTY) + '</td>';
-                        if (index === start) {
-                            html += '<td data-machine-cell rowspan="' + groupSize + '">' +
-                                escapeHtml(machineValues.length > 1 ? 'Multiple' : currentMachine) + '</td>' +
-                                '<td data-machine-cell rowspan="' + groupSize + '">' +
-                                '<div class="machine-change">' +
-                                '<select data-batch="' + escapeHtml(row.BCARD) +
-                                '" data-original="' + escapeHtml(currentMachine) + '">' +
-                                makeMachineOptions(currentMachine) + '</select>' +
-                                '<button type="button" class="button update-button" data-update-batch="' +
-                                escapeHtml(row.BCARD) + '"><i class="fas fa-check"></i> Update</button>' +
-                                '</div></td>';
-                        }
-                        html += fields.slice(6).map(function(field) {
+                        html += fields.slice(0, 4).map(function(field) {
+                            return '<td>' + escapeHtml(row[field]) + '</td>';
+                        }).join('') +
+                            '<td>' + escapeHtml(row.MCNO) + '</td>' +
+                            '<td><div class="machine-change">' +
+                            '<select data-roll-id="' + escapeHtml(row.DLTID) +
+                            '" data-original="' + escapeHtml(row.MCNO) + '">' +
+                            makeMachineOptions(row.MCNO) + '</select>' +
+                            '<button type="button" class="button update-button" data-update-roll="' +
+                            escapeHtml(row.DLTID) + '"><i class="fas fa-check"></i> Update</button>' +
+                            '</div></td>' +
+                            fields.slice(4).map(function(field) {
                             if (field === 'PROCESS') {
-                                if (index !== start) return '';
                                 var selected = processFields.filter(function(processField) {
                                     return String(row[processField] || '').trim() !== '';
                                 });
-                                return '<td data-process-cell rowspan="' + groupSize + '">' + (selected.length
+                                return '<td>' + (selected.length
                                     ? '<div class="process-badges">' + selected.map(function(processField) {
                                     return '<span class="process-badge">' + escapeHtml(row[processField]) + '</span>';
                                     }).join('') + '</div>'
@@ -382,7 +368,7 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
                 var batch = document.getElementById('batchSearch').value.trim();
                 var poNumber = document.getElementById('poSearch').value.trim();
                 var budat = document.getElementById('dateSearch').value;
-                showStatus('Loading delivery rolls...');
+                showStatus('Loading dyeing-loaded rolls...');
                 return request('search', {batch: batch, po_number: poNumber, budat: budat}).then(function(data) {
                     rows = data.rows;
                     renderRows();
@@ -420,20 +406,21 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
             });
 
             results.addEventListener('click', function(event) {
-                var button = event.target.closest('[data-update-batch]');
+                var button = event.target.closest('[data-update-roll]');
                 if (!button) return;
 
-                var batch = button.dataset.updateBatch;
-                var select = Array.prototype.find.call(
-                    results.querySelectorAll('select[data-batch]'),
-                    function(candidate) { return candidate.dataset.batch === batch; }
-                );
+                var rollId = button.dataset.updateRoll;
+                var select = button.closest('tr').querySelector('select[data-roll-id]');
+                var selectedRow = rows.filter(function(row) {
+                    return String(row.DLTID) === String(rollId);
+                })[0];
+                var rollNumber = selectedRow ? String(selectedRow.ROLL || '') : '';
                 if (!select || !select.value) {
-                    showResult('Machine Required', 'Select a machine for Batch ' + batch + ' before updating.', true);
+                    showResult('Machine Required', 'Select a machine for this roll before updating.', true);
                     return;
                 }
                 if (select.value === select.dataset.original) {
-                    showResult('No Change Made', 'Batch ' + batch + ' already uses MCNO ' + select.value + '.', true);
+                    showResult('No Change Made', 'This roll already uses MCNO ' + select.value + '.', true);
                     return;
                 }
 
@@ -442,13 +429,12 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
                 button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating';
                 request('save', {}, {
                     csrf_token: csrfToken,
-                    changes: [{batch: batch, mcno: newMcno}]
+                    roll_id: rollId,
+                    mcno: newMcno
                 }).then(function(data) {
-                    var updated = {};
-                    data.updated.forEach(function(item) { updated[String(item.batch)] = item.mcno; });
                     rows.forEach(function(row) {
-                        if (Object.prototype.hasOwnProperty.call(updated, String(row.BCARD))) {
-                            row.DYMCNO = updated[String(row.BCARD)];
+                        if (String(row.DLTID) === String(data.updated.roll_id)) {
+                            row.MCNO = data.updated.mcno;
                         }
                     });
                     renderRows();
@@ -458,8 +444,7 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
                         (machineLoadError ? ' ' + machineLoadError : ''));
                     showResult(
                         'MCNO Updated',
-                        'Batch ' + batch + ' updated to MCNO ' + newMcno +
-                            ' for ' + data.updated[0].roll_count + ' roll(s).',
+                        'Roll ' + rollNumber + ' updated to MCNO ' + newMcno + '.',
                         false
                     );
                 }).catch(function(error) {

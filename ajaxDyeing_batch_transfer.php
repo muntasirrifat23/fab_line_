@@ -16,7 +16,7 @@ if (!isset($_SESSION['username'])) {
 }
 
 try {
-    ensureDyeingProcessColumns($db, 'dyeing_batch_delivery');
+    ensureDyeingProcessColumns($db, 'dyeing_load');
 } catch (Throwable $error) {
     respond(['success' => false, 'message' => 'Could not initialize Batch Transfer process fields: ' . $error->getMessage()], 500);
 }
@@ -53,15 +53,20 @@ if ($action === 'search') {
         }
     }
 
-    $sql = "SELECT DBDTID, BCARD, ROLL, PO_NUMBER, COLOR, QTY, DYMCNO,
+    $sql = "SELECT DLTID, BCARD, ROLL, PO_NUMBER, COLOR, QTY, MCNO,
                    SONO, BUYER, STYLE, MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA,
                    YTYPE, YCOUNT, YBRAND, SILICON, NONSILICON, NWASH, EWASH, ENZYME,
                    NONENZYME, PEACH, BRUSH, AOP, SOFTENER, NONSOFTENER, OTHERS
-            FROM dyeing_batch_delivery
-            WHERE (? = '' OR BCARD LIKE CONCAT('%', ?, '%'))
+            FROM dyeing_load
+            WHERE NOT EXISTS (
+                  SELECT 1
+                  FROM dyeing_unload AS unloaded
+                  WHERE TRIM(unloaded.BCARD) = TRIM(dyeing_load.BCARD)
+              )
+              AND (? = '' OR BCARD LIKE CONCAT('%', ?, '%'))
               AND (? = '' OR PO_NUMBER LIKE CONCAT('%', ?, '%'))
               AND (? = '' OR BUDAT = ?)
-            ORDER BY BCARD ASC, DBDTID ASC";
+            ORDER BY BCARD ASC, DLTID ASC";
     $stmt = $db->prepare($sql);
     if (!$stmt) {
         respond(['success' => false, 'message' => 'Could not prepare Batch Transfer search: ' . $db->error], 500);
@@ -70,7 +75,7 @@ if ($action === 'search') {
     if (!$stmt->execute()) {
         $message = $stmt->error;
         $stmt->close();
-        respond(['success' => false, 'message' => 'Could not search delivery rolls: ' . $message], 500);
+        respond(['success' => false, 'message' => 'Could not search loaded rolls: ' . $message], 500);
     }
 
     $result = $stmt->get_result();
@@ -95,120 +100,84 @@ if ($action === 'save' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         respond(['success' => false, 'message' => 'Your session token is invalid. Refresh the page and try again.'], 403);
     }
 
-    $changes = isset($input['changes']) && is_array($input['changes']) ? $input['changes'] : [];
-    if (!$changes || count($changes) > 1000) {
-        respond(['success' => false, 'message' => 'Select between 1 and 1000 roll machine changes.'], 400);
-    }
-
-    $normalizedChanges = [];
-    $seenBatches = [];
-    foreach ($changes as $change) {
-        if (!is_array($change) || !isset($change['batch'], $change['mcno'])) {
-            respond(['success' => false, 'message' => 'A batch machine change is incomplete.'], 400);
-        }
-        $batch = trim((string) $change['batch']);
-        $mcno = trim((string) $change['mcno']);
-        if ($batch === '' || strlen($batch) > 30 || $mcno === '') {
-            respond(['success' => false, 'message' => 'Each selected batch and machine must be valid.'], 400);
-        }
-        if (isset($seenBatches[$batch])) {
-            respond(['success' => false, 'message' => 'A batch was included more than once.'], 400);
-        }
-        $seenBatches[$batch] = true;
-        $normalizedChanges[] = ['batch' => $batch, 'mcno' => $mcno];
+    $rollId = isset($input['roll_id']) ? filter_var($input['roll_id'], FILTER_VALIDATE_INT) : false;
+    $mcno = isset($input['mcno']) ? trim((string) $input['mcno']) : '';
+    if ($rollId === false || $rollId < 1 || $mcno === '' || strlen($mcno) > 100) {
+        respond(['success' => false, 'message' => 'Select a valid roll and machine.'], 400);
     }
 
     $machineStmt = $db->prepare('SELECT DMCNO FROM dyeing_mcno WHERE DMCNO = ? LIMIT 1');
     if (!$machineStmt) {
         respond(['success' => false, 'message' => 'Could not validate dyeing machines: ' . $db->error], 500);
     }
-    foreach ($normalizedChanges as $change) {
-        $mcno = $change['mcno'];
-        $machineStmt->bind_param('s', $mcno);
-        if (!$machineStmt->execute()) {
-            $message = $machineStmt->error;
-            $machineStmt->close();
-            respond(['success' => false, 'message' => 'Could not validate selected machine: ' . $message], 500);
-        }
-        $machineResult = $machineStmt->get_result();
-        $machineFound = $machineResult->fetch_assoc();
-        $machineResult->free();
-        if (!$machineFound) {
-            $machineStmt->close();
-            respond(['success' => false, 'message' => 'A selected machine is no longer available. Reload the page and try again.'], 400);
-        }
+    $machineStmt->bind_param('s', $mcno);
+    if (!$machineStmt->execute()) {
+        $message = $machineStmt->error;
+        $machineStmt->close();
+        respond(['success' => false, 'message' => 'Could not validate selected machine: ' . $message], 500);
     }
+    $machineResult = $machineStmt->get_result();
+    $machineFound = $machineResult->fetch_assoc();
+    $machineResult->free();
     $machineStmt->close();
+    if (!$machineFound) {
+        respond(['success' => false, 'message' => 'The selected machine is no longer available. Reload the page and try again.'], 400);
+    }
 
     if (!$db->begin_transaction()) {
         respond(['success' => false, 'message' => 'Could not start the transfer transaction: ' . $db->error], 500);
     }
-    $updateStmt = $db->prepare('UPDATE dyeing_batch_delivery SET DYMCNO = ? WHERE BCARD = ?');
-    $countStmt = $db->prepare(
-        'SELECT COUNT(*) AS roll_count, SUM(DYMCNO = ?) AS matching_count
-         FROM dyeing_batch_delivery WHERE BCARD = ?'
-    );
-    if (!$updateStmt || !$countStmt) {
+    $currentStmt = $db->prepare('SELECT MCNO FROM dyeing_load WHERE DLTID = ? FOR UPDATE');
+    $updateStmt = $db->prepare('UPDATE dyeing_load SET MCNO = ? WHERE DLTID = ?');
+    if (!$currentStmt || !$updateStmt) {
         $error = $db->error;
+        if ($currentStmt) {
+            $currentStmt->close();
+        }
         if ($updateStmt) {
             $updateStmt->close();
-        }
-        if ($countStmt) {
-            $countStmt->close();
         }
         $db->rollback();
         respond(['success' => false, 'message' => 'Could not prepare the transfer update: ' . $error], 500);
     }
 
-    $updated = [];
-    foreach ($normalizedChanges as $change) {
-        $batch = $change['batch'];
-        $mcno = $change['mcno'];
-        $countStmt->bind_param('ss', $mcno, $batch);
-        if (!$countStmt->execute()) {
-            $error = $countStmt->error;
-            $updateStmt->close();
-            $countStmt->close();
-            $db->rollback();
-            respond(['success' => false, 'message' => 'Could not verify rolls for batch ' . $batch . ': ' . $error], 500);
-        }
-        $countResult = $countStmt->get_result();
-        $countRow = $countResult->fetch_assoc();
-        $countResult->free();
-        $rollCount = (int) $countRow['roll_count'];
-        $matchingCount = (int) $countRow['matching_count'];
-        if ($rollCount === 0) {
-            $updateStmt->close();
-            $countStmt->close();
-            $db->rollback();
-            respond(['success' => false, 'message' => 'Batch ' . $batch . ' was not found. No changes were saved.'], 404);
-        }
-        if ($matchingCount === $rollCount) {
-            $updateStmt->close();
-            $countStmt->close();
-            $db->rollback();
-            respond(['success' => false, 'message' => 'Batch ' . $batch . ' already uses MCNO ' . $mcno . '. No change was made.'], 409);
-        }
-        if (!$updateStmt->bind_param('ss', $mcno, $batch) || !$updateStmt->execute()) {
-            $error = $updateStmt->error;
-            $updateStmt->close();
-            $countStmt->close();
-            $db->rollback();
-            respond(['success' => false, 'message' => 'Could not update machine assignment for batch ' . $batch . ': ' . $error], 500);
-        }
-        $updated[] = ['batch' => $batch, 'mcno' => $mcno, 'roll_count' => $rollCount];
+    $currentStmt->bind_param('i', $rollId);
+    if (!$currentStmt->execute()) {
+        $error = $currentStmt->error;
+        $currentStmt->close();
+        $updateStmt->close();
+        $db->rollback();
+        respond(['success' => false, 'message' => 'Could not verify the selected roll: ' . $error], 500);
     }
-
+    $currentResult = $currentStmt->get_result();
+    $currentRow = $currentResult->fetch_assoc();
+    $currentResult->free();
+    $currentStmt->close();
+    if (!$currentRow) {
+        $updateStmt->close();
+        $db->rollback();
+        respond(['success' => false, 'message' => 'The selected loaded roll was not found. No change was saved.'], 404);
+    }
+    if ((string) $currentRow['MCNO'] === $mcno) {
+        $updateStmt->close();
+        $db->rollback();
+        respond(['success' => false, 'message' => 'This roll already uses MCNO ' . $mcno . '. No change was made.'], 409);
+    }
+    if (!$updateStmt->bind_param('si', $mcno, $rollId) || !$updateStmt->execute()) {
+        $error = $updateStmt->error;
+        $updateStmt->close();
+        $db->rollback();
+        respond(['success' => false, 'message' => 'Could not update machine assignment for the selected roll: ' . $error], 500);
+    }
     $updateStmt->close();
-    $countStmt->close();
     if (!$db->commit()) {
         $db->rollback();
         respond(['success' => false, 'message' => 'Could not commit the transfer changes: ' . $db->error], 500);
     }
     respond([
         'success' => true,
-        'message' => array_sum(array_column($updated, 'roll_count')) . ' roll(s) transferred successfully across ' . count($updated) . ' batch(es).',
-        'updated' => $updated
+        'message' => 'Machine assignment updated for one roll.',
+        'updated' => ['roll_id' => $rollId, 'mcno' => $mcno]
     ]);
 }
 

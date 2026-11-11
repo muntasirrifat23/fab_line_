@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <title>Purbani:Login</title>
+  <title>FabLine | Login</title>
   <meta name="viewport" content="width=device-width,height=device-height, initial-scale=1.0">
   <link rel="stylesheet" type="text/css" href="css/w3.css">
   <link rel="stylesheet" href="css/font-awesome.min.css">
@@ -258,7 +258,7 @@
   <div class="container">
     <form method="post">
       <div class="row">
-        <div class="col"><img src="image/fabline.jpg" alt="Proline Logo"></div>
+        <div class="col"><img src="image/fabline.jpg" alt="FabLine Logo"></div>
         <div class="col">
           <div class="hide-md-lg"></div>
           <input type="text" name="username" id="uname" placeholder="User ID / Operator ID" required>

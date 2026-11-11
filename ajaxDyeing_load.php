@@ -11,6 +11,19 @@ function respond($payload, $statusCode = 200)
     exit;
 }
 
+function currentDyeingShift()
+{
+    $dhakaTime = new DateTimeImmutable('now', new DateTimeZone('Asia/Dhaka'));
+    $minutes = ((int) $dhakaTime->format('G') * 60) + (int) $dhakaTime->format('i');
+    if ($minutes >= 360 && $minutes <= 840) {
+        return 'A';
+    }
+    if ($minutes >= 841 && $minutes <= 1320) {
+        return 'B';
+    }
+    return 'C';
+}
+
 if (!isset($_SESSION['username'])) {
     respond(['success' => false, 'message' => 'Unauthorized. Please login.'], 401);
 }
@@ -193,6 +206,7 @@ if ($action === 'load_batch') {
         'success' => true,
         'card_no' => $card,
         'roll_count' => count($rows),
+        'shift' => currentDyeingShift(),
         'rows' => $rows
     ]);
 }
@@ -312,6 +326,7 @@ if ($action === 'start_load') {
         respond(['success' => false, 'message' => 'Could not prepare Dyeing Load insert: ' . $db->error], 500);
     }
 
+    $shift = currentDyeingShift();
     foreach ($rows as $row) {
         $budat = $row['BUDAT'];
         $batchCard = $row['BCARD'];
@@ -319,7 +334,6 @@ if ($action === 'start_load') {
         $poNumber = $row['PO_NUMBER'];
         $qty = $row['QTY'];
         $sono = $row['SONO'];
-        $shift = null;
         $buyer = $row['BUYER'];
         $style = $row['STYLE'];
         $color = $row['COLOR'];
@@ -402,7 +416,8 @@ if ($action === 'start_load') {
         'success' => true,
         'card_no' => $card,
         'roll_count' => count($rows),
-        'operator' => $operator
+        'operator' => $operator,
+        'shift' => $shift
     ]);
 }
 

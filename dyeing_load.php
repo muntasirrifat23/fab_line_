@@ -243,6 +243,7 @@ if (!isset($_SESSION['username'])) {
                 <div class="summary-item">Name: <span id="operatorName">-</span></div>
                 <div class="summary-item">Batch: <span id="batchNumber">-</span></div>
                 <div class="summary-item">Rolls: <span id="rollCount">0</span></div>
+                <div class="summary-item">Shift: <span id="shiftValue">-</span></div>
             </div>
             <h2 class="panel-title">Verified Batch Rolls</h2>
             <div class="table-wrap">
@@ -362,6 +363,7 @@ if (!isset($_SESSION['username'])) {
             function renderBatch(data) {
                 document.getElementById('batchNumber').textContent = data.card_no;
                 document.getElementById('rollCount').textContent = String(data.roll_count);
+                document.getElementById('shiftValue').textContent = data.shift || '-';
                 document.getElementById('tableHead').innerHTML = columns.map(function(column) {
                     return '<th>' + escapeHtml(column[1]) + '</th>';
                 }).join('');
@@ -467,11 +469,12 @@ if (!isset($_SESSION['username'])) {
                         return data;
                     });
                 }).then(function(data) {
+                    document.getElementById('shiftValue').textContent = data.shift || '-';
                     startDyeingLoadButton.innerHTML = '<i class="fas fa-circle-check"></i> Load Started';
                     showMessage(
                         'Dyeing Load Started',
                         'Batch ' + data.card_no + ' started for ' + data.roll_count + ' roll(s). Operator: ' +
-                            data.operator.DY_OP_NAME + ' (' + data.operator.DY_OP_ID + ').',
+                            data.operator.DY_OP_NAME + ' (' + data.operator.DY_OP_ID + '). Shift: ' + data.shift + '.',
                         'success'
                     );
                     window.setTimeout(function() {
