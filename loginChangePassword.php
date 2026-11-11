@@ -57,6 +57,19 @@ if (isset($_POST['change_password'])) {
     return $updated ? 'OK' : 'update_failed';
   }
 
+  // Finishing operator IDs can also exist in users; update the dedicated operator account first.
+  $result = change_password_in_table($db, 'finishing_operator', 'FN_OP_ID', 'FN_OP_PASSWORD', $username, $oldp, $newp);
+  if ($result === 'wrong_old' && strtolower($username) === 'f01') {
+    $result = change_password_in_table($db, 'users', 'USER_ID', 'password', $username, $oldp, $newp);
+    if ($result === 'not_found') $result = 'wrong_old';
+  }
+  if ($result !== 'not_found') {
+    if ($result === 'OK') echo 'OK';
+    elseif ($result === 'wrong_old') echo 'Old password not correct';
+    else echo 'Failed to update password';
+    exit;
+  }
+
   // 1) users table
   $result = change_password_in_table($db, 'users', 'USER_ID', 'password', $username, $oldp, $newp);
   if ($result !== 'not_found') {

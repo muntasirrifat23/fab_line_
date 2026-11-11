@@ -1,9 +1,15 @@
 <?php
 session_start();
+if (!isset($_SESSION['username'])) {
+  header('Location: login.php');
+  exit;
+}
 
-$user = strtolower($_SESSION['username'] ?? '');
-$isDyeingUser = $user === 'd01';
-$isKnittingUser = $user === 'k01';
+$user = strtolower(trim((string) ($_SESSION['username'] ?? '')));
+$userType = strtolower(trim((string) ($_SESSION['user_type'] ?? '')));
+$isDyeingUser = $user === 'd01' || $userType === 'dyeing_operator';
+$isKnittingUser = $user === 'k01' || in_array($userType, array('operator', 'qc'), true);
+$isFinishingUser = $user === 'f01' || $userType === 'finishing_operator';
 
 // $adminUsers = ['admin', 'ppq30', 'ppq34', 'ppq70'];
 
@@ -343,11 +349,32 @@ $isKnittingUser = $user === 'k01';
   <div class="report-container">
     <div class="card">
       <h2 class="card-title text-center" style="color: #6d28d9;">
-        <?php echo $isDyeingUser ? 'Dyeing Report Section' : 'Knitting Report Section'; ?>
+        <?php
+          if ($isFinishingUser) {
+            echo 'Finished Production Report';
+          } else {
+            echo $isDyeingUser ? 'Dyeing Report Section' : 'Knitting Report Section';
+          }
+        ?>
       </h2>
       <div class="row d-flex align-items-stretch">
 
-        <?php if (!$isDyeingUser): ?>
+        <?php if ($isFinishingUser): ?>
+        <div class="col-6 col-md-4 mb-3 d-flex">
+          <div class="report-card w-100 dyeing-report-card dyeing-report-card--unload">
+            <form method="GET" action="dyeing_finished_production_report.php" class="h-100 w-100">
+              <button type="submit" class="btn btn-report">
+                <i class="fa-solid fa-circle-check card-btn"></i>
+                <span class="floor-text">
+                  <span>Finished Production Report</span>
+                </span>
+              </button>
+            </form>
+          </div>
+        </div>
+        <?php endif; ?>
+
+        <?php if (!$isDyeingUser && !$isFinishingUser): ?>
         <!-- 1. Knitting Input Details Report -->
         <div class="col-6 col-md-4 mb-3 d-flex">
           <div class="report-card w-100 knitting-report-card knitting-report-card--input">
@@ -448,7 +475,7 @@ $isKnittingUser = $user === 'k01';
         <?php endif; ?>
 
         <!-- Dyeing Part Start -->
-        <?php if (!$isKnittingUser): ?>
+        <?php if (!$isKnittingUser && !$isFinishingUser): ?>
         <!-- Dyeing workflow reports -->
         <div class="col-6 col-md-4 mb-3 d-flex">
           <div class="report-card w-100 dyeing-report-card dyeing-report-card--card">

@@ -18,6 +18,46 @@ if (isset($_POST['login_user'])) {
         echo "Password is required";
         exit();
     }
+
+    // Finishing operators are a separate login role, even when the ID also exists in users.
+    $finishingQuery = $db->prepare(
+        'SELECT FN_OP_ID
+         FROM finishing_operator
+         WHERE FN_OP_ID = ? AND FN_OP_PASSWORD = ?
+         LIMIT 1'
+    );
+    if (!$finishingQuery) {
+        error_log('Could not prepare finishing operator login query: ' . $db->error);
+        http_response_code(500);
+        echo 'SERVER_ERROR';
+        exit();
+    }
+
+    $finishingPassword = md5($password);
+    $finishingQuery->bind_param('ss', $username, $finishingPassword);
+    if (!$finishingQuery->execute()) {
+        error_log('Could not execute finishing operator login query: ' . $finishingQuery->error);
+        $finishingQuery->close();
+        http_response_code(500);
+        echo 'SERVER_ERROR';
+        exit();
+    }
+
+    $finishingResults = $finishingQuery->get_result();
+    if ($finishingResults && $finishingResults->num_rows === 1) {
+        $finishingData = $finishingResults->fetch_assoc();
+        $_SESSION['username'] = $finishingData['FN_OP_ID'];
+        $_SESSION['user_name'] = $finishingData['FN_OP_ID'];
+        $_SESSION['user_id'] = $finishingData['FN_OP_ID'];
+        $_SESSION['user_type'] = 'finishing_operator';
+        $_SESSION['finishing_operator_id'] = $finishingData['FN_OP_ID'];
+        $_SESSION['success'] = 'You are now logged in as finishing operator';
+        $_SESSION['expire_time'] = time() + 60000;
+        $finishingQuery->close();
+        echo 'OK';
+        exit();
+    }
+    $finishingQuery->close();
     
     // First, check in users table (regular users) – login by USER_ID
     $escapedUsername = mysqli_real_escape_string($db, $username);

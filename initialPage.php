@@ -12,6 +12,16 @@ $userId = strtolower(trim((string) $uname));
 $userType = isset($_SESSION['user_type']) ? strtolower(trim((string) $_SESSION['user_type'])) : '';
 $isKnittingUser = $userId === 'k01' || in_array($userType, array('operator', 'qc'), true);
 $isDyeingUser = $userId === 'd01' || $userType === 'dyeing_operator';
+$isFinishingUser = $userId === 'f01' || $userType === 'finishing_operator';
+
+if ($isFinishingUser) {
+    foreach (array_keys($_POST) as $action) {
+        if (!in_array($action, array('finished_production', 'report'), true)) {
+            http_response_code(403);
+            exit('You are not authorized to access this action.');
+        }
+    }
+}
 
 if ($isKnittingUser) {
     $restrictedActions = array(
@@ -176,7 +186,9 @@ if (isset($_POST['user_management'])) {
     exit();
 }
 if (isset($_POST['report'])) {
-    $_SESSION['lineNo'] = $_POST['option'];
+    if (!$isFinishingUser) {
+        $_SESSION['lineNo'] = $_POST['option'];
+    }
     header('location:report.php');
     exit();
 }
@@ -704,6 +716,16 @@ mysqli_close($db);
         <div class="glass-panel">
             <form action="initialPage.php" method="post">
 
+                <?php if ($isFinishingUser): ?>
+                    <div class="btn-grid">
+                        <button class="w3-button w3-teal" name="finished_production" id="finished_production">
+                            <i class="fas fa-circle-check"></i> Finished Production
+                        </button>
+                        <button class="w3-button w3-teal" name="report" id="report">
+                            <i class="fas fa-chart-bar"></i> All Reports
+                        </button>
+                    </div>
+                <?php else: ?>
                 <div class="btn-grid">
                     <?php if (!$isDyeingUser): ?>
                         <button class="w3-button w3-teal" name="subcontract_input" id="subcontract_input">
@@ -778,9 +800,6 @@ mysqli_close($db);
                             <i class="fas fa-rotate"></i> Re Dyeing
                         </button>
 
-                        <button class="w3-button w3-teal" name="finished_production" id="finished_production">
-                            <i class="fas fa-circle-check"></i> Finished Production
-                        </button>
                     <?php endif; ?>
                     <?php if (!$isKnittingUser && !$isDyeingUser): ?>
                         <button class="w3-button w3-teal" name="user_management" id="user_management">
@@ -796,6 +815,7 @@ mysqli_close($db);
                 <div class="btn-grid">
                     <button class="w3-button w3-black" name="uploadCSV" id="uploadCSV"><i class="fas fa-upload"></i> Upload CSV</button>
                 </div>
+                <?php endif; ?>
 
             </form>
         </div>
