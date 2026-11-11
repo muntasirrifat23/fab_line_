@@ -198,7 +198,7 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
                 <table>
                     <thead>
                         <tr>
-                            <th>Batch</th><th>Roll</th><th>PO Number</th><th>Color</th><th>QTY</th>
+                            <th>Batch</th><th>DCount</th><th>Roll</th><th>PO Number</th><th>Color</th><th>QTY</th>
                             <th>MCNO</th><th>Change MCNO</th><th>SONO</th><th>Buyer</th><th>Style</th>
                             <th>MC Dia</th><th>Customer</th><th>O /T</th><th>SL/VQ</th>
                             <th>Fabrics Type</th><th>GSM</th><th>Dia</th><th>Yarn Type</th>
@@ -206,7 +206,7 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
                         </tr>
                     </thead>
                     <tbody id="results">
-                        <tr><td class="empty" colspan="21">Loading dyeing-loaded rolls...</td></tr>
+                        <tr><td class="empty" colspan="22">Loading dyeing-loaded rolls...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -307,7 +307,7 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
 
             function renderRows() {
                 if (!rows.length) {
-                    results.innerHTML = '<tr><td class="empty" colspan="21">No matching dyeing-loaded rolls were found.</td></tr>';
+                    results.innerHTML = '<tr><td class="empty" colspan="22">No matching dyeing-loaded rolls were found.</td></tr>';
                     return;
                 }
 
@@ -323,7 +323,11 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
                 var html = '';
                 for (var start = 0; start < rows.length;) {
                     var end = start + 1;
-                    while (end < rows.length && String(rows[end].BCARD) === String(rows[start].BCARD)) {
+                    while (
+                        end < rows.length &&
+                        String(rows[end].BCARD) === String(rows[start].BCARD) &&
+                        String(rows[end].DCOUNT || '1') === String(rows[start].DCOUNT || '1')
+                    ) {
                         end++;
                     }
                     var groupSize = end - start;
@@ -333,6 +337,8 @@ $csrfToken = $_SESSION['batch_transfer_csrf'];
                         if (index === start) {
                             html += '<td data-batch-cell rowspan="' + groupSize + '">' +
                                 escapeHtml(row.BCARD) + '</td>';
+                            html += '<td rowspan="' + groupSize + '">' +
+                                escapeHtml(row.DCOUNT || '1') + '</td>';
                         }
                         html += fields.slice(0, 4).map(function(field) {
                             return '<td>' + escapeHtml(row[field]) + '</td>';

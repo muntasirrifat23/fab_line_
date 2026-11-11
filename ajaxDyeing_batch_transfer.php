@@ -17,8 +17,10 @@ if (!isset($_SESSION['username'])) {
 
 try {
     ensureDyeingProcessColumns($db, 'dyeing_load');
+    ensureDyeingCountColumn($db, 'dyeing_load');
+    ensureDyeingCountColumn($db, 'dyeing_unload');
 } catch (Throwable $error) {
-    respond(['success' => false, 'message' => 'Could not initialize Batch Transfer process fields: ' . $error->getMessage()], 500);
+    respond(['success' => false, 'message' => 'Could not initialize Batch Transfer fields: ' . $error->getMessage()], 500);
 }
 
 $action = isset($_GET['action']) ? trim((string) $_GET['action']) : '';
@@ -53,7 +55,7 @@ if ($action === 'search') {
         }
     }
 
-    $sql = "SELECT DLTID, BCARD, ROLL, PO_NUMBER, COLOR, QTY, MCNO,
+    $sql = "SELECT DLTID, BCARD, DCOUNT, ROLL, PO_NUMBER, COLOR, QTY, MCNO,
                    SONO, BUYER, STYLE, MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA,
                    YTYPE, YCOUNT, YBRAND, SILICON, NONSILICON, NWASH, EWASH, ENZYME,
                    NONENZYME, PEACH, BRUSH, AOP, SOFTENER, NONSOFTENER, OTHERS
@@ -62,6 +64,7 @@ if ($action === 'search') {
                   SELECT 1
                   FROM dyeing_unload AS unloaded
                   WHERE TRIM(unloaded.BCARD) = TRIM(dyeing_load.BCARD)
+                    AND unloaded.DCOUNT = dyeing_load.DCOUNT
               )
               AND (? = '' OR BCARD LIKE CONCAT('%', ?, '%'))
               AND (? = '' OR PO_NUMBER LIKE CONCAT('%', ?, '%'))
@@ -127,7 +130,18 @@ if ($action === 'save' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$db->begin_transaction()) {
         respond(['success' => false, 'message' => 'Could not start the transfer transaction: ' . $db->error], 500);
     }
-    $currentStmt = $db->prepare('SELECT MCNO FROM dyeing_load WHERE DLTID = ? FOR UPDATE');
+    $currentStmt = $db->prepare(
+        'SELECT loaded.MCNO
+         FROM dyeing_load loaded
+         WHERE loaded.DLTID = ?
+           AND NOT EXISTS (
+               SELECT 1
+               FROM dyeing_unload unloaded
+               WHERE TRIM(unloaded.BCARD) = TRIM(loaded.BCARD)
+                 AND unloaded.DCOUNT = loaded.DCOUNT
+           )
+         FOR UPDATE'
+    );
     $updateStmt = $db->prepare('UPDATE dyeing_load SET MCNO = ? WHERE DLTID = ?');
     if (!$currentStmt || !$updateStmt) {
         $error = $db->error;

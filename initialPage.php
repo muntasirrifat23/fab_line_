@@ -24,6 +24,7 @@ if ($isKnittingUser) {
         'dyeing_load',
         'dyeing_unload',
         'dyeing_redye',
+        'finished_production',
         'user_management',
         'users',
         'users_update'
@@ -163,6 +164,10 @@ if (isset($_POST['dyeing_unload'])) {
 }
 if (isset($_POST['dyeing_redye'])) {
     header('Location: dyeing_redye.php');
+    exit();
+}
+if (isset($_POST['finished_production'])) {
+    header('Location: dyeing_finished_production.php');
     exit();
 }
 if (isset($_POST['user_management'])) {
@@ -771,6 +776,10 @@ mysqli_close($db);
 
                         <button class="w3-button w3-teal" name="dyeing_redye" id="dyeing_redye">
                             <i class="fas fa-rotate"></i> Re Dyeing
+                        </button>
+
+                        <button class="w3-button w3-teal" name="finished_production" id="finished_production">
+                            <i class="fas fa-circle-check"></i> Finished Production
                         </button>
                     <?php endif; ?>
                     <?php if (!$isKnittingUser && !$isDyeingUser): ?>

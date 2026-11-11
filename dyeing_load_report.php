@@ -27,11 +27,16 @@ $reportOperator = $reportConfig['operator'];
 $reportOperatorId = $reportConfig['operator_id'];
 $reportProcessAlias = $reportConfig['process_alias'];
 $reportOrder = $reportConfig['order'];
-$reportWhere = isset($reportConfig['where']) ? $reportConfig['where'] : '';
+$reportWhere = "NOT EXISTS (
+    SELECT 1
+    FROM dyeing_batch_verification redye_started
+    WHERE TRIM(redye_started.BCARD) = TRIM(t.BCARD)
+      AND redye_started.DCOUNT > t.DCOUNT
+)";
 $reportThemeStart = $reportConfig['theme_start'];
 $reportThemeEnd = $reportConfig['theme_end'];
 $reportTimeColumns = isset($reportConfig['time_columns']) ? $reportConfig['time_columns'] : [];
-$reportColumnCount = 24 + count($reportTimeColumns);
+$reportColumnCount = 25 + count($reportTimeColumns);
 $processFields = dyeingProcessFieldNames();
 
 $processSelect = [];
@@ -57,6 +62,7 @@ foreach ($reportTimeColumns as $timeColumn) {
 $sql = "SELECT
             t.BCARD,
             t.ROLL,
+            t.DCOUNT,
             t.PO_NUMBER,
             t.COLOR,
             t.QTY,
@@ -86,12 +92,20 @@ $sql .= ' ORDER BY ' . $reportOrder;
 
 $rows = [];
 $loadError = false;
-$result = $db->query($sql);
-if (!$result) {
+try {
+    ensureDyeingCountColumn($db, 'dyeing_load');
+    ensureDyeingCountColumn($db, 'dyeing_batch_verification');
+} catch (Throwable $error) {
+    error_log('Could not initialize Dyeing Load report count fields: ' . $error->getMessage());
+    http_response_code(500);
+    $loadError = true;
+}
+$result = $loadError ? false : $db->query($sql);
+if (!$loadError && !$result) {
     error_log('Dyeing report query failed: ' . $db->error);
     http_response_code(500);
     $loadError = true;
-} else {
+} elseif ($result) {
     while ($row = $result->fetch_assoc()) {
         foreach ($reportTimeColumns as $timeColumn) {
             $value = isset($row[$timeColumn]) ? trim((string) $row[$timeColumn]) : '';
@@ -227,6 +241,7 @@ function dyeingReportEscape($value)
             <?php foreach ($reportTimeColumns as $timeColumn): ?>
             [<?php echo json_encode($timeColumn); ?>, <?php echo json_encode($timeColumnLabels[$timeColumn]); ?>],
             <?php endforeach; ?>
+            ['DCOUNT', 'DCount'],
             ['OPERATOR', 'Operator'],
             ['OP_ID', 'OP Id']
         ];
@@ -258,9 +273,9 @@ function dyeingReportEscape($value)
             return list;
         }
 
-        function printBatch(batch) {
+        function printBatch(groupKey) {
             document.querySelectorAll('.report-table tbody tr').forEach(function(row) {
-                row.classList.toggle('print-target', row.dataset.batch === batch);
+                row.classList.toggle('print-target', row.dataset.group === groupKey);
             });
             window.print();
         }
@@ -280,15 +295,17 @@ function dyeingReportEscape($value)
 
             var groups = new Map();
             rows.forEach(function(row) {
-                var key = String(row.BCARD || '');
+                var key = JSON.stringify([String(row.BCARD || ''), String(row.DCOUNT || '1')]);
                 if (!groups.has(key)) groups.set(key, []);
                 groups.get(key).push(row);
             });
 
-            groups.forEach(function(group, batch) {
+            groups.forEach(function(group, groupKey) {
+                var batch = String(group[0].BCARD || '');
                 group.forEach(function(row, index) {
                     var tr = body.insertRow();
                     tr.dataset.batch = batch;
+                    tr.dataset.group = groupKey;
                     if (index === 0) {
                         var actionCell = tr.insertCell();
                         actionCell.rowSpan = group.length;
@@ -297,7 +314,7 @@ function dyeingReportEscape($value)
                         printButton.type = 'button';
                         printButton.className = 'btn btn-print no-print';
                         printButton.innerHTML = '<i class="fa-solid fa-print"></i> Print';
-                        printButton.addEventListener('click', function() { printBatch(batch); });
+                        printButton.addEventListener('click', function() { printBatch(groupKey); });
                         actionCell.appendChild(printButton);
 
                         var batchCell = tr.insertCell();

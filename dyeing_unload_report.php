@@ -1,6 +1,7 @@
 <?php
+$isRedyeReport = isset($isRedyeReport) && $isRedyeReport === true;
 $reportConfig = [
-    'title' => 'Dyeing Unload Report',
+    'title' => $isRedyeReport ? 'Re Dyeing' : 'Dyeing Unload Report',
     'from' => 'dyeing_unload t',
     'machine' => "COALESCE(t.MCNO, '')",
     'operator' => "COALESCE(t.DOP, '')",
@@ -19,6 +20,11 @@ if (!isset($_SESSION['username'])) {
     header('Location: login.php');
     exit;
 }
+if ($isRedyeReport && empty($_SESSION['dyeing_redye_csrf'])) {
+    $_SESSION['dyeing_redye_csrf'] = bin2hex(random_bytes(32));
+}
+$redyeCsrfToken = $isRedyeReport ? $_SESSION['dyeing_redye_csrf'] : '';
+
 $reportTitle = $reportConfig['title'];
 $reportFrom = $reportConfig['from'];
 $reportMachine = $reportConfig['machine'];
@@ -27,6 +33,24 @@ $reportOperatorId = $reportConfig['operator_id'];
 $reportProcessAlias = $reportConfig['process_alias'];
 $reportOrder = $reportConfig['order'];
 $reportWhere = isset($reportConfig['where']) ? $reportConfig['where'] : '';
+if ($isRedyeReport) {
+    $reportWhere = "t.DCOUNT = (
+        SELECT MAX(latest_unload.DCOUNT)
+        FROM dyeing_unload latest_unload
+        WHERE TRIM(latest_unload.BCARD) = TRIM(t.BCARD)
+    ) AND t.DCOUNT = (
+        SELECT COALESCE(MAX(verified.DCOUNT), 0)
+        FROM dyeing_batch_verification verified
+        WHERE TRIM(verified.BCARD) = TRIM(t.BCARD)
+    )";
+} else {
+    $reportWhere = "NOT EXISTS (
+        SELECT 1
+        FROM dyeing_batch_verification redye_started
+        WHERE TRIM(redye_started.BCARD) = TRIM(t.BCARD)
+          AND redye_started.DCOUNT > t.DCOUNT
+    )";
+}
 $reportThemeStart = $reportConfig['theme_start'];
 $reportThemeEnd = $reportConfig['theme_end'];
 $reportTimeColumns = isset($reportConfig['time_columns']) ? $reportConfig['time_columns'] : [];
@@ -57,8 +81,11 @@ $rows = [];
 $loadError = false;
 try {
     ensureDyeingCountColumn($db, 'dyeing_unload');
+    if ($isRedyeReport) {
+        ensureDyeingCountColumn($db, 'dyeing_batch_verification');
+    }
 } catch (Throwable $error) {
-    error_log('Could not initialize Dyeing Unload report count field: ' . $error->getMessage());
+    error_log('Could not initialize Dyeing report count fields: ' . $error->getMessage());
     http_response_code(500);
     $loadError = true;
 }
@@ -149,6 +176,8 @@ function dyeingReportEscape($value)
         .btn-search { background: #2563eb; }
         .btn-clear { background: #64748b; }
         .btn-print { padding: 6px 10px; background: #16a34a; }
+        .btn-redye { padding: 6px 10px; background: #7c3aed; }
+        .btn-redye:disabled { opacity: .6; cursor: wait; }
         .table-scroll { overflow: auto; max-height: calc(100vh - 190px); }
         table { width: 100%; min-width: 1850px; border-collapse: separate; border-spacing: 0; font-size: .9rem; }
         thead th { position: sticky; top: 0; z-index: 3; padding: 11px 9px; border-bottom: 3px solid <?php echo dyeingReportEscape($reportThemeEnd); ?>; background: #334155; color: #fff; text-align: left; white-space: nowrap; }
@@ -159,6 +188,15 @@ function dyeingReportEscape($value)
         .process-chip { padding: 3px 7px; border: 1px solid #99d5c9; border-radius: 6px; background: #e6f8f3; color: #075e54; font-size: .78rem; font-weight: 700; }
         .empty-row td, .error-row td { padding: 28px; color: #64748b; text-align: center; font-weight: 700; }
         .error-row td { color: #b91c1c; }
+        .confirm-modal { position: fixed; inset: 0; z-index: 20; display: none; align-items: center; justify-content: center; padding: 16px; background: rgba(15, 23, 42, .48); }
+        .confirm-modal.show { display: flex; }
+        .confirm-card { position: relative; width: min(100%, 420px); padding: 30px 28px 24px; border-radius: 12px; background: #fff; box-shadow: 0 18px 48px rgba(15, 23, 42, .25); text-align: center; }
+        .confirm-icon { display: flex; width: 66px; height: 66px; align-items: center; justify-content: center; margin: 0 auto 16px; border: 2px solid #d97706; border-radius: 50%; color: #d97706; font-size: 1.8rem; }
+        .confirm-title { margin: 0 0 10px; color: #1f2937; font-size: 1.3rem; }
+        .confirm-text { margin: 0; color: #64748b; line-height: 1.5; }
+        .confirm-actions { display: flex; justify-content: center; gap: 10px; margin-top: 24px; }
+        .btn-confirm-yes { min-width: 90px; background: #16a34a; }
+        .btn-confirm-cancel { min-width: 90px; background: #64748b; }
         @media (max-width: 700px) {
             body { padding: 10px; }
             .report-header { flex-wrap: wrap; gap: 8px; }
@@ -208,12 +246,25 @@ function dyeingReportEscape($value)
             </div>
         </div>
     </main>
+    <div class="confirm-modal" id="redyeConfirmModal" role="dialog" aria-modal="true" aria-labelledby="redyeConfirmTitle" aria-describedby="redyeConfirmText" aria-hidden="true">
+        <div class="confirm-card">
+            <div class="confirm-icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+            <h2 class="confirm-title" id="redyeConfirmTitle">Confirm Re Dyeing</h2>
+            <p class="confirm-text" id="redyeConfirmText"></p>
+            <div class="confirm-actions">
+                <button class="btn btn-confirm-yes" id="confirmRedyeYes" type="button">Yes</button>
+                <button class="btn btn-confirm-cancel" id="confirmRedyeCancel" type="button">Cancel</button>
+            </div>
+        </div>
+    </div>
     <script>
         var reportRows = <?php echo json_encode($rows, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_INVALID_UTF8_SUBSTITUTE); ?>;
+        var isRedyeReport = <?php echo $isRedyeReport ? 'true' : 'false'; ?>;
+        var redyeCsrfToken = <?php echo json_encode($redyeCsrfToken, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+        var redyeConfirmResolver = null;
         var reportColumns = [
             ['ACTION', 'ACTION'],
             ['BCARD', 'Batch'],
-            ['DCOUNT', 'DCOUNT'],
             ['ROLL', 'Roll'],
             ['PO_NUMBER', 'PO Number'],
             ['COLOR', 'Color'],
@@ -237,6 +288,7 @@ function dyeingReportEscape($value)
             <?php foreach ($reportTimeColumns as $timeColumn): ?>
             [<?php echo json_encode($timeColumn); ?>, <?php echo json_encode($timeColumnLabels[$timeColumn]); ?>],
             <?php endforeach; ?>
+            ['DCOUNT', 'DCount'],
             ['OPERATOR', 'Operator'],
             ['OP_ID', 'OP Id']
         ];
@@ -275,6 +327,65 @@ function dyeingReportEscape($value)
             window.print();
         }
 
+        function confirmRedyeing(batch) {
+            var modal = document.getElementById('redyeConfirmModal');
+            document.getElementById('redyeConfirmText').textContent =
+                'Send Batch ' + batch + ' back to Batch Verification for re-dyeing?';
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden', 'false');
+            document.getElementById('confirmRedyeYes').focus();
+            return new Promise(function(resolve) {
+                redyeConfirmResolver = resolve;
+            });
+        }
+
+        function closeRedyeConfirmation(confirmed) {
+            if (!redyeConfirmResolver) return;
+            var resolve = redyeConfirmResolver;
+            redyeConfirmResolver = null;
+            var modal = document.getElementById('redyeConfirmModal');
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+            resolve(confirmed);
+        }
+
+        function startRedyeing(batch, button) {
+            confirmRedyeing(batch).then(function(confirmed) {
+                if (!confirmed) return;
+                button.disabled = true;
+                fetch('ajaxDyeing_redye.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ card_no: batch, csrf_token: redyeCsrfToken })
+                })
+                    .then(function(response) {
+                        return response.json().then(function(data) {
+                            if (!response.ok || !data.success) {
+                                throw new Error(data.message || 'Could not start re-dyeing.');
+                            }
+                            window.location.reload();
+                        });
+                    })
+                    .catch(function(error) {
+                        button.disabled = false;
+                        window.alert(error.message);
+                    });
+            });
+        }
+
+        document.getElementById('confirmRedyeYes').addEventListener('click', function() {
+            closeRedyeConfirmation(true);
+        });
+        document.getElementById('confirmRedyeCancel').addEventListener('click', function() {
+            closeRedyeConfirmation(false);
+        });
+        document.getElementById('redyeConfirmModal').addEventListener('click', function(event) {
+            if (event.target === this) closeRedyeConfirmation(false);
+        });
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') closeRedyeConfirmation(false);
+        });
+
         function renderReport(rows) {
             var body = document.getElementById('reportBody');
             body.replaceChildren();
@@ -305,12 +416,20 @@ function dyeingReportEscape($value)
                         var actionCell = tr.insertCell();
                         actionCell.rowSpan = group.length;
                         actionCell.className = 'action-column';
-                        var printButton = document.createElement('button');
-                        printButton.type = 'button';
-                        printButton.className = 'btn btn-print no-print';
-                        printButton.innerHTML = '<i class="fa-solid fa-print"></i> Print';
-                        printButton.addEventListener('click', function() { printBatch(groupKey); });
-                        actionCell.appendChild(printButton);
+                        var actionButton = document.createElement('button');
+                        actionButton.type = 'button';
+                        actionButton.className = 'btn no-print ' + (isRedyeReport ? 'btn-redye' : 'btn-print');
+                        actionButton.innerHTML = isRedyeReport
+                            ? '<i class="fa-solid fa-rotate"></i> Re Dyeing'
+                            : '<i class="fa-solid fa-print"></i> Print';
+                        actionButton.addEventListener('click', function() {
+                            if (isRedyeReport) {
+                                startRedyeing(String(group[0].BCARD || ''), actionButton);
+                            } else {
+                                printBatch(groupKey);
+                            }
+                        });
+                        actionCell.appendChild(actionButton);
 
                         var batchCell = tr.insertCell();
                         batchCell.rowSpan = group.length;
