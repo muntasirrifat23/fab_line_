@@ -24,6 +24,8 @@ try {
     ensureDyeingProcessColumns($db, 'dyeing_batch_card');
     ensureDyeingProcessColumns($db, 'dyeing_batch_delivery');
     ensureDyeingProcessColumns($db, 'dyeing_batch_verification');
+    ensureDyeingCountColumn($db, 'dyeing_batch_verification');
+    ensureDyeingCountColumn($db, 'dyeing_unload');
 } catch (Throwable $error) {
     respond(['success' => false, 'message' => 'Could not initialize verification process fields: ' . $error->getMessage()], 500);
 }
@@ -39,6 +41,7 @@ if ($action === 'update_decisions') {
     $batchId = isset($input['batch_id']) && is_scalar($input['batch_id'])
         ? trim((string)$input['batch_id'])
         : '';
+    $dcount = isset($input['dcount']) ? filter_var($input['dcount'], FILTER_VALIDATE_INT) : false;
     $decisions = isset($input['decisions']) && is_array($input['decisions'])
         ? $input['decisions']
         : [];
@@ -49,6 +52,9 @@ if ($action === 'update_decisions') {
     }
     if ($batchId === '' || strlen($batchId) > 30) {
         respond(['success' => false, 'message' => 'Invalid Batch Card.'], 400);
+    }
+    if ($dcount === false || $dcount < 1) {
+        respond(['success' => false, 'message' => 'Invalid dyeing count. Refresh and try again.'], 400);
     }
 
     $passCount = 0;
@@ -94,18 +100,19 @@ if ($action === 'update_decisions') {
         $roleStmt = $db->prepare(
             "SELECT SINCHARGE, SUPERVISOR, BINCHARGE, BMANAGER
              FROM dyeing_batch_verification
-             WHERE BCARD = ?
+             WHERE BCARD = ? AND DCOUNT = ?
              FOR UPDATE"
         );
         if (!$roleStmt) {
             throw new RuntimeException('Could not prepare verification lookup: ' . $db->error);
         }
-        if (!$roleStmt->bind_param('s', $batchId) || !$roleStmt->execute()) {
+        if (!$roleStmt->bind_param('si', $batchId, $dcount) || !$roleStmt->execute()) {
             throw new RuntimeException('Could not load batch verification: ' . $roleStmt->error);
         }
         $verificationResult = $roleStmt->get_result();
         $verificationCount = 0;
         $hasVerifiedRoll = false;
+        $editableDecisions = null;
         while ($verification = $verificationResult->fetch_assoc()) {
             $verificationCount++;
             $currentPassCount = 0;
@@ -134,15 +141,16 @@ if ($action === 'update_decisions') {
         foreach ($roleColumns as $column) {
             $roleValues[] = strtoupper($decisions[$column]);
         }
+        $previousCount = $dcount - 1;
         $insertMissingStmt = $db->prepare(
             "INSERT INTO dyeing_batch_verification (
-                BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, BUYER, STYLE, COLOR, DYMCNO,
+                BUDAT, BCARD, ROLL, DCOUNT, PO_NUMBER, QTY, SONO, BUYER, STYLE, COLOR, DYMCNO,
                 MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
                 YTYPE, YCOUNT, YBRAND, CATEGORY, SINCHARGE, SUPERVISOR, BINCHARGE,
                 BMANAGER, DOP, DID, SILICON, NONSILICON, NWASH, EWASH, ENZYME,
                 NONENZYME, PEACH, BRUSH, AOP, SOFTENER, NONSOFTENER, OTHERS
             )
-            SELECT d.BUDAT, d.BCARD, d.ROLL, d.PO_NUMBER, d.QTY, d.SONO, d.BUYER,
+            SELECT d.BUDAT, d.BCARD, d.ROLL, ?, d.PO_NUMBER, d.QTY, d.SONO, d.BUYER,
                    d.STYLE, d.COLOR, d.DYMCNO, d.MCDIA, d.CUSTOMER, d.O_T, d.SL,
                    d.FTYPE, d.FGSM, d.FDIA, d.FEEDER_PLAN, d.LOT_NO, d.YTYPE,
                    d.YCOUNT, d.YBRAND, d.CATEGORY, ?, ?, ?, ?, d.DOP, d.DID,
@@ -151,19 +159,32 @@ if ($action === 'update_decisions') {
                    d.NONSOFTENER, d.OTHERS
             FROM dyeing_batch_delivery d
             LEFT JOIN dyeing_batch_verification v
-                ON v.BCARD = d.BCARD AND v.ROLL = d.ROLL
-            WHERE d.BCARD = ? AND v.DBVTID IS NULL"
+                ON v.BCARD = d.BCARD AND v.ROLL = d.ROLL AND v.DCOUNT = ?
+            WHERE d.BCARD = ? AND v.DBVTID IS NULL
+              AND (
+                  ? = 1 OR EXISTS (
+                      SELECT 1
+                      FROM dyeing_unload unloaded
+                      WHERE unloaded.BCARD = d.BCARD
+                        AND unloaded.ROLL = d.ROLL
+                        AND unloaded.DCOUNT = ?
+                  )
+              )"
         );
         if (!$insertMissingStmt) {
             throw new RuntimeException('Could not prepare missing roll verification insert: ' . $db->error);
         }
         if (!$insertMissingStmt->bind_param(
-            'sssss',
+            'issssisii',
+            $dcount,
             $roleValues[0],
             $roleValues[1],
             $roleValues[2],
             $roleValues[3],
-            $batchId
+            $dcount,
+            $batchId,
+            $dcount,
+            $previousCount
         ) || !$insertMissingStmt->execute()) {
             $error = $insertMissingStmt->error;
             $insertMissingStmt->close();
@@ -174,18 +195,19 @@ if ($action === 'update_decisions') {
         $updateStmt = $db->prepare(
             'UPDATE dyeing_batch_verification
              SET SINCHARGE = ?, SUPERVISOR = ?, BINCHARGE = ?, BMANAGER = ?
-             WHERE BCARD = ?'
+             WHERE BCARD = ? AND DCOUNT = ?'
         );
         if (!$updateStmt) {
             throw new RuntimeException('Could not prepare role-decision update: ' . $db->error);
         }
         if (!$updateStmt->bind_param(
-            'sssss',
+            'sssssi',
             $roleValues[0],
             $roleValues[1],
             $roleValues[2],
             $roleValues[3],
-            $batchId
+            $batchId,
+            $dcount
         ) || !$updateStmt->execute()) {
             $error = $updateStmt->error;
             $updateStmt->close();
@@ -215,6 +237,7 @@ if ($action === 'authorize_edit') {
     $batchId = isset($input['batch_id']) && is_scalar($input['batch_id'])
         ? trim((string)$input['batch_id'])
         : '';
+    $dcount = isset($input['dcount']) ? filter_var($input['dcount'], FILTER_VALIDATE_INT) : false;
 
     if (!hash_equals('1122', $password)) {
         respond(['success' => false, 'message' => 'Incorrect verification password.'], 403);
@@ -222,22 +245,27 @@ if ($action === 'authorize_edit') {
     if ($batchId === '' || strlen($batchId) > 30) {
         respond(['success' => false, 'message' => 'Invalid Batch Card.'], 400);
     }
+    if ($dcount === false || $dcount < 1) {
+        respond(['success' => false, 'message' => 'Invalid dyeing count. Refresh and try again.'], 400);
+    }
 
     try {
         $roleStmt = $db->prepare(
             "SELECT SINCHARGE, SUPERVISOR, BINCHARGE, BMANAGER
              FROM dyeing_batch_verification
-             WHERE BCARD = ?"
+             WHERE BCARD = ? AND DCOUNT = ?"
         );
         if (!$roleStmt) {
             throw new RuntimeException('Could not prepare verification lookup: ' . $db->error);
         }
-        if (!$roleStmt->bind_param('s', $batchId) || !$roleStmt->execute()) {
+        if (!$roleStmt->bind_param('si', $batchId, $dcount) || !$roleStmt->execute()) {
             throw new RuntimeException('Could not load batch verification: ' . $roleStmt->error);
         }
         $verificationResult = $roleStmt->get_result();
         $verificationCount = 0;
         $hasVerifiedRoll = false;
+        $roleColumns = ['SINCHARGE', 'SUPERVISOR', 'BINCHARGE', 'BMANAGER'];
+        $editableDecisions = null;
         while ($verification = $verificationResult->fetch_assoc()) {
             $verificationCount++;
             $passCount = 0;
@@ -252,6 +280,12 @@ if ($action === 'authorize_edit') {
             if (($passCount >= 2 && $passCount > $failCount) ||
                 ($failCount >= 2 && $failCount > $passCount)) {
                 $hasVerifiedRoll = true;
+                if ($editableDecisions === null) {
+                    $editableDecisions = [];
+                    foreach ($roleColumns as $column) {
+                        $editableDecisions[$column] = strtolower((string) $verification[$column]);
+                    }
+                }
             }
         }
         $roleStmt->close();
@@ -261,7 +295,11 @@ if ($action === 'authorize_edit') {
         if (!$hasVerifiedRoll) {
             respond(['success' => false, 'message' => 'At least one PASS or FAIL roll is required to edit this Batch Card.'], 409);
         }
-        respond(['success' => true, 'message' => 'Edit authorized for every roll in the Batch Card.']);
+        respond([
+            'success' => true,
+            'message' => 'Edit authorized for every roll in the Batch Card.',
+            'decisions' => $editableDecisions
+        ]);
     } catch (Throwable $error) {
         respond(['success' => false, 'message' => $error->getMessage()], 500);
     }
@@ -312,13 +350,13 @@ if (!(($passCount >= 2 && $passCount > $failCount) || ($failCount >= 2 && $failC
 $inTransaction = false;
 try {
     $insertSql = "INSERT INTO dyeing_batch_verification (
-        BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, BUYER, STYLE, COLOR, DYMCNO,
+        BUDAT, BCARD, ROLL, DCOUNT, PO_NUMBER, QTY, SONO, BUYER, STYLE, COLOR, DYMCNO,
         MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
         YTYPE, YCOUNT, YBRAND, CATEGORY, SINCHARGE, SUPERVISOR, BINCHARGE,
         BMANAGER, DOP, DID, SILICON, NONSILICON, NWASH, EWASH, ENZYME,
         NONENZYME, PEACH, BRUSH, AOP, SOFTENER, NONSOFTENER, OTHERS
     )
-    SELECT d.BUDAT, d.BCARD, d.ROLL, d.PO_NUMBER, d.QTY, d.SONO, d.BUYER,
+    SELECT d.BUDAT, d.BCARD, d.ROLL, ?, d.PO_NUMBER, d.QTY, d.SONO, d.BUYER,
            d.STYLE, d.COLOR, d.DYMCNO, d.MCDIA, d.CUSTOMER, d.O_T, d.SL,
            d.FTYPE, d.FGSM, d.FDIA, d.FEEDER_PLAN, d.LOT_NO, d.YTYPE,
            d.YCOUNT, d.YBRAND, d.CATEGORY, ?, ?, ?, ?, d.DOP, d.DID,
@@ -330,11 +368,41 @@ try {
       AND NOT EXISTS (
           SELECT 1
           FROM dyeing_batch_verification v
-          WHERE v.BCARD = d.BCARD AND v.ROLL = d.ROLL
+          WHERE v.BCARD = d.BCARD AND v.ROLL = d.ROLL AND v.DCOUNT = ?
+      )
+      AND (
+          ? = 1 OR EXISTS (
+              SELECT 1
+              FROM dyeing_unload unloaded
+              WHERE unloaded.BCARD = d.BCARD
+                AND unloaded.ROLL = d.ROLL
+                AND unloaded.DCOUNT = ?
+          )
       )";
     $insertStmt = $db->prepare($insertSql);
     if (!$insertStmt) {
         throw new RuntimeException('Could not prepare verification insert: ' . $db->error);
+    }
+    $currentCountStmt = $db->prepare(
+        'SELECT COALESCE(MAX(DCOUNT), 0) AS DCOUNT
+         FROM dyeing_batch_verification WHERE BCARD = ?'
+    );
+    $updateStmt = $db->prepare(
+        'UPDATE dyeing_batch_verification
+         SET SINCHARGE = ?, SUPERVISOR = ?, BINCHARGE = ?, BMANAGER = ?
+         WHERE BCARD = ? AND DCOUNT = ?'
+    );
+    $recordCountStmt = $db->prepare(
+        'SELECT COUNT(*) AS ROW_COUNT
+         FROM dyeing_batch_verification WHERE BCARD = ? AND DCOUNT = ?'
+    );
+    if (!$currentCountStmt || !$updateStmt || !$recordCountStmt) {
+        $error = $db->error;
+        if ($currentCountStmt) $currentCountStmt->close();
+        if ($updateStmt) $updateStmt->close();
+        if ($recordCountStmt) $recordCountStmt->close();
+        $insertStmt->close();
+        throw new RuntimeException('Could not prepare verification cycle statements: ' . $error);
     }
 
     if (!$db->begin_transaction()) {
@@ -343,31 +411,57 @@ try {
     $inTransaction = true;
     $savedCards = [];
     foreach ($batchIds as $batchId) {
+        if (!$currentCountStmt->bind_param('s', $batchId) || !$currentCountStmt->execute()) {
+            throw new RuntimeException('Could not determine dyeing count for ' . $batchId . ': ' . $currentCountStmt->error);
+        }
+        $currentCountRow = $currentCountStmt->get_result()->fetch_assoc();
+        $dcount = max(1, (int) $currentCountRow['DCOUNT']);
+
         $shiftIncharge = isset($decisions['SINCHARGE']) ? strtoupper($decisions['SINCHARGE']) : null;
         $supervisor = isset($decisions['SUPERVISOR']) ? strtoupper($decisions['SUPERVISOR']) : null;
         $batchIncharge = isset($decisions['BINCHARGE']) ? strtoupper($decisions['BINCHARGE']) : null;
         $batchManager = isset($decisions['BMANAGER']) ? strtoupper($decisions['BMANAGER']) : null;
+        $previousCount = $dcount - 1;
         $insertStmt->bind_param(
-            'sssss',
+            'issssisii',
+            $dcount,
             $shiftIncharge,
             $supervisor,
             $batchIncharge,
             $batchManager,
-            $batchId
+            $batchId,
+            $dcount,
+            $dcount,
+            $previousCount
         );
         if (!$insertStmt->execute()) {
             throw new RuntimeException('Could not save verification for ' . $batchId . ': ' . $insertStmt->error);
         }
-        if ($insertStmt->affected_rows < 1) {
-            throw new RuntimeException(
-                'No new verification rows were inserted for Batch Card ' . $batchId .
-                '. Delivery rolls may already have verification records.'
-            );
+        if (!$recordCountStmt->bind_param('si', $batchId, $dcount) || !$recordCountStmt->execute()) {
+            throw new RuntimeException('Could not verify the current cycle for ' . $batchId . ': ' . $recordCountStmt->error);
+        }
+        $recordCount = (int) $recordCountStmt->get_result()->fetch_assoc()['ROW_COUNT'];
+        if ($recordCount < 1) {
+            throw new RuntimeException('No verification or delivery rows were found for Batch Card ' . $batchId . '.');
+        }
+        if (!$updateStmt->bind_param(
+            'sssssi',
+            $shiftIncharge,
+            $supervisor,
+            $batchIncharge,
+            $batchManager,
+            $batchId,
+            $dcount
+        ) || !$updateStmt->execute()) {
+            throw new RuntimeException('Could not apply verification decisions for ' . $batchId . ': ' . $updateStmt->error);
         }
         $savedCards[] = $batchId;
     }
 
     $insertStmt->close();
+    $currentCountStmt->close();
+    $updateStmt->close();
+    $recordCountStmt->close();
     if (!$db->commit()) {
         throw new RuntimeException('Could not complete batch verification save: ' . $db->error);
     }

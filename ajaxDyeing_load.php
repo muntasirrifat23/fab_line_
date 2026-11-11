@@ -33,6 +33,8 @@ try {
     ensureDyeingProcessColumns($db, 'dyeing_batch_delivery');
     ensureDyeingProcessColumns($db, 'dyeing_batch_verification');
     ensureDyeingProcessColumns($db, 'dyeing_load');
+    ensureDyeingCountColumn($db, 'dyeing_batch_verification');
+    ensureDyeingCountColumn($db, 'dyeing_load');
 } catch (Throwable $error) {
     respond(['success' => false, 'message' => 'Could not initialize Dyeing Load process fields: ' . $error->getMessage()], 500);
 }
@@ -141,13 +143,32 @@ if ($action === 'load_batch') {
         respond(['success' => false, 'message' => 'Dyeing Operator ID ' . $operatorId . ' was not found.'], 404);
     }
 
+    $countStmt = $db->prepare(
+        'SELECT COALESCE(MAX(DCOUNT), 0) AS DCOUNT
+         FROM dyeing_batch_verification WHERE TRIM(BCARD) = ?'
+    );
+    if (!$countStmt) {
+        respond(['success' => false, 'message' => 'Could not prepare Batch Verification count lookup: ' . $db->error], 500);
+    }
+    $countStmt->bind_param('s', $card);
+    if (!$countStmt->execute()) {
+        $error = $countStmt->error;
+        $countStmt->close();
+        respond(['success' => false, 'message' => 'Could not determine the current batch cycle: ' . $error], 500);
+    }
+    $dcount = (int) $countStmt->get_result()->fetch_assoc()['DCOUNT'];
+    $countStmt->close();
+    if ($dcount < 1) {
+        respond(['success' => false, 'message' => 'Batch ' . $card . ' has not completed Batch Verification.'], 409);
+    }
+
     $loadedBatchStmt = $db->prepare(
-        'SELECT DLTID FROM dyeing_load WHERE TRIM(BCARD) = ? LIMIT 1'
+        'SELECT DLTID FROM dyeing_load WHERE TRIM(BCARD) = ? AND DCOUNT = ? LIMIT 1'
     );
     if (!$loadedBatchStmt) {
         respond(['success' => false, 'message' => 'Could not check whether Batch ' . $card . ' was already loaded: ' . $db->error], 500);
     }
-    $loadedBatchStmt->bind_param('s', $card);
+    $loadedBatchStmt->bind_param('si', $card, $dcount);
     if (!$loadedBatchStmt->execute()) {
         $error = $loadedBatchStmt->error;
         $loadedBatchStmt->close();
@@ -167,7 +188,7 @@ if ($action === 'load_batch') {
     }
 
     $batchStmt = $db->prepare(
-        'SELECT verified.DBVTID, verified.BUDAT, verified.BCARD, verified.ROLL,
+    'SELECT verified.DBVTID, verified.DCOUNT, verified.BUDAT, verified.BCARD, verified.ROLL,
                 verified.PO_NUMBER, verified.QTY, verified.SONO, verified.BUYER,
                 verified.STYLE, verified.COLOR, verified.DYMCNO AS MCNO, verified.MCDIA,
                 verified.CUSTOMER, verified.O_T, verified.SL, verified.FTYPE,
@@ -176,13 +197,14 @@ if ($action === 'load_batch') {
                 verified.DOP, verified.DID, verified.CREATEDAT
          FROM dyeing_batch_verification verified
          WHERE TRIM(verified.BCARD) = ?
+           AND verified.DCOUNT = ?
            AND ' . $passFilter . '
          ORDER BY verified.DBVTID ASC'
     );
     if (!$batchStmt) {
         respond(['success' => false, 'message' => 'Could not prepare batch lookup: ' . $db->error], 500);
     }
-    $batchStmt->bind_param('s', $card);
+    $batchStmt->bind_param('si', $card, $dcount);
     if (!$batchStmt->execute()) {
         $error = $batchStmt->error;
         $batchStmt->close();
@@ -206,6 +228,7 @@ if ($action === 'load_batch') {
         'success' => true,
         'card_no' => $card,
         'roll_count' => count($rows),
+        'dcount' => $dcount,
         'shift' => currentDyeingShift(),
         'rows' => $rows
     ]);
@@ -250,14 +273,36 @@ if ($action === 'start_load') {
         respond(['success' => false, 'message' => 'Could not start the Dyeing Load transaction: ' . $db->error], 500);
     }
 
+    $countStmt = $db->prepare(
+        'SELECT COALESCE(MAX(DCOUNT), 0) AS DCOUNT
+         FROM dyeing_batch_verification WHERE TRIM(BCARD) = ?'
+    );
+    if (!$countStmt) {
+        $db->rollback();
+        respond(['success' => false, 'message' => 'Could not prepare Batch Verification count lookup: ' . $db->error], 500);
+    }
+    $countStmt->bind_param('s', $card);
+    if (!$countStmt->execute()) {
+        $error = $countStmt->error;
+        $countStmt->close();
+        $db->rollback();
+        respond(['success' => false, 'message' => 'Could not determine the current batch cycle: ' . $error], 500);
+    }
+    $dcount = (int) $countStmt->get_result()->fetch_assoc()['DCOUNT'];
+    $countStmt->close();
+    if ($dcount < 1) {
+        $db->rollback();
+        respond(['success' => false, 'message' => 'Batch ' . $card . ' has not completed Batch Verification.'], 409);
+    }
+
     $existingStmt = $db->prepare(
-        'SELECT DLTID FROM dyeing_load WHERE TRIM(BCARD) = ? LIMIT 1'
+        'SELECT DLTID FROM dyeing_load WHERE TRIM(BCARD) = ? AND DCOUNT = ? LIMIT 1'
     );
     if (!$existingStmt) {
         $db->rollback();
         respond(['success' => false, 'message' => 'Could not check whether this batch was already started: ' . $db->error], 500);
     }
-    $existingStmt->bind_param('s', $card);
+    $existingStmt->bind_param('si', $card, $dcount);
     if (!$existingStmt->execute()) {
         $error = $existingStmt->error;
         $existingStmt->close();
@@ -276,7 +321,7 @@ if ($action === 'start_load') {
     }
 
     $batchStmt = $db->prepare(
-        'SELECT verified.BUDAT, verified.BCARD, verified.ROLL, verified.PO_NUMBER,
+        'SELECT verified.DCOUNT, verified.BUDAT, verified.BCARD, verified.ROLL, verified.PO_NUMBER,
                 verified.QTY, verified.SONO, verified.BUYER, verified.STYLE, verified.COLOR,
                 verified.DYMCNO AS MCNO, verified.MCDIA, verified.CUSTOMER, verified.O_T, verified.SL,
                 verified.FTYPE, verified.FGSM, verified.FDIA, verified.FEEDER_PLAN,
@@ -284,6 +329,7 @@ if ($action === 'start_load') {
                 verified.CATEGORY, ' . implode(', ', $processProjection) . '
          FROM dyeing_batch_verification verified
          WHERE TRIM(verified.BCARD) = ?
+           AND verified.DCOUNT = ?
            AND ' . $passFilter . '
          ORDER BY verified.DBVTID ASC'
     );
@@ -291,7 +337,7 @@ if ($action === 'start_load') {
         $db->rollback();
         respond(['success' => false, 'message' => 'Could not prepare verified batch lookup: ' . $db->error], 500);
     }
-    $batchStmt->bind_param('s', $card);
+    $batchStmt->bind_param('si', $card, $dcount);
     if (!$batchStmt->execute()) {
         $error = $batchStmt->error;
         $batchStmt->close();
@@ -314,11 +360,11 @@ if ($action === 'start_load') {
 
     $insertStmt = $db->prepare(
         'INSERT INTO dyeing_load
-         (BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
+         (BUDAT, BCARD, ROLL, DCOUNT, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
           MCNO, MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
           YTYPE, YCOUNT, YBRAND, CATEGORY, DOP, DID, SILICON, NONSILICON, NWASH,
           EWASH, ENZYME, NONENZYME, PEACH, BRUSH, AOP, SOFTENER, NONSOFTENER, OTHERS)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
     if (!$insertStmt) {
@@ -328,6 +374,7 @@ if ($action === 'start_load') {
 
     $shift = currentDyeingShift();
     foreach ($rows as $row) {
+        $rowDcount = (int) $row['DCOUNT'];
         $budat = $row['BUDAT'];
         $batchCard = $row['BCARD'];
         $roll = $row['ROLL'];
@@ -359,10 +406,11 @@ if ($action === 'start_load') {
         $verifiedOperatorId = $operator['DY_OP_ID'];
 
         if (!$insertStmt->bind_param(
-            str_repeat('s', 38),
+            'sssi' . str_repeat('s', 35),
             $budat,
             $batchCard,
             $roll,
+            $rowDcount,
             $poNumber,
             $qty,
             $sono,
@@ -417,7 +465,8 @@ if ($action === 'start_load') {
         'card_no' => $card,
         'roll_count' => count($rows),
         'operator' => $operator,
-        'shift' => $shift
+        'shift' => $shift,
+        'dcount' => $dcount
     ]);
 }
 

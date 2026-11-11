@@ -42,6 +42,7 @@ try {
         if ($errorMessage === '' && $hasVerificationTable) {
             try {
                 ensureDyeingProcessColumns($db, 'dyeing_batch_verification');
+                ensureDyeingCountColumn($db, 'dyeing_batch_verification');
             } catch (Throwable $error) {
                 $errorMessage = 'Could not initialize batch verification process fields: ' . $error->getMessage();
             }
@@ -137,6 +138,7 @@ try {
                                COALESCE(v.SOFTENER, d.SOFTENER) AS SOFTENER,
                                COALESCE(v.NONSOFTENER, d.NONSOFTENER) AS NONSOFTENER,
                                COALESCE(v.OTHERS, d.OTHERS) AS OTHERS,
+                               COALESCE(v.DCOUNT, 1) AS DCOUNT,
                                v.SINCHARGE, v.SUPERVISOR, v.BINCHARGE, v.BMANAGER,
                                CASE
                                    WHEN v.DBVTID IS NULL THEN 'verification'
@@ -166,7 +168,13 @@ try {
                                END AS VERIFICATION_STATUS
                         FROM dyeing_batch_delivery d
                         LEFT JOIN dyeing_batch_verification v
-                            ON v.BCARD = d.BCARD AND v.ROLL = d.ROLL";
+                            ON v.BCARD = d.BCARD AND v.ROLL = d.ROLL
+                           AND v.DCOUNT = (
+                               SELECT MAX(v2.DCOUNT)
+                               FROM dyeing_batch_verification v2
+                               WHERE v2.BCARD = d.BCARD
+                                 AND v2.ROLL = d.ROLL
+                           )";
         } else {
             $sql = "SELECT d.ROLL, d.BCARD, d.PO_NUMBER, d.COLOR, d.QTY, d.DYMCNO, d.SONO,
                                d.BUYER, d.STYLE, d.MCDIA, d.CUSTOMER, d.O_T, d.SL,
@@ -176,6 +184,13 @@ try {
                                d.NONSOFTENER, d.OTHERS,
                                'verification' AS VERIFICATION_STATUS
                         FROM dyeing_batch_delivery d";
+        }
+        if ($hasVerificationTable) {
+            $conditions[] = "(v.DBVTID IS NOT NULL OR NOT EXISTS (
+                SELECT 1
+                FROM dyeing_batch_verification current_cycle
+                WHERE current_cycle.BCARD = d.BCARD
+            ))";
         }
         if ($conditions) {
             $sql .= ' WHERE ' . implode(' AND ', $conditions);
@@ -489,7 +504,7 @@ function h($value)
                     <table>
                         <thead>
                             <tr>
-                                <th data-action-header>Action</th><th>Roll</th><th>Batch</th><th>PO Number</th><th>Color</th><th>QTY</th><th>MC NO</th><th>SONO</th>
+                                <th data-action-header>Action</th><th>Roll</th><th>Batch</th><th>DCOUNT</th><th>PO Number</th><th>Color</th><th>QTY</th><th>MC NO</th><th>SONO</th>
                                 <th>Buyer</th><th>Style</th><th>MC Dia</th><th>Customer</th><th>O / T</th>
                                 <th>SL/VQ</th><th>Fabrics Type</th><th>GSM</th><th>Dia</th>
                                 <th>Yarn Type</th><th>Yarn Count</th><th>Yarn Brand</th><th>Process</th>
@@ -501,12 +516,13 @@ function h($value)
                         </thead>
                         <tbody>
                             <?php if (!$rows): ?>
-                                <tr><td class="empty" colspan="25">No matching delivery records found.</td></tr>
+                                <tr><td class="empty" colspan="26">No matching delivery records found.</td></tr>
                             <?php else: ?>
                                 <?php foreach ($rows as $row): ?>
                                     <tr class="delivery-row"
                                         data-batch="<?php echo h($row['BCARD']); ?>"
                                         data-roll="<?php echo h($row['ROLL']); ?>"
+                                        data-dcount="<?php echo h($row['DCOUNT'] ?? 1); ?>"
                                         data-status="<?php echo h($row['VERIFICATION_STATUS']); ?>"
                                         data-sincharge="<?php echo h($row['SINCHARGE'] ?? ''); ?>"
                                         data-supervisor="<?php echo h($row['SUPERVISOR'] ?? ''); ?>"
@@ -518,6 +534,7 @@ function h($value)
                                         </td>
                                         <td><?php echo h($row['ROLL']); ?></td>
                                         <td data-batch-cell><?php echo h($row['BCARD']); ?></td>
+                                        <td><?php echo h($row['DCOUNT'] ?? 1); ?></td>
                                         <td data-column="PO_NUMBER"><?php echo h($row['PO_NUMBER']); ?></td>
                                         <td data-column="COLOR"><?php echo h($row['COLOR']); ?></td>
                                         <td data-column="QTY"><?php echo h($row['QTY']); ?></td>
@@ -553,7 +570,7 @@ function h($value)
                             <?php endif; ?>
                             <?php if ($rows): ?>
                                 <tr id="emptyTabRow" hidden>
-                                    <td class="empty" colspan="25">There are no batches in this status.</td>
+                                    <td class="empty" colspan="26">There are no batches in this status.</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
@@ -583,6 +600,7 @@ function h($value)
                 var authorizeButton = document.getElementById('authorizePasswordEdit');
                 var activeEditButton = null;
                 var authorizedPassword = null;
+                var editDecisions = {};
                 var decisions = {};
                 var completed = false;
                 var activeApprovalBatch = null;
@@ -594,7 +612,7 @@ function h($value)
                 });
 
                 function rowKey(row) {
-                    return row.dataset.batch + '\u0000' + row.dataset.roll;
+                    return row.dataset.batch + '\u0000' + row.dataset.dcount + '\u0000' + row.dataset.roll;
                 }
 
                 function showSuccessAndReload(title, message, clearSearch) {
@@ -880,7 +898,8 @@ function h($value)
                             body: JSON.stringify({
                                 action: 'authorize_edit',
                                 password: passwordInput.value,
-                                batch_id: row.dataset.batch
+                                batch_id: row.dataset.batch,
+                                dcount: row.dataset.dcount
                             })
                         });
                         var payload = await response.json();
@@ -889,6 +908,7 @@ function h($value)
                         }
 
                         editButton.dataset.authorized = 'true';
+                        editDecisions = Object.assign({}, payload.decisions || {});
                         var editor = decisionEditor;
                         editor.replaceChildren();
                         [
@@ -911,10 +931,11 @@ function h($value)
                                 choice.dataset.decision = decision;
                                 choice.setAttribute(
                                     'aria-pressed',
-                                    row.dataset[role[2]].toLowerCase() === decision ? 'true' : 'false'
+                                    editDecisions[role[0]] === decision ? 'true' : 'false'
                                 );
                                 choice.textContent = decision.toUpperCase();
                                 choice.addEventListener('click', function() {
+                                    editDecisions[role[0]] = decision;
                                     options.querySelectorAll('.decision-toggle').forEach(function(other) {
                                         other.setAttribute(
                                             'aria-pressed',
@@ -955,18 +976,14 @@ function h($value)
                         cancelButton.addEventListener('click', function() {
                             roleDecisionPanel.hidden = true;
                             delete editButton.dataset.authorized;
+                            editDecisions = {};
                             activeEditButton = null;
                             activeEditBatch = null;
                             authorizedPassword = null;
                             updateTabs();
                         });
                         saveButton.addEventListener('click', async function() {
-                            var editedDecisions = {};
-                            editor.querySelectorAll('.decision-toggle[aria-pressed="true"]').forEach(
-                                function(choice) {
-                                    editedDecisions[choice.dataset.role] = choice.dataset.decision;
-                                }
-                            );
+                            var editedDecisions = Object.assign({}, editDecisions);
                             var selectedRoles = Object.keys(editedDecisions).length;
                             var passCount = Object.values(editedDecisions).filter(function(decision) {
                                 return decision === 'pass';
@@ -992,6 +1009,7 @@ function h($value)
                                         action: 'update_decisions',
                                         password: authorizedPassword,
                                         batch_id: row.dataset.batch,
+                                        dcount: row.dataset.dcount,
                                         decisions: editedDecisions
                                     })
                                 });
@@ -1009,6 +1027,7 @@ function h($value)
                                 });
                                 roleDecisionPanel.hidden = true;
                                 delete editButton.dataset.authorized;
+                                editDecisions = {};
                                 activeEditButton = null;
                                 activeEditBatch = null;
                                 authorizedPassword = null;

@@ -32,6 +32,9 @@ try {
     ensureDyeingProcessColumns($db, 'dyeing_batch_card');
     ensureDyeingProcessColumns($db, 'dyeing_load');
     ensureDyeingProcessColumns($db, 'dyeing_unload');
+    ensureDyeingCountColumn($db, 'dyeing_batch_verification');
+    ensureDyeingCountColumn($db, 'dyeing_load');
+    ensureDyeingCountColumn($db, 'dyeing_unload');
 } catch (Throwable $error) {
     respond(['success' => false, 'message' => 'Could not initialize Dyeing Unload process fields: ' . $error->getMessage()], 500);
 }
@@ -137,20 +140,39 @@ if ($card === '' || strlen($card) > 30) {
     respond(['success' => false, 'message' => 'Enter a valid Batch Card number.'], 400);
 }
 
-$sourceFields = 'BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
+$sourceFields = 'BUDAT, BCARD, ROLL, DCOUNT, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
                  MCNO, MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN,
                  LOT_NO, YTYPE, YCOUNT, YBRAND, CATEGORY, DOP, DID, DYSTART,
                  SILICON, NONSILICON, NWASH, EWASH, ENZYME, NONENZYME, PEACH,
                  BRUSH, AOP, SOFTENER, NONSOFTENER, OTHERS';
 
 if ($action === 'load_batch') {
+    $countStmt = $db->prepare(
+        'SELECT COALESCE(MAX(DCOUNT), 0) AS DCOUNT
+         FROM dyeing_load WHERE TRIM(BCARD) = ?'
+    );
+    if (!$countStmt) {
+        respond(['success' => false, 'message' => 'Could not prepare Dyeing Load count lookup: ' . $db->error], 500);
+    }
+    $countStmt->bind_param('s', $card);
+    if (!$countStmt->execute()) {
+        $error = $countStmt->error;
+        $countStmt->close();
+        respond(['success' => false, 'message' => 'Could not determine the current batch cycle: ' . $error], 500);
+    }
+    $dcount = (int) $countStmt->get_result()->fetch_assoc()['DCOUNT'];
+    $countStmt->close();
+    if ($dcount < 1) {
+        respond(['success' => false, 'message' => 'Batch ' . $card . ' has not been loaded.'], 404);
+    }
+
     $unloadedStmt = $db->prepare(
-        'SELECT DULTID FROM dyeing_unload WHERE TRIM(BCARD) = ? LIMIT 1'
+        'SELECT DULTID FROM dyeing_unload WHERE TRIM(BCARD) = ? AND DCOUNT = ? LIMIT 1'
     );
     if (!$unloadedStmt) {
         respond(['success' => false, 'message' => 'Could not prepare unload status lookup: ' . $db->error], 500);
     }
-    $unloadedStmt->bind_param('s', $card);
+    $unloadedStmt->bind_param('si', $card, $dcount);
     if (!$unloadedStmt->execute()) {
         $error = $unloadedStmt->error;
         $unloadedStmt->close();
@@ -169,13 +191,13 @@ if ($action === 'load_batch') {
     $batchStmt = $db->prepare(
         'SELECT ' . $sourceFields . '
          FROM dyeing_load
-         WHERE TRIM(BCARD) = ?
+         WHERE TRIM(BCARD) = ? AND DCOUNT = ?
          ORDER BY DLTID ASC'
     );
     if (!$batchStmt) {
         respond(['success' => false, 'message' => 'Could not prepare loaded batch lookup: ' . $db->error], 500);
     }
-    $batchStmt->bind_param('s', $card);
+    $batchStmt->bind_param('si', $card, $dcount);
     if (!$batchStmt->execute()) {
         $error = $batchStmt->error;
         $batchStmt->close();
@@ -210,6 +232,7 @@ if ($action === 'load_batch') {
         'success' => true,
         'card_no' => $card,
         'roll_count' => count($rows),
+        'dcount' => $dcount,
         'operator' => $operator,
         'shift' => currentDyeingShift(),
         'rows' => $rows
@@ -220,10 +243,32 @@ if (!$db->begin_transaction()) {
     respond(['success' => false, 'message' => 'Could not start the Dyeing Unload transaction: ' . $db->error], 500);
 }
 
+$countStmt = $db->prepare(
+    'SELECT COALESCE(MAX(DCOUNT), 0) AS DCOUNT
+     FROM dyeing_load WHERE TRIM(BCARD) = ?'
+);
+if (!$countStmt) {
+    $db->rollback();
+    respond(['success' => false, 'message' => 'Could not prepare Dyeing Load count lookup: ' . $db->error], 500);
+}
+$countStmt->bind_param('s', $card);
+if (!$countStmt->execute()) {
+    $error = $countStmt->error;
+    $countStmt->close();
+    $db->rollback();
+    respond(['success' => false, 'message' => 'Could not determine the current batch cycle: ' . $error], 500);
+}
+$dcount = (int) $countStmt->get_result()->fetch_assoc()['DCOUNT'];
+$countStmt->close();
+if ($dcount < 1) {
+    $db->rollback();
+    respond(['success' => false, 'message' => 'Batch ' . $card . ' has not been loaded.'], 404);
+}
+
 $batchStmt = $db->prepare(
     'SELECT ' . $sourceFields . '
      FROM dyeing_load
-     WHERE TRIM(BCARD) = ?
+     WHERE TRIM(BCARD) = ? AND DCOUNT = ?
      ORDER BY DLTID ASC
      FOR UPDATE'
 );
@@ -231,7 +276,7 @@ if (!$batchStmt) {
     $db->rollback();
     respond(['success' => false, 'message' => 'Could not prepare loaded batch lookup: ' . $db->error], 500);
 }
-$batchStmt->bind_param('s', $card);
+$batchStmt->bind_param('si', $card, $dcount);
 if (!$batchStmt->execute()) {
     $error = $batchStmt->error;
     $batchStmt->close();
@@ -254,13 +299,13 @@ if (!$rows) {
 }
 
 $unloadedStmt = $db->prepare(
-    'SELECT DULTID FROM dyeing_unload WHERE TRIM(BCARD) = ? LIMIT 1'
+    'SELECT DULTID FROM dyeing_unload WHERE TRIM(BCARD) = ? AND DCOUNT = ? LIMIT 1'
 );
 if (!$unloadedStmt) {
     $db->rollback();
     respond(['success' => false, 'message' => 'Could not prepare unload status lookup: ' . $db->error], 500);
 }
-$unloadedStmt->bind_param('s', $card);
+$unloadedStmt->bind_param('si', $card, $dcount);
 if (!$unloadedStmt->execute()) {
     $error = $unloadedStmt->error;
     $unloadedStmt->close();
@@ -280,12 +325,12 @@ if ($alreadyUnloaded) {
 
 $insertStmt = $db->prepare(
     'INSERT INTO dyeing_unload
-     (BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
+     (BUDAT, BCARD, ROLL, DCOUNT, PO_NUMBER, QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
       MCNO, MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
       YTYPE, YCOUNT, YBRAND, CATEGORY, DOP, DID, DYSTART, SILICON, NONSILICON,
       NWASH, EWASH, ENZYME, NONENZYME, PEACH, BRUSH, AOP, SOFTENER, NONSOFTENER,
       OTHERS)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
 );
 if (!$insertStmt) {
@@ -298,6 +343,7 @@ foreach ($rows as $row) {
     $budat = $row['BUDAT'];
     $batchCard = $row['BCARD'];
     $roll = $row['ROLL'];
+    $rowDcount = (int) $row['DCOUNT'];
     $poNumber = $row['PO_NUMBER'];
     $qty = $row['QTY'];
     $sono = $row['SONO'];
@@ -327,10 +373,11 @@ foreach ($rows as $row) {
     }
 
     if (!$insertStmt->bind_param(
-        str_repeat('s', 39),
+        'sssi' . str_repeat('s', 36),
         $budat,
         $batchCard,
         $roll,
+        $rowDcount,
         $poNumber,
         $qty,
         $sono,
@@ -386,5 +433,6 @@ respond([
     'success' => true,
     'card_no' => $card,
     'roll_count' => count($rows),
-    'shift' => $shift
+    'shift' => $shift,
+    'dcount' => $dcount
 ]);

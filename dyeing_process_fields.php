@@ -8,6 +8,31 @@ function dyeingProcessFieldNames()
     ];
 }
 
+function ensureDyeingCountColumn($db, $table)
+{
+    $allowedTables = [
+        'dyeing_batch_verification',
+        'dyeing_roll_verification',
+        'dyeing_load',
+        'dyeing_unload'
+    ];
+    if (!in_array($table, $allowedTables, true)) {
+        throw new InvalidArgumentException('Unsupported dyeing count table.');
+    }
+
+    $result = $db->query('SHOW COLUMNS FROM `' . $table . '` LIKE \'DCOUNT\'');
+    if (!$result) {
+        throw new RuntimeException('Could not inspect ' . $table . ' DCOUNT column: ' . $db->error);
+    }
+    $exists = $result->num_rows > 0;
+    $result->free();
+    if (!$exists && !$db->query(
+        'ALTER TABLE `' . $table . '` ADD COLUMN `DCOUNT` INT NOT NULL DEFAULT 1'
+    )) {
+        throw new RuntimeException('Could not add DCOUNT to ' . $table . ': ' . $db->error);
+    }
+}
+
 function ensureDyeingProcessColumns($db, $table)
 {
     $allowedTables = [

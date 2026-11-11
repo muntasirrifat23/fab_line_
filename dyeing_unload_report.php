@@ -19,7 +19,6 @@ if (!isset($_SESSION['username'])) {
     header('Location: login.php');
     exit;
 }
-
 $reportTitle = $reportConfig['title'];
 $reportFrom = $reportConfig['from'];
 $reportMachine = $reportConfig['machine'];
@@ -31,7 +30,7 @@ $reportWhere = isset($reportConfig['where']) ? $reportConfig['where'] : '';
 $reportThemeStart = $reportConfig['theme_start'];
 $reportThemeEnd = $reportConfig['theme_end'];
 $reportTimeColumns = isset($reportConfig['time_columns']) ? $reportConfig['time_columns'] : [];
-$reportColumnCount = 24 + count($reportTimeColumns);
+$reportColumnCount = 25 + count($reportTimeColumns);
 $processFields = dyeingProcessFieldNames();
 
 $processSelect = [];
@@ -54,9 +53,19 @@ foreach ($reportTimeColumns as $timeColumn) {
     }
 }
 
+$rows = [];
+$loadError = false;
+try {
+    ensureDyeingCountColumn($db, 'dyeing_unload');
+} catch (Throwable $error) {
+    error_log('Could not initialize Dyeing Unload report count field: ' . $error->getMessage());
+    http_response_code(500);
+    $loadError = true;
+}
 $sql = "SELECT
             t.BCARD,
             t.ROLL,
+            t.DCOUNT,
             t.PO_NUMBER,
             t.COLOR,
             t.QTY,
@@ -84,32 +93,32 @@ if ($reportWhere !== '') {
 }
 $sql .= ' ORDER BY ' . $reportOrder;
 
-$rows = [];
-$loadError = false;
-$result = $db->query($sql);
-if (!$result) {
-    error_log('Dyeing report query failed: ' . $db->error);
-    http_response_code(500);
-    $loadError = true;
-} else {
-    while ($row = $result->fetch_assoc()) {
-        foreach ($reportTimeColumns as $timeColumn) {
-            $value = isset($row[$timeColumn]) ? trim((string) $row[$timeColumn]) : '';
-            if ($value === '') {
-                $row[$timeColumn] = '-';
-                continue;
+if (!$loadError) {
+    $result = $db->query($sql);
+    if (!$result) {
+        error_log('Dyeing report query failed: ' . $db->error);
+        http_response_code(500);
+        $loadError = true;
+    } else {
+        while ($row = $result->fetch_assoc()) {
+            foreach ($reportTimeColumns as $timeColumn) {
+                $value = isset($row[$timeColumn]) ? trim((string) $row[$timeColumn]) : '';
+                if ($value === '') {
+                    $row[$timeColumn] = '-';
+                    continue;
+                }
+                try {
+                    $row[$timeColumn] = (new DateTimeImmutable($value, new DateTimeZone('Asia/Dhaka')))
+                        ->format('d-m-Y H:i:s');
+                } catch (Throwable $error) {
+                    error_log('Invalid ' . $timeColumn . ' value in dyeing report: ' . $value);
+                    $row[$timeColumn] = $value;
+                }
             }
-            try {
-                $row[$timeColumn] = (new DateTimeImmutable($value, new DateTimeZone('Asia/Dhaka')))
-                    ->format('d-m-Y H:i:s');
-            } catch (Throwable $error) {
-                error_log('Invalid ' . $timeColumn . ' value in dyeing report: ' . $value);
-                $row[$timeColumn] = $value;
-            }
+            $rows[] = $row;
         }
-        $rows[] = $row;
+        $result->free();
     }
-    $result->free();
 }
 
 function dyeingReportEscape($value)
@@ -204,6 +213,7 @@ function dyeingReportEscape($value)
         var reportColumns = [
             ['ACTION', 'ACTION'],
             ['BCARD', 'Batch'],
+            ['DCOUNT', 'DCOUNT'],
             ['ROLL', 'Roll'],
             ['PO_NUMBER', 'PO Number'],
             ['COLOR', 'Color'],
@@ -260,7 +270,7 @@ function dyeingReportEscape($value)
 
         function printBatch(batch) {
             document.querySelectorAll('.report-table tbody tr').forEach(function(row) {
-                row.classList.toggle('print-target', row.dataset.batch === batch);
+                row.classList.toggle('print-target', row.dataset.group === batch);
             });
             window.print();
         }
@@ -280,15 +290,17 @@ function dyeingReportEscape($value)
 
             var groups = new Map();
             rows.forEach(function(row) {
-                var key = String(row.BCARD || '');
+                var batch = String(row.BCARD || '');
+                var key = JSON.stringify([batch, String(row.DCOUNT || '1')]);
                 if (!groups.has(key)) groups.set(key, []);
                 groups.get(key).push(row);
             });
 
-            groups.forEach(function(group, batch) {
+            groups.forEach(function(group, groupKey) {
                 group.forEach(function(row, index) {
                     var tr = body.insertRow();
-                    tr.dataset.batch = batch;
+                    tr.dataset.batch = String(group[0].BCARD || '');
+                    tr.dataset.group = groupKey;
                     if (index === 0) {
                         var actionCell = tr.insertCell();
                         actionCell.rowSpan = group.length;
@@ -297,12 +309,12 @@ function dyeingReportEscape($value)
                         printButton.type = 'button';
                         printButton.className = 'btn btn-print no-print';
                         printButton.innerHTML = '<i class="fa-solid fa-print"></i> Print';
-                        printButton.addEventListener('click', function() { printBatch(batch); });
+                        printButton.addEventListener('click', function() { printBatch(groupKey); });
                         actionCell.appendChild(printButton);
 
                         var batchCell = tr.insertCell();
                         batchCell.rowSpan = group.length;
-                        batchCell.textContent = batch;
+                        batchCell.textContent = String(group[0].BCARD || '');
                     }
 
                     reportColumns.slice(2).forEach(function(column) {

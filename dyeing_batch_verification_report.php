@@ -30,7 +30,7 @@ $reportWhere = isset($reportConfig['where']) ? $reportConfig['where'] : '';
 $reportThemeStart = $reportConfig['theme_start'];
 $reportThemeEnd = $reportConfig['theme_end'];
 $reportTimeColumns = isset($reportConfig['time_columns']) ? $reportConfig['time_columns'] : [];
-$reportColumnCount = 24 + count($reportTimeColumns);
+$reportColumnCount = 23 + count($reportTimeColumns);
 $processFields = dyeingProcessFieldNames();
 
 $processSelect = [];
@@ -38,7 +38,7 @@ foreach ($processFields as $field) {
     $processSelect[] = "COALESCE({$reportProcessAlias}.`{$field}`, '') AS `{$field}`";
 }
 
-$timeSelect = ["COALESCE(t.SHIFT, '') AS SHIFT"];
+$timeSelect = [];
 $timeColumnLabels = [
     'START_TIME' => 'Start Time',
     'END_TIME' => 'End Time'
@@ -52,6 +52,9 @@ foreach ($reportTimeColumns as $timeColumn) {
         throw new InvalidArgumentException('Unsupported dyeing report time column.');
     }
 }
+$timeSelectSql = $timeSelect
+    ? implode(",\n            ", $timeSelect) . ",\n            "
+    : '';
 
 $sql = "SELECT
             t.BCARD,
@@ -73,8 +76,7 @@ $sql = "SELECT
             t.YTYPE,
             t.YCOUNT,
             t.YBRAND,
-            " . implode(",\n            ", $timeSelect) . ",
-            {$reportOperator} AS OPERATOR,
+            {$timeSelectSql}{$reportOperator} AS OPERATOR,
             {$reportOperatorId} AS OP_ID,
             " . implode(",\n            ", $processSelect) . "
         FROM {$reportFrom}";
@@ -222,7 +224,6 @@ function dyeingReportEscape($value)
             ['YCOUNT', 'Yarn Count'],
             ['YBRAND', 'Yarn Brand'],
             ['PROCESS', 'Process'],
-            ['SHIFT', 'Shift'],
             <?php foreach ($reportTimeColumns as $timeColumn): ?>
             [<?php echo json_encode($timeColumn); ?>, <?php echo json_encode($timeColumnLabels[$timeColumn]); ?>],
             <?php endforeach; ?>

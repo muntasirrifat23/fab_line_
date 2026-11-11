@@ -17,6 +17,8 @@ if (!isset($_SESSION['username'])) {
 
 try {
     ensureDyeingProcessColumns($db, 'dyeing_batch_delivery');
+    ensureDyeingCountColumn($db, 'dyeing_batch_verification');
+    ensureDyeingCountColumn($db, 'dyeing_roll_verification');
 } catch (Throwable $error) {
     respond(['success' => false, 'message' => 'Could not initialize Roll Verification process fields: ' . $error->getMessage()], 500);
 }
@@ -82,19 +84,39 @@ if ($action === 'save_verified_rolls') {
         respond(['success' => false, 'message' => 'Select a batch with verified rolls to save.'], 400);
     }
 
+    $countStmt = $db->prepare(
+        'SELECT COALESCE(MAX(DCOUNT), 0) AS DCOUNT
+         FROM dyeing_batch_verification WHERE BCARD = ?'
+    );
+    if (!$countStmt) {
+        respond(['success' => false, 'message' => 'Could not prepare the batch dyeing count lookup: ' . $db->error], 500);
+    }
+    $countStmt->bind_param('s', $card);
+    if (!$countStmt->execute()) {
+        $error = $countStmt->error;
+        $countStmt->close();
+        respond(['success' => false, 'message' => 'Could not determine the current batch cycle: ' . $error], 500);
+    }
+    $dcount = (int) $countStmt->get_result()->fetch_assoc()['DCOUNT'];
+    $countStmt->close();
+    if ($dcount < 1) {
+        respond(['success' => false, 'message' => 'Batch ' . $card . ' has not completed Batch Verification.'], 409);
+    }
+
     $sourceStmt = $db->prepare(
-        'SELECT BCARD, ROLL, PO_NUMBER, QTY, SONO, BUYER, STYLE, COLOR, DYMCNO, MCDIA,
+        'SELECT BCARD, ROLL, DCOUNT, PO_NUMBER, QTY, SONO, BUYER, STYLE, COLOR, DYMCNO, MCDIA,
                 CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO, YTYPE,
                 YCOUNT, YBRAND, CATEGORY, DOP, DID
-         FROM dyeing_batch_delivery
-         WHERE BCARD = ? AND TRIM(ROLL) = ?
+         FROM dyeing_batch_verification
+         WHERE BCARD = ? AND TRIM(ROLL) = ? AND DCOUNT = ?
          LIMIT 1'
     );
     if (!$sourceStmt) {
         respond(['success' => false, 'message' => 'Could not prepare verified roll lookup: ' . $db->error], 500);
     }
     $existingStmt = $db->prepare(
-        'SELECT DRVTID FROM dyeing_roll_verification WHERE BCARD = ? AND ROLL = ? LIMIT 1'
+        'SELECT DRVTID FROM dyeing_roll_verification
+         WHERE BCARD = ? AND ROLL = ? AND DCOUNT = ? LIMIT 1'
     );
     if (!$existingStmt) {
         $sourceStmt->close();
@@ -102,10 +124,10 @@ if ($action === 'save_verified_rolls') {
     }
     $insertStmt = $db->prepare(
         'INSERT INTO dyeing_roll_verification
-         (BUDAT, BCARD, ROLL, PO_NUMBER, QTY, SONO, BUYER, STYLE, COLOR, MCNO,
+         (BUDAT, BCARD, ROLL, DCOUNT, PO_NUMBER, QTY, SONO, BUYER, STYLE, COLOR, MCNO,
           MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO, YTYPE,
           YCOUNT, YBRAND, CATEGORY, DOP, DID)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
     if (!$insertStmt) {
         $sourceStmt->close();
@@ -126,7 +148,7 @@ if ($action === 'save_verified_rolls') {
     $budat = date('Y-m-d');
 
     foreach ($rolls as $roll) {
-        $sourceStmt->bind_param('ss', $card, $roll);
+        $sourceStmt->bind_param('ssi', $card, $roll, $dcount);
         if (!$sourceStmt->execute()) {
             $saveError = 'Could not verify roll ' . $roll . ': ' . $sourceStmt->error;
             break;
@@ -141,7 +163,7 @@ if ($action === 'save_verified_rolls') {
             break;
         }
 
-        $existingStmt->bind_param('ss', $card, $roll);
+        $existingStmt->bind_param('ssi', $card, $roll, $dcount);
         if (!$existingStmt->execute()) {
             $saveError = 'Could not check whether roll ' . $roll . ' was already saved: ' . $existingStmt->error;
             break;
@@ -161,6 +183,7 @@ if ($action === 'save_verified_rolls') {
         };
         $sourceCard = $value('BCARD');
         $sourceRoll = $value('ROLL');
+        $sourceDcount = (int) $value('DCOUNT');
         $poNumber = $value('PO_NUMBER');
         $qty = $value('QTY');
         $sono = $value('SONO');
@@ -184,8 +207,8 @@ if ($action === 'save_verified_rolls') {
         $dop = $value('DOP');
         $did = $value('DID');
         $insertStmt->bind_param(
-            'sssssssssssssssssssssssss',
-            $budat, $sourceCard, $sourceRoll, $poNumber, $qty, $sono, $buyer,
+            'sssissssssssssssssssssssss',
+            $budat, $sourceCard, $sourceRoll, $sourceDcount, $poNumber, $qty, $sono, $buyer,
             $style, $color, $mcno, $mcDia, $customer, $openTube, $sl, $fabricType,
             $finishGsm, $finishDia, $feederPlan, $lotNo, $yarnType, $yarnCount,
             $yarnBrand, $category, $dop, $did
@@ -237,10 +260,15 @@ if ($roll === '' || strlen($roll) > 50) {
 $currentCard = isset($_GET['current_batch']) ? trim((string) $_GET['current_batch']) : '';
 
 $batchStmt = $db->prepare(
-    'SELECT BCARD
-     FROM dyeing_batch_delivery
-     WHERE TRIM(ROLL) = ? AND BCARD IS NOT NULL AND TRIM(BCARD) <> \'\'
-     ORDER BY (BCARD = ?) DESC, DBDTID DESC
+    'SELECT v.BCARD
+     FROM dyeing_batch_verification v
+     WHERE TRIM(v.ROLL) = ? AND v.BCARD IS NOT NULL AND TRIM(v.BCARD) <> \'\'
+       AND v.DCOUNT = (
+           SELECT MAX(v2.DCOUNT)
+           FROM dyeing_batch_verification v2
+           WHERE v2.BCARD = v.BCARD
+       )
+     ORDER BY (v.BCARD = ?) DESC, v.DBVTID DESC
      LIMIT 1'
 );
 if (!$batchStmt) {
@@ -259,21 +287,22 @@ $batchResult->free();
 $batchStmt->close();
 
 if ($card === '') {
-    respond(['success' => false, 'message' => 'Roll ' . $roll . ' was not found in dyeing_batch_delivery.'], 404);
+    respond(['success' => false, 'message' => 'Roll ' . $roll . ' was not found in the current Batch Verification cycle.'], 404);
 }
 $rowsStmt = $db->prepare(
-    'SELECT DBDTID, BCARD, ROLL, PO_NUMBER, COLOR, QTY, DYMCNO, SONO, BUYER, STYLE,
+    'SELECT DBVTID, BCARD, ROLL, DCOUNT, PO_NUMBER, COLOR, QTY, DYMCNO, SONO, BUYER, STYLE,
             MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, YTYPE, YCOUNT, YBRAND,
             SILICON, NONSILICON, NWASH, EWASH, ENZYME, NONENZYME, PEACH, BRUSH,
             AOP, SOFTENER, NONSOFTENER, OTHERS, DOP, DID
-     FROM dyeing_batch_delivery
+     FROM dyeing_batch_verification
      WHERE BCARD = ?
-     ORDER BY DBDTID ASC'
+       AND DCOUNT = (SELECT MAX(DCOUNT) FROM dyeing_batch_verification WHERE BCARD = ?)
+     ORDER BY DBVTID ASC'
 );
 if (!$rowsStmt) {
     respond(['success' => false, 'message' => 'Could not prepare batch roll lookup: ' . $db->error], 500);
 }
-$rowsStmt->bind_param('s', $card);
+$rowsStmt->bind_param('ss', $card, $card);
 if (!$rowsStmt->execute()) {
     $error = $rowsStmt->error;
     $rowsStmt->close();
@@ -306,6 +335,7 @@ if (!$rows) {
 respond([
     'success' => true,
     'card_no' => $card,
+    'dcount' => (int) ($rows[0]['DCOUNT'] ?? 1),
     'roll_count' => count($rows),
     'rows' => $rows
 ]);
