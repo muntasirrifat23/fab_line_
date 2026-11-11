@@ -506,11 +506,12 @@ $isFinishingUser = $user === 'f01' || $userType === 'finishing_operator';
         <?php
         $dyeingReports = [
           ['dyeing_batch_split_report.php', 'Batch Split Report', 'fa-scissors', 'split'],
-          ['dyeing_batch_transfer_report.php', 'Batch Transfer Report', 'fa-right-left', 'transfer'],
           ['dyeing_batch_verification_report.php', 'Batch Verification Report', 'fa-clipboard-check', 'verification'],
           ['dyeing_roll_verification_report.php', 'Roll Verification Report', 'fa-qrcode', 'roll-verification'],
-          ['dyeing_load_report.php', 'Load Report', 'fa-dolly', 'load'],
-          ['dyeing_unload_report.php', 'Unload Report', 'fa-box-open', 'unload']
+          ['dyeing_load_report.php', 'Dyeing Load Report', 'fa-dolly', 'load'],
+          ['dyeing_batch_transfer_report.php', 'Batch Transfer Report', 'fa-right-left', 'transfer'],
+          ['dyeing_unload_report.php', 'Dyeing Unload Report', 'fa-box-open', 'unload'],
+          ['dyeing_redye.php', 'Re Dyeing Report', 'fa-rotate', 'unload']
         ];
         foreach ($dyeingReports as $dyeingReport):
         ?>

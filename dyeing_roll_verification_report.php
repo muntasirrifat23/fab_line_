@@ -26,11 +26,15 @@ $reportOperator = $reportConfig['operator'];
 $reportOperatorId = $reportConfig['operator_id'];
 $reportProcessAlias = $reportConfig['process_alias'];
 $reportOrder = $reportConfig['order'];
-$reportWhere = isset($reportConfig['where']) ? $reportConfig['where'] : '';
+$reportWhere = 't.DCOUNT = (
+    SELECT MAX(current_cycle.DCOUNT)
+    FROM dyeing_batch_verification current_cycle
+    WHERE TRIM(current_cycle.BCARD) = TRIM(t.BCARD)
+)';
 $reportThemeStart = $reportConfig['theme_start'];
 $reportThemeEnd = $reportConfig['theme_end'];
 $reportTimeColumns = isset($reportConfig['time_columns']) ? $reportConfig['time_columns'] : [];
-$reportColumnCount = 23 + count($reportTimeColumns);
+$reportColumnCount = 24 + count($reportTimeColumns);
 $processFields = dyeingProcessFieldNames();
 
 $processSelect = [];
@@ -62,6 +66,7 @@ $sql = "SELECT
             t.PO_NUMBER,
             t.COLOR,
             t.QTY,
+            t.DCOUNT,
             {$reportMachine} AS MCNO,
             t.SONO,
             t.BUYER,
@@ -87,12 +92,20 @@ $sql .= ' ORDER BY ' . $reportOrder;
 
 $rows = [];
 $loadError = false;
-$result = $db->query($sql);
-if (!$result) {
+try {
+    ensureDyeingCountColumn($db, 'dyeing_roll_verification');
+    ensureDyeingCountColumn($db, 'dyeing_batch_verification');
+} catch (Throwable $error) {
+    error_log('Could not initialize Dyeing Roll Verification report count field: ' . $error->getMessage());
+    http_response_code(500);
+    $loadError = true;
+}
+$result = $loadError ? false : $db->query($sql);
+if (!$loadError && !$result) {
     error_log('Dyeing report query failed: ' . $db->error);
     http_response_code(500);
     $loadError = true;
-} else {
+} elseif ($result) {
     while ($row = $result->fetch_assoc()) {
         foreach ($reportTimeColumns as $timeColumn) {
             $value = isset($row[$timeColumn]) ? trim((string) $row[$timeColumn]) : '';
@@ -227,6 +240,7 @@ function dyeingReportEscape($value)
             <?php foreach ($reportTimeColumns as $timeColumn): ?>
             [<?php echo json_encode($timeColumn); ?>, <?php echo json_encode($timeColumnLabels[$timeColumn]); ?>],
             <?php endforeach; ?>
+            ['DCOUNT', 'DCount'],
             ['OPERATOR', 'Operator'],
             ['OP_ID', 'OP Id']
         ];
