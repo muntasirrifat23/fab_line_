@@ -1043,8 +1043,8 @@
                         <div class="info-item">
                             <label for="category">Category</label>
                             <select id="category">
-                                <option value="In House (Sample)">In House (Sample)</option>
                                 <option value="In House (Bulk)">In House (Bulk)</option>
+                                <option value="In House (Sample)">In House (Sample)</option>
                                 <option value="Knitting (Service)">Knitting (Service)</option>
                                 <option value="Knitting (Outside)">Knitting (Outside)</option>
                             </select>
@@ -1746,7 +1746,7 @@ var finishGsmSelect = $('#finish_gsm');
                      // reset all display fields
                      $('#infoGrid span').text('-');
                      $('#finish_dia, #open_tube, #fabrics_type, #customer, #sl_vdq, #mc_dia, #feeder_plan, #knit_m_description, #remarks').val('');
-                     $('#category').val('In House (Sample)');
+                     $('#category').val('In House (Bulk)');
                      addMcnoRow();
                      $('#submitBtn').prop('disabled', true);
                  });
