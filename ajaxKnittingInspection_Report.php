@@ -9,6 +9,21 @@ if (!isset($db) || !$db) {
     exit;
 }
 
+try {
+    $othersColumn = mysqli_query($db, "SHOW COLUMNS FROM knitting_inspection LIKE 'OTHERS'");
+    if ($othersColumn === false) {
+        throw new mysqli_sql_exception($db->error);
+    }
+    if (mysqli_num_rows($othersColumn) === 0 && !mysqli_query($db, "ALTER TABLE knitting_inspection ADD COLUMN OTHERS TEXT NULL AFTER CMARK")) {
+        throw new mysqli_sql_exception($db->error);
+    }
+} catch (mysqli_sql_exception $e) {
+    http_response_code(500);
+    error_log('Could not initialize the inspection OTHERS column: ' . $e->getMessage());
+    echo json_encode(['success' => false, 'error' => 'Could not initialize the inspection OTHERS column.']);
+    exit;
+}
+
 $search    = isset($_GET['search']) ? trim($_GET['search']) : '';
 $category  = isset($_GET['category']) ? strtolower(trim($_GET['category'])) : 'all';
 $from_date = isset($_GET['from_date']) ? trim($_GET['from_date']) : '';

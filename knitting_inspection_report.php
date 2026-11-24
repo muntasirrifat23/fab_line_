@@ -846,6 +846,7 @@ if (isset($db) && $db) {
                             <th>LOOP</th>
                             <th>SETUP</th>
                             <th>CMARK</th>
+                            <th>OTHERS</th>
                             <th>TPOINT</th>
                             <th>QC GRADE</th>
                             <th>QC STATUS</th>
@@ -854,7 +855,7 @@ if (isset($db) && $db) {
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="47" class="loading-cell">Loading inspection data...</td>
+                            <td colspan="48" class="loading-cell">Loading inspection data...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -912,6 +913,7 @@ if (isset($db) && $db) {
             { key: 'LOOP', label: 'LOOP' },
             { key: 'SETUP', label: 'SETUP' },
             { key: 'CMARK', label: 'CMARK' },
+            { key: 'OTHERS', label: 'OTHERS' },
             { key: 'TPOINT', label: 'TPOINT' },
             { key: 'QC_GRADE', label: 'QC_GRADE' },
             { key: 'QC_STATUS', label: 'QC_STATUS' },
@@ -1016,6 +1018,7 @@ if (isset($db) && $db) {
                 '<th style="width:3.5%;border:1px solid #000000;padding:3px 1px;">Loop</th>' +
                 '<th style="width:3.5%;border:1px solid #000000;padding:3px 1px;">Setup</th>' +
                 '<th style="width:4.5%;border:1px solid #000000;padding:3px 1px;">Crease Mark</th>' +
+                '<th style="width:5.5%;border:1px solid #000000;padding:3px 1px;">Others</th>' +
                 '<th style="width:5%;border:1px solid #000000;padding:3px 1px;">Per 100 Sq Yds</th>' +
                 '<th style="width:3.5%;border:1px solid #000000;padding:3px 1px;">Pass</th>' +
                 '<th style="width:3.5%;border:1px solid #000000;padding:3px 1px;">Fail</th>' +
@@ -1044,6 +1047,7 @@ if (isset($db) && $db) {
                 '<td style="border:1px solid #000000;padding:3px 1px;">' + esc(row.LOOP) + '</td>' +
                 '<td style="border:1px solid #000000;padding:3px 1px;">' + esc(row.SETUP) + '</td>' +
                 '<td style="border:1px solid #000000;padding:3px 1px;">' + esc(row.CMARK) + '</td>' +
+                '<td style="border:1px solid #000000;padding:3px 1px;">' + esc(row.OTHERS) + '</td>' +
                 '<td style="border:1px solid #000000;padding:3px 1px;"></td>' +
                 '<td style="border:1px solid #000000;padding:3px 1px;">' + (isPass ? '✓' : '') + '</td>' +
                 '<td style="border:1px solid #000000;padding:3px 1px;">' + (isFail ? '✓' : '') + '</td>' +
@@ -1552,7 +1556,7 @@ if (isset($db) && $db) {
             tbody.empty();
             currentData = data || [];
             if (!currentData.length) {
-                tbody.append('<tr class="empty-row"><td colspan="47"><i class="fa-regular fa-folder-open me-2"></i>No inspection records found for the selected filters</td></tr>');
+                tbody.append('<tr class="empty-row"><td colspan="48"><i class="fa-regular fa-folder-open me-2"></i>No inspection records found for the selected filters</td></tr>');
                 return;
             }
             currentData.forEach(function(row) {
@@ -1624,7 +1628,7 @@ if (isset($db) && $db) {
 
         function loadInspectionData(silent) {
             if (!silent) {
-                $('#tableBody').html('<tr><td colspan="47" class="loading-cell"><i class="fa-solid fa-spinner fa-spin me-2"></i>Loading inspection report data...</td></tr>');
+                $('#tableBody').html('<tr><td colspan="48" class="loading-cell"><i class="fa-solid fa-spinner fa-spin me-2"></i>Loading inspection report data...</td></tr>');
             }
             var payload = getFilterPayload();
             $.ajax({
@@ -1638,12 +1642,12 @@ if (isset($db) && $db) {
                     renderTableRows(resp.data);
                     updateStatsBar(resp.stats);
                 } else if (!silent) {
-                    $('#tableBody').html('<tr class="empty-row"><td colspan="47">No data returned from server</td></tr>');
+                    $('#tableBody').html('<tr class="empty-row"><td colspan="48">No data returned from server</td></tr>');
                 }
             })
             .fail(function() {
                 if (!silent) {
-                    $('#tableBody').html('<tr class="empty-row"><td colspan="47" style="color:#dc2626;"><i class="fa-solid fa-triangle-exclamation me-2"></i>Error loading inspection data</td></tr>');
+                    $('#tableBody').html('<tr class="empty-row"><td colspan="48" style="color:#dc2626;"><i class="fa-solid fa-triangle-exclamation me-2"></i>Error loading inspection data</td></tr>');
                 }
             })
             .always(function() {

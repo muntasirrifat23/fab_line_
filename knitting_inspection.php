@@ -11,7 +11,7 @@ if (isset($db) && $db) {
     }
 }
 
-$category_schema_error = '';
+$inspection_schema_error = '';
 if (isset($db) && $db) {
     try {
         $category_col_check = mysqli_query($db, "SHOW COLUMNS FROM knitting_inspection LIKE 'CATEGORY'");
@@ -21,9 +21,16 @@ if (isset($db) && $db) {
         if (mysqli_num_rows($category_col_check) === 0 && !mysqli_query($db, "ALTER TABLE knitting_inspection ADD COLUMN CATEGORY varchar(50) NULL AFTER LOTNO")) {
             throw new mysqli_sql_exception($db->error);
         }
+        $others_col_check = mysqli_query($db, "SHOW COLUMNS FROM knitting_inspection LIKE 'OTHERS'");
+        if ($others_col_check === false) {
+            throw new mysqli_sql_exception($db->error);
+        }
+        if (mysqli_num_rows($others_col_check) === 0 && !mysqli_query($db, "ALTER TABLE knitting_inspection ADD COLUMN OTHERS TEXT NULL AFTER CMARK")) {
+            throw new mysqli_sql_exception($db->error);
+        }
     } catch (mysqli_sql_exception $e) {
-        $category_schema_error = 'Unable to initialize the inspection CATEGORY field. Please contact the database administrator.';
-        error_log($category_schema_error . ' ' . $e->getMessage());
+        $inspection_schema_error = 'Unable to initialize the inspection database fields. Please contact the database administrator.';
+        error_log($inspection_schema_error . ' ' . $e->getMessage());
     }
 }
 
@@ -190,8 +197,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'search_card') {
         exit();
     }
 
-    if ($category_schema_error !== '') {
-        echo json_encode(['success' => false, 'error' => $category_schema_error]);
+    if ($inspection_schema_error !== '') {
+        echo json_encode(['success' => false, 'error' => $inspection_schema_error]);
         exit();
     }
 
@@ -340,8 +347,8 @@ if (isset($_SESSION['inspection_flash'])) {
 
 // ── SAVE INSPECTION RECORD ──
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspection'])) {
-    if ($category_schema_error !== '') {
-        $error = 'Database schema error: ' . $category_schema_error;
+    if ($inspection_schema_error !== '') {
+        $error = 'Database schema error: ' . $inspection_schema_error;
     } elseif (!isset($_SESSION['active_operator']) || empty($_SESSION['active_operator']['id']) || ($_SESSION['active_operator']['role'] ?? '') !== 'qc') {
         $error = "Unauthorized: You must authenticate with a valid QC Operator ID QR Code before completing fabric inspection.";
     } else {
@@ -390,6 +397,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
         $defect_loop        = isset($_POST['DEFECT_LOOP']) ? 1 : 0;
         $defect_setup       = isset($_POST['DEFECT_SETUP']) ? 1 : 0;
         $defect_crease_mark = isset($_POST['DEFECT_CMARK']) ? 1 : 0;
+        $defect_others     = isset($_POST['DEFECT_OTHERS']) ? 1 : 0;
+        $others_input      = $_POST['OTHERS'] ?? '';
+        $others            = is_string($others_input) ? trim($others_input) : '';
+        if (!$defect_others) {
+            $others = '';
+        }
 
         $total_points = ($defect_tt * 1) + ($defect_patta * 1) + ($defect_slub * 1) + ($defect_yc * 1) + 
                         ($defect_oil_spot * 2) + ($defect_ff * 2) + ($defect_seeds * 2) + ($defect_m_stitch * 2) + 
@@ -416,7 +429,17 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
             $qc_status = ($qc_grade === 'Reject') ? 'Failed' : 'Passed';
         }
 
-        if ($production_id <= 0 && empty($roll_no)) {
+        $has_selected_fault = $defect_tt || $defect_patta || $defect_slub || $defect_yc ||
+            $defect_oil_spot || $defect_ff || $defect_seeds || $defect_m_stitch ||
+            $defect_sinker_mark || $defect_needle_mark || $defect_lycra_out ||
+            $defect_oil_line || $defect_hole || $defect_loop || $defect_setup ||
+            $defect_crease_mark || $defect_others;
+
+        if (!$has_selected_fault) {
+            $error = 'Select at least one fabric fault before saving inspection.';
+        } elseif ($defect_others && $others === '') {
+            $error = 'Enter a description for the selected Others fault.';
+        } elseif ($production_id <= 0 && empty($roll_no)) {
           $error = "Please select a valid production roll or enter Roll Number.";
         } elseif (empty($roll_no)) {
             $error = "Roll Number is required.";
@@ -481,6 +504,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                 $v_loop       = strval($defect_loop);
                 $v_setup      = strval($defect_setup);
                 $v_cmark      = strval($defect_crease_mark);
+                $v_others     = $others;
                 $v_tpoint     = strval($total_points);
 
                 $uname        = strval($_SESSION['active_operator']['name']);
@@ -496,20 +520,20 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                         `MCNO`, `MC_DIA`, `CUSTOMER`, `SHIFT`, `YTYPE`, `YCOUNT`, `YBRAND`, `FTYPE`, `FGSM`, `FDIA`, `O_T`,
                         `SL`, `FPLAN`, `LOTNO`, `CATEGORY`, `MATERIAL_CODE`, `M_DES`,
                         `TT`, `PATTA`, `SLUB`, `YC_SPOT`, `OILSPOT`, `FF`, `SEEDS`, `MSTITCH`, `SINKERMARK`, `NEEDLEMARK`,
-                        `LYCOUT`, `OILLINE`, `HOLE`, `LOOP`, `SETUP`, `CMARK`, `TPOINT`,
+                        `LYCOUT`, `OILLINE`, `HOLE`, `LOOP`, `SETUP`, `CMARK`, `OTHERS`, `TPOINT`,
                         `QC_GRADE`, `QC_STATUS`, `UNAME`, `UID`
                     ) VALUES (
                         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                         ?, ?, ?, ?, ?, ?,
                         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                        ?, ?, ?, ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?, ?, ?, ?,
                         ?, ?, ?, ?
                     )
                 ";
 
                 $types = 'ssddd' . str_repeat('s', 17) . 'd' . str_repeat('s', 5)
-                       . str_repeat('s', 17) . str_repeat('s', 4);
+                       . str_repeat('s', 18) . str_repeat('s', 4);
 
                 $active_defects = [];
                 if ($defect_tt)          $active_defects[] = 'T&T (+1p)';
@@ -528,6 +552,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                 if ($defect_loop)        $active_defects[] = 'Loop (+4p)';
                 if ($defect_setup)       $active_defects[] = 'Set Up (+4p)';
                 if ($defect_crease_mark) $active_defects[] = 'Crease Mark (+4p)';
+                if ($defect_others)      $active_defects[] = 'Others: ' . $others;
 
                 if ($is_split_eligible) {
                     // Split roll into Pass (-P) and Reject (-R) in a single transaction
@@ -553,7 +578,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                             $mcno, $mc_dia, $supplier, $shift, $ytype, $ycount, $ybrand, $ftype, $fgsm, $fdia, $o_t,
                             $sl, $fplan, $lotno, $category, $mat_code, $m_des,
                             $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str,
-                            $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str,
+                            $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str, $v_zero_str,
                             $v_pass_grade, $v_pass_status, $uname, $uid
                         );
                         if (!$stmt_pass->execute()) throw new Exception("Execute Pass roll failed: " . $stmt_pass->error);
@@ -574,7 +599,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                             $mcno, $mc_dia, $supplier, $shift, $ytype, $ycount, $ybrand, $ftype, $fgsm, $fdia, $o_t,
                             $sl, $fplan, $lotno, $category, $mat_code, $m_des,
                             $v_tt, $v_patta, $v_slub, $v_yc_spot, $v_oilspot, $v_ff, $v_seeds, $v_mstitch, $v_sinkermark, $v_needlemark,
-                            $v_lycout, $v_oilline, $v_hole, $v_loop, $v_setup, $v_cmark, $v_tpoint,
+                            $v_lycout, $v_oilline, $v_hole, $v_loop, $v_setup, $v_cmark, $v_others, $v_tpoint,
                             $v_rej_grade, $v_rej_status, $uname, $uid
                         );
                         if (!$stmt_rej->execute()) throw new Exception("Execute Reject roll failed: " . $stmt_rej->error);
@@ -640,7 +665,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['save_inspe
                         $mcno, $mc_dia, $supplier, $shift, $ytype, $ycount, $ybrand, $ftype, $fgsm, $fdia, $o_t,
                         $sl, $fplan, $lotno, $category, $mat_code, $m_des,
                         $v_tt, $v_patta, $v_slub, $v_yc_spot, $v_oilspot, $v_ff, $v_seeds, $v_mstitch, $v_sinkermark, $v_needlemark,
-                        $v_lycout, $v_oilline, $v_hole, $v_loop, $v_setup, $v_cmark, $v_tpoint,
+                        $v_lycout, $v_oilline, $v_hole, $v_loop, $v_setup, $v_cmark, $v_others, $v_tpoint,
                         $qc_grade, $qc_status, $uname, $uid
                     );
 
@@ -796,16 +821,17 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
       display: flex;
       justify-content: center;
       align-items: flex-start;
-      padding: 16px;
+      padding: 10px;
       margin: 0;
     }
 
     .card {
-      max-width: 1200px;
+      max-width: 100%;
       width: 100%;
+      min-height: calc(100vh - 20px);
       background: #ffffff;
       border-radius: 18px;
-      padding: 14px 16px 18px;
+      padding: 18px 22px 22px;
       box-shadow: 0 10px 25px rgba(30, 60, 120, 0.12);
       border: 1px solid #dbe4ef;
       transition: max-width 0.3s ease;
@@ -838,7 +864,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
     }
 
     .card.card-wide {
-      max-width: 1100px;
+      max-width: 100%;
     }
 
     .info-grid {
@@ -867,7 +893,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
       border-left: 3px solid #2563eb;
       border-radius: 8px;
       padding: 6px 10px;
-      font-size: 0.8rem;
+      font-size: 0.9rem;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -875,7 +901,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
     }
 
     .info-item .info-label {
-      font-size: 0.68rem;
+      font-size: 0.76rem;
       font-weight: 700;
       color: #64748b;
       text-transform: uppercase;
@@ -884,7 +910,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
     }
 
     .info-item .info-val {
-      font-size: 0.85rem;
+      font-size: 0.95rem;
       font-weight: 700;
       color: #0f172a;
       word-break: break-word;
@@ -1165,7 +1191,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
       color: #334155;
       font-weight: 700;
       letter-spacing: 0.2px;
-      font-size: 0.82rem;
+      font-size: 0.92rem;
       border-bottom: 1px dashed #cbd5e1;
       padding-bottom: 6px;
       margin-bottom: 8px;
@@ -1181,7 +1207,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
       border-radius: 6px;
       border-left: 3px solid #2563eb;
       color: #1e293b;
-      font-size: 0.78rem;
+      font-size: 0.88rem;
       line-height: 1.3;
       box-shadow: 0 1px 3px rgba(30, 60, 120, 0.05);
       display: flex;
@@ -1205,7 +1231,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
       border-left-color: #f59e0b;
       background: #e8eef6;
       font-weight: 700;
-      font-size: 0.82rem;
+      font-size: 0.92rem;
     }
 
     .manual-entry {
@@ -1317,6 +1343,11 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
     }
 
     @media (max-width: 576px) {
+      body { padding: 6px; }
+      .card { min-height: calc(100vh - 12px); padding: 12px; }
+      .fault-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .fault-other-option { grid-column: 1 / -1; }
+      .fault-other-option .fault-btn { flex-basis: 110px; }
       .camera-controls {
         flex-wrap: wrap;
         gap: 8px;
@@ -1363,18 +1394,38 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
 
     .fault-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
-      gap: 5px;
+      grid-template-columns: repeat(auto-fill, minmax(125px, 1fr));
+      gap: 8px;
       margin-top: 6px;
       margin-bottom: 10px;
+    }
+
+    .fault-other-option {
+      grid-column: span 2;
+      display: flex;
+      align-items: stretch;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .fault-other-option .fault-btn {
+      flex: 0 0 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .fault-other-option .field-input {
+      flex: 1;
+      min-width: 120px;
     }
 
     .fault-btn {
       background: #ffffff;
       border: 1px solid #cbd5e1;
       border-radius: 8px;
-      padding: 5px 6px;
-      font-size: 0.7rem;
+      padding: 8px 9px;
+      font-size: 0.84rem;
       font-weight: 700;
       color: #334155;
       cursor: pointer;
@@ -1401,8 +1452,8 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
       border: 1px solid #cbd5e1;
       color: #0f172a;
       border-radius: 8px;
-      padding: 6px 10px;
-      font-size: 0.85rem;
+      padding: 8px 12px;
+      font-size: 0.95rem;
       outline: none;
     }
 
@@ -1435,8 +1486,8 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
       min-width: 100px;
       border: none;
       border-radius: 10px;
-      padding: 8px 12px;
-      font-size: 0.85rem;
+      padding: 10px 14px;
+      font-size: 0.95rem;
       font-weight: 600;
       cursor: pointer;
       transition: 0.2s;
@@ -2657,7 +2708,20 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
           `;
         });
 
-        html += `</div>`;
+        html += `
+            <div class="fault-other-option">
+              <div class="fault-btn" id="fault_OTHERS" role="button" tabindex="0"
+                onclick="window.toggleOtherFault()"
+                onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault();window.toggleOtherFault();}">
+                OTHERS
+              </div>
+              <input type="text" id="otherFaultInput" class="field-input" maxlength="500"
+                placeholder="Enter fault" aria-label="Other fabric fault" hidden
+                oninput="window.updateActionButtons()">
+            </div>
+          </div>
+          <div id="faultSelectionError" role="alert" style="display:none; margin:4px 0 8px; color:#b91c1c; font-size:0.88rem; font-weight:700;"></div>
+        `;
 
         html += `
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:8px;">
@@ -2714,6 +2778,29 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
           }
         }
         recalcPoints();
+        window.updateActionButtons();
+      };
+
+      window.toggleOtherFault = function() {
+        const otherButton = document.getElementById('fault_OTHERS');
+        const otherInput = document.getElementById('otherFaultInput');
+        if (Object.prototype.hasOwnProperty.call(selectedFaults, 'OTHERS')) {
+          delete selectedFaults.OTHERS;
+          if (otherButton) otherButton.classList.remove('active');
+          if (otherInput) {
+            otherInput.value = '';
+            otherInput.hidden = true;
+          }
+        } else {
+          selectedFaults.OTHERS = 0;
+          if (otherButton) otherButton.classList.add('active');
+          if (otherInput) {
+            otherInput.hidden = false;
+            otherInput.focus();
+          }
+        }
+        recalcPoints();
+        window.updateActionButtons();
       };
 
       function recalcPoints() {
@@ -2761,6 +2848,17 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         const rejectQty = parseFloat(rejInput?.value) || 0;
         const updateQty = parseFloat(updateEl?.value) || 0;
         const rejectExceedsMain = rejectQty > mainQty;
+        const hasSelectedFault = Object.keys(selectedFaults).length > 0;
+        const otherInput = document.getElementById('otherFaultInput');
+        const hasOtherFault = Object.prototype.hasOwnProperty.call(selectedFaults, 'OTHERS');
+        const otherFaultMissing = hasOtherFault && !String(otherInput?.value || '').trim();
+        const faultError = document.getElementById('faultSelectionError');
+        if (faultError) {
+          faultError.style.display = hasSelectedFault && !otherFaultMissing ? 'none' : 'block';
+          faultError.textContent = !hasSelectedFault
+            ? 'Select at least one fabric fault to enable Save Inspection.'
+            : (otherFaultMissing ? 'Describe the selected Others fault to enable Save Inspection.' : '');
+        }
 
         if (rejectQty > 0 && updateQty > 0) {
           actionContainer.innerHTML = `
@@ -2780,7 +2878,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
           actionContainer.innerHTML = `
             <div class="action-card">
               <button class="btn-action production inspection-save-btn" id="saveBtn" onclick="window.saveInspectionRecord(false)">
-                <i class="fa-solid fa-floppy-disk me-1"></i> Save Inspection Record
+                <i class="fa-solid fa-floppy-disk me-1"></i> Save Inspection
               </button>
               <button class="btn-action cancel" onclick="window.location.reload()">
                 <i class="fa-solid fa-rotate-left me-1"></i> Reset / Scan New Roll
@@ -2790,7 +2888,7 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         }
 
         actionContainer.querySelectorAll('.inspection-save-btn').forEach(button => {
-          button.disabled = rejectExceedsMain;
+          button.disabled = rejectExceedsMain || !hasSelectedFault || otherFaultMissing;
         });
       };
 
@@ -2832,6 +2930,18 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         const mainQty   = parseFloat(document.getElementById('mainQtyInput')?.value)   || 0;
         const rejectQty = parseFloat(document.getElementById('rejectQtyInput')?.value) || 0;
         const updateQty = Math.max(0, mainQty - rejectQty);
+        const otherInput = document.getElementById('otherFaultInput');
+        const otherDescription = String(otherInput?.value || '').trim();
+        const hasOtherFault = Object.prototype.hasOwnProperty.call(selectedFaults, 'OTHERS');
+
+        if (Object.keys(selectedFaults).length === 0) {
+          showInspectionError('Select at least one fabric fault before saving inspection.', 'faultSelectionError');
+          return;
+        }
+        if (hasOtherFault && !otherDescription) {
+          showInspectionError('Enter a description for the selected Others fault.', 'otherFaultInput');
+          return;
+        }
 
         if (mainQty <= 0) {
           alert('Please enter a valid Main Quantity (must be > 0).');
@@ -2879,6 +2989,10 @@ if ($active_operator && ($active_operator['role'] ?? '') !== 'qc') {
         addField('MAIN_QTY',   mainQty.toFixed(2));
         addField('REJECT_QTY', rejectQty.toFixed(2));
         addField('UPDATE_QTY', updateQty.toFixed(2));
+        if (hasOtherFault) {
+          addField('DEFECT_OTHERS', '1');
+          addField('OTHERS', otherDescription);
+        }
 
         const isLycra = !!selectedFaults['LYCOUT'];
         const gradeText = document.getElementById('calc_grade')?.textContent || '';
