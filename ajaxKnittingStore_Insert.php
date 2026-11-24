@@ -186,6 +186,9 @@ $insertSql = "INSERT INTO knitting_store
 
 $duplicateCheck = null;
 $insertStatement = null;
+$updateStatement = null;
+$existingRolls = [];
+$updatedCount = 0;
 try {
     if (!mysqli_begin_transaction($db)) {
         throw new Exception('Unable to start store transaction: ' . mysqli_error($db));
@@ -208,7 +211,7 @@ try {
         }
         $fetchResult = mysqli_stmt_fetch($duplicateCheck);
         if ($fetchResult === true) {
-            throw new RuntimeException('ROLL_ALREADY_STORED:' . $roll);
+            $existingRolls[strtoupper($roll)] = true;
         }
         if ($fetchResult === false) {
             throw new Exception('Unable to read existing Roll ' . $roll . ': ' . mysqli_stmt_error($duplicateCheck));
@@ -226,12 +229,33 @@ try {
         throw new Exception('Unable to prepare store insert: ' . mysqli_error($db));
     }
 
+    $updateStatement = mysqli_prepare(
+        $db,
+        'UPDATE knitting_store SET RACKNO = ?, RACKLOCATION = ? WHERE TRIM(ROLL) = ?'
+    );
+    if (!$updateStatement) {
+        throw new Exception('Unable to prepare rack location update: ' . mysqli_error($db));
+    }
+
     foreach ($items as $item) {
-        insertKnittingStoreRoll($insertStatement, $item, $rackNo, $rackLocation, $uname, $uid);
+        $roll = trim((string) $item['ROLL']);
+        if (isset($existingRolls[strtoupper($roll)])) {
+            mysqli_stmt_bind_param($updateStatement, 'sss', $rackNo, $rackLocation, $roll);
+            if (!mysqli_stmt_execute($updateStatement)) {
+                throw new Exception('Unable to update rack location for Roll ' . $roll . ': ' . mysqli_stmt_error($updateStatement));
+            }
+            if (mysqli_stmt_affected_rows($updateStatement) > 0) {
+                $updatedCount++;
+            }
+        } else {
+            insertKnittingStoreRoll($insertStatement, $item, $rackNo, $rackLocation, $uname, $uid);
+        }
     }
 
     mysqli_stmt_close($insertStatement);
     $insertStatement = null;
+    mysqli_stmt_close($updateStatement);
+    $updateStatement = null;
     if (!mysqli_commit($db)) {
         throw new Exception('Unable to commit store batch: ' . mysqli_error($db));
     }
@@ -243,15 +267,10 @@ try {
     if ($insertStatement instanceof mysqli_stmt) {
         mysqli_stmt_close($insertStatement);
     }
-    $message = $e->getMessage();
-    if (strpos($message, 'ROLL_ALREADY_STORED:') === 0) {
-        $roll = substr($message, strlen('ROLL_ALREADY_STORED:'));
-        respond([
-            'success' => false,
-            'messager_exist' => true,
-            'error' => 'Data already exists for Roll ' . $roll . ' in Knitting Store.'
-        ], 409);
+    if ($updateStatement instanceof mysqli_stmt) {
+        mysqli_stmt_close($updateStatement);
     }
+    $message = $e->getMessage();
     if (strpos($message, 'ROLL_NOT_QC_PASSED:') === 0) {
         $roll = substr($message, strlen('ROLL_NOT_QC_PASSED:'));
         respond([
@@ -276,6 +295,9 @@ try {
     if ($insertStatement instanceof mysqli_stmt) {
         mysqli_stmt_close($insertStatement);
     }
+    if ($updateStatement instanceof mysqli_stmt) {
+        mysqli_stmt_close($updateStatement);
+    }
     error_log('Knitting Store batch insert failed: ' . $e->getMessage());
     respond(['success' => false, 'error' => $e->getMessage()], 500);
 }
@@ -284,5 +306,7 @@ $storedCount = count($items);
 respond([
     'success' => true,
     'stored' => $storedCount,
-    'message' => $storedCount . ' roll(s) stored successfully - Rack No: ' . $rackNo . ', Location: ' . $rackLocation
+    'updated' => $updatedCount,
+    'message' => $storedCount . ' roll(s) assigned to Rack No: ' . $rackNo . ', Location: ' . $rackLocation .
+        ($updatedCount ? ' (' . $updatedCount . ' existing roll location(s) updated).' : '.')
 ]);

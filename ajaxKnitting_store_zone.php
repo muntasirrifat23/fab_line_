@@ -68,7 +68,7 @@ function ensureRollNotInZone($db, $roll)
 {
     $statement = mysqli_prepare($db, 'SELECT KSZTID FROM knitting_store_zone WHERE TRIM(ROLL) = ? LIMIT 1');
     if (!$statement) {
-        throw new RuntimeException('Unable to prepare the Store Common Zone duplicate check: ' . mysqli_error($db));
+        throw new RuntimeException('Unable to prepare the Knitting Store Common Zone duplicate check: ' . mysqli_error($db));
     }
     mysqli_stmt_bind_param($statement, 's', $roll);
     if (!mysqli_stmt_execute($statement)) {
@@ -132,7 +132,7 @@ function storeInspectionRollInZone($statement, $row, $uname, $uid)
     unset($value);
 
     if (!call_user_func_array([$statement, 'bind_param'], $references)) {
-        throw new RuntimeException('Unable to bind Store Common Zone values: ' . mysqli_stmt_error($statement));
+        throw new RuntimeException('Unable to bind Knitting Store Common Zone values: ' . mysqli_stmt_error($statement));
     }
     if (!mysqli_stmt_execute($statement)) {
         throw new RuntimeException('Unable to store Roll ' . $values[1] . ': ' . mysqli_stmt_error($statement));
@@ -159,21 +159,21 @@ if ($action === 'get_by_roll') {
     } catch (RuntimeException $e) {
         $message = $e->getMessage();
         if (strpos($message, 'ROLL_ALREADY_IN_ZONE:') === 0) {
-            respondStoreZone(['success' => false, 'error' => 'Roll ' . $roll . ' is already stored in the Common Zone.'], 409);
+            respondStoreZone(['success' => false, 'error' => 'Roll ' . $roll . ' is already stored in Knitting Store Common Zone.'], 409);
         }
         if (strpos($message, 'ROLL_NOT_FOUND:') === 0) {
             respondStoreZone(['success' => false, 'error' => 'Roll ' . $roll . ' was not found in Knitting Inspection.'], 404);
         }
         if (strpos($message, 'ROLL_NOT_QC_PASSED:') === 0) {
-            respondStoreZone(['success' => false, 'error' => 'Roll ' . $roll . ' has not passed QC and cannot be stored in the Common Zone.'], 422);
+            respondStoreZone(['success' => false, 'error' => 'Roll ' . $roll . ' has not passed QC and cannot be stored in Knitting Store Common Zone.'], 422);
         }
-        error_log('Store Common Zone lookup failed: ' . $message);
+        error_log('Knitting Store Common Zone lookup failed: ' . $message);
         respondStoreZone(['success' => false, 'error' => 'Unable to load inspection data for this roll.'], 500);
     }
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || $action !== 'insert_zone') {
-    respondStoreZone(['success' => false, 'error' => 'Invalid Store Common Zone request.'], 400);
+    respondStoreZone(['success' => false, 'error' => 'Invalid Knitting Store Common Zone request.'], 400);
 }
 
 $input = json_decode(file_get_contents('php://input'), true);
@@ -225,13 +225,13 @@ $insertStatement = null;
 $transactionStarted = false;
 try {
     if (!mysqli_begin_transaction($db)) {
-        throw new RuntimeException('Unable to start Store Common Zone transaction: ' . mysqli_error($db));
+        throw new RuntimeException('Unable to start Knitting Store Common Zone transaction: ' . mysqli_error($db));
     }
     $transactionStarted = true;
 
     $insertStatement = mysqli_prepare($db, $insertSql);
     if (!$insertStatement) {
-        throw new RuntimeException('Unable to prepare Store Common Zone insert: ' . mysqli_error($db));
+        throw new RuntimeException('Unable to prepare Knitting Store Common Zone insert: ' . mysqli_error($db));
     }
 
     foreach ($rolls as $roll) {
@@ -243,7 +243,7 @@ try {
     mysqli_stmt_close($insertStatement);
     $insertStatement = null;
     if (!mysqli_commit($db)) {
-        throw new RuntimeException('Unable to commit Store Common Zone batch: ' . mysqli_error($db));
+        throw new RuntimeException('Unable to commit Knitting Store Common Zone batch: ' . mysqli_error($db));
     }
     $transactionStarted = false;
 } catch (RuntimeException $e) {
@@ -257,7 +257,7 @@ try {
     $message = $e->getMessage();
     if (strpos($message, 'ROLL_ALREADY_IN_ZONE:') === 0) {
         $roll = substr($message, strlen('ROLL_ALREADY_IN_ZONE:'));
-        respondStoreZone(['success' => false, 'error' => 'Roll ' . $roll . ' is already stored in the Common Zone.'], 409);
+        respondStoreZone(['success' => false, 'error' => 'Roll ' . $roll . ' is already stored in Knitting Store Common Zone.'], 409);
     }
     if (strpos($message, 'ROLL_NOT_FOUND:') === 0) {
         $roll = substr($message, strlen('ROLL_NOT_FOUND:'));
@@ -265,14 +265,14 @@ try {
     }
     if (strpos($message, 'ROLL_NOT_QC_PASSED:') === 0) {
         $roll = substr($message, strlen('ROLL_NOT_QC_PASSED:'));
-        respondStoreZone(['success' => false, 'error' => 'Roll ' . $roll . ' has not passed QC and cannot be stored in the Common Zone.'], 422);
+        respondStoreZone(['success' => false, 'error' => 'Roll ' . $roll . ' has not passed QC and cannot be stored in Knitting Store Common Zone.'], 422);
     }
-    error_log('Store Common Zone insert failed: ' . $message);
+    error_log('Knitting Store Common Zone insert failed: ' . $message);
     respondStoreZone(['success' => false, 'error' => $message], 500);
 }
 
 respondStoreZone([
     'success' => true,
     'stored' => count($rolls),
-    'message' => count($rolls) . ' roll(s) stored in Common Zone.'
+    'message' => count($rolls) . ' roll(s) stored in Knitting Store Common Zone.'
 ]);

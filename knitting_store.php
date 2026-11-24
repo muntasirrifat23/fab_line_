@@ -11,10 +11,12 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><?php echo $isStoreZone ? 'Store Common Zone' : 'Knitting | Store'; ?></title>
+  <title><?php echo $isStoreZone ? 'Knitting Store Common Zone' : 'Knitting | Store'; ?></title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <?php if ($isStoreZone): ?>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <?php endif; ?>
   <style>
     * {
       box-sizing: border-box;
@@ -1104,19 +1106,388 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
         flex: 1;
       }
     }
+
+    .card.store-inventory-card {
+      max-width: none;
+      width: 100%;
+      height: 100vh;
+      min-height: 0;
+      padding: 12px 16px;
+      border: 0;
+      border-radius: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    body.store-inventory-body {
+      height: 100vh;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .store-page-header.inventory-page-header {
+      flex: 0 0 auto;
+      grid-template-columns: auto 1fr;
+      margin-bottom: 8px;
+      padding: 8px 12px;
+      border: 0;
+      border-radius: 8px;
+    }
+
+    .store-page-header.inventory-page-header h1 {
+      grid-column: 2;
+    }
+
+    .store-inventory {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      gap: 6px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .store-inventory-controls {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      flex: 0 0 auto;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .store-search-panel {
+      display: flex;
+      min-width: 0;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .store-search-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .store-search-row input {
+      width: 100%;
+      min-width: 0;
+      min-height: 46px;
+      padding: 10px 14px;
+      border: 1px solid #9dbbb5;
+      border-radius: 9px;
+      background: #fff;
+      font-size: 1rem;
+    }
+
+    .store-search-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .store-search-actions button,
+    .store-rack-panel button {
+      min-height: 44px;
+      padding: 10px 18px;
+      border: 0;
+      border-radius: 9px;
+      background: #087f70;
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .store-search-actions .store-clear-button {
+      background: #526b68;
+    }
+
+    @media (max-width: 900px) {
+      .store-inventory-controls {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .store-search-row {
+        flex-direction: row;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      .store-search-row input {
+        flex: 0 0 50%;
+        width: 50%;
+      }
+
+      .store-search-actions {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .store-search-actions button {
+        flex: 1;
+        min-width: 0;
+        padding: 8px;
+        white-space: nowrap;
+      }
+    }
+
+    .store-rack-panel button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .store-rack-panel {
+      display: grid;
+      grid-template-columns: minmax(135px, 0.8fr) minmax(170px, 1.2fr);
+      align-items: start;
+      gap: 10px;
+      min-width: 0;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+    }
+
+    .store-rack-primary {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .store-rack-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .store-rack-field label,
+    .store-rack-label {
+      color: #174e46;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .store-rack-field select {
+      width: 100%;
+      min-height: 44px;
+      padding: 8px 10px;
+      border: 1px solid #9dbbb5;
+      border-radius: 8px;
+      background: #fff;
+      font-size: 1rem;
+    }
+
+    .store-rack-locations {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 5px;
+    }
+
+    .store-rack-panel .store-rack-location-button {
+      min-height: 34px;
+      padding: 5px 8px;
+      border: 1px solid #b5d8d2;
+      background: #fff;
+      color: #174e46;
+      font-size: 0.9rem;
+    }
+
+    .store-rack-panel .store-rack-location-button.active {
+      border-color: #087f70;
+      background: #087f70;
+      color: #fff;
+    }
+
+    .store-list-message {
+      min-height: 18px;
+      color: #28504a;
+      font-weight: 600;
+    }
+
+    .store-list-message.error {
+      color: #b42318;
+    }
+
+    .store-table-wrap {
+      width: 100%;
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      border: 0;
+      border-top: 1px solid #b5d8d2;
+      border-radius: 0;
+      background: #fff;
+    }
+
+    .store-list-table {
+      width: 100%;
+      min-width: 1600px;
+      border-collapse: separate;
+      border-spacing: 0;
+      color: #173b37;
+      font-size: 0.9rem;
+    }
+
+    .store-list-table th,
+    .store-list-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid #e1ece9;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .store-list-table th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #c2ded7;
+      color: #164b42;
+      font-weight: 800;
+    }
+
+    .store-list-table th:first-child,
+    .store-list-table td:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      width: 48px;
+      text-align: center;
+      background: #f4faf8;
+    }
+
+    .store-list-table th:first-child {
+      z-index: 3;
+      background: #c2ded7;
+    }
+
+    .store-list-table input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #087f70;
+      cursor: pointer;
+    }
+
+    .store-list-table input[type="checkbox"]:disabled {
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 640px) {
+      body.store-inventory-body {
+        padding: 0;
+      }
+
+      .card.store-inventory-card {
+        height: 100vh;
+        padding: 8px 10px;
+      }
+
+      .store-rack-panel {
+        grid-template-columns: minmax(130px, 0.8fr) minmax(160px, 1.2fr);
+      }
+
+      .store-rack-primary .store-save-button {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .store-rack-panel {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
   </style>
 </head>
 
-<body>
-  <div class="card">
-    <div class="knitting-page-header store-page-header">
+<body class="<?php echo $isStoreZone ? '' : 'store-inventory-body'; ?>">
+  <div class="card<?php echo $isStoreZone ? '' : ' store-inventory-card'; ?>">
+    <div class="knitting-page-header store-page-header<?php echo $isStoreZone ? '' : ' inventory-page-header'; ?>">
       <a class="knitting-header-back" href="initialPage.php">← Back</a>
-      <h1><?php echo $isStoreZone ? 'Store Common Zone' : 'Knitting Store'; ?></h1>
-      <button type="button" class="knitting-header-refresh" id="pageRefreshBtn" title="Reload the full page">
-        <i class="fa-solid fa-rotate-right"></i> Refresh
-      </button>
+      <h1><?php echo $isStoreZone ? 'Knitting Store Common Zone' : 'Knitting Store'; ?></h1>
+      <?php if ($isStoreZone): ?>
+        <button type="button" class="knitting-header-refresh" id="pageRefreshBtn" title="Reload the full page">
+          <i class="fa-solid fa-rotate-right"></i> Refresh
+        </button>
+      <?php endif; ?>
     </div>
 
+    <?php if (!$isStoreZone): ?>
+      <section class="store-inventory" id="storeInventory">
+        <div class="store-inventory-controls">
+          <div class="store-search-panel">
+            <div class="store-search-row">
+              <input type="search" id="storeSearchInput" autocomplete="off"
+                placeholder="Search SONO, PO Number, Buyer, Style, Color or Fabrics Type">
+              <div class="store-search-actions">
+                <button type="button" id="storeSearchButton"><i class="fas fa-search"></i> Search</button>
+                <button type="button" class="store-clear-button" id="storeClearSearchButton">Clear</button>
+              </div>
+            </div>
+            <div class="store-list-message" id="storeListMessage" role="status" aria-live="polite"></div>
+          </div>
+          <div class="store-rack-panel" id="storeRackPanel">
+            <div class="store-rack-primary">
+              <div class="store-rack-field">
+                <select id="storeRackNumber" disabled>
+                  <option value="">Select Rack No</option>
+                  <?php for ($rackNumber = 1; $rackNumber <= 50; $rackNumber++): ?>
+                    <option value="<?php echo str_pad((string) $rackNumber, 2, '0', STR_PAD_LEFT); ?>">
+                      <?php echo str_pad((string) $rackNumber, 2, '0', STR_PAD_LEFT); ?>
+                    </option>
+                  <?php endfor; ?>
+                </select>
+              </div>
+              <button type="button" class="store-save-button" id="storeSaveButton" disabled>
+                <i class="fas fa-save"></i> Store Selected Rolls
+              </button>
+            </div>
+            <div class="store-rack-field">
+              <div class="store-rack-locations" id="storeRackLocations" role="group" aria-label="Rack Location">
+                <?php foreach (['A3', 'B3', 'C3', 'A2', 'B2', 'C2', 'A1', 'B1', 'C1'] as $rackLocation): ?>
+                  <button type="button" class="store-rack-location-button" data-location="<?php echo $rackLocation; ?>"
+                    aria-pressed="false" disabled><?php echo $rackLocation; ?></button>
+                <?php endforeach; ?>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="store-table-wrap">
+          <table class="store-list-table" aria-label="Knitting Store Common Zone rolls">
+            <thead>
+              <tr>
+                <th>Select</th>
+                <th>Roll</th>
+                <th>PO Number</th>
+                <th>Color</th>
+                <th>QTY</th>
+                <th>MCNO</th>
+                <th>SONO</th>
+                <th>Buyer</th>
+                <th>Style</th>
+                <th>MC Dia</th>
+                <th>Customer</th>
+                <th>O / T</th>
+                <th>SL/VQ</th>
+                <th>Fabrics Type</th>
+                <th>Finish GSM</th>
+                <th>Finish Dia</th>
+                <th>Yarn Type</th>
+                <th>Yarn Count</th>
+                <th>Yarn Brand</th>
+              </tr>
+            </thead>
+            <tbody id="storeRows">
+              <tr><td colspan="19">Loading Knitting Store Common Zone rolls...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    <?php endif; ?>
+
+    <?php if ($isStoreZone): ?>
     <div class="scanner-container" id="scannerContainer">
       <div id="qr-reader"></div>
       <div class="scan-overlay"></div>
@@ -1199,9 +1570,210 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
       </div>
       <div id="message"></div>
     </div>
+    <?php endif; ?>
 
   </div>
 
+  <?php if (!$isStoreZone): ?>
+  <script>
+    (function() {
+      "use strict";
+
+      const searchInput = document.getElementById('storeSearchInput');
+      const searchButton = document.getElementById('storeSearchButton');
+      const clearSearchButton = document.getElementById('storeClearSearchButton');
+      const rackNumber = document.getElementById('storeRackNumber');
+      const rackLocationButtons = document.querySelectorAll('.store-rack-location-button');
+      const saveButton = document.getElementById('storeSaveButton');
+      const rowsContainer = document.getElementById('storeRows');
+      const message = document.getElementById('storeListMessage');
+      const selectedRolls = new Map();
+      let currentRows = [];
+      let requestNumber = 0;
+      let isSaving = false;
+      let selectedRackLocation = '';
+
+      const columns = [
+        ['ROLL', 'ROLL'], ['PO_NUMBER', 'PO_NUMBER'], ['COLOR', 'COLOR'], ['QTY', 'QTY'],
+        ['MCNO', 'MCNO'], ['SONO', 'SONO'], ['BUYER', 'BUYER'], ['STYLE', 'STYLE'],
+        ['MCDIA', 'MCDIA'], ['CUSTOMER', 'CUSTOMER'], ['O_T', 'O_T'], ['SL', 'SL'],
+        ['FTYPE', 'FTYPE'], ['FGSM', 'FGSM'], ['FDIA', 'FDIA'], ['YTYPE', 'YTYPE'],
+        ['YCOUNT', 'YCOUNT'], ['YBRAND', 'YBRAND']
+      ];
+
+      function escapeHtml(value) {
+        return String(value === null || value === undefined ? '' : value).replace(/[&<>"']/g, function(char) {
+          return {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+          }[char];
+        });
+      }
+
+      function showMessage(text, isError) {
+        message.textContent = text || '';
+        message.classList.toggle('error', Boolean(isError));
+      }
+
+      function updateSelectionState() {
+        if (!selectedRolls.size) {
+          rackNumber.value = '';
+          selectedRackLocation = '';
+        }
+        const hasSelection = selectedRolls.size > 0;
+        rackNumber.disabled = !hasSelection || isSaving;
+        rackLocationButtons.forEach(function(button) {
+          button.disabled = !hasSelection || isSaving;
+          button.classList.toggle('active', button.dataset.location === selectedRackLocation);
+          button.setAttribute('aria-pressed', button.dataset.location === selectedRackLocation ? 'true' : 'false');
+        });
+        saveButton.disabled = !hasSelection || isSaving || !rackNumber.value || !selectedRackLocation;
+        rowsContainer.querySelectorAll('.store-row-checkbox').forEach(function(checkbox) {
+          checkbox.disabled = isSaving;
+        });
+      }
+
+      function renderRows(rows) {
+        currentRows = rows;
+        if (!rows.length) {
+          rowsContainer.innerHTML = '<tr><td colspan="19">No Knitting Store Common Zone rolls found.</td></tr>';
+          updateSelectionState();
+          return;
+        }
+
+        rowsContainer.innerHTML = rows.map(function(row) {
+          const roll = String(row.ROLL || '');
+          const cells = columns.map(function(column) {
+            const value = row[column[0]];
+            return '<td>' + escapeHtml(value === null || value === undefined || value === '' ? '-' : value) + '</td>';
+          }).join('');
+          return '<tr><td><input type="checkbox" class="store-row-checkbox" data-roll="' + escapeHtml(roll) + '"' +
+            (selectedRolls.has(roll) ? ' checked' : '') +
+            ' aria-label="Select roll ' + escapeHtml(roll) + '"></td>' + cells + '</tr>';
+        }).join('');
+
+        rowsContainer.querySelectorAll('.store-row-checkbox').forEach(function(checkbox) {
+          checkbox.addEventListener('change', function() {
+            const row = currentRows.find(function(item) {
+              return String(item.ROLL) === checkbox.dataset.roll;
+            });
+            if (!row) return;
+            if (checkbox.checked) selectedRolls.set(String(row.ROLL), row);
+            else selectedRolls.delete(String(row.ROLL));
+            updateSelectionState();
+          });
+        });
+        updateSelectionState();
+      }
+
+      function loadRows() {
+        if (isSaving) return;
+        const thisRequest = ++requestNumber;
+        searchButton.disabled = true;
+        clearSearchButton.disabled = true;
+        showMessage('Loading Knitting Store Common Zone rolls...');
+        fetch('ajaxKnitting_store.php?action=available_rolls&search=' + encodeURIComponent(searchInput.value.trim()))
+          .then(function(response) {
+            return response.json().then(function(data) {
+              if (!response.ok || !data.success) {
+                throw new Error(data.error || data.message || 'Unable to load Knitting Store Common Zone rolls.');
+              }
+              return data;
+            });
+          })
+          .then(function(data) {
+            if (thisRequest !== requestNumber) return;
+            renderRows(Array.isArray(data.data) ? data.data : []);
+            showMessage(data.data.length + ' roll(s) found.');
+          })
+          .catch(function(error) {
+            if (thisRequest !== requestNumber) return;
+            rowsContainer.innerHTML = '<tr><td colspan="19">Could not load rolls.</td></tr>';
+            showMessage(error.message || 'Unable to load Knitting Store Common Zone rolls.', true);
+          })
+          .finally(function() {
+            if (thisRequest === requestNumber) {
+              searchButton.disabled = isSaving;
+              clearSearchButton.disabled = isSaving;
+            }
+          });
+      }
+
+      searchButton.addEventListener('click', loadRows);
+      searchInput.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') loadRows();
+      });
+      clearSearchButton.addEventListener('click', function() {
+        searchInput.value = '';
+        loadRows();
+      });
+
+      rackNumber.addEventListener('change', updateSelectionState);
+      rackLocationButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+          if (button.disabled) return;
+          selectedRackLocation = button.dataset.location;
+          updateSelectionState();
+        });
+      });
+
+      saveButton.addEventListener('click', function() {
+        if (isSaving) return;
+        const items = Array.from(selectedRolls.values());
+        if (!items.length || !rackNumber.value || !selectedRackLocation) return;
+
+        isSaving = true;
+        searchButton.disabled = true;
+        clearSearchButton.disabled = true;
+        updateSelectionState();
+        saveButton.disabled = true;
+        saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        showMessage('Saving selected rolls to Knitting Store...');
+        fetch('ajaxKnittingStore_Insert.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            items: items,
+            RACKNO: rackNumber.value,
+            RACKLOCATION: selectedRackLocation
+          })
+        })
+          .then(function(response) {
+            return response.json().then(function(data) {
+              if (!response.ok || !data.success) {
+                throw new Error(data.error || data.message || 'Unable to store selected rolls.');
+              }
+              return data;
+            });
+          })
+          .then(function(data) {
+            items.forEach(function(row) { selectedRolls.delete(String(row.ROLL)); });
+            rackNumber.value = '';
+            selectedRackLocation = '';
+            showMessage(data.message || data.stored + ' roll(s) stored successfully.');
+            renderRows(currentRows);
+          })
+          .catch(function(error) {
+            showMessage(error.message || 'Unable to store selected rolls.', true);
+          })
+          .finally(function() {
+            isSaving = false;
+            saveButton.innerHTML = '<i class="fas fa-save"></i> Store Selected Rolls';
+            updateSelectionState();
+            searchButton.disabled = false;
+            clearSearchButton.disabled = false;
+          });
+      });
+
+      loadRows();
+    })();
+  </script>
+  <?php endif; ?>
+
+  <?php if ($isStoreZone): ?>
   <script>
     (function() {
       "use strict";
@@ -1433,7 +2005,7 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
         showRackSection();
         let html = `
           <div class="scan-preview-summary">
-            ${scannedRolls.length} roll${scannedRolls.length === 1 ? '' : 's'} ${isZoneMode ? 'ready to store in Common Zone.' : 'ready — choose one rack location for all rolls.'}
+            ${scannedRolls.length} roll${scannedRolls.length === 1 ? '' : 's'} ${isZoneMode ? 'ready to store in Knitting Store Common Zone.' : 'ready — choose one rack location for all rolls.'}
           </div>
           <div class="scan-preview-wrap">
             <table class="scan-preview-table" aria-label="Scanned roll preview">
@@ -1925,13 +2497,13 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
           .then(function(resp) {
             const storedCount = Number(resp.stored) || rollsToSave.length;
             const successMessage = isZoneMode
-              ? storedCount + ' roll(s) stored in Common Zone.'
+              ? storedCount + ' roll(s) stored in Knitting Store Common Zone.'
               : storedCount + ' roll(s) stored in Rack ' + rackno.padStart(2, '0') + racklocation;
 
             if (typeof Swal !== "undefined") {
               Swal.fire({
                 icon: "success",
-                title: isZoneMode ? "Store Zone Complete!" : "All Rolls Stored!",
+                title: isZoneMode ? "Knitting Store Common Zone Complete!" : "All Rolls Stored!",
                 text: successMessage,
                 timer: 3000,
                 timerProgressBar: true,
@@ -2232,6 +2804,7 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
 
     })();
   </script>
+  <?php endif; ?>
 </body>
 
 </html>

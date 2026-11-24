@@ -16,7 +16,54 @@ if (!isset($db) || !$db) {
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 $TABLE = 'knitting_inspection';
 
-if ($action === 'search') {
+if ($action === 'available_rolls') {
+    $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+    $sql = "SELECT z.*
+            FROM knitting_store_zone z
+            WHERE (? = ''
+                OR CONVERT(z.SONO USING utf8mb4) COLLATE utf8mb4_unicode_ci
+                    LIKE CONVERT(CONCAT('%', ?, '%') USING utf8mb4) COLLATE utf8mb4_unicode_ci
+                OR CONVERT(z.PO_NUMBER USING utf8mb4) COLLATE utf8mb4_unicode_ci
+                    LIKE CONVERT(CONCAT('%', ?, '%') USING utf8mb4) COLLATE utf8mb4_unicode_ci
+                OR CONVERT(z.BUYER USING utf8mb4) COLLATE utf8mb4_unicode_ci
+                    LIKE CONVERT(CONCAT('%', ?, '%') USING utf8mb4) COLLATE utf8mb4_unicode_ci
+                OR CONVERT(z.STYLE USING utf8mb4) COLLATE utf8mb4_unicode_ci
+                    LIKE CONVERT(CONCAT('%', ?, '%') USING utf8mb4) COLLATE utf8mb4_unicode_ci
+                OR CONVERT(z.COLOR USING utf8mb4) COLLATE utf8mb4_unicode_ci
+                    LIKE CONVERT(CONCAT('%', ?, '%') USING utf8mb4) COLLATE utf8mb4_unicode_ci
+                OR CONVERT(z.FTYPE USING utf8mb4) COLLATE utf8mb4_unicode_ci
+                    LIKE CONVERT(CONCAT('%', ?, '%') USING utf8mb4) COLLATE utf8mb4_unicode_ci)
+            ORDER BY z.KSZTID DESC";
+    $statement = mysqli_prepare($db, $sql);
+    if (!$statement) {
+        echo json_encode(['success' => false, 'error' => 'Unable to prepare Store Common Zone search: ' . mysqli_error($db)]);
+        exit;
+    }
+
+    mysqli_stmt_bind_param($statement, 'sssssss', $search, $search, $search, $search, $search, $search, $search);
+    if (!mysqli_stmt_execute($statement)) {
+        $error = mysqli_stmt_error($statement);
+        mysqli_stmt_close($statement);
+        echo json_encode(['success' => false, 'error' => 'Unable to load Store Common Zone rolls: ' . $error]);
+        exit;
+    }
+
+    $result = mysqli_stmt_get_result($statement);
+    if (!$result) {
+        $error = mysqli_stmt_error($statement);
+        mysqli_stmt_close($statement);
+        echo json_encode(['success' => false, 'error' => 'Unable to read Store Common Zone rolls: ' . $error]);
+        exit;
+    }
+
+    $data = [];
+    while ($row = mysqli_fetch_assoc($result)) {
+        $data[] = $row;
+    }
+    mysqli_stmt_close($statement);
+    echo json_encode(['success' => true, 'data' => $data]);
+
+} elseif ($action === 'search') {
     // Search by ROLL or PO_NUMBER
     $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 
