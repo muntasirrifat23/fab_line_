@@ -56,8 +56,6 @@ if ($action === 'search') {
     }
 
     $rollEsc = mysqli_real_escape_string($db, $roll);
-    $cleanRoll = preg_replace('/-(R|P)$/i', '', $roll);
-
     // If the roll is already stored in knitting_store, do NOT show data again
     $storeRes = mysqli_query($db, "SELECT ROLL FROM knitting_store WHERE TRIM(ROLL) = '$rollEsc' LIMIT 1");
     if (!$storeRes) {
@@ -69,11 +67,11 @@ if ($action === 'search') {
         exit;
     }
 
-    // Search the exact roll first, using the latest inspection record when duplicates exist.
-    $sql = "SELECT * FROM $TABLE WHERE TRIM(ROLL) = '$rollEsc' ORDER BY KITID DESC LIMIT 1";
+    // Knitting Store receives rolls from the already-populated Common Zone.
+    $sql = "SELECT * FROM knitting_store_zone WHERE TRIM(ROLL) = '$rollEsc' ORDER BY KSZTID DESC LIMIT 1";
     $result = mysqli_query($db, $sql);
     if (!$result) {
-        echo json_encode(['success' => false, 'error' => 'Unable to match this roll in Knitting Inspection: ' . mysqli_error($db)]);
+        echo json_encode(['success' => false, 'error' => 'Unable to match this roll in Store Common Zone: ' . mysqli_error($db)]);
         exit;
     }
 
@@ -82,43 +80,20 @@ if ($action === 'search') {
         if ($data) {
             $qcStatus = strtolower(trim((string) (isset($data['QC_STATUS']) ? $data['QC_STATUS'] : '')));
             if ($qcStatus !== 'passed') {
-                $qcGrade = strtolower(trim((string) (isset($data['QC_GRADE']) ? $data['QC_GRADE'] : '')));
-                $qcResult = (strpos($qcStatus, 'reject') !== false || strpos($qcGrade, 'reject') !== false)
-                    ? 'Rejected'
-                    : 'Failed';
                 echo json_encode([
                     'success' => false,
-                    'error' => "Roll $roll is QC $qcResult and cannot be scanned into Knitting Store."
+                    'error' => "Roll $roll has not passed QC in Store Common Zone and cannot be scanned into Knitting Store."
                 ]);
                 exit;
             }
 
-            unset($data['QC_PASSES']);
-
-            // If scanned roll has -R suffix, adapt roll and weight to Rejection
-            if (preg_match('/-R$/i', $roll)) {
-                $data['ROLL'] = $cleanRoll . '-R';
-                $data['QTY']  = (isset($data['RQTY']) && floatval($data['RQTY']) > 0) ? $data['RQTY'] : (isset($data['OQTY']) && floatval($data['OQTY']) > 0 ? $data['OQTY'] : $data['QTY']);
-                $data['UQTY'] = $data['QTY'];
-                $data['REJECTION_TAG'] = true;
-            } elseif (preg_match('/-P$/i', $roll)) {
-                $data['ROLL'] = $cleanRoll . '-P';
-                $data['QTY']  = (isset($data['UQTY']) && floatval($data['UQTY']) > 0) ? $data['UQTY'] : (isset($data['OQTY']) && floatval($data['OQTY']) > 0 ? $data['OQTY'] : $data['QTY']);
-                $data['UQTY'] = $data['QTY'];
-            } else {
-                $data['ROLL'] = $roll;
-                if (isset($data['UQTY']) && floatval($data['UQTY']) > 0) {
-                    $data['QTY'] = $data['UQTY'];
-                } elseif (isset($data['OQTY']) && floatval($data['OQTY']) > 0) {
-                    $data['QTY'] = $data['OQTY'];
-                }
-            }
+            $data['ROLL'] = $roll;
             echo json_encode(['success' => true, 'data' => $data]);
         } else {
-            echo json_encode(['success' => false, 'error' => "Roll $roll does not match any ROLL in Knitting Inspection."]);
+            echo json_encode(['success' => false, 'error' => "Roll $roll does not match any ROLL in Store Common Zone."]);
         }
     } else {
-        echo json_encode(['success' => false, 'error' => "Roll $roll does not match any ROLL in Knitting Inspection."]);
+        echo json_encode(['success' => false, 'error' => "Roll $roll does not match any ROLL in Store Common Zone."]);
     }
 
 } elseif ($action === 'save_rack') {

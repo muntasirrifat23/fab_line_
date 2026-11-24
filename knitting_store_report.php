@@ -1,10 +1,14 @@
+<?php
+$isStoreZoneReport = isset($isStoreZoneReport) && $isStoreZoneReport === true;
+$storeReportTitle = $isStoreZoneReport ? 'Store Common Zone Report' : 'Knitting Store Report';
+?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Report | Knitting Store Report</title>
+    <title>Report | <?php echo htmlspecialchars($storeReportTitle, ENT_QUOTES, 'UTF-8'); ?></title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <link rel="stylesheet" href="css/bootstrap.min.css">
@@ -677,7 +681,7 @@
                 <i class="fa-solid fa-arrow-left" ></i> Back to Report
             </button>
             <div class="title-tabs">
-                <h1>Knitting Store Report</h1>
+                <h1><?php echo htmlspecialchars($storeReportTitle, ENT_QUOTES, 'UTF-8'); ?></h1>
             </div>
             <div aria-hidden="true"></div>
         </div>
@@ -685,16 +689,20 @@
         <div class="store-report-controls">
             <div class="search-panel">
                 <div class="search-row">
-                    <input type="text" id="bookingInput" placeholder="Search Roll / PO Number / SONO / Buyer / Style / Rack">
+                    <input type="text" id="bookingInput" placeholder="<?php echo $isStoreZoneReport ? 'Search Roll / PO Number / SONO / Buyer / Style' : 'Search Roll / PO Number / SONO / Buyer / Style / Rack'; ?>">
                     <button class="btn btn-search" id="searchBtn"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
                     <button class="btn btn-clear" id="clearBtn"><i class="fa-solid fa-rotate-left"></i> Clear</button>
                 </div>
             </div>
 
             <div class="tab-bar" id="tabBar">
-                <button type="button" class="tab-btn active" data-tab="receive"><i class="fa-solid fa-inbox"></i> Receive</button>
-                <button type="button" class="tab-btn" data-tab="hold"><i class="fa-solid fa-pause-circle"></i> Hold</button>
-                <button type="button" class="tab-btn" data-tab="pending"><i class="fa-solid fa-hourglass-half"></i> Pending</button>
+                <?php if ($isStoreZoneReport): ?>
+                    <button type="button" class="tab-btn active" data-tab="receive"><i class="fa-solid fa-boxes-stacked"></i> Store Zone</button>
+                <?php else: ?>
+                    <button type="button" class="tab-btn active" data-tab="receive"><i class="fa-solid fa-inbox"></i> Receive</button>
+                    <button type="button" class="tab-btn" data-tab="hold"><i class="fa-solid fa-pause-circle"></i> Hold</button>
+                    <button type="button" class="tab-btn" data-tab="pending"><i class="fa-solid fa-hourglass-half"></i> Pending</button>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -708,7 +716,7 @@
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="26" class="loading-cell">Loading data...</td>
+                            <td colspan="<?php echo $isStoreZoneReport ? '27' : '28'; ?>" class="loading-cell">Loading data...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -739,6 +747,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <script>
+        var isStoreZoneReport = <?php echo $isStoreZoneReport ? 'true' : 'false'; ?>;
+        var storeReportTitle = <?php echo json_encode($storeReportTitle); ?>;
         var REPORT_COLS = [
             { key: 'BUDAT', label: 'Date' },
             { key: 'ROLL', label: 'Roll No' },
@@ -771,7 +781,7 @@
 
         var TAB_CONFIG = {
             receive: {
-                endpoint: 'ajaxKnittingStore_Report.php',
+                endpoint: isStoreZoneReport ? 'ajaxKnittingStoreZone_Report.php' : 'ajaxKnittingStore_Report.php',
                 cols: REPORT_COLS,
                 fields: {}
             },
@@ -915,7 +925,7 @@
             var cfg = TAB_CONFIG[tab];
 
             COLS = REPORT_COLS.filter(function(col) {
-                return (col.key !== 'RACK' || tab === 'receive') &&
+                return (col.key !== 'RACK' || (!isStoreZoneReport && tab === 'receive')) &&
                     (col.key !== 'QC_STATUS' || tab === 'receive' || tab === 'hold') &&
                     (col.key !== 'TPOINT' || tab !== 'pending');
             });
@@ -939,7 +949,7 @@
             var content = '' +
                 '<div id="rowPdfCard" style="position:relative;width:760px;min-height:1050px;padding:24px 24px 72px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">' +
                 '<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:3px solid #2563eb;padding-bottom:12px;margin-bottom:18px;">' +
-                '<div style="flex:1;text-align:center;font-size:24px;font-weight:bold;color:#1e3a8a;">Knitting Store Report</div>' +
+                '<div style="flex:1;text-align:center;font-size:24px;font-weight:bold;color:#1e3a8a;">' + esc(storeReportTitle) + '</div>' +
                 '<div class="row-qr-box" style="flex:none;width:120px;height:120px;display:flex;align-items:center;justify-content:center;background:#ffffff;"></div>' +
                 '</div>' +
                 '<div class="pdf-grid">' + rowsHTML + '</div>' +
@@ -1038,7 +1048,7 @@
                 // Identical to the old PDF: A4 portrait, full-width card image at top-left.
                 var doc = iframe.contentWindow.document;
                 doc.open();
-                doc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Knitting Store Report</title><style>' +
+                doc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + esc(storeReportTitle) + '</title><style>' +
                     '@page{size:A4 portrait;margin:0;}' +
                     'html,body{margin:0;padding:0;background:#fff;}' +
                     'img{display:block;width:210mm;height:auto;}' +

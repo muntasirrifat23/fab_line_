@@ -2,6 +2,7 @@
 if (session_status() === PHP_SESSION_NONE) {
   session_start();
 }
+$isStoreZone = isset($knittingStoreMode) && $knittingStoreMode === 'zone';
 unset($_SESSION['knitting_store_manual_entry_authorized']);
 ?>
 <!DOCTYPE html>
@@ -10,7 +11,7 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Knitting | Store</title>
+  <title><?php echo $isStoreZone ? 'Store Common Zone' : 'Knitting | Store'; ?></title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -1110,7 +1111,7 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
   <div class="card">
     <div class="knitting-page-header store-page-header">
       <a class="knitting-header-back" href="initialPage.php">← Back</a>
-      <h1>Knitting Store</h1>
+      <h1><?php echo $isStoreZone ? 'Store Common Zone' : 'Knitting Store'; ?></h1>
       <button type="button" class="knitting-header-refresh" id="pageRefreshBtn" title="Reload the full page">
         <i class="fa-solid fa-rotate-right"></i> Refresh
       </button>
@@ -1155,7 +1156,7 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
         <!-- Default content will be injected by JS -->
       </div>
       <div id="rack-section" class="rack-section" style="display:none;">
-        <div class="rack-selection-grid">
+        <div class="rack-selection-grid" <?php echo $isStoreZone ? 'style="display:none;"' : ''; ?>>
           <div class="rack-selection-field">
             <div class="rack-section-title">
               <i class="fas fa-warehouse"></i>
@@ -1189,7 +1190,7 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
         </div>
         <div class="rack-actions">
           <button class="btn-action save" type="button" id="saveRackBtn" disabled>
-            <i class="fas fa-save"></i> Save Rack
+            <i class="fas fa-save"></i> <?php echo $isStoreZone ? 'Store Zone' : 'Save Rack'; ?>
           </button>
           <button class="btn-action reset" type="button" id="resetRackBtn">
             <i class="fas fa-undo"></i> Reset
@@ -1205,6 +1206,7 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
     (function() {
       "use strict";
 
+      const isZoneMode = <?php echo $isStoreZone ? 'true' : 'false'; ?>;
       const resultContainer = document.getElementById('result-content');
       const resultPanel = document.getElementById('resultPanel');
       const messageContainer = document.getElementById('message');
@@ -1279,11 +1281,19 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
         if (hasLoadedData) return;
         resultPanel.style.display = 'none';
         hideRackSection();
-        saveRackBtn.innerHTML = '<i class="fas fa-save"></i> Save Rack';
+        saveRackBtn.innerHTML = isZoneMode
+          ? getStoreButtonLabel()
+          : '<i class="fas fa-save"></i> Save Rack';
         resultContainer.innerHTML = `
           <div class="data-row header-row"><span class="label">Default Information</span><span class="value"></span></div>
           <div class="data-row default-row"><span class="label">Status</span><span class="value">Scan rolls</span></div>
         `;
+      }
+
+      function getStoreButtonLabel(count) {
+        return isZoneMode
+          ? '<i class="fas fa-save"></i> Store Zone'
+          : '<i class="fas fa-save"></i> Store All Rolls (' + (count || 0) + ')';
       }
 
       function showMessage(msg, type) {
@@ -1423,7 +1433,7 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
         showRackSection();
         let html = `
           <div class="scan-preview-summary">
-            ${scannedRolls.length} roll${scannedRolls.length === 1 ? '' : 's'} ready — choose one rack location for all rolls.
+            ${scannedRolls.length} roll${scannedRolls.length === 1 ? '' : 's'} ${isZoneMode ? 'ready to store in Common Zone.' : 'ready — choose one rack location for all rolls.'}
           </div>
           <div class="scan-preview-wrap">
             <table class="scan-preview-table" aria-label="Scanned roll preview">
@@ -1453,7 +1463,8 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
             renderScannedData();
           });
         });
-        saveRackBtn.innerHTML = '<i class="fas fa-save"></i> Store All Rolls (' + scannedRolls.length + ')';
+        saveRackBtn.innerHTML = getStoreButtonLabel(scannedRolls.length);
+        if (isZoneMode) saveRackBtn.disabled = false;
         return true;
       }
 
@@ -1734,7 +1745,8 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
       function fetchDataByRoll(roll, isManualEntry) {
         return new Promise(function(resolve, reject) {
           const manualQuery = isManualEntry ? '&manual=1' : '';
-          fetch('ajaxKnitting_store.php?action=get_by_roll&roll=' + encodeURIComponent(roll) + manualQuery)
+          const endpoint = isZoneMode ? 'ajaxKnitting_store_zone.php' : 'ajaxKnitting_store.php';
+          fetch(endpoint + '?action=get_by_roll&roll=' + encodeURIComponent(roll) + manualQuery)
             .then(function(r) {
               return r.json();
             })
@@ -1752,13 +1764,14 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
       }
 
       function saveRackData(items, rackno, racklocation) {
-        var payload = {
-          items: items,
-          RACKNO: rackno,
-          RACKLOCATION: racklocation
-        };
+        var endpoint = 'ajaxKnittingStore_Insert.php';
+        var payload = { items: items, RACKNO: rackno, RACKLOCATION: racklocation };
+        if (isZoneMode) {
+          endpoint = 'ajaxKnitting_store_zone.php?action=insert_zone';
+          payload = { action: 'insert_zone', items: items };
+        }
         return new Promise(function(resolve, reject) {
-          fetch('ajaxKnittingStore_Insert.php', {
+          fetch(endpoint, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'
@@ -1869,7 +1882,7 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
       resetRackBtn.addEventListener('click', function() {
         resetRackSelection();
         renderScannedData();
-        showMessage('Rack selection reset.', '');
+        showMessage(isZoneMode ? 'Roll selection reset.' : 'Rack selection reset.', '');
       });
 
       saveRackBtn.addEventListener('click', function() {
@@ -1882,17 +1895,19 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
         const rackno = selectedRack ? String(selectedRack).trim() : '';
         const racklocation = selectedSubRack ? String(selectedSubRack).trim().toUpperCase() : '';
 
-        if (!rackno || Number(rackno) < 1 || Number(rackno) > 50) {
-          showMessage('Please select a Rack Number (01-50) first.', 'error');
-          return;
-        }
-        if (!racklocation) {
-          showMessage('Please select a Rack Location (A1, A2, B3...) first.', 'error');
-          return;
-        }
-        if (!/^[A-C][1-9]$/.test(racklocation)) {
-          showMessage('Invalid Rack Location. Use format like A1, A2, A3, B1...', 'error');
-          return;
+        if (!isZoneMode) {
+          if (!rackno || Number(rackno) < 1 || Number(rackno) > 50) {
+            showMessage('Please select a Rack Number (01-50) first.', 'error');
+            return;
+          }
+          if (!racklocation) {
+            showMessage('Please select a Rack Location (A1, A2, B3...) first.', 'error');
+            return;
+          }
+          if (!/^[A-C][1-9]$/.test(racklocation)) {
+            showMessage('Invalid Rack Location. Use format like A1, A2, A3, B1...', 'error');
+            return;
+          }
         }
 
         const rollsToSave = scannedRolls.slice();
@@ -1909,12 +1924,15 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
           saveRackData(rollsToSave, rackno.padStart(2, '0'), racklocation)
           .then(function(resp) {
             const storedCount = Number(resp.stored) || rollsToSave.length;
+            const successMessage = isZoneMode
+              ? storedCount + ' roll(s) stored in Common Zone.'
+              : storedCount + ' roll(s) stored in Rack ' + rackno.padStart(2, '0') + racklocation;
 
             if (typeof Swal !== "undefined") {
               Swal.fire({
                 icon: "success",
-                title: "All Rolls Stored!",
-                text: storedCount + " roll(s) stored in Rack " + rackno.padStart(2, '0') + racklocation,
+                title: isZoneMode ? "Store Zone Complete!" : "All Rolls Stored!",
+                text: successMessage,
                 timer: 3000,
                 timerProgressBar: true,
                 showConfirmButton: false,
@@ -1926,7 +1944,7 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
               return;
             }
 
-            showMessage(resp.message || storedCount + ' roll(s) stored in Rack ' + rackno.padStart(2, '0') + racklocation, 'success');
+            showMessage(resp.message || successMessage, 'success');
             setTimeout(function() {
               window.location.reload();
             }, 2000);
@@ -1941,7 +1959,7 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
             isSaving = false;
             syncManualEntryControls();
             saveRackBtn.disabled = false;
-            saveRackBtn.innerHTML = '<i class="fas fa-save"></i> Store All Rolls (' + scannedRolls.length + ')';
+            saveRackBtn.innerHTML = getStoreButtonLabel(scannedRolls.length);
             if (wasScanningBeforeSave) restartScanner();
           });
         };
@@ -1960,7 +1978,7 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
               isSaving = false;
               syncManualEntryControls();
               saveRackBtn.disabled = false;
-              saveRackBtn.innerHTML = '<i class="fas fa-save"></i> Store All Rolls (' + scannedRolls.length + ')';
+              saveRackBtn.innerHTML = getStoreButtonLabel(scannedRolls.length);
             });
         } else {
           saveAllRolls();

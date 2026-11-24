@@ -118,6 +118,11 @@ if (isset($_POST['knitting_store'])) {
     header('location:knitting_store.php');
     exit();
 }
+if (isset($_POST['knitting_store_zone'])) {
+    $_SESSION['lineNo'] = $_POST['option'];
+    header('location:knitting_store_zone.php');
+    exit();
+}
 if (isset($_POST['knitting_rack_transfer'])) {
     $_SESSION['lineNo'] = $_POST['option'];
     header('location:knitting_rack_transfer.php');
@@ -743,6 +748,10 @@ mysqli_close($db);
 
                         <button class="w3-button w3-teal" name="knitting_inspection" id="knitting_inspection">
                             <i class="fas fa-clipboard-check"></i> Knitting Inspection
+                        </button>
+
+                        <button class="w3-button w3-teal" name="knitting_store_zone" id="knitting_store_zone">
+                            <i class="fas fa-boxes-stacked"></i> Store Common Zone
                         </button>
 
                         <button class="w3-button w3-teal" name="knitting_store" id="knitting_store">

@@ -24,7 +24,7 @@ function insertKnittingStoreRoll($statement, $item, $rackNo, $rackLocation, $una
     $style = isset($item['STYLE']) ? $item['STYLE'] : '';
     $color = isset($item['COLOR']) ? $item['COLOR'] : '';
     $mcno = isset($item['MCNO']) ? $item['MCNO'] : '';
-    $mcdia = isset($item['MC_DIA']) ? $item['MC_DIA'] : '';
+    $mcdia = isset($item['MCDIA']) ? $item['MCDIA'] : (isset($item['MC_DIA']) ? $item['MC_DIA'] : '');
     $customer = isset($item['CUSTOMER']) ? $item['CUSTOMER'] : '';
     $ytype = isset($item['YTYPE']) ? $item['YTYPE'] : '';
     $ycount = isset($item['YCOUNT']) ? $item['YCOUNT'] : '';
@@ -34,11 +34,11 @@ function insertKnittingStoreRoll($statement, $item, $rackNo, $rackLocation, $una
     $ftype = isset($item['FTYPE']) ? $item['FTYPE'] : '';
     $fgsm = isset($item['FGSM']) ? $item['FGSM'] : '';
     $fdia = isset($item['FDIA']) ? $item['FDIA'] : '';
-    $fplan = isset($item['FPLAN']) ? $item['FPLAN'] : '';
-    $lotno = isset($item['LOTNO']) ? $item['LOTNO'] : '';
+    $fplan = isset($item['FEEDER_PLAN']) ? $item['FEEDER_PLAN'] : (isset($item['FPLAN']) ? $item['FPLAN'] : '');
+    $lotno = isset($item['LOT_NO']) ? $item['LOT_NO'] : (isset($item['LOTNO']) ? $item['LOTNO'] : '');
     $tpoint = isset($item['TPOINT']) ? $item['TPOINT'] : '';
-    $mcode = isset($item['MATERIAL_CODE']) ? $item['MATERIAL_CODE'] : '';
-    $mdesc = isset($item['M_DES']) ? $item['M_DES'] : '';
+    $mcode = isset($item['MCODE']) ? $item['MCODE'] : (isset($item['MATERIAL_CODE']) ? $item['MATERIAL_CODE'] : '');
+    $mdesc = isset($item['MDESCRIPTION']) ? $item['MDESCRIPTION'] : (isset($item['M_DES']) ? $item['M_DES'] : '');
     $qcstatus = isset($item['QC_STATUS']) ? $item['QC_STATUS'] : '';
     $category = isset($item['CATEGORY']) ? $item['CATEGORY'] : '';
 
@@ -57,20 +57,20 @@ function insertKnittingStoreRoll($statement, $item, $rackNo, $rackLocation, $una
 
 function assertKnittingRollPassed($db, $roll) {
     $escapedRoll = mysqli_real_escape_string($db, $roll);
-    $sql = "SELECT QC_STATUS FROM knitting_inspection
+    $sql = "SELECT QC_STATUS FROM knitting_store_zone
         WHERE TRIM(ROLL) = '$escapedRoll'
-        ORDER BY KITID DESC
+        ORDER BY KSZTID DESC
         LIMIT 1";
     $result = mysqli_query($db, $sql);
     if (!$result) {
-        throw new Exception('Unable to verify QC for Roll ' . $roll . ': ' . mysqli_error($db));
+        throw new Exception('Unable to verify Store Common Zone data for Roll ' . $roll . ': ' . mysqli_error($db));
     }
 
-    $inspection = mysqli_fetch_assoc($result);
-    if (!$inspection) {
-        throw new RuntimeException('ROLL_QC_NOT_FOUND:' . $roll);
+    $zoneRoll = mysqli_fetch_assoc($result);
+    if (!$zoneRoll) {
+        throw new RuntimeException('ROLL_ZONE_NOT_FOUND:' . $roll);
     }
-    if (strtolower(trim((string) $inspection['QC_STATUS'])) !== 'passed') {
+    if (strtolower(trim((string) $zoneRoll['QC_STATUS'])) !== 'passed') {
         throw new RuntimeException('ROLL_NOT_QC_PASSED:' . $roll);
     }
 }
@@ -259,11 +259,11 @@ try {
             'error' => 'Roll ' . $roll . ' has not passed QC and cannot be stored.'
         ], 422);
     }
-    if (strpos($message, 'ROLL_QC_NOT_FOUND:') === 0) {
-        $roll = substr($message, strlen('ROLL_QC_NOT_FOUND:'));
+    if (strpos($message, 'ROLL_ZONE_NOT_FOUND:') === 0) {
+        $roll = substr($message, strlen('ROLL_ZONE_NOT_FOUND:'));
         respond([
             'success' => false,
-            'error' => 'QC inspection data was not found for Roll ' . $roll . '.'
+            'error' => 'Roll ' . $roll . ' was not found in Store Common Zone.'
         ], 404);
     }
     error_log('Knitting Store batch insert failed: ' . $message);

@@ -483,7 +483,21 @@ $isFinishingUser = $user === 'f01' || $userType === 'finishing_operator';
             </div>
           </div>
 
-          <!-- 8. Knitting Rack Transfer Report -->
+          <!-- 8. Knitting Store Zone Report -->
+          <div class="col-6 col-md-4 mb-3 d-flex">
+            <div class="report-card w-100 knitting-report-card knitting-report-card--store">
+              <form method="POST" action="knitting_store_zone_report.php" class="h-100 w-100">
+                <button type="submit" class="btn btn-report">
+                  <i class="fa-solid fa-boxes-stacked card-btn"></i>
+                  <span class="floor-text">
+                    <span>Store Zone Report</span>
+                  </span>
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- 9. Knitting Rack Transfer Report -->
           <div class="col-6 col-md-4 mb-3 d-flex">
             <div class="report-card w-100 knitting-report-card knitting-report-card--rack-transfer">
               <form method="POST" action="knitting_rack_transfer_report.php" class="h-100 w-100">
