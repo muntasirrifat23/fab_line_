@@ -755,16 +755,16 @@ mysqli_close($db);
                         </button>
 
                         <button class="w3-button w3-teal" name="knitting_store" id="knitting_store">
-                            <i class="fas fa-warehouse"></i> Knitting Store
+                            <i class="fas fa-boxes-stacked"></i> Knitting Store
                         </button>
 
                         <button class="w3-button w3-teal" name="knitting_rack_transfer" id="knitting_rack_transfer">
-                            <i class="fas fa-warehouse"></i> Knitting Rack Transfer
+                            <i class="fas fa-right-left"></i> Store Rack Transfer
                         </button>
 
                         <?php if (!$isFinishingUser): ?>
                             <button class="w3-button w3-teal" name="knitting_roll_split" id="knitting_roll_split">
-                                <i class="fas fa-warehouse"></i> Knitting Roll Split
+                                <i class="fas fa-scissors"></i> Knitting Roll Split
                             </button>
                             <button class="w3-button w3-teal" name="knitting_batch_delivery" id="knitting_batch_delivery">
                                 <i class="fas fa-truck"></i> Batch Delivery

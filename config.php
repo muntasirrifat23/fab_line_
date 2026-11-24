@@ -104,7 +104,7 @@ if (!function_exists('ensureKnittingRackTransferTable')) {
               AND TABLE_NAME = 'knitting_rack_transfer'
         ");
         if (!$result) {
-            throw new RuntimeException('Unable to inspect knitting rack transfer table: ' . $db->error);
+            throw new RuntimeException('Unable to inspect Store Rack Transfer table: ' . $db->error);
         }
 
         $tableExists = $result->num_rows > 0;
@@ -127,7 +127,7 @@ if (!function_exists('ensureKnittingRackTransferTable')) {
             ";
 
             if (!$db->query($sql)) {
-                throw new RuntimeException('Unable to create knitting rack transfer table: ' . $db->error);
+                throw new RuntimeException('Unable to create Store Rack Transfer table: ' . $db->error);
             }
         }
 

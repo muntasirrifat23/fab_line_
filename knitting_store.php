@@ -65,6 +65,15 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
       transition: 0.2s;
     }
 
+    body.store-zone-body {
+      padding: 10px;
+    }
+
+    .card.store-zone-card {
+      max-width: none;
+      width: 100%;
+    }
+
     .back-btn {
       background: #000000 !important;
       color: #ffffff !important;
@@ -1402,8 +1411,8 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
   </style>
 </head>
 
-<body class="<?php echo $isStoreZone ? '' : 'store-inventory-body'; ?>">
-  <div class="card<?php echo $isStoreZone ? '' : ' store-inventory-card'; ?>">
+<body class="<?php echo $isStoreZone ? 'store-zone-body' : 'store-inventory-body'; ?>">
+  <div class="card<?php echo $isStoreZone ? ' store-zone-card' : ' store-inventory-card'; ?>">
     <div class="knitting-page-header store-page-header<?php echo $isStoreZone ? '' : ' inventory-page-header'; ?>">
       <a class="knitting-header-back" href="initialPage.php">← Back</a>
       <h1><?php echo $isStoreZone ? 'Knitting Store Common Zone' : 'Knitting Store'; ?></h1>

@@ -170,11 +170,11 @@ if (!$db) {
     } catch (Throwable $e) {
 
         error_log(
-            'Knitting rack transfer schema error: ' .
+            'Store Rack Transfer schema error: ' .
             $e->getMessage()
         );
 
-        $reportError = 'Unable to prepare rack transfer records.';
+        $reportError = 'Unable to prepare Store Rack Transfer records.';
     }
 
     if ($reportError === '') {
@@ -184,10 +184,10 @@ if (!$db) {
         if (!$stmt) {
 
             error_log(
-                'Rack transfer prepare error: ' . $db->error
+                'Store Rack Transfer prepare error: ' . $db->error
             );
 
-            $reportError = 'Unable to load rack transfer records.';
+            $reportError = 'Unable to load Store Rack Transfer records.';
 
         } else {
 
@@ -231,10 +231,10 @@ if (!$db) {
             } elseif ($reportError === '') {
 
                 error_log(
-                    'Rack transfer execute error: ' . $stmt->error
+                    'Store Rack Transfer execute error: ' . $stmt->error
                 );
 
-                $reportError = 'Unable to load rack transfer records.';
+                $reportError = 'Unable to load Store Rack Transfer records.';
             }
 
             $stmt->close();
@@ -250,8 +250,8 @@ if (!$db) {
     <meta charset="UTF-8">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Knitting Rack Transfer Report</title>
+Store Rack Transfer
+    <title> Report</title>
 
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
@@ -567,7 +567,7 @@ if (!$db) {
         </a>
 
         <div class="title-tabs">
-            <h1>Knitting Rack Transfer Report</h1>
+            <h1>Store Rack Transfer Report</h1>
         </div>
 
         <div aria-hidden="true"></div>
@@ -645,7 +645,7 @@ if (!$db) {
 
                         <tr class="empty-row">
                             <td colspan="9">
-                                No rack transfer records found.
+                                No Store Rack Transfer records found.
                             </td>
                         </tr>
 

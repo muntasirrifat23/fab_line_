@@ -21,7 +21,7 @@ for ($r = 1; $r <= 50; $r++) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rack Transfer | Knitting Store</title>
+  <title>Store Rack Transfer | Knitting Store</title>
   <!-- Fonts & Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1726,7 +1726,7 @@ for ($r = 1; $r <= 50; $r++) {
             <i class="fa-solid fa-arrows-split-up-and-left"></i>
           </span>
           <div class="brand-text-group">
-            <h1 class="brand-main-title">Knitting Rack Transfer</h1>
+            <h1 class="brand-main-title">Store Rack Transfer</h1>
           </div>
         </div>
       </div>

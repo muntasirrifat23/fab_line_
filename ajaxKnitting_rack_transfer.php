@@ -16,9 +16,9 @@ $action = trim($_REQUEST['action'] ?? '');
 try {
     ensureKnittingRackTransferTable($db);
 } catch (Throwable $e) {
-    error_log('Knitting rack transfer schema setup failed: ' . $e->getMessage());
+    error_log('Store Rack Transfer schema setup failed: ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Unable to prepare rack transfer logging.']);
+    echo json_encode(['success' => false, 'message' => 'Unable to prepare Store Rack Transfer logging.']);
     exit();
 }
 
@@ -338,7 +338,7 @@ if ($action === 'get_shelves') {
 }
 
 // -------------------------------------------------------------
-// 3. EXECUTE RACK TRANSFER (USER-SELECTED RACK & SHELF)
+// 3. EXECUTE Store Rack Transfer (USER-SELECTED RACK & SHELF)
 // -------------------------------------------------------------
 if ($action === 'transfer_rack') {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -409,7 +409,7 @@ if ($action === 'transfer_rack') {
         }
         $updateStmt->close();
 
-        // 2. Insert into the KSTID-linked rack transfer table
+        // 2. Insert into the KSTID-linked Store Rack Transfer table
         $fromRackRecord = $currFullRack ?: ($currRackNoPad ?: 'NONE');
         $logStmt = $db->prepare("
             INSERT INTO knitting_rack_transfer (BUDAT, KSTID, ROLLNO, FRACK, TORACK, TBUDATE)
@@ -449,7 +449,7 @@ if ($action === 'transfer_rack') {
 }
 
 // -------------------------------------------------------------
-// 3b. EXECUTE BATCH RACK TRANSFER (USER-SELECTED RACK & SHELF)
+// 3b. EXECUTE BATCH Store Rack Transfer (USER-SELECTED RACK & SHELF)
 // -------------------------------------------------------------
 if ($action === 'batch_transfer') {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
