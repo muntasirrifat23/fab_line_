@@ -399,6 +399,20 @@ $isFinishingUser = $user === 'f01' || $userType === 'finishing_operator';
             </div>
           </div>
 
+          <!-- Yarn Materials Report -->
+          <div class="col-6 col-md-4 mb-3 d-flex">
+            <div class="report-card w-100 knitting-report-card knitting-report-card--input">
+              <form method="GET" action="yarn_material_report.php" class="h-100 w-100">
+                <button type="submit" class="btn btn-report">
+                  <i class="fa-solid fa-boxes-stacked card-btn"></i>
+                  <span class="floor-text">
+                    <span>Yarn Materials</span>
+                  </span>
+                </button>
+              </form>
+            </div>
+          </div>
+
           <!-- 2. Knitting Program Report -->
           <div class="col-6 col-md-4 mb-3 d-flex">
             <div class="report-card w-100 knitting-report-card knitting-report-card--program">
@@ -474,7 +488,7 @@ $isFinishingUser = $user === 'f01' || $userType === 'finishing_operator';
             <div class="report-card w-100 knitting-report-card knitting-report-card--store">
               <form method="POST" action="knitting_store_zone_report.php" class="h-100 w-100">
                 <button type="submit" class="btn btn-report">
-                  <i class="fa-solid fa-boxes-stacked card-btn"></i>
+                  <i class="fa-solid fa-layer-group card-btn"></i>
                   <span class="floor-text">
                     <span>Store Zone Report</span>
                   </span>
@@ -506,7 +520,7 @@ $isFinishingUser = $user === 'f01' || $userType === 'finishing_operator';
                 <button type="submit" class="btn btn-report">
                   <i class="fa-solid fa-arrow-right-arrow-left card-btn"></i>
                   <span class="floor-text">
-                    <span>Store Rack Transfer Report</span>
+                    <span>Rack Transfer Report</span>
                   </span>
                 </button>
               </form>
