@@ -180,6 +180,7 @@ function dyeingReportEscape($value)
         table { width: 100%; min-width: 1850px; border: 1px solid #94a3b8; border-collapse: separate; border-spacing: 0; font-size: .9rem; }
         thead th { position: sticky; top: 0; z-index: 3; padding: 11px 9px; border-right: 1px solid rgba(255,255,255,.2); border-bottom: 3px solid <?php echo dyeingReportEscape($reportThemeEnd); ?>; background: #334155; color: #fff; text-align: left; white-space: nowrap; }
         tbody td { padding: 9px; border-right: 1px solid #94a3b8; border-bottom: 1px solid #e5e7eb; white-space: nowrap; vertical-align: middle; }
+        .report-table tbody tr.batch-group-start td { border-top: 2px solid #64748b; }
         tbody td.go-to-cell { width: 220px; min-width: 180px; max-width: 220px; white-space: normal; overflow-wrap: anywhere; line-height: 1.35; }
         tbody tr:nth-child(even) { background: #f8fafc; }
         tbody tr:hover { background: #eff6ff; }
@@ -189,29 +190,30 @@ function dyeingReportEscape($value)
         .error-row td { color: #b91c1c; }
         #challanPrint { display: none; }
         .challan-page { display: flex; flex-direction: column; width: 190mm; min-height: 270mm; margin: 0 auto; color: #111; font: 11px Arial, Helvetica, sans-serif; }
-        .challan-heading { display: grid; grid-template-columns: 1fr 3fr 1fr; align-items: center; min-height: 22mm; }
+        .challan-heading { display: grid; grid-template-columns: 1fr 3fr 1fr; align-items: center; min-height: 16mm; }
         .challan-wordmark { color: #1e3a8a; font-size: 15px; font-style: italic; font-weight: 800; }
         .challan-company { text-align: center; }
-        .challan-company h2 { margin: 0; font-size: 24px; letter-spacing: .3px; }
-        .challan-company p { margin: 2px 0 0; font-size: 12px; font-weight: 600; }
-        .challan-title { display: table; margin: 3px auto 8px; padding: 2px 14px; border: 1px solid #111; border-radius: 20px; font-size: 12px; font-weight: 700; }
-        .challan-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 12px; margin-bottom: 5mm; }
-        .challan-to { grid-column: 1 / -1; min-height: 9mm; }
-        .challan-meta-list { display: grid; grid-column: 1 / -1; grid-template-columns: 1fr 1fr; gap: 5px 12px; }
-        .challan-meta-list div { min-height: 17px; }
-        .challan-page table { width: 100%; min-width: 0; border-collapse: collapse; table-layout: fixed; font-size: 10px; }
-        .challan-page th, .challan-page td { padding: 5px 4px; border: 1px solid #222; color: #111; text-align: center; vertical-align: middle; }
+        .challan-company h2 { margin: 0; font-size: 20px; letter-spacing: .2px; }
+        .challan-company p { margin: 1px 0 0; font-size: 10px; font-weight: 600; }
+        .challan-title { display: table; margin: 1px auto 4px; padding: 1px 10px; border: 1px solid #111; border-radius: 20px; font-size: 10px; font-weight: 700; }
+        .challan-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; margin-bottom: 2mm; }
+        .challan-to { grid-column: 1 / -1; min-height: 5mm; }
+        .challan-meta-list { display: grid; grid-column: 1 / -1; grid-template-columns: 1fr 1fr; gap: 2px 8px; }
+        .challan-meta-list div { min-height: 13px; }
+        .challan-page table { width: 100%; min-width: 0; border-collapse: collapse; table-layout: fixed; font-size: var(--challan-font-size, 10px); }
+        .challan-page th, .challan-page td { padding: var(--challan-cell-padding, 5px) 2px; border: 1px solid #222; color: #111; text-align: center; vertical-align: middle; line-height: 1; }
         .challan-page th { border: 2px solid #111; background: #fff; text-align: center; font-weight: 700; }
         .challan-page tbody tr { background: #fff; }
         .challan-page tbody tr.blank-fill td { border-top: 0; border-bottom: 0; }
         .challan-page tbody tr.blank-fill-last td { border-bottom: 1px solid #111; }
         .challan-page td { white-space: normal; }
-        .challan-page tbody td { height: 12mm; }
+        .challan-page tbody td { height: var(--challan-row-height, 12mm); }
         .challan-page tfoot th { background: #fff; }
-        .challan-quantity-lines { margin-top: 5mm; }
-        .challan-quantity-line { min-height: 20px; margin-bottom: 3px; }
-        .challan-signatures { display: flex; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 16mm; }
-        .challan-signatures span { flex: 1; padding-top: 4px; border-top: 1px solid #222; text-align: center; white-space: nowrap; }
+        .challan-quantity-lines { margin-top: 2mm; }
+        .challan-quantity-line { min-height: 14px; margin-bottom: 1px; }
+        .challan-signatures { display: flex; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 5mm; }
+        .challan-signatures > span { position: relative; flex: 1; padding-top: 4px; border-top: 1px solid #222; text-align: center; white-space: nowrap; }
+        .challan-prepared-name { position: absolute; right: 0; bottom: calc(100% + 4px); left: 0; font-size: 9px; font-weight: 700; }
         @media (max-width: 700px) {
             body { padding: 10px; }
             .report-header { flex-wrap: wrap; gap: 8px; }
@@ -225,8 +227,8 @@ function dyeingReportEscape($value)
             body { padding: 0; background: #fff; }
             body > main { display: none !important; }
             #challanPrint { display: block !important; }
-            .challan-page { width: 100%; min-height: 270mm; margin: 0; }
-            .challan-page table { page-break-inside: auto; }
+            .challan-page { width: 100%; height: 279mm; min-height: 0; max-height: 279mm; margin: 0; overflow: hidden; page-break-inside: avoid; break-inside: avoid; }
+            .challan-page table { page-break-inside: avoid; break-inside: avoid; }
             .challan-page thead { display: table-header-group; }
             .challan-page tr { page-break-inside: avoid; }
             .challan-page tfoot { display: table-row-group; }
@@ -328,6 +330,11 @@ function dyeingReportEscape($value)
             return element.innerHTML;
         }
 
+        function formatQty(value) {
+            var quantity = Number(value);
+            return Number.isFinite(quantity) ? quantity.toFixed(3).replace(/\.?0+$/, '') : '0';
+        }
+
         function numberToWords(value) {
             var ones = [
                 'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine',
@@ -388,7 +395,12 @@ function dyeingReportEscape($value)
             var serial = 0;
             var totalQty = 0;
             var tableRows = '';
-            groups.forEach(function(group, batchNo) {
+            var orderedGroups = Array.from(groups.entries()).sort(function(left, right) {
+                return String(left[0]).localeCompare(String(right[0]));
+            });
+            orderedGroups.forEach(function(entry) {
+                var batchNo = entry[0];
+                var group = entry[1];
                 group.forEach(function(row, index) {
                     serial++;
                     totalQty += Number(row.QTY) || 0;
@@ -401,7 +413,7 @@ function dyeingReportEscape($value)
                         (index === 0
                             ? '<td rowspan="' + group.length + '">' + group.length + '</td>'
                             : '') +
-                        '<td>' + escapeHtml(row.QTY) + '</td>' +
+                        '<td>' + escapeHtml(formatQty(row.QTY)) + '</td>' +
                         (index === 0
                             ? '<td rowspan="' + group.length + '">' +
                                 escapeHtml(group[0].DELIVERY_REMARKS) + '</td>'
@@ -409,6 +421,12 @@ function dyeingReportEscape($value)
                         '</tr>';
                 });
             });
+            var challanRowHeight = serial > 12 ? Math.min(12, 210 / serial) : 12;
+            var challanFontSize = serial > 12 ? Math.max(4, Math.min(10, challanRowHeight * 1.6)) : 10;
+            var challanCellPadding = serial > 12 ? Math.max(0.5, Math.min(2, challanRowHeight * 0.2)) : 5;
+            var challanDensityStyle = '--challan-row-height:' + challanRowHeight.toFixed(2) + 'mm;' +
+                '--challan-font-size:' + challanFontSize.toFixed(1) + 'px;' +
+                '--challan-cell-padding:' + challanCellPadding.toFixed(1) + 'px';
             for (var blankRow = serial; blankRow < 12; blankRow++) {
                 var blankRowClass = blankRow === 11 ? 'blank-fill blank-fill-last' : 'blank-fill';
                 tableRows += '<tr class="' + blankRowClass + '">' +
@@ -424,7 +442,7 @@ function dyeingReportEscape($value)
             quantityWords += ' only';
 
             document.getElementById('challanPrint').innerHTML =
-                '<article class="challan-page">' +
+                '<article class="challan-page" style="' + challanDensityStyle + '">' +
                 '<header class="challan-heading">' +
                 '<div class="challan-wordmark">PURBANI</div>' +
                 '<div class="challan-company"><h2>PURBANI FABRICS LTD.</h2>' +
@@ -442,13 +460,15 @@ function dyeingReportEscape($value)
                 '<table><colgroup><col style="width:18%"><col style="width:18%"><col style="width:26%">' +
                 '<col style="width:10%"><col style="width:13%"><col style="width:15%"></colgroup>' +
                 '<thead><tr><th>Batch No.</th><th>Roll No.</th><th>Fabrics Type</th>' +
-                '<th>Roll</th><th>Qty</th><th>Remarks</th></tr></thead><tbody>' +
-                tableRows + '</tbody><tfoot><tr><th colspan="4">TOTAL</th><th>' +
-                escapeHtml(totalQty.toFixed(3)) + '</th><th></th></tr></tfoot></table>' +
+                '<th>Roll</th><th>Batch Qty</th><th>Remarks</th></tr></thead><tbody>' +
+                tableRows + '</tbody><tfoot><tr><th colspan="3">TOTAL</th><th>' +
+                serial + '</th><th>' + escapeHtml(formatQty(totalQty)) +
+                '</th><th></th></tr></tfoot></table>' +
                 '<div class="challan-quantity-lines">' +
-                '<div class="challan-quantity-line">Total weight: ' + escapeHtml(totalQty.toFixed(3)) + ' KG</div>' +
+                '<div class="challan-quantity-line">Total weight: ' + escapeHtml(formatQty(totalQty)) + ' KG</div>' +
                 '<div class="challan-quantity-line">In words: ' + escapeHtml(quantityWords) + '</div>' +
-                '</div><div class="challan-signatures"><span>Received by</span><span>Prepared by</span>' +
+                '</div><div class="challan-signatures"><span>Received by</span><span>Prepared By' +
+                '<span class="challan-prepared-name">' + escapeHtml(header.OPERATOR || '') + '</span></span>' +
                 '<span>Store Officer</span><span>Store Manager</span><span>Auth. Signature</span></div>' +
                 '</article>';
             document.getElementById('challanPrint').setAttribute('aria-hidden', 'false');
@@ -479,10 +499,8 @@ function dyeingReportEscape($value)
             });
 
             groups.forEach(function(group) {
-                var batchCounts = new Map();
-                group.forEach(function(row) {
-                    var batchNo = String(row.BCARD || '');
-                    batchCounts.set(batchNo, (batchCounts.get(batchNo) || 0) + 1);
+                group.sort(function(left, right) {
+                    return String(left.BCARD || '').localeCompare(String(right.BCARD || ''));
                 });
                 var renderedBatches = new Set();
                 var printChallanKey = String(group[0].KCHALLAN || '').trim();
@@ -490,12 +508,14 @@ function dyeingReportEscape($value)
                 group.forEach(function(row, index) {
                     var batch = String(row.BCARD || '');
                     var firstBatchRow = !renderedBatches.has(batch);
+                    var firstChallanRow = index === 0;
+                    if (firstBatchRow) renderedBatches.add(batch);
                     var tr = body.insertRow();
+                    if (firstBatchRow) tr.className = 'batch-group-start';
                     tr.dataset.batch = batch;
-                    if (index === 0) {
-                        var actionCell = tr.insertCell();
-                        actionCell.rowSpan = group.length;
-                        actionCell.className = 'action-column';
+                    var actionCell = tr.insertCell();
+                    actionCell.className = 'action-column';
+                    if (firstChallanRow) {
                         var printButton = document.createElement('button');
                         printButton.type = 'button';
                         printButton.className = 'btn btn-print no-print';
@@ -504,36 +524,25 @@ function dyeingReportEscape($value)
                             printBatch(batch, printChallanKey);
                         });
                         actionCell.appendChild(printButton);
-
-                        var challanCell = tr.insertCell();
-                        challanCell.rowSpan = group.length;
-                        challanCell.textContent = group[0].KCHALLAN || '';
-
-                        var goToCell = tr.insertCell();
-                        goToCell.rowSpan = group.length;
-                        goToCell.className = 'go-to-cell';
-                        goToCell.textContent = group[0].TO_NAME || '';
-
-                        var vehicleCell = tr.insertCell();
-                        vehicleCell.rowSpan = group.length;
-                        vehicleCell.textContent = group[0].VEHICLE_NO || '';
                     }
-                    if (firstBatchRow) {
-                        renderedBatches.add(batch);
-                        var batchCell = tr.insertCell();
-                        batchCell.rowSpan = batchCounts.get(batch);
-                        batchCell.textContent = batch;
-                    }
+
+                    var challanCell = tr.insertCell();
+                    challanCell.textContent = firstBatchRow ? row.KCHALLAN || '' : '';
+
+                    var goToCell = tr.insertCell();
+                    goToCell.className = 'go-to-cell';
+                    goToCell.textContent = firstBatchRow ? row.TO_NAME || '' : '';
+
+                    var vehicleCell = tr.insertCell();
+                    vehicleCell.textContent = firstBatchRow ? row.VEHICLE_NO || '' : '';
+
+                    var batchCell = tr.insertCell();
+                    batchCell.textContent = firstBatchRow ? batch : '';
 
                     reportColumns.slice(5).forEach(function(column) {
                         var cell = tr.insertCell();
                         if (column[0] === 'PROCESS') {
-                            if (firstBatchRow) {
-                                cell.rowSpan = batchCounts.get(batch);
-                                cell.appendChild(processChips(row));
-                            } else {
-                                tr.deleteCell(tr.cells.length - 1);
-                            }
+                            if (firstBatchRow) cell.appendChild(processChips(row));
                             return;
                         }
                         var value = row[column[0]];

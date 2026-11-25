@@ -198,29 +198,30 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
         .print-button { background: #2563eb; }
         #challanPrint { display: none; }
         .challan-page { display: flex; flex-direction: column; width: 190mm; min-height: 270mm; margin: 0 auto; color: #111; font: 11px Arial, Helvetica, sans-serif; }
-        .challan-heading { display: grid; grid-template-columns: 1fr 3fr 1fr; align-items: center; min-height: 22mm; }
+        .challan-heading { display: grid; grid-template-columns: 1fr 3fr 1fr; align-items: center; min-height: 16mm; }
         .challan-wordmark { color: #1e3a8a; font-size: 15px; font-style: italic; font-weight: 800; }
         .challan-company { text-align: center; }
-        .challan-company h2 { margin: 0; font-size: 24px; letter-spacing: .3px; }
-        .challan-company p { margin: 2px 0 0; font-size: 12px; font-weight: 600; }
-        .challan-title { display: table; margin: 3px auto 8px; padding: 2px 14px; border: 1px solid #111; border-radius: 20px; font-size: 12px; font-weight: 700; }
-        .challan-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 12px; margin-bottom: 5mm; }
-        .challan-to { grid-column: 1 / -1; min-height: 9mm; }
-        .challan-meta-list { display: grid; grid-column: 1 / -1; grid-template-columns: 1fr 1fr; gap: 5px 12px; }
-        .challan-meta-list div { min-height: 17px; }
-        .challan-page table { width: 100%; min-width: 0; border-collapse: collapse; table-layout: fixed; font-size: 10px; }
-        .challan-page th, .challan-page td { padding: 5px 4px; border: 1px solid #222; color: #111; text-align: center; vertical-align: middle; }
+        .challan-company h2 { margin: 0; font-size: 20px; letter-spacing: .2px; }
+        .challan-company p { margin: 1px 0 0; font-size: 10px; font-weight: 600; }
+        .challan-title { display: table; margin: 1px auto 4px; padding: 1px 10px; border: 1px solid #111; border-radius: 20px; font-size: 10px; font-weight: 700; }
+        .challan-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; margin-bottom: 2mm; }
+        .challan-to { grid-column: 1 / -1; min-height: 5mm; }
+        .challan-meta-list { display: grid; grid-column: 1 / -1; grid-template-columns: 1fr 1fr; gap: 2px 8px; }
+        .challan-meta-list div { min-height: 13px; }
+        .challan-page table { width: 100%; min-width: 0; border-collapse: collapse; table-layout: fixed; font-size: var(--challan-font-size, 10px); }
+        .challan-page th, .challan-page td { padding: var(--challan-cell-padding, 5px) 2px; border: 1px solid #222; color: #111; text-align: center; vertical-align: middle; line-height: 1; }
         .challan-page th { border: 2px solid #111; background: #fff; text-align: center; font-weight: 700; }
         .challan-page tbody tr { background: #fff; }
         .challan-page tbody tr.blank-fill td { border-top: 0; border-bottom: 0; }
         .challan-page tbody tr.blank-fill-last td { border-bottom: 1px solid #111; }
         .challan-page td { white-space: normal; }
-        .challan-page tbody td { height: 12mm; }
+        .challan-page tbody td { height: var(--challan-row-height, 12mm); }
         .challan-page tfoot th { background: #fff; }
-        .challan-quantity-lines { margin-top: 5mm; }
-        .challan-quantity-line { min-height: 20px; margin-bottom: 3px; }
-        .challan-signatures { display: flex; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 16mm; }
-        .challan-signatures span { flex: 1; padding-top: 4px; border-top: 1px solid #222; text-align: center; white-space: nowrap; }
+        .challan-quantity-lines { margin-top: 2mm; }
+        .challan-quantity-line { min-height: 14px; margin-bottom: 1px; }
+        .challan-signatures { display: flex; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 5mm; }
+        .challan-signatures > span { position: relative; flex: 1; padding-top: 4px; border-top: 1px solid #222; text-align: center; white-space: nowrap; }
+        .challan-prepared-name { position: absolute; right: 0; bottom: calc(100% + 4px); left: 0; font-size: 9px; font-weight: 700; }
         @media (max-width: 800px) {
             body { padding: 16px 9px 9px; }
             .header { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; padding: 10px; }
@@ -239,8 +240,8 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
             body { margin: 0; padding: 0; background: #fff; }
             body > * { display: none !important; }
             #challanPrint { display: block !important; }
-            .challan-page { width: 100%; min-height: 270mm; margin: 0; }
-            .challan-page table { page-break-inside: auto; }
+            .challan-page { width: 100%; height: 279mm; min-height: 0; max-height: 279mm; margin: 0; overflow: hidden; page-break-inside: avoid; break-inside: avoid; }
+            .challan-page table { page-break-inside: avoid; break-inside: avoid; }
             .challan-page thead { display: table-header-group; }
             .challan-page tr { page-break-inside: avoid; }
             .challan-page tfoot { display: table-row-group; }
@@ -1020,6 +1021,18 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
                 var deliveredRollCount = groups.reduce(function(total, group) {
                     return total + group.rows.length;
                 }, 0);
+                var challanRowHeight = deliveredRollCount > 12
+                    ? Math.min(12, 210 / deliveredRollCount)
+                    : 12;
+                var challanFontSize = deliveredRollCount > 12
+                    ? Math.max(4, Math.min(10, challanRowHeight * 1.6))
+                    : 10;
+                var challanCellPadding = deliveredRollCount > 12
+                    ? Math.max(0.5, Math.min(2, challanRowHeight * 0.2))
+                    : 5;
+                var challanDensityStyle = '--challan-row-height:' + challanRowHeight.toFixed(2) + 'mm;' +
+                    '--challan-font-size:' + challanFontSize.toFixed(1) + 'px;' +
+                    '--challan-cell-padding:' + challanCellPadding.toFixed(1) + 'px';
                 for (var blankRow = deliveredRollCount; blankRow < 12; blankRow++) {
                     var blankRowClass = blankRow === 11 ? 'blank-fill blank-fill-last' : 'blank-fill';
                     rowsHtml += '<tr class="' + blankRowClass + '">' +
@@ -1036,7 +1049,7 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
                 qtyWords += ' only';
 
                 document.getElementById('challanPrint').innerHTML =
-                    '<article class="challan-page">' +
+                    '<article class="challan-page" style="' + challanDensityStyle + '">' +
                     '<header class="challan-heading">' +
                     '<div class="challan-wordmark">PURBANI</div>' +
                     '<div class="challan-company"><h2>PURBANI FABRICS LTD.</h2>' +
@@ -1055,14 +1068,16 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
                     '<col style="width:10%"><col style="width:13%"><col style="width:15%"></colgroup>' +
                     '<thead><tr><th>Batch No.</th><th>Roll No.</th><th>Fabrics Type</th>' +
                     '<th>Roll</th><th>Batch Qty</th><th>Remarks</th></tr></thead><tbody>' +
-                    rowsHtml + '</tbody><tfoot><tr><th colspan="4">TOTAL</th><th>' +
-                    escapeHtml(formatQty(totalQty)) + '</th><th></th></tr></tfoot></table>' +
+                    rowsHtml + '</tbody><tfoot><tr><th colspan="3">TOTAL</th><th>' +
+                    deliveredRollCount + '</th><th>' + escapeHtml(formatQty(totalQty)) +
+                    '</th><th></th></tr></tfoot></table>' +
                     '<div class="challan-quantity-lines">' +
                     '<div class="challan-quantity-line">Total weight: ' +
                     escapeHtml(formatQty(totalQty)) + ' KG</div>' +
                     '<div class="challan-quantity-line">In words: ' + escapeHtml(qtyWords) + '</div>' +
                     '</div>' +
-                    '<div class="challan-signatures"><span>Received by</span><span>Prepared by</span>' +
+                    '<div class="challan-signatures"><span>Received by</span><span>Prepared By' +
+                    '<span class="challan-prepared-name">' + escapeHtml(response.dop || '') + '</span></span>' +
                     '<span>Store Officer</span><span>Store Manager</span><span>Auth. Signature</span></div></article>';
             }
 

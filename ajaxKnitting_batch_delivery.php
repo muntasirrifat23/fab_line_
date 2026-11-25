@@ -581,11 +581,14 @@ try {
             ];
         }
 
-        $dop = isset($_SESSION['user_name']) ? (string)$_SESSION['user_name']
-            : (isset($_SESSION['operator_name']) ? (string)$_SESSION['operator_name'] : (string)$_SESSION['username']);
-        $did = isset($_SESSION['user_id']) ? (string)$_SESSION['user_id']
-            : (isset($_SESSION['operator_id']) ? (string)$_SESSION['operator_id']
-                : (isset($_SESSION['knitting_qc_id']) ? (string)$_SESSION['knitting_qc_id'] : (string)$_SESSION['username']));
+        $dop = trim((string)($_SESSION['user_name'] ?? ''));
+        if ($dop === '') {
+            $dop = trim((string)($_SESSION['operator_name'] ?? ''));
+        }
+        if ($dop === '') {
+            $dop = (string)$_SESSION['username'];
+        }
+        $did = (string)$_SESSION['username'];
         $deliveryDate = date('Y-m-d');
         $stmt = $db->prepare(
             "INSERT INTO dyeing_batch_delivery
@@ -687,6 +690,7 @@ try {
             'to_name' => $toName,
             'gate_pass_no' => $gatePassNo,
             'vehicle_no' => $vehicleNo,
+            'dop' => $dop,
             'roll_count' => $rollCount,
             'batch_count' => count($validatedBatches),
             'total_qty' => round($totalQty, 3)
