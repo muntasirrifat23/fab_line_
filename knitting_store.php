@@ -13,9 +13,9 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?php echo $isStoreZone ? 'Knitting Store Common Zone' : 'Knitting | Store'; ?></title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <?php if ($isStoreZone): ?>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <?php endif; ?>
   <style>
     * {
@@ -1173,6 +1173,30 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
       gap: 6px;
     }
 
+    .store-search-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+      gap: 10px;
+      align-items: start;
+      width: 100%;
+    }
+
+    .store-search-block {
+      min-width: 0;
+    }
+
+    .store-date-filter {
+      width: 100%;
+      min-width: 0;
+      min-height: 46px;
+      padding: 10px 12px;
+      border: 1px solid #9dbbb5;
+      border-radius: 9px;
+      background: #fff;
+      color: #173b37;
+      font: inherit;
+    }
+
     .store-search-row {
       display: flex;
       flex-direction: column;
@@ -1221,6 +1245,11 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
       .store-search-row {
         flex-direction: row;
         align-items: stretch;
+        gap: 8px;
+      }
+
+      .store-search-layout {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
         gap: 8px;
       }
 
@@ -1427,12 +1456,18 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
       <section class="store-inventory" id="storeInventory">
         <div class="store-inventory-controls">
           <div class="store-search-panel">
-            <div class="store-search-row">
-              <input type="search" id="storeSearchInput" autocomplete="off"
-                placeholder="Search SONO, PO Number, Buyer, Style, Color or Fabrics Type">
-              <div class="store-search-actions">
-                <button type="button" id="storeSearchButton"><i class="fas fa-search"></i> Search</button>
-                <button type="button" class="store-clear-button" id="storeClearSearchButton">Clear</button>
+            <div class="store-search-layout">
+              <input type="date" id="storeDateFilter" class="store-date-filter"
+                aria-label="Filter by date" max="<?php echo date('Y-m-d'); ?>">
+              <div class="store-search-block">
+                <div class="store-search-row">
+                  <input type="search" id="storeSearchInput" autocomplete="off"
+                    placeholder="Search SONO, PO Number, Buyer, Style, Color or Fabrics Type">
+                  <div class="store-search-actions">
+                    <button type="button" id="storeSearchButton"><i class="fas fa-search"></i> Search</button>
+                    <button type="button" class="store-clear-button" id="storeClearSearchButton">Clear</button>
+                  </div>
+                </div>
               </div>
             </div>
             <div class="store-list-message" id="storeListMessage" role="status" aria-live="polite"></div>
@@ -1589,6 +1624,7 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
       "use strict";
 
       const searchInput = document.getElementById('storeSearchInput');
+      const dateFilter = document.getElementById('storeDateFilter');
       const searchButton = document.getElementById('storeSearchButton');
       const clearSearchButton = document.getElementById('storeClearSearchButton');
       const rackNumber = document.getElementById('storeRackNumber');
@@ -1600,6 +1636,7 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
       let currentRows = [];
       let requestNumber = 0;
       let isSaving = false;
+      let reloadAfterSave = false;
       let selectedRackLocation = '';
 
       const columns = [
@@ -1684,7 +1721,12 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
         searchButton.disabled = true;
         clearSearchButton.disabled = true;
         showMessage('Loading Knitting Store Common Zone rolls...');
-        fetch('ajaxKnitting_store.php?action=available_rolls&search=' + encodeURIComponent(searchInput.value.trim()))
+        const params = new URLSearchParams({
+          action: 'available_rolls',
+          search: searchInput.value.trim(),
+          date: dateFilter.value
+        });
+        fetch('ajaxKnitting_store.php?' + params.toString())
           .then(function(response) {
             return response.json().then(function(data) {
               if (!response.ok || !data.success) {
@@ -1712,11 +1754,13 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
       }
 
       searchButton.addEventListener('click', loadRows);
+      dateFilter.addEventListener('change', loadRows);
       searchInput.addEventListener('keydown', function(event) {
         if (event.key === 'Enter') loadRows();
       });
       clearSearchButton.addEventListener('click', function() {
         searchInput.value = '';
+        dateFilter.value = '';
         loadRows();
       });
 
@@ -1733,6 +1777,8 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
         if (isSaving) return;
         const items = Array.from(selectedRolls.values());
         if (!items.length || !rackNumber.value || !selectedRackLocation) return;
+        const savedRackNumber = rackNumber.value;
+        const savedRackLocation = selectedRackLocation;
 
         isSaving = true;
         searchButton.disabled = true;
@@ -1758,17 +1804,38 @@ unset($_SESSION['knitting_store_manual_entry_authorized']);
               return data;
             });
           })
-          .then(function(data) {
+          .then(function() {
             items.forEach(function(row) { selectedRolls.delete(String(row.ROLL)); });
             rackNumber.value = '';
             selectedRackLocation = '';
-            showMessage(data.message || data.stored + ' roll(s) stored successfully.');
-            renderRows(currentRows);
+            reloadAfterSave = true;
+            saveButton.innerHTML = '<i class="fas fa-check"></i> Stored';
+            const successMessage = 'Successfully Store in Rack ' + savedRackNumber + savedRackLocation;
+            if (typeof Swal !== 'undefined') {
+              Swal.fire({
+                icon: 'success',
+                title: 'All Rolls Stored!',
+                text: successMessage,
+                timer: 3000,
+                timerProgressBar: true,
+                showConfirmButton: false,
+                allowOutsideClick: false,
+                allowEscapeKey: false
+              }).then(function() {
+                window.location.reload();
+              });
+            } else {
+              showMessage(successMessage);
+              window.setTimeout(function() {
+                window.location.reload();
+              }, 3000);
+            }
           })
           .catch(function(error) {
             showMessage(error.message || 'Unable to store selected rolls.', true);
           })
           .finally(function() {
+            if (reloadAfterSave) return;
             isSaving = false;
             saveButton.innerHTML = '<i class="fas fa-save"></i> Store Selected Rolls';
             updateSelectionState();

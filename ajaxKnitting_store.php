@@ -18,6 +18,15 @@ $TABLE = 'knitting_inspection';
 
 if ($action === 'available_rolls') {
     $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+    $date = isset($_GET['date']) ? trim($_GET['date']) : '';
+    if ($date !== '') {
+        $parsedDate = DateTime::createFromFormat('!Y-m-d', $date);
+        if (!$parsedDate || $parsedDate->format('Y-m-d') !== $date || $date > date('Y-m-d')) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Select a valid date that is not in the future.']);
+            exit;
+        }
+    }
     $sql = "SELECT z.*
             FROM knitting_store_zone z
             WHERE (? = ''
@@ -33,18 +42,25 @@ if ($action === 'available_rolls') {
                     LIKE CONVERT(CONCAT('%', ?, '%') USING utf8mb4) COLLATE utf8mb4_unicode_ci
                 OR CONVERT(z.FTYPE USING utf8mb4) COLLATE utf8mb4_unicode_ci
                     LIKE CONVERT(CONCAT('%', ?, '%') USING utf8mb4) COLLATE utf8mb4_unicode_ci)
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM knitting_store ks
+                  WHERE CONVERT(TRIM(ks.ROLL) USING utf8mb4) COLLATE utf8mb4_unicode_ci
+                      = CONVERT(TRIM(z.ROLL) USING utf8mb4) COLLATE utf8mb4_unicode_ci
+              )
+              AND (? = '' OR z.BUDAT = ?)
             ORDER BY z.KSZTID DESC";
     $statement = mysqli_prepare($db, $sql);
     if (!$statement) {
-        echo json_encode(['success' => false, 'error' => 'Unable to prepare Store Common Zone search: ' . mysqli_error($db)]);
+        echo json_encode(['success' => false, 'error' => 'Unable to prepare Knitting Store Common Zone search: ' . mysqli_error($db)]);
         exit;
     }
 
-    mysqli_stmt_bind_param($statement, 'sssssss', $search, $search, $search, $search, $search, $search, $search);
+    mysqli_stmt_bind_param($statement, 'sssssssss', $search, $search, $search, $search, $search, $search, $search, $date, $date);
     if (!mysqli_stmt_execute($statement)) {
         $error = mysqli_stmt_error($statement);
         mysqli_stmt_close($statement);
-        echo json_encode(['success' => false, 'error' => 'Unable to load Store Common Zone rolls: ' . $error]);
+        echo json_encode(['success' => false, 'error' => 'Unable to load Knitting Store Common Zone rolls: ' . $error]);
         exit;
     }
 
@@ -52,7 +68,7 @@ if ($action === 'available_rolls') {
     if (!$result) {
         $error = mysqli_stmt_error($statement);
         mysqli_stmt_close($statement);
-        echo json_encode(['success' => false, 'error' => 'Unable to read Store Common Zone rolls: ' . $error]);
+        echo json_encode(['success' => false, 'error' => 'Unable to read Knitting Store Common Zone rolls: ' . $error]);
         exit;
     }
 
