@@ -97,6 +97,103 @@ if (isset($_GET['action']) && $_GET['action'] === 'color_list') {
     exit();
 }
 
+if (isset($_GET['action']) && $_GET['action'] === 'fabric_type_list') {
+    $fabricTypeSearch = trim((string)($_GET['search'] ?? ''));
+    $searchTerm = '%' . $fabricTypeSearch . '%';
+    $fabricTypeStmt = mysqli_prepare(
+        $db,
+        "SELECT DISTINCT TRIM(FABRICS_TYPE) AS FABRIC_TYPE
+         FROM knitting_input
+         WHERE FABRICS_TYPE IS NOT NULL
+           AND TRIM(FABRICS_TYPE) <> ''
+           AND UPPER(TRIM(FABRICS_TYPE)) LIKE UPPER(?)
+         ORDER BY FABRIC_TYPE"
+    );
+    if (!$fabricTypeStmt ||
+        !mysqli_stmt_bind_param($fabricTypeStmt, 's', $searchTerm) ||
+        !mysqli_stmt_execute($fabricTypeStmt)) {
+        $error = $fabricTypeStmt ? mysqli_stmt_error($fabricTypeStmt) : mysqli_error($db);
+        if ($fabricTypeStmt) mysqli_stmt_close($fabricTypeStmt);
+        error_log('Fabric type lookup failed: ' . $error);
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Unable to load fabric types.']);
+        exit();
+    }
+
+    $fabricTypeResult = mysqli_stmt_get_result($fabricTypeStmt);
+    if (!$fabricTypeResult) {
+        $error = mysqli_stmt_error($fabricTypeStmt);
+        mysqli_stmt_close($fabricTypeStmt);
+        error_log('Fabric type lookup result failed: ' . $error);
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Unable to load fabric types.']);
+        exit();
+    }
+
+    $fabricTypes = [];
+    while ($fabricTypeRow = mysqli_fetch_assoc($fabricTypeResult)) {
+        $fabricTypes[] = $fabricTypeRow['FABRIC_TYPE'];
+    }
+    mysqli_free_result($fabricTypeResult);
+    mysqli_stmt_close($fabricTypeStmt);
+    echo json_encode(['success' => true, 'data' => $fabricTypes]);
+    exit();
+}
+
+if (isset($_GET['action']) && $_GET['action'] === 'yarn_material_list') {
+    $materialSearch = trim((string)($_GET['search'] ?? ''));
+    $materialOffset = max(0, (int)($_GET['offset'] ?? 0));
+    $pageSize = 100;
+    $searchTerm = '%' . $materialSearch . '%';
+    $materialStmt = mysqli_prepare(
+        $db,
+        "SELECT DISTINCT TRIM(MATERIAL_DESCRIPTION) AS MATERIAL_DESCRIPTION
+         FROM yarn_material
+         WHERE MATERIAL_DESCRIPTION IS NOT NULL
+           AND TRIM(MATERIAL_DESCRIPTION) <> ''
+           AND MATERIAL_DESCRIPTION LIKE ?
+         ORDER BY MATERIAL_DESCRIPTION
+         LIMIT " . ($pageSize + 1) . " OFFSET " . $materialOffset
+    );
+    if (!$materialStmt ||
+        !mysqli_stmt_bind_param($materialStmt, 's', $searchTerm) ||
+        !mysqli_stmt_execute($materialStmt)) {
+        $error = $materialStmt ? mysqli_stmt_error($materialStmt) : mysqli_error($db);
+        if ($materialStmt) mysqli_stmt_close($materialStmt);
+        error_log('Yarn material lookup failed: ' . $error);
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Unable to load yarn materials.']);
+        exit();
+    }
+
+    $materialResult = mysqli_stmt_get_result($materialStmt);
+    if (!$materialResult) {
+        $error = mysqli_stmt_error($materialStmt);
+        mysqli_stmt_close($materialStmt);
+        error_log('Yarn material lookup result failed: ' . $error);
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Unable to load yarn materials.']);
+        exit();
+    }
+
+    $materials = [];
+    while ($materialRow = mysqli_fetch_assoc($materialResult)) {
+        $materials[] = $materialRow['MATERIAL_DESCRIPTION'];
+    }
+    mysqli_free_result($materialResult);
+    mysqli_stmt_close($materialStmt);
+    $hasMore = count($materials) > $pageSize;
+    if ($hasMore) {
+        array_pop($materials);
+    }
+    echo json_encode([
+        'success' => true,
+        'data' => $materials,
+        'has_more' => $hasMore
+    ]);
+    exit();
+}
+
 if ($search === '') {
     http_response_code(400);
     echo json_encode([

@@ -244,6 +244,32 @@
             background: #ffffff;
         }
 
+        .info-dropdown-control {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            width: 100%;
+            margin-top: 0.15rem;
+        }
+
+        .info-dropdown-control input {
+            min-width: 0;
+            margin-top: 0;
+        }
+
+        .fabric-type-toggle {
+            flex: 0 0 42px;
+            height: 42px;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            background: #f8fafc;
+            color: #334155;
+        }
+
+        .fabric-type-toggle:hover {
+            background: #e2e8f0;
+        }
+
         .info-item .value-mono {
             font-family: 'JetBrains Mono', monospace;
             font-weight: 600;
@@ -398,6 +424,82 @@
             border-color: #2563eb;
             outline: none;
             box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.06);
+        }
+
+        .yarn-count-control {
+            display: flex;
+            position: relative;
+            gap: 4px;
+        }
+
+        .yarn-count-control .yarn_count_row {
+            min-width: 0;
+        }
+
+        .yarn-material-toggle {
+            flex: 0 0 34px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            background: #f8fafc;
+            color: #334155;
+        }
+
+        .yarn-material-toggle:hover {
+            background: #e2e8f0;
+        }
+
+        .yarn-material-menu {
+            position: fixed;
+            z-index: 10000;
+            width: 300px;
+            max-height: 280px;
+            padding: 8px;
+            overflow: hidden;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            background: #fff;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+        }
+
+        .yarn-material-search {
+            width: 100%;
+            padding: 7px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            outline: none;
+        }
+
+        .yarn-material-search:focus {
+            border-color: #2563eb;
+        }
+
+        .yarn-material-options {
+            max-height: 220px;
+            margin-top: 6px;
+            overflow-y: auto;
+        }
+
+        .yarn-material-option {
+            display: block;
+            width: 100%;
+            padding: 7px 9px;
+            border: 0;
+            border-radius: 6px;
+            background: #fff;
+            color: #0f172a;
+            text-align: left;
+        }
+
+        .yarn-material-option:hover,
+        .yarn-material-option.active {
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .yarn-material-empty {
+            padding: 8px 9px;
+            color: #64748b;
+            font-size: 0.85rem;
         }
 
         .btn-delete-row {
@@ -1039,7 +1141,15 @@
                         <div class="info-item"><label>Finish GSM</label><select id="finish_gsm"></select></div>
                         <div class="info-item"><label>Finish DIA</label><input type="text" id="finish_dia" placeholder="Finish DIA"></div>
                         <div class="info-item"><label>Open / Tube</label><input type="text" id="open_tube" placeholder="Open / Tube"></div>
-                        <div class="info-item"><label>Fabrics Type</label><input type="text" id="fabrics_type" placeholder="Fabrics Type"></div>
+                        <div class="info-item">
+                            <label for="fabrics_type">Fabric Type</label>
+                            <div class="info-dropdown-control">
+                                <input type="text" id="fabrics_type" placeholder="Fabric Type" autocomplete="off">
+                                <button type="button" class="fabric-type-toggle" id="fabricTypeToggle" title="Browse fabric types" aria-label="Browse fabric types">
+                                    <i class="fa-solid fa-chevron-down"></i>
+                                </button>
+                            </div>
+                        </div>
                         <div class="info-item">
                             <label for="category">Category</label>
                             <select id="category">
@@ -1439,7 +1549,21 @@ $('#mc_dia').val('');
             function addMcnoRow() {
                 var tbody = $('#mcnoQtyTableBody');
                 var row = $('<tr>');
-                row.append($('<td>', { 'data-label': 'Yarn Count' }).html('<input type="text" class="yarn_count_row" placeholder="Yarn Count">'));
+                var yarnCountInput = $('<input>', {
+                    type: 'text',
+                    class: 'yarn_count_row',
+                    placeholder: 'Yarn Count',
+                    'aria-label': 'Yarn Count'
+                }).attr('autocomplete', 'off');
+                var yarnMaterialToggle = $('<button>', {
+                    type: 'button',
+                    class: 'yarn-material-toggle',
+                    title: 'Browse yarn materials',
+                    'aria-label': 'Browse yarn materials'
+                }).append($('<i>', { class: 'fa-solid fa-chevron-down' }));
+                row.append($('<td>', { 'data-label': 'Yarn Count' }).append(
+                    $('<div>', { class: 'yarn-count-control' }).append(yarnCountInput, yarnMaterialToggle)
+                ));
                 row.append($('<td>', { 'data-label': 'Yarn Brand' }).html('<input type="text" class="yarn_brand_row" placeholder="Yarn Brand">'));
                 var colorSelect = $('<select>', { class: 'color_row', 'aria-label': 'Color' });
                 populateColorSelect(colorSelect, pendingColor);
@@ -1526,6 +1650,228 @@ $('#mc_dia').val('');
                 }
             }
 
+            var activeYarnCountInput = null;
+            var yarnMaterialRequest = null;
+            var yarnMaterialSearchTimer = null;
+            var yarnMaterialActiveIndex = -1;
+            var yarnMaterialEnterPending = false;
+            var yarnMaterialQuery = '';
+            var yarnMaterialOffset = 0;
+            var yarnMaterialHasMore = false;
+            var yarnMaterialLoading = false;
+            var yarnMaterialRequestVersion = 0;
+            var yarnMaterialPendingMove = false;
+
+            function getYarnMaterialMenu() {
+                var menu = $('#yarnMaterialMenu');
+                if (!menu.length) {
+                    menu = $('<div>', {
+                        id: 'yarnMaterialMenu',
+                        class: 'yarn-material-menu',
+                        role: 'dialog',
+                        'aria-label': 'Yarn material suggestions'
+                    }).append(
+                        $('<input>', {
+                            type: 'search',
+                            class: 'yarn-material-search',
+                            placeholder: 'Search materials...',
+                            'aria-label': 'Search yarn materials'
+                        }).attr('autocomplete', 'off'),
+                        $('<div>', {
+                            class: 'yarn-material-options',
+                            role: 'listbox'
+                        }).on('scroll', function() {
+                            if (this.scrollTop + this.clientHeight >= this.scrollHeight - 40) {
+                                loadMoreYarnMaterials();
+                            }
+                        })
+                    ).appendTo(document.body).hide();
+                }
+                return menu;
+            }
+
+            function positionYarnMaterialMenu(input) {
+                var menu = getYarnMaterialMenu();
+                var rect = input.getBoundingClientRect();
+                var width = Math.min(Math.max(rect.width + 38, 300), Math.max(1, window.innerWidth - 16));
+                var left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
+                menu.css({
+                    left: left + 'px',
+                    top: Math.max(8, Math.min(rect.bottom + 4, window.innerHeight - 290)) + 'px',
+                    width: width + 'px'
+                });
+            }
+
+            function cancelYarnMaterialSearch() {
+                clearTimeout(yarnMaterialSearchTimer);
+                yarnMaterialSearchTimer = null;
+                if (yarnMaterialRequest) {
+                    yarnMaterialRequest.abort();
+                    yarnMaterialRequest = null;
+                }
+                yarnMaterialLoading = false;
+            }
+
+            function selectYarnMaterial(value) {
+                if (!activeYarnCountInput) return;
+                cancelYarnMaterialSearch();
+                $(activeYarnCountInput).val(value).trigger('change');
+                getYarnMaterialMenu().hide();
+                activeYarnCountInput = null;
+                yarnMaterialEnterPending = false;
+            }
+
+            function renderYarnMaterials(values, message, append) {
+                var menu = getYarnMaterialMenu();
+                var options = menu.find('.yarn-material-options');
+                if (!append) {
+                    options.empty();
+                    yarnMaterialActiveIndex = -1;
+                } else {
+                    options.find('.yarn-material-empty').remove();
+                }
+
+                if (!values || !values.length) {
+                    if (!append || message || !options.find('.yarn-material-option').length) {
+                        options.append($('<div>', {
+                            class: 'yarn-material-empty',
+                            text: message || 'No yarn materials found.'
+                        }));
+                    }
+                    return;
+                }
+
+                values.forEach(function(value) {
+                    options.append($('<button>', {
+                        type: 'button',
+                        class: 'yarn-material-option',
+                        role: 'option',
+                        text: value
+                    }).on('click', function() {
+                        selectYarnMaterial(value);
+                    }));
+                });
+            }
+
+            function searchYarnMaterials(input, query) {
+                activeYarnCountInput = input;
+                yarnMaterialQuery = $.trim(String(query || ''));
+                yarnMaterialOffset = 0;
+                yarnMaterialHasMore = false;
+                yarnMaterialLoading = false;
+                yarnMaterialPendingMove = false;
+                var requestVersion = ++yarnMaterialRequestVersion;
+                var menu = getYarnMaterialMenu();
+                positionYarnMaterialMenu(input);
+                menu.show();
+
+                if (yarnMaterialRequest) {
+                    yarnMaterialRequest.abort();
+                    yarnMaterialRequest = null;
+                }
+                renderYarnMaterials([], 'Loading materials...');
+                menu.find('.yarn-material-options').scrollTop(0);
+                loadYarnMaterialPage(input, requestVersion, false);
+            }
+
+            function loadYarnMaterialPage(input, requestVersion, append) {
+                if (yarnMaterialLoading || (append && !yarnMaterialHasMore)) return;
+                yarnMaterialLoading = true;
+                var menu = getYarnMaterialMenu();
+                if (append) {
+                    menu.find('.yarn-material-empty').remove();
+                    menu.find('.yarn-material-options').append($('<div>', {
+                        class: 'yarn-material-empty',
+                        text: 'Loading more materials...'
+                    }));
+                }
+                var requestOffset = yarnMaterialOffset;
+                var request = $.ajax({
+                    url: 'ajaxKnittingProgram.php',
+                    method: 'GET',
+                    dataType: 'json',
+                    data: {
+                        action: 'yarn_material_list',
+                        search: yarnMaterialQuery,
+                        offset: requestOffset
+                    }
+                }).done(function(resp) {
+                    if (requestVersion !== yarnMaterialRequestVersion) return;
+                    yarnMaterialLoading = false;
+                    if (yarnMaterialRequest === request) yarnMaterialRequest = null;
+                    if (activeYarnCountInput !== input || !menu.is(':visible')) return;
+                    if (resp && resp.success && Array.isArray(resp.data)) {
+                        yarnMaterialOffset += resp.data.length;
+                        yarnMaterialHasMore = resp.has_more === true;
+                        renderYarnMaterials(resp.data, '', append);
+                        if (yarnMaterialHasMore) {
+                            menu.find('.yarn-material-options').append($('<div>', {
+                                class: 'yarn-material-empty',
+                                text: 'Scroll to load more materials...'
+                            }));
+                        }
+                        if (yarnMaterialPendingMove && resp.data.length) {
+                            yarnMaterialPendingMove = false;
+                            moveYarnMaterialSelection(1);
+                        } else if (yarnMaterialPendingMove) {
+                            yarnMaterialPendingMove = false;
+                        }
+                        if (yarnMaterialEnterPending) {
+                            yarnMaterialEnterPending = false;
+                            chooseActiveYarnMaterial();
+                        }
+                    } else {
+                        yarnMaterialEnterPending = false;
+                        yarnMaterialHasMore = false;
+                        renderYarnMaterials([], 'Unable to load yarn materials.', append);
+                    }
+                }).fail(function(xhr, status) {
+                    if (status === 'abort' || requestVersion !== yarnMaterialRequestVersion) return;
+                    yarnMaterialLoading = false;
+                    if (yarnMaterialRequest === request) yarnMaterialRequest = null;
+                    if (activeYarnCountInput !== input) return;
+                    yarnMaterialEnterPending = false;
+                    yarnMaterialPendingMove = false;
+                    renderYarnMaterials([], 'Unable to load yarn materials.', append);
+                });
+                yarnMaterialRequest = request;
+            }
+
+            function loadMoreYarnMaterials() {
+                if (!activeYarnCountInput || !yarnMaterialHasMore || yarnMaterialLoading) return;
+                loadYarnMaterialPage(activeYarnCountInput, yarnMaterialRequestVersion, true);
+            }
+
+            function closeYarnMaterialMenu() {
+                cancelYarnMaterialSearch();
+                getYarnMaterialMenu().hide();
+                activeYarnCountInput = null;
+                yarnMaterialActiveIndex = -1;
+                yarnMaterialEnterPending = false;
+                yarnMaterialPendingMove = false;
+            }
+
+            function moveYarnMaterialSelection(direction) {
+                var options = getYarnMaterialMenu().find('.yarn-material-option');
+                if (!options.length) return;
+                if (direction > 0 && yarnMaterialActiveIndex === options.length - 1 &&
+                    yarnMaterialHasMore && !yarnMaterialLoading) {
+                    yarnMaterialPendingMove = true;
+                    loadMoreYarnMaterials();
+                    return;
+                }
+                yarnMaterialActiveIndex = (yarnMaterialActiveIndex + direction + options.length) % options.length;
+                options.removeClass('active').eq(yarnMaterialActiveIndex).addClass('active')[0].scrollIntoView({
+                    block: 'nearest'
+                });
+            }
+
+            function chooseActiveYarnMaterial() {
+                var options = getYarnMaterialMenu().find('.yarn-material-option');
+                if (!options.length) return;
+                var index = yarnMaterialActiveIndex < 0 ? 0 : yarnMaterialActiveIndex;
+                options.eq(index).trigger('click');
+            }
 
             function isManualDataValid() {
                 // Only user-editable visible inputs are required here.
@@ -1662,6 +2008,41 @@ $('#mc_dia').val('');
             $(function() {
                 sessionStorage.removeItem('kp_booking');
 
+                var $fabricTypeField = $('#fabrics_type');
+                $fabricTypeField.autocomplete({
+                    minLength: 0,
+                    delay: 180,
+                    source: function(request, response) {
+                        $fabricTypeField.autocomplete('widget').empty();
+                        $.ajax({
+                            url: 'ajaxKnittingProgram.php',
+                            method: 'GET',
+                            dataType: 'json',
+                            data: {
+                                action: 'fabric_type_list',
+                                search: request.term
+                            }
+                        }).done(function(resp) {
+                            if (resp && resp.success && Array.isArray(resp.data)) {
+                                response(resp.data);
+                            } else {
+                                response([]);
+                                showPageAlert('Unable to load fabric types.', 'error', 3000);
+                            }
+                        }).fail(function(xhr, status) {
+                            response([]);
+                            if (status !== 'abort') {
+                                showPageAlert('Unable to load fabric types.', 'error', 3000);
+                            }
+                        });
+                    }
+                });
+
+                $('#fabricTypeToggle').on('click', function() {
+                    $fabricTypeField.autocomplete('search', '');
+                    $fabricTypeField.trigger('focus');
+                });
+
                 // Load all Finish GSM options from database for dropdown
                 $.ajax({
                     url: 'ajaxKnittingProgram.php',
@@ -1769,7 +2150,7 @@ var finishGsmSelect = $('#finish_gsm');
                     $('#searchError').removeClass('show');
                 });
 
-                $(document).on('input', '#bookingInput, #knittingForm input[type="text"], #knittingForm textarea', function() {
+                $(document).on('input', '#bookingInput, #knittingForm input[type="text"]:not(.yarn_count_row), #knittingForm textarea', function() {
                     var start = this.selectionStart;
                     var end = this.selectionEnd;
                     this.value = this.value.toUpperCase();
@@ -1795,6 +2176,66 @@ var finishGsmSelect = $('#finish_gsm');
                  $(document).on('input change', '.yarn_count_row, .yarn_brand_row, .color_row, .lot_no_row, .qty-input', function() {
                      checkSubmitButton();
                  });
+                 $(document).on('input', '.yarn_count_row', function() {
+                     var input = this;
+                     yarnMaterialEnterPending = false;
+                     clearTimeout(yarnMaterialSearchTimer);
+                     yarnMaterialSearchTimer = setTimeout(function() {
+                         yarnMaterialSearchTimer = null;
+                         searchYarnMaterials(input, $(input).val());
+                     }, 180);
+                 });
+                 $(document).on('click', '.yarn-material-toggle', function() {
+                     var input = $(this).siblings('.yarn_count_row')[0];
+                     searchYarnMaterials(input, '');
+                     getYarnMaterialMenu().find('.yarn-material-search').val('').trigger('focus');
+                 });
+                 $(document).on('input', '.yarn-material-search', function() {
+                     if (!activeYarnCountInput) return;
+                     var input = activeYarnCountInput;
+                     yarnMaterialEnterPending = false;
+                     clearTimeout(yarnMaterialSearchTimer);
+                     yarnMaterialSearchTimer = setTimeout(function() {
+                         yarnMaterialSearchTimer = null;
+                         searchYarnMaterials(input, $('.yarn-material-search').val());
+                     }, 180);
+                 });
+                 $(document).on('keydown', '.yarn_count_row, .yarn-material-search', function(e) {
+                     if (e.key === 'ArrowDown') {
+                         e.preventDefault();
+                         moveYarnMaterialSelection(1);
+                     } else if (e.key === 'ArrowUp') {
+                         e.preventDefault();
+                         moveYarnMaterialSelection(-1);
+                     } else if (e.key === 'Enter') {
+                         e.preventDefault();
+                         var menu = getYarnMaterialMenu();
+                         if (yarnMaterialSearchTimer) {
+                             clearTimeout(yarnMaterialSearchTimer);
+                             yarnMaterialSearchTimer = null;
+                             yarnMaterialEnterPending = true;
+                             var input = activeYarnCountInput || $(this).closest('.yarn-count-control').find('.yarn_count_row')[0];
+                             searchYarnMaterials(input, $(this).val());
+                         } else if (menu.is(':visible') && menu.find('.yarn-material-option').length) {
+                             chooseActiveYarnMaterial();
+                         } else {
+                             var input = activeYarnCountInput || $(this).closest('.yarn-count-control').find('.yarn_count_row')[0];
+                             if (input) {
+                                 yarnMaterialEnterPending = true;
+                                 searchYarnMaterials(input, $(this).val());
+                             }
+                         }
+                     } else if (e.key === 'Escape') {
+                         closeYarnMaterialMenu();
+                     }
+                 });
+                 $(document).on('mousedown', function(e) {
+                     if (!$(e.target).closest('#yarnMaterialMenu, .yarn-count-control').length) {
+                         closeYarnMaterialMenu();
+                     }
+                 });
+                 $(window).on('resize scroll', closeYarnMaterialMenu);
+                 $('.mcno-table-wrap').on('scroll', closeYarnMaterialMenu);
                  $('#knittingForm').on('input change', function() {
                      checkSubmitButton();
                  });
@@ -1884,11 +2325,14 @@ var finishGsmSelect = $('#finish_gsm');
                                 });
                             }
                         },
-                        error: function() {
+                        error: function(xhr) {
+                            var errorMessage = xhr.responseJSON && xhr.responseJSON.message
+                                ? xhr.responseJSON.message
+                                : 'Error saving program.';
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Save Failed',
-                                text: 'Error saving program.',
+                                text: errorMessage,
                                 timer: 3000,
                                 timerProgressBar: true,
                                 showConfirmButton: false

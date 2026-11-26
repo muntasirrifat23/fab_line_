@@ -55,7 +55,9 @@ function uppercaseProgramValues($value)
 {
     if (is_array($value)) {
         foreach ($value as $key => $item) {
-            $value[$key] = uppercaseProgramValues($item);
+            $value[$key] = $key === 'yarn_count' && is_string($item)
+                ? trim($item)
+                : uppercaseProgramValues($item);
         }
         return $value;
     }
