@@ -127,6 +127,200 @@ switch ($action) {
         echo json_encode(['success' => true, 'colors' => $colors]);
         exit;
 
+    case 'fabric_totals':
+        $poNumber = isset($_GET['po_number']) ? trim($_GET['po_number']) : '';
+        $color = isset($_GET['color']) ? trim($_GET['color']) : '';
+        if ($poNumber === '' || $color === '') {
+            echo json_encode(['success' => false, 'message' => 'PO Number and Color are required']);
+            exit;
+        }
+
+        $stmt = $db->prepare(
+            "SELECT TRIM(ks.FTYPE) AS FTYPE, TRIM(ks.COLOR) AS COLOR,
+                    SUM(CAST(NULLIF(TRIM(ks.QTY), '') AS DECIMAL(12,3))) AS TOTAL_QTY,
+                    MAX(ks.O_T) AS O_T, MAX(ks.MCDIA) AS MCDIA, MAX(ks.SL) AS SL,
+                    MAX(ks.FGSM) AS FGSM, MAX(ks.FDIA) AS FDIA, MAX(ks.SONO) AS SONO,
+                    MAX(ks.BUYER) AS BUYER, MAX(ks.STYLE) AS STYLE,
+                    MAX(ks.CUSTOMER) AS CUSTOMER, MAX(ks.YTYPE) AS YTYPE,
+                    MAX(ks.YCOUNT) AS YCOUNT, MAX(ks.YBRAND) AS YBRAND,
+                    MAX(ks.LOT_NO) AS LOT_NO, MAX(ks.TPOINT) AS TPOINT,
+                    MAX(ks.FEEDER_PLAN) AS FEEDER_PLAN
+             FROM knitting_store ks
+             WHERE TRIM(ks.PO_NUMBER) = ? AND TRIM(ks.COLOR) = ?
+               AND ks.FTYPE IS NOT NULL AND TRIM(ks.FTYPE) <> ''
+             GROUP BY TRIM(ks.FTYPE), TRIM(ks.COLOR)
+             ORDER BY TRIM(ks.FTYPE)"
+        );
+        if (!$stmt) {
+            echo json_encode(['success' => false, 'message' => 'Could not prepare fabric totals query: ' . $db->error]);
+            exit;
+        }
+        $stmt->bind_param('ss', $poNumber, $color);
+        if (!$stmt->execute()) {
+            echo json_encode(['success' => false, 'message' => 'Could not load fabric totals: ' . $stmt->error]);
+            $stmt->close();
+            exit;
+        }
+        $result = $stmt->get_result();
+        $fabrics = [];
+        while ($row = $result->fetch_assoc()) {
+            $row['TOTAL_QTY'] = round((float)$row['TOTAL_QTY'], 3);
+            $fabrics[] = $row;
+        }
+        $stmt->close();
+        echo json_encode(['success' => true, 'fabrics' => $fabrics]);
+        exit;
+
+    case 'select_fabrics':
+        $input = json_decode(file_get_contents('php://input'), true);
+        if (!is_array($input)) {
+            echo json_encode(['success' => false, 'message' => 'Invalid batch card selection data']);
+            exit;
+        }
+        $poNumber = isset($input['po_number']) ? trim((string)$input['po_number']) : '';
+        $color = isset($input['color']) ? trim((string)$input['color']) : '';
+        $dyeingMcno = isset($input['dymcno']) ? trim((string)$input['dymcno']) : '';
+        $requestedItems = isset($input['items']) && is_array($input['items']) ? $input['items'] : [];
+        $allowedCategories = ['BODY', 'RIB', 'NECK'];
+        if ($poNumber === '' || $color === '' || $dyeingMcno === '' ||
+            count($requestedItems) === 0 || count($requestedItems) > 300) {
+            echo json_encode(['success' => false, 'message' => 'Select a PO Number, Color, Dyeing MC No and at least one fabric row']);
+            exit;
+        }
+
+        $machineStmt = $db->prepare('SELECT DMCNO FROM dyeing_mcno WHERE DMCNO = ? LIMIT 1');
+        if (!$machineStmt) {
+            echo json_encode(['success' => false, 'message' => 'Could not validate dyeing machine: ' . $db->error]);
+            exit;
+        }
+        $machineStmt->bind_param('s', $dyeingMcno);
+        if (!$machineStmt->execute()) {
+            echo json_encode(['success' => false, 'message' => 'Could not validate dyeing machine: ' . $machineStmt->error]);
+            $machineStmt->close();
+            exit;
+        }
+        $machineResult = $machineStmt->get_result();
+        $machine = $machineResult ? $machineResult->fetch_assoc() : null;
+        $machineStmt->close();
+        if (!$machine) {
+            echo json_encode(['success' => false, 'message' => 'Selected Dyeing MC No is not available. Please choose again.']);
+            exit;
+        }
+        $dyeingMcno = trim((string)$machine['DMCNO']);
+
+        $allowedProcessFields = dyeingBatchCardProcessFieldNames();
+        $requestedProcesses = isset($input['processes']) && is_array($input['processes']) ? $input['processes'] : [];
+        $selectedProcesses = [];
+        foreach ($requestedProcesses as $processField => $processValue) {
+            if (is_int($processField)) {
+                $processField = is_string($processValue) ? $processValue : '';
+                $processValue = $processField;
+            }
+            if (!is_string($processField) || !in_array($processField, $allowedProcessFields, true)) {
+                echo json_encode(['success' => false, 'message' => 'Invalid Dyeing Process selection']);
+                exit;
+            }
+            if ($processField === 'OTHERS') {
+                $processValue = is_string($processValue) ? trim($processValue) : '';
+                $selectedProcesses[$processField] = $processValue !== '' ? $processValue : 'Others';
+            } else {
+                $selectedProcesses[$processField] = $processField;
+            }
+        }
+        if (count($selectedProcesses) === 0) {
+            echo json_encode(['success' => false, 'message' => 'Select at least one Dyeing Process']);
+            exit;
+        }
+
+        $sourceStmt = $db->prepare(
+            "SELECT SUM(CAST(NULLIF(TRIM(QTY), '') AS DECIMAL(12,3))) AS TOTAL_QTY,
+                    MAX(O_T) AS O_T, MAX(MCDIA) AS MCDIA, MAX(SL) AS SL,
+                    MAX(FGSM) AS FGSM, MAX(FDIA) AS FDIA, MAX(SONO) AS SONO,
+                    MAX(BUYER) AS BUYER, MAX(STYLE) AS STYLE, MAX(CUSTOMER) AS CUSTOMER,
+                    MAX(YTYPE) AS YTYPE, MAX(YCOUNT) AS YCOUNT, MAX(YBRAND) AS YBRAND,
+                    MAX(LOT_NO) AS LOT_NO, MAX(TPOINT) AS TPOINT, MAX(FEEDER_PLAN) AS FEEDER_PLAN
+             FROM knitting_store
+             WHERE TRIM(PO_NUMBER) = ? AND TRIM(COLOR) = ? AND TRIM(FTYPE) = ?"
+        );
+        if (!$sourceStmt) {
+            echo json_encode(['success' => false, 'message' => 'Could not prepare fabric quantity validation: ' . $db->error]);
+            exit;
+        }
+
+        $items = [];
+        $seen = [];
+        $allocatedByFabric = [];
+        $totalQty = 0;
+        foreach ($requestedItems as $requestedItem) {
+            if (!is_array($requestedItem)) {
+                echo json_encode(['success' => false, 'message' => 'Invalid fabric selection row']);
+                $sourceStmt->close();
+                exit;
+            }
+            $category = isset($requestedItem['category']) ? strtoupper(trim((string)$requestedItem['category'])) : '';
+            $fabricType = isset($requestedItem['fabric_type']) ? trim((string)$requestedItem['fabric_type']) : '';
+            $quantity = isset($requestedItem['quantity']) && is_numeric($requestedItem['quantity'])
+                ? round((float)$requestedItem['quantity'], 3)
+                : 0;
+            $fabricKey = strtoupper($fabricType);
+            $key = $fabricKey . '|' . $category;
+            if (!in_array($category, $allowedCategories, true) || $fabricType === '' ||
+                !is_finite($quantity) || $quantity <= 0 || isset($seen[$key])) {
+                echo json_encode(['success' => false, 'message' => 'Each selected fabric needs a unique F/T per Fabric Type and valid Batch QTY']);
+                $sourceStmt->close();
+                exit;
+            }
+
+            $sourceStmt->bind_param('sss', $poNumber, $color, $fabricType);
+            if (!$sourceStmt->execute()) {
+                echo json_encode(['success' => false, 'message' => 'Could not verify ' . $fabricType . ' quantity: ' . $sourceStmt->error]);
+                $sourceStmt->close();
+                exit;
+            }
+            $sourceResult = $sourceStmt->get_result();
+            $source = $sourceResult ? $sourceResult->fetch_assoc() : null;
+            $availableQty = $source && is_numeric($source['TOTAL_QTY']) ? round((float)$source['TOTAL_QTY'], 3) : 0;
+            $remainingQty = max(0, round($availableQty - (isset($allocatedByFabric[$fabricKey])
+                ? $allocatedByFabric[$fabricKey]
+                : 0), 3));
+            if (!$source || $remainingQty <= 0 || $quantity - $remainingQty > 0.000001) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Batch QTY for ' . $fabricType . ' cannot exceed its total ' .
+                        number_format($remainingQty, 3) . ' KG remaining.'
+                ]);
+                $sourceStmt->close();
+                exit;
+            }
+
+            $source['CATEGORY'] = $category;
+            $source['FTYPE'] = $fabricType;
+            $source['TOTAL_QTY'] = $availableQty;
+            $source['RQTY'] = $quantity;
+            $source['AQTY'] = max(0, round($remainingQty - $quantity, 3));
+            $items[] = $source;
+            $seen[$key] = true;
+            $allocatedByFabric[$fabricKey] = round(
+                (isset($allocatedByFabric[$fabricKey]) ? $allocatedByFabric[$fabricKey] : 0) + $quantity,
+                3
+            );
+            $totalQty += $quantity;
+        }
+        $sourceStmt->close();
+
+        $_SESSION['dyeing_batch']['items'] = $items;
+        $_SESSION['dyeing_batch']['target_qty'] = round($totalQty, 3);
+        $_SESSION['dyeing_batch']['dymcno'] = $dyeingMcno;
+        $_SESSION['dyeing_batch']['processes'] = $selectedProcesses;
+        $_SESSION['dyeing_batch']['po_number'] = $poNumber;
+        $_SESSION['dyeing_batch']['color'] = $color;
+        echo json_encode([
+            'success' => true,
+            'count' => count($items),
+            'total_qty' => round($totalQty, 3)
+        ]);
+        exit;
+
     case 'search_by_po_color':
         $poNumber = isset($_GET['po_number']) ? trim($_GET['po_number']) : '';
         $color = isset($_GET['color']) ? trim($_GET['color']) : '';
@@ -182,6 +376,20 @@ switch ($action) {
         $poNumber = isset($input['po_number']) ? trim((string)$input['po_number']) : '';
         $color = isset($input['color']) ? trim((string)$input['color']) : '';
         $targetQty = isset($input['target_qty']) && is_numeric($input['target_qty']) ? (float)$input['target_qty'] : 0;
+        $categoryQuantities = [];
+        foreach (['body_qty', 'rib_qty', 'neck_qty'] as $quantityField) {
+            if (!isset($input[$quantityField]) || !is_numeric($input[$quantityField])) {
+                echo json_encode(['success' => false, 'message' => 'Enter valid Body, RIB and Neck quantities']);
+                exit;
+            }
+            $quantity = (float)$input[$quantityField];
+            if (!is_finite($quantity) || $quantity < 0) {
+                echo json_encode(['success' => false, 'message' => 'Body, RIB and Neck quantities cannot be negative']);
+                exit;
+            }
+            $categoryQuantities[$quantityField] = round($quantity, 3);
+        }
+        $categoryTotal = round(array_sum($categoryQuantities), 3);
         $dyeingMcno = isset($input['dymcno']) ? trim((string)$input['dymcno']) : '';
         $requestedRolls = isset($input['rolls']) && is_array($input['rolls']) ? $input['rolls'] : [];
         $allowedProcessFields = dyeingBatchCardProcessFieldNames();
@@ -229,8 +437,12 @@ switch ($action) {
         $rolls = array_keys($requiredQtyByRoll);
 
         if ($poNumber === '' || $color === '' || $dyeingMcno === '' ||
-            !is_finite($targetQty) || $targetQty <= 0 || count($rolls) === 0) {
-            echo json_encode(['success' => false, 'message' => 'Select a PO Number, Color, target QTY, Dyeing MC No and at least one roll']);
+            !is_finite($targetQty) || $targetQty <= 0 || $categoryTotal <= 0 ||
+            abs(round($targetQty, 3) - $categoryTotal) > 0.001 || count($rolls) === 0) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Select a PO Number, Color, Dyeing MC No, at least one roll, and a valid Body/RIB/Neck quantity'
+            ]);
             exit;
         }
         if (count($rolls) > 500) {
@@ -315,10 +527,9 @@ switch ($action) {
             ]);
             exit;
         }
-        $targetQty = round($selectedQty, 3);
-
         $_SESSION['dyeing_batch']['rolls'] = $selectedRolls;
         $_SESSION['dyeing_batch']['target_qty'] = $targetQty;
+        $_SESSION['dyeing_batch']['category_quantities'] = $categoryQuantities;
         $_SESSION['dyeing_batch']['dymcno'] = $dyeingMcno;
         $_SESSION['dyeing_batch']['processes'] = $selectedProcesses;
         echo json_encode([

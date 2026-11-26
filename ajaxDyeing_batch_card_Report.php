@@ -6,6 +6,7 @@ header('Content-Type: application/json');
 
 try {
     ensureDyeingBatchQuantityColumns($db);
+    ensureDyeingBatchCategoryColumn($db);
     ensureDyeingProcessColumns($db, 'dyeing_batch_card');
     ensureDyeingBatchCreatorColumns($db);
 } catch (Throwable $error) {
@@ -26,13 +27,13 @@ if ($batchCard !== '') {
     $s = mysqli_real_escape_string($db, $search);
     $conditions[] = "(
         BCARD LIKE '%$s%'
-        OR ROLL LIKE '%$s%'
         OR PO_NUMBER LIKE '%$s%'
         OR SONO LIKE '%$s%'
         OR BUYER LIKE '%$s%'
         OR STYLE LIKE '%$s%'
         OR COLOR LIKE '%$s%'
-        OR RACK LIKE '%$s%'
+        OR CATEGORY LIKE '%$s%'
+        OR FTYPE LIKE '%$s%'
     )";
 }
 
@@ -41,8 +42,8 @@ if (count($conditions) > 0) {
     $where = 'WHERE ' . implode(' AND ', $conditions);
 }
 
-$query = "SELECT DBCTID, BCARD, BUDAT, RACK, ROLL, PO_NUMBER, KQTY, AQTY, RQTY AS BATCH_QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
-                 DYMCNO, MCDIA, CUSTOMER, YTYPE, YCOUNT, YBRAND, SILICON, NONSILICON,
+$query = "SELECT DBCTID, BCARD, BUDAT, PO_NUMBER, KQTY, AQTY, RQTY AS BATCH_QTY, SONO, SHIFT, BUYER, STYLE, COLOR,
+                 CATEGORY, BODY_QTY, RIB_QTY, NECK_QTY, DYMCNO, MCDIA, CUSTOMER, YTYPE, YCOUNT, YBRAND, SILICON, NONSILICON,
                  NWASH, EWASH, ENZYME, NONENZYME, PEACH, BRUSH, AOP, SOFTENER,
                  NONSOFTENER, OTHERS, SHEARING, SINGEING, HEAT_SET, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN,
                  LOT_NO, TPOINT, DID, DNAME, CREATED_DATE, CATEGORY

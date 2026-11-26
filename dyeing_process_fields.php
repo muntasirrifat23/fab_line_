@@ -233,6 +233,26 @@ function ensureDyeingBatchQuantityColumns($db)
         }
     }
 
+    $previousQuantityColumn = 'RQTY';
+    foreach (['BODY_QTY', 'RIB_QTY', 'NECK_QTY'] as $quantityColumn) {
+        if (!isset($columns[$quantityColumn])) {
+            if (!$db->query(
+                'ALTER TABLE `dyeing_batch_card` ADD COLUMN `' . $quantityColumn .
+                '` DOUBLE DEFAULT NULL AFTER `' . $previousQuantityColumn . '`'
+            )) {
+                throw new RuntimeException('Could not add dyeing_batch_card ' . $quantityColumn . ': ' . $db->error);
+            }
+            $columns[$quantityColumn] = 'double';
+        } elseif (strpos($columns[$quantityColumn], 'double') !== 0) {
+            if (!$db->query(
+                'ALTER TABLE `dyeing_batch_card` MODIFY COLUMN `' . $quantityColumn . '` DOUBLE DEFAULT NULL'
+            )) {
+                throw new RuntimeException('Could not update dyeing_batch_card ' . $quantityColumn . ' storage: ' . $db->error);
+            }
+        }
+        $previousQuantityColumn = $quantityColumn;
+    }
+
     if (!$db->query(
         'UPDATE `dyeing_batch_card`
          SET `RQTY` = COALESCE(`RQTY`, `KQTY`),
@@ -270,6 +290,21 @@ function ensureDyeingBatchQuantityColumns($db)
     if (array_search('RQTY', $order, true) !== array_search('AQTY', $order, true) + 1 &&
         !$db->query('ALTER TABLE `dyeing_batch_card` MODIFY COLUMN `RQTY` DOUBLE DEFAULT NULL AFTER `AQTY`')) {
         throw new RuntimeException('Could not position dyeing_batch_card RQTY after AQTY: ' . $db->error);
+    }
+}
+
+function ensureDyeingBatchCategoryColumn($db)
+{
+    $result = $db->query("SHOW COLUMNS FROM `dyeing_batch_card` LIKE 'CATEGORY'");
+    if (!$result) {
+        throw new RuntimeException('Could not inspect dyeing_batch_card CATEGORY column: ' . $db->error);
+    }
+    $exists = $result->num_rows > 0;
+    $result->free();
+    if (!$exists && !$db->query(
+        'ALTER TABLE `dyeing_batch_card` ADD COLUMN `CATEGORY` VARCHAR(100) DEFAULT NULL AFTER `COLOR`'
+    )) {
+        throw new RuntimeException('Could not add dyeing_batch_card CATEGORY: ' . $db->error);
     }
 }
 

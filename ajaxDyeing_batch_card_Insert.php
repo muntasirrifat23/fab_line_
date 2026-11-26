@@ -1,5 +1,4 @@
 <?php
-// ajaxDyeing_batch_card_Insert.php
 session_start();
 require_once 'config.php';
 require_once 'dyeing_process_fields.php';
@@ -11,328 +10,252 @@ if (!isset($_SESSION['username'])) {
     exit;
 }
 
-if (!isset($_SESSION['dyeing_batch']) || !is_array($_SESSION['dyeing_batch'])) {
-    $_SESSION['dyeing_batch'] = [];
-}
-if (!isset($_SESSION['dyeing_batch']['rolls']) || !is_array($_SESSION['dyeing_batch']['rolls'])) {
-    $_SESSION['dyeing_batch']['rolls'] = [];
+$batch = isset($_SESSION['dyeing_batch']) && is_array($_SESSION['dyeing_batch'])
+    ? $_SESSION['dyeing_batch']
+    : [];
+$items = isset($batch['items']) && is_array($batch['items']) ? $batch['items'] : [];
+$dyeingMcno = isset($batch['dymcno']) ? trim((string)$batch['dymcno']) : '';
+$poNumber = isset($batch['po_number']) ? trim((string)$batch['po_number']) : '';
+$color = isset($batch['color']) ? trim((string)$batch['color']) : '';
+$selectedProcesses = isset($batch['processes']) && is_array($batch['processes'])
+    ? $batch['processes']
+    : [];
+$processFields = dyeingBatchCardProcessFieldNames();
+
+if (!$items || $poNumber === '' || $color === '' || $dyeingMcno === '' || !$selectedProcesses) {
+    echo json_encode(['success' => false, 'message' => 'Select fabric quantities, PO Number, Color, Dyeing MC No and process before creating the batch card.']);
+    exit;
 }
 
 try {
     ensureDyeingBatchQuantityColumns($db);
     ensureDyeingProcessColumns($db, 'dyeing_batch_card');
     ensureDyeingBatchCreatorColumns($db);
-} catch (Throwable $error) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => $error->getMessage()]);
-    exit;
-}
-
-$rolls = array_values($_SESSION['dyeing_batch']['rolls']);
-$dyeingMcno = isset($_SESSION['dyeing_batch']['dymcno'])
-    ? trim((string)$_SESSION['dyeing_batch']['dymcno'])
-    : '';
-$selectedProcesses = isset($_SESSION['dyeing_batch']['processes']) &&
-    is_array($_SESSION['dyeing_batch']['processes'])
-    ? $_SESSION['dyeing_batch']['processes']
-    : [];
-$processFields = dyeingBatchCardProcessFieldNames();
-try {
     $creator = dyeingBatchCardCreatorDetails(
         $db,
         isset($_SESSION['username']) ? $_SESSION['username'] : '',
         isset($_SESSION['user_type']) ? $_SESSION['user_type'] : ''
     );
 } catch (Throwable $error) {
-    http_response_code(400);
+    http_response_code(500);
     echo json_encode(['success' => false, 'message' => $error->getMessage()]);
     exit;
 }
 
-if (count($rolls) === 0 || $dyeingMcno === '') {
-    echo json_encode(['success' => false, 'message' => 'Select at least one roll and a Dyeing MC No to create a batch card']);
+$columns = [];
+$columnResult = $db->query('SHOW COLUMNS FROM `dyeing_batch_card`');
+if (!$columnResult) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Could not inspect dyeing batch columns: ' . $db->error]);
     exit;
 }
-if (count($selectedProcesses) === 0) {
-    echo json_encode(['success' => false, 'message' => 'Select at least one Dyeing Process to create a batch card']);
-    exit;
+while ($column = $columnResult->fetch_assoc()) {
+    $columns[strtoupper($column['Field'])] = true;
 }
-$batchColumnsResult = $db->query("SHOW COLUMNS FROM dyeing_batch_card");
-if (!$batchColumnsResult) {
-    echo json_encode(['success' => false, 'message' => 'Could not inspect batch card columns: ' . $db->error]);
-    exit;
-}
-$batchColumns = [];
-while ($column = $batchColumnsResult->fetch_assoc()) {
-    $batchColumns[] = strtoupper($column['Field']);
-}
-if (in_array('MCNO', $batchColumns, true) && in_array('DYMCNO', $batchColumns, true)) {
-    echo json_encode(['success' => false, 'message' => 'Both MCNO and DYMCNO columns exist in dyeing_batch_card. Resolve the schema before inserting.']);
-    exit;
-}
-if (in_array('MCNO', $batchColumns, true)) {
-    if (!$db->query("ALTER TABLE dyeing_batch_card CHANGE COLUMN MCNO DYMCNO VARCHAR(100) DEFAULT NULL")) {
-        echo json_encode(['success' => false, 'message' => 'Could not rename MCNO to DYMCNO: ' . $db->error]);
+$columnResult->free();
+
+if (!isset($columns['DYMCNO']) && isset($columns['MCNO'])) {
+    if (!$db->query("ALTER TABLE `dyeing_batch_card` CHANGE COLUMN `MCNO` `DYMCNO` VARCHAR(100) DEFAULT NULL")) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Could not migrate dyeing machine column: ' . $db->error]);
         exit;
     }
-} elseif (!in_array('DYMCNO', $batchColumns, true)) {
-    if (!$db->query("ALTER TABLE dyeing_batch_card ADD COLUMN DYMCNO VARCHAR(100) DEFAULT NULL AFTER COLOR")) {
-        echo json_encode(['success' => false, 'message' => 'Could not add DYMCNO column: ' . $db->error]);
+    $columns['DYMCNO'] = true;
+} elseif (!isset($columns['DYMCNO'])) {
+    if (!$db->query("ALTER TABLE `dyeing_batch_card` ADD COLUMN `DYMCNO` VARCHAR(100) DEFAULT NULL AFTER `COLOR`")) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Could not add dyeing machine column: ' . $db->error]);
         exit;
     }
 }
 
-foreach ([
-    'YBRAND' => "VARCHAR(100) DEFAULT NULL",
-    'CATEGORY' => "VARCHAR(100) DEFAULT NULL"
-] as $column => $definition) {
-    $columnResult = $db->query("SHOW COLUMNS FROM dyeing_batch_card LIKE '$column'");
-    if (!$columnResult) {
-        echo json_encode(['success' => false, 'message' => 'Could not check batch card column ' . $column . ': ' . $db->error]);
-        exit;
+foreach (['CATEGORY' => 'VARCHAR(100) DEFAULT NULL', 'YBRAND' => 'VARCHAR(100) DEFAULT NULL'] as $name => $definition) {
+    if (isset($columns[$name])) {
+        continue;
     }
-    if ($columnResult->num_rows === 0 && !$db->query("ALTER TABLE dyeing_batch_card ADD COLUMN `$column` $definition")) {
-        echo json_encode(['success' => false, 'message' => 'Could not add batch card column ' . $column . ': ' . $db->error]);
+    if (!$db->query('ALTER TABLE `dyeing_batch_card` ADD COLUMN `' . $name . '` ' . $definition)) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Could not add batch card ' . $name . ' column: ' . $db->error]);
         exit;
     }
 }
 
-// Assign next card number from DB
-$r = mysqli_query($db, "SELECT COALESCE(MAX(CAST(BCARD AS UNSIGNED)), 4000000000) + 1 AS nxt FROM dyeing_batch_card");
-if (!$r) {
+$nextResult = $db->query(
+    'SELECT COALESCE(MAX(CAST(BCARD AS UNSIGNED)), 4000000000) + 1 AS NEXT_CARD FROM `dyeing_batch_card`'
+);
+if (!$nextResult) {
+    http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Could not generate the next batch card number: ' . $db->error]);
     exit;
 }
-$rowX = $r ? mysqli_fetch_assoc($r) : null;
-if (!$rowX || !isset($rowX['nxt'])) {
-    echo json_encode(['success' => false, 'message' => 'Could not generate the next batch card number']);
+$nextRow = $nextResult->fetch_assoc();
+$nextResult->free();
+if (!$nextRow || !isset($nextRow['NEXT_CARD'])) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Could not generate the next batch card number.']);
     exit;
 }
-$seq = (int)$rowX['nxt'];
-$cardNo = (string)$seq;
 
-$budat = date('Y-m-d');
+$cardNo = (string)(int)$nextRow['NEXT_CARD'];
+$batchDate = date('Y-m-d');
+$processValues = [];
+foreach ($processFields as $processField) {
+    $processValues[$processField] = isset($selectedProcesses[$processField])
+        ? (string)$selectedProcesses[$processField]
+        : '';
+}
 
+$insertSql = "INSERT INTO `dyeing_batch_card`
+    (BUDAT, BCARD, ROLL, PO_NUMBER, RACK, KQTY, AQTY, RQTY, BODY_QTY, RIB_QTY, NECK_QTY,
+     SONO, SHIFT, BUYER, STYLE, COLOR, DYMCNO, MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA,
+     FEEDER_PLAN, LOT_NO, YTYPE, YCOUNT, YBRAND, CATEGORY, TPOINT, SILICON, NONSILICON,
+     NWASH, EWASH, ENZYME, NONENZYME, PEACH, BRUSH, AOP, SOFTENER, NONSOFTENER, OTHERS,
+     SHEARING, SINGEING, HEAT_SET, DID, DNAME)
+    VALUES (" . implode(',', array_fill(0, 48, '?')) . ')';
+$stmt = $db->prepare($insertSql);
+if (!$stmt) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Could not prepare batch card insert: ' . $db->error]);
+    exit;
+}
+
+$db->begin_transaction();
 $inserted = 0;
-$errorMsg = '';
-$db->autocommit(false);
-
+$allocatedByFabric = [];
+$usedCategories = [];
 try {
-    $lockStmt = $db->prepare(
-        'SELECT QTY FROM knitting_store WHERE TRIM(ROLL) = ? ORDER BY KSTID DESC LIMIT 1 FOR UPDATE'
-    );
-    $usedStmt = $db->prepare(
-        'SELECT COALESCE(SUM(CAST(RQTY AS DECIMAL(12,3))), 0) AS USED_QTY
-         FROM dyeing_batch_card WHERE TRIM(ROLL) = ?'
-    );
-    if (!$lockStmt || !$usedStmt) {
-        throw new RuntimeException('Could not validate current roll availability: ' . $db->error);
-    }
-
-    $remainingByRoll = [];
-    foreach ($rolls as &$row) {
-        $rollNo = isset($row['ROLL']) ? trim((string)$row['ROLL']) : '';
-        $requiredQty = isset($row['RQTY']) && is_numeric($row['RQTY'])
-            ? round((float)$row['RQTY'], 3)
+    foreach ($items as $item) {
+        $category = isset($item['CATEGORY']) ? strtoupper(trim((string)$item['CATEGORY'])) : '';
+        $fabricType = isset($item['FTYPE']) ? trim((string)$item['FTYPE']) : '';
+        $fabricKey = strtoupper($fabricType);
+        $categoryKey = $fabricKey . '|' . $category;
+        $batchQty = isset($item['RQTY']) && is_numeric($item['RQTY']) ? round((float)$item['RQTY'], 3) : 0;
+        $sourceQty = isset($item['TOTAL_QTY']) && is_numeric($item['TOTAL_QTY'])
+            ? round((float)$item['TOTAL_QTY'], 3)
             : 0;
-        if ($rollNo === '' || !is_finite($requiredQty) || $requiredQty <= 0) {
-            throw new RuntimeException('Invalid roll number or Required QTY in the batch selection.');
+        $alreadyAllocated = isset($allocatedByFabric[$fabricKey]) ? $allocatedByFabric[$fabricKey] : 0;
+        $remainingQty = max(0, round($sourceQty - $alreadyAllocated, 3));
+        if (!in_array($category, ['BODY', 'RIB', 'NECK'], true) || $fabricType === '' ||
+            $batchQty <= 0 || $sourceQty <= 0 || $batchQty - $remainingQty > 0.000001 ||
+            isset($usedCategories[$categoryKey])) {
+            throw new RuntimeException('Invalid F/T, Fabric Type or Batch QTY in the selected fabric data.');
         }
 
-        $lockStmt->bind_param('s', $rollNo);
-        if (!$lockStmt->execute()) {
-            throw new RuntimeException('Could not lock roll ' . $rollNo . ': ' . $lockStmt->error);
-        }
-        $storeResult = $lockStmt->get_result();
-        $storeRow = $storeResult ? $storeResult->fetch_assoc() : null;
-        if (!$storeRow || !is_numeric($storeRow['QTY'])) {
-            throw new RuntimeException('Roll ' . $rollNo . ' is no longer available in Knitting Store.');
-        }
+        $vPO = $poNumber;
+        $vRoll = '';
+        $vRack = '';
+        $vKqty = $sourceQty;
+        $vAqty = max(0, round($remainingQty - $batchQty, 3));
+        $vRqty = $batchQty;
+        $vBodyQty = $category === 'BODY' ? $batchQty : 0;
+        $vRibQty = $category === 'RIB' ? $batchQty : 0;
+        $vNeckQty = $category === 'NECK' ? $batchQty : 0;
+        $vSono = isset($item['SONO']) ? (string)$item['SONO'] : '';
+        $vShift = '';
+        $vBuyer = isset($item['BUYER']) ? (string)$item['BUYER'] : '';
+        $vStyle = isset($item['STYLE']) ? (string)$item['STYLE'] : '';
+        $vColor = $color;
+        $vMcdia = isset($item['MCDIA']) ? (string)$item['MCDIA'] : '';
+        $vCustomer = isset($item['CUSTOMER']) ? (string)$item['CUSTOMER'] : '';
+        $vOt = isset($item['O_T']) ? (string)$item['O_T'] : '';
+        $vSl = isset($item['SL']) ? (string)$item['SL'] : '';
+        $vFtype = $fabricType;
+        $vFgsm = isset($item['FGSM']) ? (string)$item['FGSM'] : '';
+        $vFdia = isset($item['FDIA']) ? (string)$item['FDIA'] : '';
+        $vFeederPlan = isset($item['FEEDER_PLAN']) ? (string)$item['FEEDER_PLAN'] : '';
+        $vLotNo = isset($item['LOT_NO']) ? (string)$item['LOT_NO'] : '';
+        $vYtype = isset($item['YTYPE']) ? (string)$item['YTYPE'] : '';
+        $vYcount = isset($item['YCOUNT']) ? (string)$item['YCOUNT'] : '';
+        $vYbrand = isset($item['YBRAND']) ? (string)$item['YBRAND'] : '';
+        $vCategory = $category;
+        $vTpoint = isset($item['TPOINT']) ? (string)$item['TPOINT'] : '';
 
-        $usedStmt->bind_param('s', $rollNo);
-        if (!$usedStmt->execute()) {
-            throw new RuntimeException('Could not check previous usage for roll ' . $rollNo . ': ' . $usedStmt->error);
+        $stmt->bind_param(
+            str_repeat('s', 48),
+            $batchDate,
+            $cardNo,
+            $vRoll,
+            $vPO,
+            $vRack,
+            $vKqty,
+            $vAqty,
+            $vRqty,
+            $vBodyQty,
+            $vRibQty,
+            $vNeckQty,
+            $vSono,
+            $vShift,
+            $vBuyer,
+            $vStyle,
+            $vColor,
+            $dyeingMcno,
+            $vMcdia,
+            $vCustomer,
+            $vOt,
+            $vSl,
+            $vFtype,
+            $vFgsm,
+            $vFdia,
+            $vFeederPlan,
+            $vLotNo,
+            $vYtype,
+            $vYcount,
+            $vYbrand,
+            $vCategory,
+            $vTpoint,
+            $processValues['SILICON'],
+            $processValues['NONSILICON'],
+            $processValues['NWASH'],
+            $processValues['EWASH'],
+            $processValues['ENZYME'],
+            $processValues['NONENZYME'],
+            $processValues['PEACH'],
+            $processValues['BRUSH'],
+            $processValues['AOP'],
+            $processValues['SOFTENER'],
+            $processValues['NONSOFTENER'],
+            $processValues['OTHERS'],
+            $processValues['SHEARING'],
+            $processValues['SINGEING'],
+            $processValues['HEAT_SET'],
+            $creator['DID'],
+            $creator['DNAME']
+        );
+        if (!$stmt->execute()) {
+            throw new RuntimeException('Insert error for ' . $category . ' / ' . $fabricType . ': ' . $stmt->error);
         }
-        $usedResult = $usedStmt->get_result();
-        $usedRow = $usedResult ? $usedResult->fetch_assoc() : null;
-        $availableQty = (float)$storeRow['QTY'] - ($usedRow && is_numeric($usedRow['USED_QTY']) ? (float)$usedRow['USED_QTY'] : 0);
-        if ($requiredQty - $availableQty > 0.000001) {
-            throw new RuntimeException(
-                'Required QTY for roll ' . $rollNo . ' exceeds its current Available QTY of ' .
-                number_format(max(0, $availableQty), 3) . ' KG. Search again and retry.'
-            );
-        }
-
-        $row['KQTY'] = $storeRow['QTY'];
-        $row['AQTY'] = max(0, $availableQty - $requiredQty);
-        $remainingByRoll[$rollNo] = $row['AQTY'];
+        $allocatedByFabric[$fabricKey] = round($alreadyAllocated + $batchQty, 3);
+        $usedCategories[$categoryKey] = true;
+        $inserted++;
     }
-    unset($row);
-    $lockStmt->close();
-    $usedStmt->close();
+
+    if (!$db->commit()) {
+        throw new RuntimeException('Database commit failed: ' . $db->error);
+    }
 } catch (Throwable $error) {
-    if (isset($lockStmt) && $lockStmt) $lockStmt->close();
-    if (isset($usedStmt) && $usedStmt) $usedStmt->close();
     $db->rollback();
-    $db->autocommit(true);
+    $stmt->close();
+    http_response_code(500);
     echo json_encode(['success' => false, 'message' => $error->getMessage()]);
     exit;
 }
 
-foreach ($rolls as $row) {
-    $stmt = $db->prepare(
-        "INSERT INTO dyeing_batch_card
-         (BUDAT, BCARD, ROLL, PO_NUMBER, RACK, KQTY, AQTY, RQTY, SONO, SHIFT, BUYER, STYLE, COLOR,
-          DYMCNO, MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA, FEEDER_PLAN, LOT_NO,
-          YTYPE, YCOUNT, YBRAND, CATEGORY, TPOINT, SILICON, NONSILICON, NWASH,
-          EWASH, ENZYME, NONENZYME, PEACH, BRUSH, AOP, SOFTENER, NONSOFTENER, OTHERS,
-          SHEARING, SINGEING, HEAT_SET, DID, DNAME)
-         VALUES (" . implode(',', array_fill(0, 45, '?')) . ")"
-    );
+$stmt->close();
+unset(
+    $_SESSION['dyeing_batch']['items'],
+    $_SESSION['dyeing_batch']['rolls'],
+    $_SESSION['dyeing_batch']['target_qty'],
+    $_SESSION['dyeing_batch']['dymcno'],
+    $_SESSION['dyeing_batch']['processes'],
+    $_SESSION['dyeing_batch']['po_number'],
+    $_SESSION['dyeing_batch']['color']
+);
 
-    if (!$stmt) {
-        $errorMsg = 'Database prepare error: ' . $db->error;
-        break;
-    }
-
-    $vPO_NUMBER = isset($row['PO_NUMBER']) ? $row['PO_NUMBER'] : null;
-    $vRACK = isset($row['RACK']) ? $row['RACK'] : null;
-    $vKQTY = isset($row['KQTY']) ? $row['KQTY'] : null;
-    $vAQTY = isset($row['AQTY']) ? $row['AQTY'] : null;
-    $vRQTY = isset($row['RQTY']) ? $row['RQTY'] : null;
-    $vSONO = isset($row['SONO']) ? $row['SONO'] : null;
-    $vSHIFT = isset($row['SHIFT']) ? $row['SHIFT'] : null;
-    $vBUYER = isset($row['BUYER']) ? $row['BUYER'] : null;
-    $vSTYLE = isset($row['STYLE']) ? $row['STYLE'] : null;
-    $vCOLOR = isset($row['COLOR']) ? $row['COLOR'] : null;
-    $vMCDIA = isset($row['MCDIA']) ? $row['MCDIA'] : null;
-    $vCUSTOMER = isset($row['CUSTOMER']) ? $row['CUSTOMER'] : null;
-    $vYTYPE = isset($row['YTYPE']) ? $row['YTYPE'] : null;
-    $vYCOUNT = isset($row['YCOUNT']) ? $row['YCOUNT'] : null;
-    $vO_T = isset($row['O_T']) ? $row['O_T'] : null;
-    $vSL = isset($row['SL']) ? $row['SL'] : null;
-    $vFTYPE = isset($row['FTYPE']) ? $row['FTYPE'] : null;
-    $vFGSM = isset($row['FGSM']) ? $row['FGSM'] : null;
-    $vFDIA = isset($row['FDIA']) ? $row['FDIA'] : null;
-    $vFEEDER_PLAN = isset($row['FEEDER_PLAN']) ? $row['FEEDER_PLAN'] : null;
-    $vLOT_NO = isset($row['LOT_NO']) ? $row['LOT_NO'] : null;
-    $vYBRAND = isset($row['YBRAND']) ? $row['YBRAND'] : null;
-    $vCATEGORY = isset($row['CATEGORY']) ? $row['CATEGORY'] : null;
-    $vTPOINT = isset($row['TPOINT']) ? $row['TPOINT'] : null;
-    $vROLL = isset($row['ROLL']) ? $row['ROLL'] : '';
-    $processValues = [];
-    foreach ($processFields as $processField) {
-        $processValues[$processField] = isset($selectedProcesses[$processField])
-            ? $selectedProcesses[$processField]
-            : '';
-    }
-
-    $stmt->bind_param(
-        str_repeat('s', 45),
-        $budat,
-        $cardNo,
-        $vROLL,
-        $vPO_NUMBER,
-        $vRACK,
-        $vKQTY,
-        $vAQTY,
-        $vRQTY,
-        $vSONO,
-        $vSHIFT,
-        $vBUYER,
-        $vSTYLE,
-        $vCOLOR,
-        $dyeingMcno,
-        $vMCDIA,
-        $vCUSTOMER,
-        $vO_T,
-        $vSL,
-        $vFTYPE,
-        $vFGSM,
-        $vFDIA,
-        $vFEEDER_PLAN,
-        $vLOT_NO,
-        $vYTYPE,
-        $vYCOUNT,
-        $vYBRAND,
-        $vCATEGORY,
-        $vTPOINT,
-        $processValues['SILICON'],
-        $processValues['NONSILICON'],
-        $processValues['NWASH'],
-        $processValues['EWASH'],
-        $processValues['ENZYME'],
-        $processValues['NONENZYME'],
-        $processValues['PEACH'],
-        $processValues['BRUSH'],
-        $processValues['AOP'],
-        $processValues['SOFTENER'],
-        $processValues['NONSOFTENER'],
-        $processValues['OTHERS'],
-        $processValues['SHEARING'],
-        $processValues['SINGEING'],
-        $processValues['HEAT_SET'],
-        $creator['DID'],
-        $creator['DNAME']
-    );
-
-    if (!$stmt->execute()) {
-        $errorMsg = 'Insert error for roll ' . $row['ROLL'] . ': ' . $stmt->error;
-        $stmt->close();
-        break;
-    }
-    $stmt->close();
-    $inserted++;
-}
-
-if ($inserted === count($rolls)) {
-    $availabilityStmt = $db->prepare(
-        'UPDATE dyeing_batch_card SET AQTY = ? WHERE TRIM(ROLL) = ?'
-    );
-    if (!$availabilityStmt) {
-        $errorMsg = 'Could not prepare available quantity update: ' . $db->error;
-        $inserted = 0;
-    } else {
-        foreach ($remainingByRoll as $rollNo => $remainingQty) {
-            $availabilityStmt->bind_param('ds', $remainingQty, $rollNo);
-            if (!$availabilityStmt->execute()) {
-                $errorMsg = 'Could not update available quantity for roll ' . $rollNo . ': ' . $availabilityStmt->error;
-                $inserted = 0;
-                break;
-            }
-        }
-        $availabilityStmt->close();
-    }
-}
-
-if ($inserted === count($rolls)) {
-    if (!$db->commit()) {
-        $errorMsg = 'Database commit failed: ' . $db->error;
-        $db->rollback();
-        $db->autocommit(true);
-        echo json_encode(['success' => false, 'message' => $errorMsg]);
-        exit;
-    }
-    unset($_SESSION['dyeing_batch']['rolls']);
-    unset($_SESSION['dyeing_batch']['card_no']);
-    unset($_SESSION['dyeing_batch']['created_at']);
-    unset($_SESSION['dyeing_batch']['target_qty']);
-    unset($_SESSION['dyeing_batch']['dymcno']);
-    unset($_SESSION['dyeing_batch']['processes']);
-    $_SESSION['dyeing_batch']['seq'] = $seq + 1;
-
-    echo json_encode([
-        'success' => true,
-        'card_no' => $cardNo,
-        'next_card_no' => $seq + 1,
-        'count' => $inserted,
-        'message' => 'Batch Card created with ' . $inserted . ' roll(s).'
-    ]);
-} else {
-    $db->rollback();
-    echo json_encode(['success' => false, 'message' => $errorMsg !== '' ? $errorMsg : 'Database error during batch card insert']);
-}
-
-$db->autocommit(true);
+echo json_encode([
+    'success' => true,
+    'card_no' => $cardNo,
+    'count' => $inserted,
+    'message' => 'Batch Card created with ' . $inserted . ' fabric line(s).'
+]);
 exit;
 ?>

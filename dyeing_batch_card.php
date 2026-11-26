@@ -7,14 +7,19 @@ if (!isset($_SESSION['username'])) {
     exit;
 }
 
-// Start each page load with a fresh batch so old session rolls never linger
+// Start each page load with a fresh fabric batch so stale selections never linger
 if (!isset($_SESSION['dyeing_batch']) || !is_array($_SESSION['dyeing_batch'])) {
     $_SESSION['dyeing_batch'] = [];
 }
 $_SESSION['dyeing_batch']['rolls'] = [];
+unset($_SESSION['dyeing_batch']['items']);
 unset($_SESSION['dyeing_batch']['card_no']);
 unset($_SESSION['dyeing_batch']['created_at']);
 unset($_SESSION['dyeing_batch']['target_qty']);
+unset($_SESSION['dyeing_batch']['category_quantities']);
+unset($_SESSION['dyeing_batch']['dymcno']);
+unset($_SESSION['dyeing_batch']['po_number']);
+unset($_SESSION['dyeing_batch']['color']);
 unset($_SESSION['dyeing_batch']['processes']);
 unset($_SESSION['dyeing_batch']['saved']);
 ?>
@@ -131,13 +136,13 @@ unset($_SESSION['dyeing_batch']['saved']);
 
         .search-po-row {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 10px;
         }
 
         .search-action-row {
-            display: grid;
-            grid-template-columns: minmax(150px, 1fr) minmax(170px, 1fr) auto;
+            display: flex;
+            justify-content: flex-start;
             align-items: end;
             gap: 10px;
         }
@@ -437,7 +442,44 @@ unset($_SESSION['dyeing_batch']['saved']);
 
         #searchResults .table-scroll > table {
             width: 100%;
-            min-width: 1500px;
+            min-width: 1750px;
+        }
+
+        #searchResults th,
+        #searchResults td {
+            padding: 7px 6px;
+            font-size: 0.82rem;
+        }
+
+        #searchResults .selection-cell {
+            width: 32px;
+            text-align: center;
+        }
+
+        #searchResults .selection-checkbox {
+            width: 16px;
+            height: 16px;
+            margin: 0;
+            accent-color: #0d9488;
+        }
+
+        #searchResults .fabric-category-select {
+            width: 82px;
+            min-width: 82px;
+            max-width: 82px;
+            padding: 6px 7px;
+        }
+
+        #searchResults .batch-qty-input {
+            width: 82px;
+            min-width: 82px;
+            padding: 7px 6px;
+        }
+
+        #searchResults .meta-cell {
+            max-width: 115px;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         table {
@@ -481,74 +523,12 @@ unset($_SESSION['dyeing_batch']['saved']);
             padding-left: 24px;
         }
 
-        .roll-select-cell {
-            width: 48px;
-            text-align: center;
-        }
-
-        .roll-select-checkbox {
-            width: 18px;
-            height: 18px;
-            accent-color: #0d9488;
-            cursor: pointer;
-        }
-
-        .required-qty-input {
-            width: 92px;
-            min-height: 34px;
-            padding: 6px 9px;
-            border: 1px solid #b8c8d8;
-            border-radius: 8px;
-            background: #fff;
-            color: #0f172a;
-            font: inherit;
-            font-weight: 650;
-            text-align: right;
-            box-shadow: inset 0 1px 2px rgba(15, 23, 42, .04);
-            transition: border-color .15s ease, box-shadow .15s ease;
-        }
-
-        .required-qty-input:focus {
-            border-color: #0d9488;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(13, 148, 136, .14);
-        }
-
-        .required-qty-input:disabled {
-            background: #f1f5f9;
-            color: #64748b;
-            cursor: not-allowed;
-        }
-
-        .remove-roll-btn {
-            border: 0;
-            border-radius: 8px;
-            padding: 7px 10px;
-            background: #fee2e2;
-            color: #b91c1c;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .remove-roll-btn:hover {
-            background: #fecaca;
-        }
-
         tbody tr:nth-child(even) {
             background: #f8fafc;
         }
 
         tbody tr:hover {
             background: #ecfdf5;
-        }
-
-        .roll-badge {
-            background: #ccfbf1;
-            color: #065f46;
-            font-weight: 800;
-            padding: 3px 10px;
-            border-radius: 100px;
-            display: inline-block;
         }
 
         .add-btn {
@@ -704,7 +684,7 @@ unset($_SESSION['dyeing_batch']['saved']);
         <div id="msgBox" class="msg-box" role="status" aria-live="polite"></div>
 
         <div class="panel" id="batchSearchPanel">
-            <div class="panel-title"><i class="fa-solid fa-filter"></i> Find Rolls for Batch Card</div>
+            <div class="panel-title"><i class="fa-solid fa-filter"></i> Find Fabric Quantity for Batch Card</div>
             <div class="batch-search-layout">
                 <div class="search-controls">
                     <div class="search-po-row">
@@ -720,18 +700,14 @@ unset($_SESSION['dyeing_batch']['saved']);
                                 <option value="">Select a PO Number first</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="search-action-row search-row">
-                        <div class="filter-field target-qty-field">
-                            <label for="targetQtyInput">Target QTY (KG)</label>
-                            <input type="number" id="targetQtyInput" class="qty-input" min="0.001" step="0.001" placeholder="Enter target QTY">
-                        </div>
-                        <div class="filter-field target-qty-field">
+                        <div class="filter-field">
                             <label for="dyeingMcnoSelect">Dyeing MC No (Required)</label>
                             <select id="dyeingMcnoSelect" class="filter-select" disabled>
                                 <option value="">Loading dyeing machines...</option>
                             </select>
                         </div>
+                    </div>
+                    <div class="search-action-row search-row">
                         <button class="btn btn-blue" id="searchBtn" type="button" disabled>
                             <i class="fa-solid fa-magnifying-glass"></i> Search
                         </button>
@@ -766,79 +742,60 @@ unset($_SESSION['dyeing_batch']['saved']);
 
         <div class="panel is-hidden" id="searchResults">
             <div class="panel-title">
-                <i class="fa-solid fa-table-list"></i> Matching Rolls
-                <span class="card-no-badge" id="resultCount">0 roll</span>
+                <i class="fa-solid fa-table-list"></i> Fabric Type Totals (PO + Color)
+                <span class="card-no-badge" id="resultCount">0 fabric type</span>
             </div>
             <div class="status-line" id="resultsStatus"></div>
             <div class="table-scroll">
                 <table>
                     <thead>
                         <tr>
-                            <th class="roll-select-cell">Select</th>
-                            <th>ROLL</th>
-                            <th>Rack</th>
-                            <th>PO Number</th>
-                            <th>Knitting QTY</th>
-                            <th>Available QTY</th>
-                            <th>Required QTY</th>
+                            <th class="selection-cell" aria-label="Select"></th>
+                            <th>F/T</th>
+                            <th>Fabrics Type</th>
+                            <th>Knitting QTY (KG)</th>
+                            <th>Available QTY (KG)</th>
+                            <th>Batch QTY (KG)</th>
                             <th>Color</th>
                             <th>SONO</th>
                             <th>Buyer</th>
                             <th>Style</th>
                             <th>MC Dia</th>
-                            <th>Customer</th>
-                            <th>Open / Tube</th>
                             <th>SL/VQ</th>
-                            <th>Fabrics Type</th>
                             <th>Finish GSM</th>
                             <th>Finish Dia</th>
                             <th>Yarn Type</th>
                             <th>Yarn Count</th>
                             <th>Yarn Brand</th>
+                            <th>Lot No</th>
                         </tr>
                     </thead>
                     <tbody id="storeBody">
-                        <tr class="empty-row"><td colspan="21">Select PO Number and Color, then search.</td></tr>
+                    <tr class="empty-row"><td colspan="18">Select PO Number and Color, then search.</td></tr>
                     </tbody>
                     <tfoot id="storeFoot"></tfoot>
                 </table>
             </div>
-        </div>
-
-        <div class="panel is-hidden" id="suggestionPanel">
-            <div class="panel-title"><i class="fa-solid fa-file-circle-plus"></i> Create Batch Card with Rolls:</div>
-            <div class="suggestion-preview" id="suggestionPreview">
-                <div class="table-scroll">
-                    <table>
-                        <thead><tr><th>ROLL</th><th>Rack</th><th>Knitting QTY</th><th>Available QTY</th><th>Required QTY</th><th>ACTION</th></tr></thead>
-                        <tbody id="suggestionRolls">
-                            <tr class="empty-row"><td colspan="6">Select rolls from the Matching Rolls table above.</td></tr>
-                        </tbody>
-                        <tfoot id="selectedRollsFoot"></tfoot>
-                    </table>
-                </div>
-                <div class="footer-actions">
-                    <button class="btn btn-green" id="confirmCreateBtn" type="button">
-                        <i class="fa-solid fa-check"></i> Confirm &amp; Create Batch Card
-                    </button>
-                </div>
+            <div class="footer-actions">
+                <button class="btn btn-green" id="confirmCreateBtn" type="button" disabled>
+                    <i class="fa-solid fa-check"></i> Confirm &amp; Create Batch Card
+                </button>
             </div>
         </div>
     </div>
 
     <script>
-        var candidateRolls = [];
-        var selectedRolls = new Map();
+        var fabricTotals = [];
+        var fabricAllocations = [];
+        var nextFabricAllocationId = 1;
         var colorRequestId = 0;
         var searchRequestId = 0;
         var searchInProgress = false;
         var poInputTimer = null;
-        var targetQtyTimer = null;
         var batchMessageTimer = null;
         var poNumberSelect = document.getElementById('poNumberSelect');
         var colorSelect = document.getElementById('colorSelect');
         var searchBtn = document.getElementById('searchBtn');
-        var targetQtyInput = document.getElementById('targetQtyInput');
         var dyeingMcnoSelect = document.getElementById('dyeingMcnoSelect');
         var confirmCreateBtn = document.getElementById('confirmCreateBtn');
         var processPanel = document.getElementById('processPanel');
@@ -937,25 +894,20 @@ unset($_SESSION['dyeing_batch']['saved']);
             return selected;
         }
 
-        function resetResults(preserveTargetQty) {
+        function resetResults() {
             searchRequestId++;
             searchInProgress = false;
-            candidateRolls = [];
-            selectedRolls.clear();
+            fabricTotals = [];
+            fabricAllocations = [];
+            nextFabricAllocationId = 1;
             setProcessSelectionEnabled(false);
             document.getElementById('searchResults').classList.add('is-hidden');
-            document.getElementById('suggestionPanel').classList.add('is-hidden');
             document.getElementById('storeBody').innerHTML =
-                '<tr class="empty-row"><td colspan="22">Select PO Number and Color, then search.</td></tr>';
+                '<tr class="empty-row"><td colspan="18">Select PO Number and Color, then search.</td></tr>';
             document.getElementById('storeFoot').innerHTML = '';
-            document.getElementById('resultCount').textContent = '0 roll';
-            if (!preserveTargetQty) {
-                targetQtyInput.value = '';
-            }
+            document.getElementById('resultCount').textContent = '0 fabric type';
+            document.getElementById('resultsStatus').textContent = '';
             confirmCreateBtn.disabled = true;
-            document.getElementById('suggestionRolls').innerHTML =
-                '<tr class="empty-row"><td colspan="4">Select rolls from the Matching Rolls table above.</td></tr>';
-            document.getElementById('selectedRollsFoot').innerHTML = '';
         }
 
         function loadPoNumbers() {
@@ -969,7 +921,7 @@ unset($_SESSION['dyeing_batch']['saved']);
                     options.appendChild(option);
                 });
                 if (!response.po_numbers || response.po_numbers.length === 0) {
-                    showMsg('No PO Numbers with available rolls were found.', 'error');
+                    showMsg('No PO Numbers were found in knitting_store.', 'error');
                 }
             }).catch(function(error) {
                 showMsg(error.message, 'error');
@@ -1008,21 +960,6 @@ unset($_SESSION['dyeing_batch']['saved']);
             });
         }
 
-        function qtyUnits(row) {
-            var qty = Number(row.RQTY);
-            return Number.isFinite(qty) && qty > 0 ? Math.round(qty * 1000) : 0;
-        }
-
-        function availableQtyUnits(row) {
-            var qty = Number(row.AQTY);
-            return Number.isFinite(qty) && qty > 0 ? Math.round(qty * 1000) : 0;
-        }
-
-        function knittingQtyUnits(row) {
-            var qty = Number(row.KQTY);
-            return Number.isFinite(qty) && qty > 0 ? Math.round(qty * 1000) : 0;
-        }
-
         function formatQty(value) {
             var qty = Number(value);
             return Number.isFinite(qty)
@@ -1030,254 +967,250 @@ unset($_SESSION['dyeing_batch']['saved']);
                 : '';
         }
 
-        function targetUnits() {
-            var target = Number(targetQtyInput.value);
-            return Number.isFinite(target) && target > 0 ? Math.round(target * 1000) : 0;
+        function createFabricAllocation() {
+            return {id: nextFabricAllocationId++, selected: false, category: '', quantity: ''};
         }
 
-        function syncTargetQtyFromSelection() {
-            var selectedTotal = Array.from(selectedRolls.values()).reduce(function(sum, row) {
-                return sum + qtyUnits(row);
-            }, 0);
-            targetQtyInput.value = selectedTotal > 0
-                ? (selectedTotal / 1000).toFixed(3).replace(/\.?0+$/, '')
-                : '';
+        function getFabricAllocation(index, allocationId) {
+            var allocations = fabricAllocations[index] || [];
+            return allocations.find(function(allocation) {
+                return allocation.id === allocationId;
+            }) || null;
         }
 
-        function renderMatchingRollsFoot() {
-            var totals = candidateRolls.reduce(function(sum, row) {
-                sum.knitting += knittingQtyUnits(row);
-                sum.available += availableQtyUnits(row);
-                var selectedRow = selectedRolls.get(String(row.ROLL));
-                if (selectedRow) sum.required += qtyUnits(selectedRow);
-                return sum;
-            }, {knitting: 0, available: 0, required: 0});
-            document.getElementById('storeFoot').innerHTML =
-                '<tr><th colspan="4" class="total-label">Total QTY:</th>' +
-                '<th>' + formatQty(totals.knitting / 1000) + ' KG</th>' +
-                '<th id="availableQtyTotal">' + formatQty(totals.available / 1000) + ' KG</th>' +
-                '<th>' + formatQty(totals.required / 1000) + ' KG</th>' +
-                '<th colspan="14"></th></tr>';
-        }
+        function availableBeforeAllocation(index, allocationId) {
+            var row = fabricTotals[index];
+            var allocations = fabricAllocations[index] || [];
+            var remaining = row && Number(row.TOTAL_QTY);
+            if (!Number.isFinite(remaining)) return 0;
 
-        function renderRolls(rolls) {
-            var fields = [
-                ['ROLL', 'ROLL'], ['RACK', 'RACK'], ['PO_NUMBER', 'PO_NUMBER'],
-                ['KQTY', 'KQTY'], ['AQTY', 'AQTY'], ['RQTY', 'RQTY'],
-                ['COLOR', 'COLOR'], ['SONO', 'SONO'], ['BUYER', 'BUYER'], ['STYLE', 'STYLE'],
-                ['MCDIA', 'MCDIA'], ['CUSTOMER', 'CUSTOMER'], ['O_T', 'O_T'], ['SL', 'SL'],
-                ['FTYPE', 'FTYPE'], ['FGSM', 'FGSM'], ['FDIA', 'FDIA'], ['YTYPE', 'YTYPE'],
-                ['YCOUNT', 'YCOUNT'], ['YBRAND', 'YBRAND']
-            ];
-            var html = '';
-            rolls.forEach(function(row, index) {
-                var rollKey = String(row.ROLL);
-                html += '<tr><td class="roll-select-cell"><input type="checkbox" class="roll-select-checkbox" data-roll-index="' +
-                    index + '" aria-label="Select roll ' + esc(rollKey) + '"' +
-                    (selectedRolls.has(rollKey) ? ' checked' : '') + '></td>' +
-                    fields.map(function(field) {
-                    if (field[0] === 'ROLL') {
-                        return '<td><span class="roll-badge">' + esc(row.ROLL) + '</span></td>';
+            var found = false;
+            allocations.forEach(function(allocation) {
+                if (found) return;
+                if (allocation.id === allocationId) {
+                    found = true;
+                    return;
+                }
+                if (allocation.selected) {
+                    var quantity = Number(allocation.quantity);
+                    if (Number.isFinite(quantity) && quantity > 0) {
+                        remaining = Math.max(0, remaining - quantity);
                     }
-                    if (field[0] === 'RQTY') {
-                        var selectedRow = selectedRolls.get(rollKey);
-                        var requiredQty = selectedRow ? selectedRow.RQTY : row.AQTY;
-                        return '<td><input type="number" class="required-qty-input" data-required-index="' +
-                            index + '" min="0.001" max="' + esc(row.AQTY) +
-                            '" step="0.001" value="' + esc(formatQty(requiredQty)) + '"' +
-                            (selectedRow ? '' : ' disabled') + ' aria-label="Required QTY for roll ' +
-                            esc(rollKey) + '"></td>';
-                    }
-                    return '<td>' + (['KQTY', 'AQTY'].indexOf(field[0]) >= 0
-                        ? esc(formatQty(row[field[1]]))
-                        : esc(row[field[1]])) + '</td>';
-                }).join('') + '</tr>';
+                }
             });
-            document.getElementById('storeBody').innerHTML = html ||
-                '<tr class="empty-row"><td colspan="21">No available rolls found for this PO Number and Color.</td></tr>';
-            renderMatchingRollsFoot();
-            document.querySelectorAll('.roll-select-checkbox').forEach(function(checkbox) {
-                checkbox.addEventListener('change', function() {
-                    var row = candidateRolls[Number(this.dataset.rollIndex)];
-                    if (row) toggleRollSelection(row, this.checked, this);
+            return Math.max(0, remaining);
+        }
+
+        function ensureNextFabricAllocation(index) {
+            var allocations = fabricAllocations[index] || [];
+            var activeCategories = allocations.filter(function(allocation) {
+                return allocation.selected && allocation.category;
+            }).length;
+            var hasEmptyRow = allocations.some(function(allocation) {
+                return !allocation.selected && !allocation.category && !allocation.quantity;
+            });
+            var available = Number(fabricTotals[index].TOTAL_QTY);
+            allocations.forEach(function(allocation) {
+                if (allocation.selected) {
+                    var quantity = Number(allocation.quantity);
+                    if (Number.isFinite(quantity) && quantity > 0) {
+                        available -= quantity;
+                    }
+                }
+            });
+            if (activeCategories > 0 && activeCategories < 3 && !hasEmptyRow && available > 0.000001) {
+                allocations.push(createFabricAllocation());
+            }
+        }
+
+        function trimEmptyFabricAllocations(index) {
+            var allocations = fabricAllocations[index] || [];
+            while (allocations.length > 1) {
+                var last = allocations[allocations.length - 1];
+                if (last.selected || last.category || last.quantity) break;
+                allocations.pop();
+            }
+        }
+
+        function selectedFabricItems() {
+            var items = [];
+            var valid = true;
+            var usedCategories = {};
+            fabricTotals.forEach(function(row, index) {
+                var fabricKey = String(row.FTYPE || '').trim().toUpperCase();
+                (fabricAllocations[index] || []).forEach(function(allocation) {
+                    if (!allocation.selected) return;
+
+                    var category = allocation.category;
+                    var quantity = Number(allocation.quantity);
+                    var key = fabricKey + '|' + category;
+                    var available = availableBeforeAllocation(index, allocation.id);
+                    if (['BODY', 'RIB', 'NECK'].indexOf(category) === -1 ||
+                        !Number.isFinite(quantity) || quantity <= 0 ||
+                        quantity - available > 0.000001 || usedCategories[key]) {
+                        valid = false;
+                        return;
+                    }
+                    usedCategories[key] = true;
+                    items.push({
+                        category: category,
+                        fabric_type: String(row.FTYPE || '').trim(),
+                        quantity: Math.round(quantity * 1000) / 1000
+                    });
                 });
             });
-            document.querySelectorAll('.required-qty-input').forEach(function(input) {
-                input.addEventListener('input', function() {
-                    var row = candidateRolls[Number(this.dataset.requiredIndex)];
-                    if (!row) return;
-                    var requiredQty = Number(this.value);
-                    var rollKey = String(row.ROLL);
-                    if (!selectedRolls.has(rollKey)) return;
-                    if (!Number.isFinite(requiredQty) || requiredQty <= 0 ||
-                        requiredQty - Number(row.AQTY) > 0.000001) {
-                        selectedRolls.get(rollKey).RQTY = 0;
-                    } else {
-                        selectedRolls.get(rollKey).RQTY = requiredQty;
-                        syncTargetQtyFromSelection();
-                        hideMsg();
+            return {items: items, valid: valid};
+        }
+
+        function updateAllocationAvailability() {
+            fabricTotals.forEach(function(row, index) {
+                (fabricAllocations[index] || []).forEach(function(allocation) {
+                    var tableRow = document.querySelector(
+                        '.allocation-row[data-fabric-index="' + index + '"][data-allocation-id="' + allocation.id + '"]'
+                    );
+                    if (!tableRow) return;
+
+                    var available = availableBeforeAllocation(index, allocation.id);
+                    var qtyInput = tableRow.querySelector('.batch-qty-input');
+                    var categorySelect = tableRow.querySelector('.fabric-category-select');
+                    var checkbox = tableRow.querySelector('.fabric-selection-checkbox');
+                    tableRow.querySelector('.available-qty').textContent = formatQty(available);
+                    qtyInput.max = formatQty(available);
+                    checkbox.disabled = available <= 0 && !allocation.selected;
+                    qtyInput.disabled = !allocation.selected || !allocation.category || available <= 0;
+                    categorySelect.disabled = !allocation.selected;
+                });
+            });
+        }
+
+        function renderFabricTotals(rows) {
+            var categories = [
+                ['BODY', 'Body'],
+                ['RIB', 'RIB'],
+                ['NECK', 'Neck']
+            ];
+            var html = rows.map(function(row, index) {
+                var allocations = fabricAllocations[index] || [];
+                return allocations.map(function(allocation) {
+                    var duplicateCategories = allocations.filter(function(other) {
+                        return other.id !== allocation.id && other.selected && other.category;
+                    }).map(function(other) {
+                        return other.category;
+                    });
+                    var available = formatQty(availableBeforeAllocation(index, allocation.id));
+                    var availableAmount = Number(available);
+                    var batchQuantity = allocation.quantity === '' ? '' : esc(allocation.quantity);
+                    var categoryOptions = categories.map(function(category) {
+                        var selected = allocation.category === category[0] ? ' selected' : '';
+                        var disabled = duplicateCategories.indexOf(category[0]) !== -1 ? ' disabled' : '';
+                        return '<option value="' + category[0] + '"' + selected + disabled + '>' +
+                            category[1] + '</option>';
+                    }).join('');
+                    function metaCell(value) {
+                        var content = esc(value);
+                        return '<td class="meta-cell" title="' + content + '">' + content + '</td>';
                     }
+                    return '<tr class="allocation-row" data-fabric-index="' + index +
+                        '" data-allocation-id="' + allocation.id + '">' +
+                        '<td class="selection-cell"><input type="checkbox" class="selection-checkbox fabric-selection-checkbox"' +
+                        ' aria-label="Select ' + esc(row.FTYPE) + ' for F/T allocation"' +
+                        (allocation.selected ? ' checked' : '') +
+                        (availableAmount <= 0 && !allocation.selected ? ' disabled' : '') + '></td>' +
+                        '<td><select class="filter-select fabric-category-select" aria-label="F/T for ' +
+                        esc(row.FTYPE) + '"' + (allocation.selected ? '' : ' disabled') + '>' +
+                        '<option value="">Select F/T</option>' + categoryOptions + '</select></td>' +
+                        metaCell(row.FTYPE) +
+                        '<td>' + formatQty(row.TOTAL_QTY) + '</td>' +
+                        '<td class="available-qty">' + available + '</td>' +
+                        '<td><input type="number" class="qty-input batch-qty-input" min="0.001" max="' +
+                        esc(available) + '" step="0.001" value="' + batchQuantity +
+                        '" placeholder="Max ' + esc(available) + '" aria-label="Batch QTY for ' +
+                        esc(row.FTYPE) + '"' + (!allocation.selected || !allocation.category || Number(available) <= 0
+                            ? ' disabled'
+                            : '') + '></td>' +
+                        metaCell(row.COLOR) + metaCell(row.SONO) + metaCell(row.BUYER) +
+                        metaCell(row.STYLE) + metaCell(row.MCDIA) + metaCell(row.SL) +
+                        metaCell(row.FGSM) + metaCell(row.FDIA) + metaCell(row.YTYPE) +
+                        metaCell(row.YCOUNT) + metaCell(row.YBRAND) + metaCell(row.LOT_NO) +
+                        '</tr>';
+                }).join('');
+            }).join('');
+            document.getElementById('storeBody').innerHTML = html ||
+                '<tr class="empty-row"><td colspan="18">No fabric types found for this PO Number and Color.</td></tr>';
+            document.getElementById('resultCount').textContent =
+                rows.length + ' fabric type' + (rows.length === 1 ? '' : 's');
+
+            document.querySelectorAll('.allocation-row').forEach(function(tableRow) {
+                var index = Number(tableRow.dataset.fabricIndex);
+                var allocationId = Number(tableRow.dataset.allocationId);
+                var allocation = getFabricAllocation(index, allocationId);
+                var checkbox = tableRow.querySelector('.fabric-selection-checkbox');
+                var categorySelect = tableRow.querySelector('.fabric-category-select');
+                var qtyInput = tableRow.querySelector('.batch-qty-input');
+
+                checkbox.addEventListener('change', function() {
+                    allocation.selected = checkbox.checked;
+                    if (!allocation.selected) {
+                        allocation.category = '';
+                        allocation.quantity = '';
+                        trimEmptyFabricAllocations(index);
+                    }
+                    renderFabricTotals(fabricTotals);
+                });
+                categorySelect.addEventListener('change', function() {
+                    allocation.category = categorySelect.value;
+                    ensureNextFabricAllocation(index);
+                    renderFabricTotals(fabricTotals);
+                });
+                qtyInput.addEventListener('input', function() {
+                    allocation.quantity = qtyInput.value;
                     updateCreateButton();
                 });
-                input.addEventListener('change', function() {
-                    var row = candidateRolls[Number(this.dataset.requiredIndex)];
-                    if (!row) return;
-                    var requiredQty = Number(this.value);
-                    if (!Number.isFinite(requiredQty) || requiredQty <= 0 ||
-                        requiredQty - Number(row.AQTY) > 0.000001) {
-                        showBatchPopup(
-                            'Batch Card was NOT created. Required QTY must be greater than 0 and cannot exceed Available QTY (' +
-                                row.AQTY + ' KG) for roll ' + row.ROLL + '.',
-                            'error'
-                        );
-                    }
-                });
             });
-            document.getElementById('resultCount').textContent =
-                rolls.length + ' available roll' + (rolls.length === 1 ? '' : 's');
+            updateCreateButton();
         }
 
         function updateCreateButton() {
-            var qty = targetUnits();
-            var selected = Array.from(selectedRolls.values());
-            var selectedTotal = selected.reduce(function(sum, row) {
-                return sum + qtyUnits(row);
+            updateAllocationAvailability();
+            var selection = selectedFabricItems();
+            var selectedTotal = selection.items.reduce(function(total, item) {
+                return total + Number(item.quantity);
             }, 0);
-            document.getElementById('suggestionPanel').classList.toggle(
-                'is-hidden',
-                candidateRolls.length === 0 || qty <= 0
-            );
-            var hasValidSelectedQty = selected.length > 0 &&
-                selected.every(function(row) {
-                    return qtyUnits(row) > 0 &&
-                        Number(row.RQTY) <= Number(row.AQTY) + 0.000001;
-                });
-            var selectedProcessCheckboxes = processPanel.querySelectorAll('input[data-process-field]:checked');
-            var hasSelectedProcess = selectedProcessCheckboxes.length > 0;
-            confirmCreateBtn.disabled = !hasValidSelectedQty || !dyeingMcnoSelect.value ||
-                !hasSelectedProcess;
+            var sourceTotal = fabricTotals.reduce(function(total, row) {
+                var qty = Number(row.TOTAL_QTY);
+                return total + (Number.isFinite(qty) ? qty : 0);
+            }, 0);
+            var hasSelectedProcess = processPanel.querySelectorAll('input[data-process-field]:checked').length > 0;
+            confirmCreateBtn.disabled = !fabricTotals.length || !selection.items.length ||
+                !selection.valid || !dyeingMcnoSelect.value || !hasSelectedProcess;
             confirmCreateBtn.title = !dyeingMcnoSelect.value
                 ? 'Select a Dyeing MC No to enable batch creation.'
-                : !hasValidSelectedQty
-                    ? 'Select at least one roll with a valid Required QTY.'
+                : !selection.items.length || !selection.valid
+                    ? 'Select rows, choose F/T, and enter valid Batch QTY values.'
                     : !hasSelectedProcess
                         ? 'Select at least one Dyeing Process.'
                         : 'Create the batch card.';
 
-            var status = document.getElementById('resultsStatus');
-            if (candidateRolls.length === 0) {
-                status.textContent = 'No available rolls match this PO Number and Color.';
-            } else if (qty > 0) {
-                status.textContent = 'Available total: ' +
-                    formatQty(candidateRolls.reduce(function(sum, row) { return sum + availableQtyUnits(row); }, 0) / 1000) +
-                    ' KG. Selected total: ' + formatQty(selectedTotal / 1000) +
-                    ' KG; target: ' + formatQty(qty / 1000) + ' KG.';
+            if (!fabricTotals.length) {
+                document.getElementById('resultsStatus').textContent =
+                    'No fabric types found for this PO Number and Color.';
             } else {
-                status.textContent = 'Available total: ' +
-                    formatQty(candidateRolls.reduce(function(sum, row) { return sum + availableQtyUnits(row); }, 0) / 1000) +
-                    ' KG. Select rolls to automatically fill Target QTY.';
+                document.getElementById('resultsStatus').textContent =
+                    'Knitting total: ' + formatQty(sourceTotal) + ' KG. Selected batch total: ' +
+                    formatQty(selectedTotal) + ' KG across ' + selection.items.length + ' allocation(s).';
             }
-            renderMatchingRollsFoot();
-            renderSelectedRolls();
+            document.getElementById('storeFoot').innerHTML = fabricTotals.length
+                ? '<tr><th colspan="3" class="total-label">Totals:</th><th>' +
+                    formatQty(sourceTotal) + ' KG</th><th></th><th>' + formatQty(selectedTotal) +
+                    ' KG selected</th><th colspan="12"></th></tr>'
+                : '';
         }
 
-        function buildSuggestedRolls(target) {
-            var available = candidateRolls.reduce(function(sum, row) {
-                return sum + availableQtyUnits(row);
-            }, 0);
-            var minimum = Math.max(0, target - 5000);
-            var maximum = Math.min(available, target + 5000);
-            if (maximum < minimum || maximum > 5000000) return null;
-
-            var stateNodes = new Int32Array(maximum + 1);
-            stateNodes.fill(-2);
-            stateNodes[0] = -1;
-            var previousNodes = [];
-            var rowIndexes = [];
-            var reachableSums = [0];
-
-            candidateRolls.forEach(function(row, rowIndex) {
-                var units = availableQtyUnits(row);
-                if (units <= 0 || units > maximum) return;
-
-                var countBeforeRow = reachableSums.length;
-                for (var i = countBeforeRow - 1; i >= 0; i--) {
-                    var sum = reachableSums[i];
-                    var next = sum + units;
-                    if (next > maximum || stateNodes[next] !== -2) continue;
-
-                    previousNodes.push(stateNodes[sum]);
-                    rowIndexes.push(rowIndex);
-                    stateNodes[next] = previousNodes.length - 1;
-                    reachableSums.push(next);
-                }
-            });
-
-            var total = -1;
-            for (var distance = 0; distance <= 5000; distance++) {
-                var below = target - distance;
-                var above = target + distance;
-                if (below >= minimum && below <= maximum && stateNodes[below] !== -2) {
-                    total = below;
-                    break;
-                }
-                if (above <= maximum && stateNodes[above] !== -2) {
-                    total = above;
-                    break;
-                }
-            }
-            if (total < 0) return null;
-
-            var selected = [];
-            var node = stateNodes[total];
-            while (node >= 0) {
-                selected.push(candidateRolls[rowIndexes[node]]);
-                node = previousNodes[node];
-            }
-            return selected;
-        }
-
-        function suggestRollsForTarget() {
-            var target = targetUnits();
-            if (!target || candidateRolls.length === 0) {
-                selectedRolls.clear();
-                updateCreateButton();
-                return;
-            }
-
-            var suggested = buildSuggestedRolls(target);
-            selectedRolls.clear();
-            if (suggested) {
-                suggested.forEach(function(row) {
-                    selectedRolls.set(String(row.ROLL), Object.assign({}, row, {RQTY: Number(row.AQTY)}));
-                });
-                syncTargetQtyFromSelection();
-            }
-
-            document.querySelectorAll('.roll-select-checkbox').forEach(function(checkbox) {
-                var row = candidateRolls[Number(checkbox.dataset.rollIndex)];
-                checkbox.checked = Boolean(row && selectedRolls.has(String(row.ROLL)));
-                var requiredInput = checkbox.closest('tr').querySelector('.required-qty-input');
-                if (requiredInput) {
-                    var selectedRow = row ? selectedRolls.get(String(row.ROLL)) : null;
-                    requiredInput.disabled = !selectedRow;
-                    requiredInput.value = formatQty(selectedRow ? selectedRow.RQTY : row.AQTY);
-                }
-            });
-
-            updateCreateButton();
-            if (!suggested) {
-                var status = document.getElementById('resultsStatus');
-                status.textContent +=
-                    ' No automatic combination is within 5 KG of the target. Select or remove rolls manually.';
-            }
-        }
-
-        function searchRolls() {
+        function searchFabricTotals() {
             var poNumber = poNumberSelect.value;
             var color = colorSelect.value;
             hideMsg();
-            resetResults(true);
+            resetResults();
             if (!poNumber || !color) {
                 showMsg('Select both PO Number and Color before searching.', 'error');
                 return;
@@ -1288,18 +1221,18 @@ unset($_SESSION['dyeing_batch']['saved']);
             searchBtn.disabled = true;
             searchBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Searching...';
             document.getElementById('searchResults').classList.remove('is-hidden');
-            document.getElementById('resultsStatus').textContent = 'Loading matching rolls...';
-            apiGet('search_by_po_color', {po_number: poNumber, color: color}).then(function(response) {
+            document.getElementById('resultsStatus').textContent = 'Loading fabric totals...';
+            apiGet('fabric_totals', {po_number: poNumber, color: color}).then(function(response) {
                 if (requestId !== searchRequestId) return;
-                if (!response.success) throw new Error(response.message || 'Could not search rolls');
-                candidateRolls = response.rolls || [];
-                renderRolls(candidateRolls);
-                setProcessSelectionEnabled(candidateRolls.length > 0);
-                if (targetUnits()) {
-                    suggestRollsForTarget();
-                } else {
-                    updateCreateButton();
-                }
+                if (!response.success) throw new Error(response.message || 'Could not load fabric totals');
+                fabricTotals = response.fabrics || [];
+                nextFabricAllocationId = 1;
+                fabricAllocations = fabricTotals.map(function() {
+                    return [createFabricAllocation()];
+                });
+                renderFabricTotals(fabricTotals);
+                setProcessSelectionEnabled(fabricTotals.length > 0);
+                updateCreateButton();
             }).catch(function(error) {
                 if (requestId !== searchRequestId) return;
                 document.getElementById('resultsStatus').textContent = '';
@@ -1312,71 +1245,9 @@ unset($_SESSION['dyeing_batch']['saved']);
             });
         }
 
-        function toggleRollSelection(row, checked, checkbox) {
-            var key = String(row.ROLL);
-            var requiredInput = checkbox.closest('tr').querySelector('.required-qty-input');
-            if (checked) {
-                selectedRolls.set(key, Object.assign({}, row, {RQTY: Number(row.AQTY)}));
-                requiredInput.disabled = false;
-                requiredInput.value = formatQty(row.AQTY);
-                hideMsg();
-            } else {
-                selectedRolls.delete(key);
-                requiredInput.disabled = true;
-            }
-            syncTargetQtyFromSelection();
-            updateCreateButton();
-        }
-
-        function renderSelectedRolls() {
-            var rows = Array.from(selectedRolls.values());
-            var total = rows.reduce(function(sum, row) {
-                return sum + qtyUnits(row);
-            }, 0);
-            var knittingTotal = rows.reduce(function(sum, row) {
-                return sum + knittingQtyUnits(row);
-            }, 0);
-            var availableTotal = rows.reduce(function(sum, row) {
-                return sum + availableQtyUnits(row);
-            }, 0);
-            document.getElementById('suggestionRolls').innerHTML = rows.length
-                ? rows.map(function(row) {
-                    return '<tr><td><span class="roll-badge">' + esc(row.ROLL) + '</span></td>' +
-                        '<td>' + esc(row.RACK) + '</td><td>' + esc(formatQty(row.KQTY)) + '</td>' +
-                        '<td>' + esc(formatQty(row.AQTY)) + '</td><td>' + esc(formatQty(row.RQTY)) + '</td>' +
-                        '<td><button type="button" class="remove-roll-btn" data-remove-roll="' +
-                        esc(row.ROLL) + '"><i class="fa-solid fa-trash"></i> Remove</button></td></tr>';
-                }).join('')
-                : '<tr class="empty-row"><td colspan="6">Select rolls from the Matching Rolls table above.</td></tr>';
-            document.getElementById('selectedRollsFoot').innerHTML =
-                '<tr><th colspan="2" class="total-label">Total QTY:</th>' +
-                '<th>' + formatQty(knittingTotal / 1000) + ' KG</th>' +
-                '<th>' + formatQty(availableTotal / 1000) + ' KG</th>' +
-                '<th id="selectedQtyTotal" class="selected-total-value">' + formatQty(total / 1000) + ' KG</th>' +
-                '<th></th></tr>';
-
-            document.querySelectorAll('[data-remove-roll]').forEach(function(button) {
-                button.addEventListener('click', function() {
-                    var key = this.dataset.removeRoll;
-                    selectedRolls.delete(key);
-                    var matchingCheckbox = Array.from(document.querySelectorAll('.roll-select-checkbox'))
-                        .find(function(checkbox) {
-                            var row = candidateRolls[Number(checkbox.dataset.rollIndex)];
-                            return row && String(row.ROLL) === key;
-                        });
-                    if (matchingCheckbox) matchingCheckbox.checked = false;
-                    if (matchingCheckbox) {
-                        var requiredInput = matchingCheckbox.closest('tr').querySelector('.required-qty-input');
-                        if (requiredInput) requiredInput.disabled = true;
-                    }
-                    syncTargetQtyFromSelection();
-                    updateCreateButton();
-                });
-            });
-        }
-
         function confirmCreate() {
-            var selected = Array.from(selectedRolls.values());
+            var selection = selectedFabricItems();
+            var selected = selection.items;
             var processes = getSelectedProcesses();
             if (!dyeingMcnoSelect.value) {
                 showMsg('Select a Dyeing MC No before creating the batch card.', 'error');
@@ -1386,8 +1257,8 @@ unset($_SESSION['dyeing_batch']['saved']);
                 showMsg('Select at least one Dyeing Process before creating the batch card.', 'error');
                 return;
             }
-            if (!selected.length || confirmCreateBtn.disabled) {
-                showMsg('Select at least one roll and enter a valid Required QTY.', 'error');
+            if (!selected.length || !selection.valid || confirmCreateBtn.disabled) {
+                showMsg('Choose an F/T and enter a valid Batch QTY for at least one fabric type.', 'error');
                 return;
             }
 
@@ -1396,16 +1267,13 @@ unset($_SESSION['dyeing_batch']['saved']);
             var payload = {
                 po_number: poNumberSelect.value,
                 color: colorSelect.value,
-                target_qty: Number(targetQtyInput.value),
                 dymcno: dyeingMcnoSelect.value,
                 processes: processes,
-                rolls: selected.map(function(row) {
-                    return {ROLL: row.ROLL, required_qty: Number(row.RQTY)};
-                })
+                items: selected
             };
 
-            apiPost('select_rolls', payload).then(function(response) {
-                if (!response.success) throw new Error(response.message || 'Could not select suggested rolls');
+            apiPost('select_fabrics', payload).then(function(response) {
+                if (!response.success) throw new Error(response.message || 'Could not validate selected fabric quantities');
                 return fetch('ajaxDyeing_batch_card_Insert.php', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -1419,7 +1287,7 @@ unset($_SESSION['dyeing_batch']['saved']);
             }).then(function(response) {
                 document.getElementById('cardNo').textContent = response.card_no || '-';
                 var successMessage = 'Batch Created Successfully!\n' + response.count +
-                    ' roll(s) saved in the database.\nBatch Card No: ' + response.card_no;
+                    ' fabric line(s) saved in the database.\nBatch Card No: ' + response.card_no;
                 showMsg(successMessage.replace(/\n/g, ' '), 'success');
                 showBatchPopup(successMessage.replace(/\n/g, ' '), 'success');
                 confirmCreateBtn.innerHTML = '<i class="fa-solid fa-check"></i> Batch Card Created';
@@ -1488,14 +1356,14 @@ unset($_SESSION['dyeing_batch']['saved']);
 
         colorSelect.addEventListener('change', function() {
             if (poNumberSelect.value.trim() && this.value) {
-                searchRolls();
+                searchFabricTotals();
             } else {
                 resetResults();
                 searchBtn.disabled = true;
             }
         });
 
-        searchBtn.addEventListener('click', searchRolls);
+        searchBtn.addEventListener('click', searchFabricTotals);
         processPanel.querySelectorAll('input[data-process-field]').forEach(function(checkbox) {
             checkbox.addEventListener('change', function() {
                 if (this.dataset.processField === 'OTHERS') {
@@ -1509,39 +1377,6 @@ unset($_SESSION['dyeing_batch']['saved']);
             });
         });
         document.getElementById('othersProcessInput').addEventListener('input', updateCreateButton);
-        targetQtyInput.addEventListener('input', function() {
-            updateCreateButton();
-            if (targetQtyTimer) clearTimeout(targetQtyTimer);
-            targetQtyTimer = setTimeout(function() {
-                targetQtyTimer = null;
-                suggestRollsForTarget();
-            }, 250);
-        });
-        targetQtyInput.addEventListener('change', function() {
-            if (targetQtyTimer) {
-                clearTimeout(targetQtyTimer);
-                targetQtyTimer = null;
-            }
-            suggestRollsForTarget();
-        });
-        targetQtyInput.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                if (targetQtyTimer) {
-                    clearTimeout(targetQtyTimer);
-                    targetQtyTimer = null;
-                }
-                if (!poNumberSelect.value.trim() || !colorSelect.value) {
-                    showMsg('Select PO Number and Color to show matching rolls.', 'error');
-                } else if (searchInProgress) {
-                    return;
-                } else if (!document.getElementById('searchResults').classList.contains('is-hidden')) {
-                    suggestRollsForTarget();
-                } else {
-                    searchRolls();
-                }
-            }
-        });
         dyeingMcnoSelect.addEventListener('change', updateCreateButton);
         confirmCreateBtn.addEventListener('click', confirmCreate);
         document.getElementById('backBtn').addEventListener('click', function(event) {
