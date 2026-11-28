@@ -21,6 +21,7 @@ if (!isset($_SESSION['dyeing_batch']['rolls']) || !is_array($_SESSION['dyeing_ba
 try {
     ensureDyeingBatchQuantityColumns($db);
     ensureDyeingBatchCreatorColumns($db);
+    ensureDyeingBatchLineSchema($db);
 } catch (Throwable $error) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => $error->getMessage()]);
@@ -60,6 +61,11 @@ function formatRackNumberFirst($row) {
 }
 
 $action = isset($_GET['action']) ? $_GET['action'] : '';
+if (in_array($action, ['select_rolls', 'search_rolls', 'get_roll', 'add_roll', 'delete_roll'], true)) {
+    http_response_code(410);
+    echo json_encode(['success' => false, 'message' => 'Roll-based batch allocation is no longer supported.']);
+    exit;
+}
 
 switch ($action) {
 

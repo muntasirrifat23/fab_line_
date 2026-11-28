@@ -20,6 +20,7 @@ if (!isset($_SESSION['username'])) {
 }
 
 try {
+    ensureDyeingBatchLineSchema($db);
     ensureDyeingBatchQuantityColumns($db);
     ensureDyeingBatchCategoryColumn($db);
     ensureDyeingProcessColumns($db, 'dyeing_batch_card');
@@ -166,31 +167,46 @@ function dyeingReportEscape($value)
         .empty-row td, .error-row td { padding: 28px; color: #64748b; text-align: center; font-weight: 700; }
         .error-row td { color: #b91c1c; }
         .batch-print-report { display: none; }
-        .print-page { position: relative; width: 210mm; height: 297mm; margin: 0 auto; padding: 5mm 8mm 10mm; overflow: hidden; color: #111; background: #fff; font: 6.3pt Arial, sans-serif; }
+        .print-page { position: relative; box-sizing: border-box; width: 210mm; height: 297mm; margin: 0 auto; padding: 6mm 8mm 13mm; overflow: hidden; color: #111; background: #fff; font: 6.3pt Arial, sans-serif; }
         .print-page table { width: 100%; min-width: 0; border-collapse: collapse; table-layout: fixed; font-size: 6.1pt; }
         .print-page th, .print-page td { padding: 1px 2px; border: 1px solid #000; color: #000; text-align: center; vertical-align: middle; overflow-wrap: anywhere; word-break: break-word; }
-        .print-header td { height: 19mm; }
-        .print-brand { width: 17%; color: #a51f79; font: italic 15pt Georgia, serif; }
-        .print-title { font-size: 10pt; font-weight: 700; }
-        .print-qr-cell { width: 19%; }
+        .print-header td { height: 20mm; }
+        .print-brand { width: 14%; color: #a51f79; font: italic 15pt Georgia, serif; }
+        .print-title { width: 57%; font-size: 10pt; font-weight: 700; }
+        .print-title span { font-size: 8pt; }
+        .print-header-info { width: 29%; font-size: 5.2pt; text-align: left !important; }
+        .print-qr-cell { float: right; width: 18mm; border: 0 !important; }
         .print-qr-cell img, .print-qr-cell canvas { width: 18mm !important; height: 18mm !important; }
         .print-meta { margin-top: 1mm; }
         .print-meta .meta-label { width: 10%; font-weight: 700; }
+        .print-meta td { height: 6mm; }
         .print-batch-layout, .print-route-section { margin-top: 1mm; }
-        .print-section-title { width: 7%; font-size: 7pt; font-weight: 700; }
+        .print-section-title { width: 8%; font-size: 7pt; font-weight: 700; }
+        .print-batch-inner { width: 100%; }
         .print-fabric-table th { font-size: 5.5pt; font-weight: 700; }
-        .print-fabric-table td { height: 5mm; }
-        .print-process-cell { width: 15%; vertical-align: top !important; }
-        .print-process-grid { display: grid; grid-template-columns: 1fr; gap: 1px; text-align: left; }
-        .print-process-item { font-size: 5.7pt; line-height: 1.05; white-space: normal; overflow-wrap: anywhere; }
+        .print-fabric-table td { height: 5.5mm; }
+        .print-fabric-table th:nth-child(1) { width: 9%; }
+        .print-fabric-table th:nth-child(2) { width: 25%; }
+        .print-fabric-table th:nth-child(3) { width: 19%; }
+        .print-fabric-table th:nth-child(4),
+        .print-fabric-table th:nth-child(5),
+        .print-fabric-table th:nth-child(6) { width: 10%; }
+        .print-fabric-table th:nth-child(7) { width: 7%; }
+        .print-fabric-table th:nth-child(8) { width: 10%; }
+        .print-process-cell { width: 25%; padding: 0 !important; vertical-align: top !important; }
+        .print-process-options th { height: 4mm; font-size: 6.2pt; }
+        .print-process-options td { height: 3.7mm; text-align: left; white-space: nowrap; }
+        .print-process-options .process-check { width: 8%; text-align: center; }
         .print-grand-total { font-weight: 700; text-align: right !important; }
         .print-comment { height: 8mm; text-align: left !important; vertical-align: top !important; }
         .print-subtitle { font-weight: 700; }
         .print-signatures { position: absolute; right: 8mm; bottom: 5mm; left: 8mm; width: 194mm !important; margin: 0; border: 0; }
         .print-signatures td { height: 10mm; padding: 0 2mm; border: 0; font-size: 6pt; font-weight: 700; white-space: nowrap; vertical-align: bottom; }
         .print-sign-line { width: 86%; height: 0; margin: 0 auto 2mm; border-top: 1px solid #000; }
-        .print-route-label { width: 7%; font-weight: 700; }
-        .print-option { display: inline-block; margin: 0 3px; white-space: nowrap; }
+        .print-route-label { width: 8%; font-weight: 700; }
+        .print-route-section td { height: 6.5mm; }
+        .print-route-section .print-comment { height: 10mm; text-align: left !important; vertical-align: top !important; }
+        .print-route-section .print-section-title { height: auto; }
         @media (max-width: 700px) {
             body { padding: 10px; }
             .report-header { flex-wrap: wrap; gap: 8px; }
@@ -336,22 +352,32 @@ function dyeingReportEscape($value)
                 return total + (Number.isFinite(qty) ? qty : 0);
             }, 0);
             var categoryLabels = {BODY: 'Body', RIB: 'RIB', NECK: 'Neck'};
-            var fabricGroups = {
-                BODY: {fabrications: [], machineGauge: [], finishDia: [], gsm: [], qty: 0},
-                RIB: {fabrications: [], machineGauge: [], finishDia: [], gsm: [], qty: 0},
-                NECK: {fabrications: [], machineGauge: [], finishDia: [], gsm: [], qty: 0}
-            };
+            var fabricationGroups = {};
             function addUniqueValue(values, value) {
                 var text = String(value || '').trim();
                 if (text && values.indexOf(text) === -1) values.push(text);
             }
             rows.forEach(function(row) {
                 var category = categoryForRow(row);
-                if (!fabricGroups[category]) return;
-                var group = fabricGroups[category];
+                var fabrication = String(row.FTYPE || '').trim();
+                if (!fabrication) return;
+                var fabricationKey = fabrication.toLocaleUpperCase();
+                if (!fabricationGroups[fabricationKey]) {
+                    fabricationGroups[fabricationKey] = {
+                        fabrication: fabrication,
+                        categories: [],
+                        machineGauge: [],
+                        finishDia: [],
+                        gsm: [],
+                        qty: 0
+                    };
+                }
+                var group = fabricationGroups[fabricationKey];
                 var qty = Number(row.BATCH_QTY);
-                addUniqueValue(group.fabrications, row.FTYPE);
-                addUniqueValue(group.machineGauge, [row.MCDIA, row.SL].filter(Boolean).join(' x '));
+                if (categoryLabels[category]) {
+                    addUniqueValue(group.categories, categoryLabels[category]);
+                }
+                addUniqueValue(group.machineGauge, row.MCDIA);
                 addUniqueValue(group.finishDia, row.FDIA);
                 addUniqueValue(group.gsm, row.FGSM);
                 group.qty += Number.isFinite(qty) ? qty : 0;
@@ -374,25 +400,37 @@ function dyeingReportEscape($value)
                 SINGEING: 'Singeing',
                 HEAT_SET: 'Heat Set'
             };
-            var processHtml = processFields.filter(function(field) {
-                return hasProcess(first, field);
-            }).map(function(field) {
-                var label = field === 'OTHERS'
-                    ? first[field]
-                    : (processLabels[field] || field);
-                return '<div class="print-process-item">&#9745; ' + escapeHtml(label) + '</div>';
-            }).join('');
-            if (!processHtml) {
-                processHtml = '<div class="print-process-item">No processes selected</div>';
+            var processOptions = [
+                'SILICON', 'PEACH', 'NONSILICON', 'BRUSH', 'NWASH', 'AOP',
+                'EWASH', 'ENZYME', 'NONENZYME', 'SOFTENER', 'OTHERS',
+                'NONSOFTENER', 'SINGEING', 'SHEARING', 'HEAT_SET'
+            ];
+            var processRows = [];
+            for (var processIndex = 0; processIndex < processOptions.length; processIndex += 2) {
+                var processCells = processOptions.slice(processIndex, processIndex + 2).map(function(field) {
+                    var label = field === 'OTHERS' && hasProcess(first, field)
+                        ? first[field]
+                        : (processLabels[field] || field);
+                    return '<td class="process-check">' +
+                        (hasProcess(first, field) ? '&#9745;' : '&#9744;') + '</td><td>' +
+                        escapeHtml(label) + '</td>';
+                }).join('');
+                if (processIndex + 1 >= processOptions.length) {
+                    processCells += '<td colspan="2"></td>';
+                }
+                processRows.push('<tr>' + processCells + '</tr>');
             }
-            var fabricRows = Object.keys(categoryLabels).map(function(category) {
-                var group = fabricGroups[category];
-                return '<tr><td>' + categoryLabels[category] + '</td><td>' +
-                    escapeHtml(group.fabrications.join(', ')) + '</td><td>' +
+            var processHtml = '<table class="print-process-options"><thead><tr>' +
+                '<th colspan="4">Process</th></tr></thead><tbody>' +
+                processRows.join('') + '</tbody></table>';
+            var fabricRows = Object.keys(fabricationGroups).map(function(fabricationKey) {
+                var group = fabricationGroups[fabricationKey];
+                return '<tr><td>' + escapeHtml(group.categories.join(' / ')) + '</td><td>' +
+                    escapeHtml(group.fabrication) + '</td><td>' +
                     escapeHtml(group.machineGauge.join(', ')) + '</td><td>' +
                     escapeHtml(group.finishDia.join(', ')) + '</td><td>' +
                     escapeHtml(group.gsm.join(', ')) + '</td><td>' + formatQty(group.qty) +
-                    '</td><td></td></tr>';
+                    '</td><td></td><td></td></tr>';
             }).join('');
 
             var dateValue = String(first.BUDAT || '').trim();
@@ -403,11 +441,11 @@ function dyeingReportEscape($value)
 
             var pageOne = '<article class="print-page">' +
                 '<table class="print-header"><tr><td class="print-brand">PURBANI</td>' +
-                '<td class="print-title">PURBANI FABRICS LTD.<br><span>Process Route Card</span>' +
-                '<div style="margin-top:2px;font-size:6pt;font-weight:400">Batch Card: ' +
-                escapeHtml(batch) + ' &nbsp; Batch Created: ' + escapeHtml(first.DNAME) + '</div></td>' +
-                '<td class="print-qr-cell"><div class="batch-qr" data-batch="' + escapeHtml(batch) +
-                '"></div><strong>Date: ' + escapeHtml(dateValue) + '</strong></td></tr></table>' +
+                '<td class="print-title">PURBANI FABRICS LTD.<br><span>Process Route Card</span></td>' +
+                '<td class="print-header-info"><div class="print-qr-cell"><div class="batch-qr" data-batch="' +
+                escapeHtml(batch) + '"></div></div><strong>FORM NO:</strong> PFL-QF-BATCH-001<br>' +
+                '<strong>EFFECTIVE DATE:</strong> 01.06.2021<br><strong>REVISION NO.</strong> 00<br>' +
+                '<strong>DATE:</strong> ' + escapeHtml(dateValue) + '</td></tr></table>' +
                 '<table class="print-meta">' +
                 '<tr><td class="meta-label">Dyeing Batch No.</td><td>' + escapeHtml(batch) +
                 '</td><td class="meta-label">Style No.</td><td>' + escapeHtml(first.STYLE) +
@@ -422,37 +460,47 @@ function dyeingReportEscape($value)
                 '</td><td class="meta-label">SO Number</td><td>' + escapeHtml(first.SONO) +
                 '</td><td class="meta-label">Yarn Lot</td><td>' + escapeHtml(first.LOT_NO) + '</td></tr></table>' +
                 '<table class="print-batch-layout"><tr><td class="print-section-title">Batch</td>' +
-                '<td><table class="print-fabric-table"><thead><tr><th>F/T</th><th>Fabrics Type</th>' +
-                '<th>M/C DIA x Gauge</th><th>F/DIA</th><th>GSM</th><th>Qty (kg)</th>' +
+                '<td><table class="print-batch-inner"><thead><tr><th>F/T</th><th>Fabrication</th>' +
+                '<th>M/C DIA X Gauge</th><th>F/DIA</th><th>GSM</th><th>Qty (kg)</th><th>Roll</th>' +
                 '<th>Remark</th></tr></thead><tbody>' + fabricRows +
-                '<tr><td colspan="5" class="print-grand-total">Total Qty (kg)</td><td>' +
-                formatQty(totalQty) + '</td><td></td></tr></tbody></table></td>' +
-                '<td class="print-process-cell"><strong>Process</strong><div class="print-process-grid">' +
-                processHtml + '</div></td></tr><tr><td colspan="3" class="print-comment">Comments:</td></tr></table>' +
+                '<tr><td colspan="5" class="print-grand-total">Total Wt (kg) / Total Roll</td><td>' +
+                formatQty(totalQty) + '</td><td></td><td></td></tr></tbody></table></td>' +
+                '<td class="print-process-cell">' + processHtml + '</td></tr>' +
+                '<tr><td colspan="3" class="print-comment">Comments:</td></tr></table>' +
                 '<table class="print-route-section"><tr><td class="print-section-title" rowspan="3">Dyeing</td>' +
                 '<td rowspan="2"><strong>Shade</strong><br>□ OK &nbsp; □ Not OK</td>' +
-                '<td rowspan="2"><strong>Sign</strong></td><td colspan="4" class="print-subtitle">Proposed Parameter (Stenter)</td>' +
-                '<td colspan="3" class="print-subtitle">Color Fastness</td></tr>' +
-                '<tr><td>Temp.</td><td>Softener</td><td>P.P</td><td>pH</td><td>□ Water</td><td>□ Rubbing</td><td>□ Perspiration</td></tr>' +
-                '<tr><td colspan="2">Shade: □ OK &nbsp; □ Not OK</td><td colspan="4">Comments:</td>' +
-                '<td colspan="3">Sign: __________________</td></tr></table>' +
-                '<table class="print-route-section"><tr><td class="print-section-title" rowspan="8">Finishing</td>' +
+                '<td rowspan="2"><strong>Sign</strong></td><td colspan="5" class="print-subtitle">Proposed Parameter (Stenter)</td>' +
+                '<td colspan="3" class="print-subtitle">Color Fastness</td><td rowspan="2"><strong>Sign</strong></td></tr>' +
+                '<tr><td>Speed</td><td>Temp.</td><td>Softener</td><td>P/P</td><td>pH</td>' +
+                '<td>Wash</td><td>Water</td><td>Rubbing / Perspiration</td></tr>' +
+                '<tr><td colspan="2">Shade: □ OK &nbsp; □ Not OK</td><td colspan="5" class="print-comment">Comments:</td>' +
+                '<td colspan="4">Sign: __________________</td></tr></table>' +
+                '<table class="print-route-section"><tr><td class="print-section-title" rowspan="16">Finishing</td>' +
                 '<td colspan="10" class="print-subtitle">Heat Set Parameter</td></tr>' +
-                '<tr><td>R. Dia</td><td>Set Dia</td><td>A. Dia</td><td>R. Gam</td><td>A. Gam</td>' +
-                '<td>Speed</td><td>Temp.</td><td>Over Feed%</td><td>Blower</td><td>Remark / Sign</td></tr>' +
+                '<tr><td>R. Dia</td><td>Set Dia</td><td>A. Dia</td><td>R. GSM</td><td>A. GSM</td>' +
+                '<td>Speed</td><td>Temp.</td><td>Over Feed%</td><td>Blower</td><td>Remark</td></tr><tr>' +
+                '<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>' +
                 '<tr><td colspan="10" class="print-subtitle">Shade Roll Parameter (Stenter)</td></tr>' +
-                '<tr><td>Shade</td><td>Sign</td><td>Speed</td><td>Temp.</td><td>Softener</td><td>P.P</td><td>pH</td><td>Over Feed%</td><td>Remark</td><td>Sign</td></tr>' +
+                '<tr><td>Shade</td><td>Sign</td><td>Speed</td><td>Temp.</td><td>Softener</td><td>P/P</td><td>pH</td><td>Over Feed%</td><td>Remark</td><td>Sign</td></tr>' +
+                '<tr><td>OK / Not OK</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>' +
                 '<tr><td colspan="10" class="print-subtitle">Shade Roll Parameter (Compactor)</td></tr>' +
-                '<tr><td>Shade</td><td>Sign</td><td>Speed</td><td>Temp.</td><td>Softener</td><td>P.P</td><td>pH</td><td>Over Feed%</td><td>Remark</td><td>Sign</td></tr>' +
-                '<tr><td colspan="7" class="print-subtitle">Bulau Parameter (Stenter / Compactor)</td><td colspan="3">DIA &nbsp; GSM &nbsp; Speed &nbsp; Temp.</td></tr>' +
-                '<tr><td colspan="10">Comments:</td></tr></table>' +
+                '<tr><td>Shade</td><td>Sign</td><td>Speed</td><td>Temp.</td><td>Softener</td><td>P/P</td><td>pH</td><td>Over Feed%</td><td>Remark</td><td>Sign</td></tr>' +
+                '<tr><td>OK / Not OK</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>' +
+                '<tr><td colspan="10" class="print-subtitle">Bulk Parameter (Stenter)</td></tr>' +
+                '<tr><td>DIA</td><td>GSM</td><td>Speed</td><td>Temp.</td><td>Softener</td><td>P/P</td><td>pH</td><td>Over Feed%</td><td>Remark</td><td>Sign</td></tr>' +
+                '<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>' +
+                '<tr><td colspan="10" class="print-subtitle">Bulk Parameter (Compactor)</td></tr>' +
+                '<tr><td>DIA</td><td>GSM</td><td>Speed</td><td>Temp.</td><td>Softener</td><td>P/P</td><td>pH</td><td>Over Feed%</td><td>Remark</td><td>Sign</td></tr>' +
+                '<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>' +
+                '<tr><td colspan="10" class="print-comment">Comments:</td></tr></table>' +
                 '<table class="print-route-section"><tr><td class="print-section-title" rowspan="4">Quality</td>' +
-                '<td colspan="4" class="print-subtitle">Online Check (Stenter)</td><td colspan="4" class="print-subtitle">Online Check (Compacting)</td><td class="print-subtitle">Decision</td></tr>' +
-                '<tr><td>Shade</td><td>Sign</td><td>DIA</td><td>GSM</td><td>Shade</td><td>Sign</td><td>Surface</td><td>Uneven</td><td>□ Go for Compacting</td></tr>' +
-                '<tr><td>□ OK</td><td>□</td><td></td><td></td><td>□ OK</td><td>□</td><td></td><td></td><td>□ Return to Dyeing/Finishing</td></tr>' +
-                '<tr><td colspan="9">Comments:</td><td>Sign: __________</td></tr></table>' +
+                '<td colspan="4" class="print-subtitle">Online Check (Stenter)</td><td colspan="4" class="print-subtitle">Online Check (Compacting)</td><td colspan="2" class="print-subtitle">Decision</td></tr>' +
+                '<tr><td>Shade</td><td>Sign</td><td>DIA</td><td>GSM</td><td>Shade</td><td>Sign</td><td>Surface</td><td>Uneven</td><td colspan="2">□ Go for Compacting</td></tr>' +
+                '<tr><td>□ OK</td><td>□</td><td></td><td></td><td>□ OK</td><td>□</td><td></td><td></td><td colspan="2">□ Return to Dyeing/Finishing</td></tr>' +
+                '<tr><td colspan="9" class="print-comment">Comments:</td><td colspan="2">Sign: __________</td></tr></table>' +
                 '<table class="print-route-section"><tr><td class="print-section-title">Finish Fabric Store</td>' +
-                '<td>Rack No.</td><td>Other Position</td><td>Position after R/P</td><td>Remark</td><td>Sign</td></tr></table>' +
+                '<td>Rack No.</td><td>Other Position</td><td>Position after R/P</td><td>Remark</td><td>Sign</td></tr>' +
+                '<tr><td></td><td></td><td></td><td></td><td></td><td></td></tr></table>' +
                 '<table class="print-signatures"><tr><td><div class="print-sign-line"></div>Batch Shift Incharge</td>' +
                 '<td><div class="print-sign-line"></div>Batch Supervisor</td><td><div class="print-sign-line"></div>' +
                 'Batch Incharge</td><td><div class="print-sign-line"></div>Batch Manager</td></tr></table></article>';

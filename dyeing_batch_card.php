@@ -142,9 +142,18 @@ unset($_SESSION['dyeing_batch']['saved']);
 
         .search-action-row {
             display: flex;
-            justify-content: flex-start;
+            justify-content: flex-end;
             align-items: end;
             gap: 10px;
+        }
+
+        .fabric-search-field {
+            flex: 1;
+            min-width: 260px;
+        }
+
+        .fabric-search-field .filter-select {
+            min-height: 42px;
         }
 
         .process-panel {
@@ -708,6 +717,11 @@ unset($_SESSION['dyeing_batch']['saved']);
                         </div>
                     </div>
                     <div class="search-action-row search-row">
+                        <div class="filter-field fabric-search-field">
+                            <label for="fabricSearchInput">Search Fabrics Type / SONO / Yarn Type / Yarn Count / Yarn Brand</label>
+                            <input type="search" id="fabricSearchInput" class="filter-select"
+                                placeholder="Search fabrics and yarn details" autocomplete="off">
+                        </div>
                         <button class="btn btn-blue" id="searchBtn" type="button" disabled>
                             <i class="fa-solid fa-magnifying-glass"></i> Search
                         </button>
@@ -789,12 +803,18 @@ unset($_SESSION['dyeing_batch']['saved']);
         var fabricAllocations = [];
         var nextFabricAllocationId = 1;
         var colorRequestId = 0;
+        var colorLoadPoNumber = '';
+        var loadedColorPoNumber = '';
+        var colorsLoading = false;
         var searchRequestId = 0;
         var searchInProgress = false;
+        var loadedPoNumber = '';
+        var loadedColor = '';
         var poInputTimer = null;
         var batchMessageTimer = null;
         var poNumberSelect = document.getElementById('poNumberSelect');
         var colorSelect = document.getElementById('colorSelect');
+        var fabricSearchInput = document.getElementById('fabricSearchInput');
         var searchBtn = document.getElementById('searchBtn');
         var dyeingMcnoSelect = document.getElementById('dyeingMcnoSelect');
         var confirmCreateBtn = document.getElementById('confirmCreateBtn');
@@ -900,6 +920,8 @@ unset($_SESSION['dyeing_batch']['saved']);
             fabricTotals = [];
             fabricAllocations = [];
             nextFabricAllocationId = 1;
+            loadedPoNumber = '';
+            loadedColor = '';
             setProcessSelectionEnabled(false);
             document.getElementById('searchResults').classList.add('is-hidden');
             document.getElementById('storeBody').innerHTML =
@@ -929,13 +951,19 @@ unset($_SESSION['dyeing_batch']['saved']);
         }
 
         function loadColors(poNumber) {
+            if (colorsLoading && colorLoadPoNumber === poNumber) return;
+            if (loadedColorPoNumber === poNumber && !colorSelect.disabled) return;
             var requestId = ++colorRequestId;
+            colorLoadPoNumber = poNumber;
+            loadedColorPoNumber = '';
+            colorsLoading = true;
             resetResults();
             colorSelect.disabled = true;
             searchBtn.disabled = true;
             colorSelect.innerHTML = '<option value="">Loading Colors...</option>';
             if (!poNumber) {
                 colorSelect.innerHTML = '<option value="">Select a PO Number first</option>';
+                colorsLoading = false;
                 return;
             }
 
@@ -953,9 +981,13 @@ unset($_SESSION['dyeing_batch']['saved']);
                     colorSelect.innerHTML = '<option value="">No available Color for this PO</option>';
                 }
                 colorSelect.disabled = !response.colors || response.colors.length === 0;
+                loadedColorPoNumber = poNumber;
+                colorsLoading = false;
             }).catch(function(error) {
                 if (requestId !== colorRequestId) return;
                 colorSelect.innerHTML = '<option value="">Unable to load Colors</option>';
+                colorsLoading = false;
+                loadedColorPoNumber = '';
                 showMsg(error.message, 'error');
             });
         }
@@ -1083,13 +1115,29 @@ unset($_SESSION['dyeing_batch']['saved']);
             });
         }
 
-        function renderFabricTotals(rows) {
+        function visibleFabricIndices() {
+            var query = fabricSearchInput.value.trim().toLocaleLowerCase();
+            return fabricTotals.reduce(function(indices, row, index) {
+                var matches = !query || ['FTYPE', 'SONO', 'YTYPE', 'YCOUNT', 'YBRAND'].some(function(field) {
+                    return String(row[field] || '').toLocaleLowerCase().indexOf(query) !== -1;
+                });
+                var selected = (fabricAllocations[index] || []).some(function(allocation) {
+                    return allocation.selected;
+                });
+                if (matches || selected) indices.push(index);
+                return indices;
+            }, []);
+        }
+
+        function renderFabricTotals() {
             var categories = [
                 ['BODY', 'Body'],
                 ['RIB', 'RIB'],
                 ['NECK', 'Neck']
             ];
-            var html = rows.map(function(row, index) {
+            var indices = visibleFabricIndices();
+            var html = indices.map(function(index) {
+                var row = fabricTotals[index];
                 var allocations = fabricAllocations[index] || [];
                 return allocations.map(function(allocation) {
                     var duplicateCategories = allocations.filter(function(other) {
@@ -1136,9 +1184,14 @@ unset($_SESSION['dyeing_batch']['saved']);
                 }).join('');
             }).join('');
             document.getElementById('storeBody').innerHTML = html ||
-                '<tr class="empty-row"><td colspan="18">No fabric types found for this PO Number and Color.</td></tr>';
+                '<tr class="empty-row"><td colspan="18">' +
+                (fabricTotals.length
+                    ? 'No matching fabric types. Selected rows remain visible.'
+                    : 'No fabric types found for this PO Number and Color.') +
+                '</td></tr>';
             document.getElementById('resultCount').textContent =
-                rows.length + ' fabric type' + (rows.length === 1 ? '' : 's');
+                indices.length + ' of ' + fabricTotals.length +
+                ' fabric type' + (fabricTotals.length === 1 ? '' : 's');
 
             document.querySelectorAll('.allocation-row').forEach(function(tableRow) {
                 var index = Number(tableRow.dataset.fabricIndex);
@@ -1155,12 +1208,12 @@ unset($_SESSION['dyeing_batch']['saved']);
                         allocation.quantity = '';
                         trimEmptyFabricAllocations(index);
                     }
-                    renderFabricTotals(fabricTotals);
+                    renderFabricTotals();
                 });
                 categorySelect.addEventListener('change', function() {
                     allocation.category = categorySelect.value;
                     ensureNextFabricAllocation(index);
-                    renderFabricTotals(fabricTotals);
+                    renderFabricTotals();
                 });
                 qtyInput.addEventListener('input', function() {
                     allocation.quantity = qtyInput.value;
@@ -1195,9 +1248,13 @@ unset($_SESSION['dyeing_batch']['saved']);
                 document.getElementById('resultsStatus').textContent =
                     'No fabric types found for this PO Number and Color.';
             } else {
+                var visibleCount = visibleFabricIndices().length;
                 document.getElementById('resultsStatus').textContent =
                     'Knitting total: ' + formatQty(sourceTotal) + ' KG. Selected batch total: ' +
-                    formatQty(selectedTotal) + ' KG across ' + selection.items.length + ' allocation(s).';
+                    formatQty(selectedTotal) + ' KG across ' + selection.items.length + ' allocation(s).' +
+                    (visibleCount < fabricTotals.length
+                        ? ' Showing ' + visibleCount + ' of ' + fabricTotals.length + ' fabric types.'
+                        : '');
             }
             document.getElementById('storeFoot').innerHTML = fabricTotals.length
                 ? '<tr><th colspan="3" class="total-label">Totals:</th><th>' +
@@ -1210,12 +1267,17 @@ unset($_SESSION['dyeing_batch']['saved']);
             var poNumber = poNumberSelect.value;
             var color = colorSelect.value;
             hideMsg();
-            resetResults();
             if (!poNumber || !color) {
                 showMsg('Select both PO Number and Color before searching.', 'error');
                 return;
             }
 
+            if (loadedPoNumber === poNumber && loadedColor === color && fabricTotals.length) {
+                renderFabricTotals();
+                return;
+            }
+
+            resetResults();
             var requestId = searchRequestId;
             searchInProgress = true;
             searchBtn.disabled = true;
@@ -1226,11 +1288,13 @@ unset($_SESSION['dyeing_batch']['saved']);
                 if (requestId !== searchRequestId) return;
                 if (!response.success) throw new Error(response.message || 'Could not load fabric totals');
                 fabricTotals = response.fabrics || [];
+                loadedPoNumber = poNumber;
+                loadedColor = color;
                 nextFabricAllocationId = 1;
                 fabricAllocations = fabricTotals.map(function() {
                     return [createFabricAllocation()];
                 });
-                renderFabricTotals(fabricTotals);
+                renderFabricTotals();
                 setProcessSelectionEnabled(fabricTotals.length > 0);
                 updateCreateButton();
             }).catch(function(error) {
@@ -1330,12 +1394,17 @@ unset($_SESSION['dyeing_batch']['saved']);
                 poInputTimer = null;
             }
             hideMsg();
-            loadColors(poNumberSelect.value.trim());
-            searchBtn.disabled = true;
+            var poNumber = poNumberSelect.value.trim();
+            if (poNumber === loadedColorPoNumber && !colorSelect.disabled) return;
+            if (poNumber === colorLoadPoNumber && colorsLoading) return;
+            loadColors(poNumber);
         }
 
         poNumberSelect.addEventListener('input', function() {
             colorRequestId++;
+            colorLoadPoNumber = '';
+            loadedColorPoNumber = '';
+            colorsLoading = false;
             colorSelect.disabled = true;
             colorSelect.innerHTML = '<option value="">Select a PO Number first</option>';
             searchBtn.disabled = true;
@@ -1364,6 +1433,12 @@ unset($_SESSION['dyeing_batch']['saved']);
         });
 
         searchBtn.addEventListener('click', searchFabricTotals);
+        fabricSearchInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                searchFabricTotals();
+            }
+        });
         processPanel.querySelectorAll('input[data-process-field]').forEach(function(checkbox) {
             checkbox.addEventListener('change', function() {
                 if (this.dataset.processField === 'OTHERS') {

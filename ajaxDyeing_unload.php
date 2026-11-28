@@ -29,6 +29,9 @@ if (!isset($_SESSION['username'])) {
 }
 
 try {
+    ensureDyeingBatchLineSchema($db);
+    ensureDyeingBatchLineIdColumn($db, 'dyeing_load');
+    ensureDyeingBatchLineIdColumn($db, 'dyeing_unload');
     ensureDyeingProcessColumns($db, 'dyeing_batch_card');
     ensureDyeingProcessColumns($db, 'dyeing_load');
     ensureDyeingProcessColumns($db, 'dyeing_unload');

@@ -382,6 +382,25 @@ function ensureDyeingProcessColumns($db, $table)
         return;
     }
 
+    $sourceColumnsResult = $db->query('SHOW COLUMNS FROM `' . $sources[$table] . '`');
+    if (!$sourceColumnsResult) {
+        throw new RuntimeException('Could not inspect ' . $sources[$table] . ' columns: ' . $db->error);
+    }
+    $sourceColumns = [];
+    while ($column = $sourceColumnsResult->fetch_assoc()) {
+        $sourceColumns[] = strtoupper($column['Field']);
+    }
+    $sourceColumnsResult->free();
+    $targetColumnsResult = $db->query('SHOW COLUMNS FROM `' . $table . '`');
+    if (!$targetColumnsResult) {
+        throw new RuntimeException('Could not inspect ' . $table . ' columns: ' . $db->error);
+    }
+    $targetColumns = [];
+    while ($column = $targetColumnsResult->fetch_assoc()) {
+        $targetColumns[] = strtoupper($column['Field']);
+    }
+    $targetColumnsResult->free();
+
     $sourceFields = [];
     $assignments = [];
     $emptyChecks = [];
@@ -395,17 +414,195 @@ function ensureDyeingProcessColumns($db, $table)
         $emptyChecks[] = '(`destination`.`' . $field . '` IS NULL OR `destination`.`' . $field . '` = \'\')';
     }
     $sourceTable = $sources[$table];
-    $backfillSql = 'UPDATE `' . $table . '` AS `destination`
-        INNER JOIN (
-            SELECT `BCARD`, `ROLL`, ' . implode(', ', $sourceFields) . '
-            FROM `' . $sourceTable . '`
-            GROUP BY `BCARD`, `ROLL`
-        ) AS `source`
-            ON TRIM(`source`.`BCARD`) = TRIM(`destination`.`BCARD`)
-            AND TRIM(`source`.`ROLL`) = TRIM(`destination`.`ROLL`)
-        SET ' . implode(', ', $assignments) . '
-        WHERE (' . implode(' OR ', $emptyChecks) . ')';
+    if (in_array('BATCH_LINE_ID', $targetColumns, true) &&
+        in_array('BATCH_LINE_ID', $sourceColumns, true)) {
+        $backfillSql = 'UPDATE `' . $table . '` AS `destination`
+            INNER JOIN (
+                SELECT `BCARD`, `BATCH_LINE_ID`, ' . implode(', ', $sourceFields) . '
+                FROM `' . $sourceTable . '`
+                WHERE `BATCH_LINE_ID` IS NOT NULL
+                GROUP BY `BCARD`, `BATCH_LINE_ID`
+            ) AS `source`
+                ON TRIM(`source`.`BCARD`) = TRIM(`destination`.`BCARD`)
+                AND `source`.`BATCH_LINE_ID` = `destination`.`BATCH_LINE_ID`
+            SET ' . implode(', ', $assignments) . '
+            WHERE (' . implode(' OR ', $emptyChecks) . ')';
+    } elseif ($table === 'dyeing_batch_delivery' &&
+        in_array('BATCH_LINE_ID', $targetColumns, true) &&
+        in_array('DBCTID', $sourceColumns, true)) {
+        $backfillSql = 'UPDATE `' . $table . '` AS `destination`
+            INNER JOIN (
+                SELECT `DBCTID`, ' . implode(', ', $sourceFields) . '
+                FROM `' . $sourceTable . '`
+                GROUP BY `DBCTID`
+            ) AS `source`
+                ON `source`.`DBCTID` = `destination`.`BATCH_LINE_ID`
+            SET ' . implode(', ', $assignments) . '
+            WHERE (' . implode(' OR ', $emptyChecks) . ')';
+    } elseif (in_array('ROLL', $sourceColumns, true) && in_array('ROLL', $targetColumns, true)) {
+        $backfillSql = 'UPDATE `' . $table . '` AS `destination`
+            INNER JOIN (
+                SELECT `BCARD`, `ROLL`, ' . implode(', ', $sourceFields) . '
+                FROM `' . $sourceTable . '`
+                GROUP BY `BCARD`, `ROLL`
+            ) AS `source`
+                ON TRIM(`source`.`BCARD`) = TRIM(`destination`.`BCARD`)
+                AND TRIM(`source`.`ROLL`) = TRIM(`destination`.`ROLL`)
+            SET ' . implode(', ', $assignments) . '
+            WHERE (' . implode(' OR ', $emptyChecks) . ')';
+    } else {
+        throw new RuntimeException('Could not find a safe key to backfill dyeing process fields in ' . $table . '.');
+    }
     if (!$db->query($backfillSql)) {
         throw new RuntimeException('Could not backfill dyeing process fields in ' . $table . ': ' . $db->error);
+    }
+}
+
+function ensureDyeingBatchLineSchema($db)
+{
+    $batchResult = $db->query('SHOW COLUMNS FROM `dyeing_batch_card`');
+    if (!$batchResult) {
+        throw new RuntimeException('Could not inspect dyeing_batch_card columns: ' . $db->error);
+    }
+    $batchColumns = [];
+    while ($column = $batchResult->fetch_assoc()) {
+        $batchColumns[] = strtoupper($column['Field']);
+    }
+    $batchResult->free();
+
+    $deliveryTableResult = $db->query("SHOW TABLES LIKE 'dyeing_batch_delivery'");
+    if (!$deliveryTableResult) {
+        throw new RuntimeException('Could not check the dyeing batch delivery table: ' . $db->error);
+    }
+    $deliveryTableExists = $deliveryTableResult->num_rows > 0;
+    $deliveryTableResult->free();
+
+    if ($deliveryTableExists) {
+        $deliveryResult = $db->query('SHOW COLUMNS FROM `dyeing_batch_delivery`');
+        if (!$deliveryResult) {
+            throw new RuntimeException('Could not inspect dyeing_batch_delivery columns: ' . $db->error);
+        }
+        $deliveryColumns = [];
+        while ($column = $deliveryResult->fetch_assoc()) {
+            $deliveryColumns[] = strtoupper($column['Field']);
+        }
+        $deliveryResult->free();
+
+        if (!in_array('BATCH_LINE_ID', $deliveryColumns, true)) {
+            if (!$db->query(
+                'ALTER TABLE `dyeing_batch_delivery` ADD COLUMN `BATCH_LINE_ID` INT(11) DEFAULT NULL AFTER `BCARD`'
+            )) {
+                throw new RuntimeException('Could not add BATCH_LINE_ID to dyeing_batch_delivery: ' . $db->error);
+            }
+            $deliveryColumns[] = 'BATCH_LINE_ID';
+        }
+        if (in_array('ROLL', $deliveryColumns, true)) {
+            $rollResult = $db->query("SHOW COLUMNS FROM `dyeing_batch_delivery` LIKE 'ROLL'");
+            if (!$rollResult) {
+                throw new RuntimeException('Could not inspect delivery ROLL column: ' . $db->error);
+            }
+            $rollColumn = $rollResult->fetch_assoc();
+            $rollResult->free();
+            if ($rollColumn && strtoupper($rollColumn['Null']) !== 'YES' &&
+                !$db->query('ALTER TABLE `dyeing_batch_delivery` MODIFY COLUMN `ROLL` VARCHAR(50) DEFAULT NULL')) {
+                throw new RuntimeException('Could not allow empty delivery ROLL values: ' . $db->error);
+            }
+        }
+
+        $lineIndexResult = $db->query(
+            "SHOW INDEX FROM `dyeing_batch_delivery` WHERE Key_name = 'idx_dyeing_delivery_line'"
+        );
+        if (!$lineIndexResult) {
+            throw new RuntimeException('Could not inspect the delivery line index: ' . $db->error);
+        }
+        $hasLineIndex = $lineIndexResult->num_rows > 0;
+        $lineIndexResult->free();
+        if (!$hasLineIndex && !$db->query(
+            'ALTER TABLE `dyeing_batch_delivery` ADD INDEX `idx_dyeing_delivery_line` (`BCARD`, `BATCH_LINE_ID`)'
+        )) {
+            throw new RuntimeException('Could not add the delivery line index: ' . $db->error);
+        }
+
+        if (in_array('ROLL', $batchColumns, true) && in_array('ROLL', $deliveryColumns, true)) {
+            $backfillSql = 'UPDATE `dyeing_batch_delivery` AS `delivery`
+                INNER JOIN `dyeing_batch_card` AS `batch`
+                    ON TRIM(`batch`.`BCARD`) = TRIM(`delivery`.`BCARD`)
+                    AND TRIM(`batch`.`ROLL`) = TRIM(`delivery`.`ROLL`)
+                SET `delivery`.`BATCH_LINE_ID` = `batch`.`DBCTID`
+                WHERE `delivery`.`BATCH_LINE_ID` IS NULL
+                  AND `delivery`.`ROLL` IS NOT NULL
+                  AND TRIM(`delivery`.`ROLL`) <> \'\'';
+            if (!$db->query($backfillSql)) {
+                throw new RuntimeException('Could not map legacy delivery rows to fabric lines: ' . $db->error);
+            }
+        }
+    }
+
+    foreach (['ROLL', 'RACK'] as $columnName) {
+        if (in_array($columnName, $batchColumns, true) &&
+            !$db->query('ALTER TABLE `dyeing_batch_card` DROP COLUMN `' . $columnName . '`')) {
+            throw new RuntimeException('Could not remove dyeing_batch_card ' . $columnName . ' column: ' . $db->error);
+        }
+    }
+}
+
+function ensureDyeingBatchLineIdColumn($db, $table)
+{
+    $sourceTables = [
+        'dyeing_batch_verification' => 'dyeing_batch_delivery',
+        'dyeing_load' => 'dyeing_batch_verification',
+        'dyeing_unload' => 'dyeing_load'
+    ];
+    if (!isset($sourceTables[$table])) {
+        throw new InvalidArgumentException('Unsupported dyeing batch line table.');
+    }
+
+    $columnResult = $db->query('SHOW COLUMNS FROM `' . $table . '` LIKE \'BATCH_LINE_ID\'');
+    if (!$columnResult) {
+        throw new RuntimeException('Could not inspect ' . $table . ' BATCH_LINE_ID column: ' . $db->error);
+    }
+    $hasLineId = $columnResult->num_rows > 0;
+    $columnResult->free();
+    if (!$hasLineId && !$db->query(
+        'ALTER TABLE `' . $table . '` ADD COLUMN `BATCH_LINE_ID` INT(11) DEFAULT NULL AFTER `BCARD`'
+    )) {
+        throw new RuntimeException('Could not add BATCH_LINE_ID to ' . $table . ': ' . $db->error);
+    }
+
+    $sourceTable = $sourceTables[$table];
+    $sourceColumnsResult = $db->query('SHOW COLUMNS FROM `' . $sourceTable . '`');
+    if (!$sourceColumnsResult) {
+        throw new RuntimeException('Could not inspect ' . $sourceTable . ' columns: ' . $db->error);
+    }
+    $sourceColumns = [];
+    while ($column = $sourceColumnsResult->fetch_assoc()) {
+        $sourceColumns[] = strtoupper($column['Field']);
+    }
+    $sourceColumnsResult->free();
+    $tableColumnsResult = $db->query('SHOW COLUMNS FROM `' . $table . '`');
+    if (!$tableColumnsResult) {
+        throw new RuntimeException('Could not inspect ' . $table . ' columns: ' . $db->error);
+    }
+    $tableColumns = [];
+    while ($column = $tableColumnsResult->fetch_assoc()) {
+        $tableColumns[] = strtoupper($column['Field']);
+    }
+    $tableColumnsResult->free();
+    if (!in_array('BATCH_LINE_ID', $sourceColumns, true) ||
+        !in_array('ROLL', $sourceColumns, true) || !in_array('ROLL', $tableColumns, true)) {
+        return;
+    }
+
+    $backfillSql = 'UPDATE `' . $table . '` AS `destination`
+        INNER JOIN `' . $sourceTable . '` AS `source`
+            ON TRIM(`source`.`BCARD`) = TRIM(`destination`.`BCARD`)
+            AND TRIM(`source`.`ROLL`) = TRIM(`destination`.`ROLL`)
+        SET `destination`.`BATCH_LINE_ID` = `source`.`BATCH_LINE_ID`
+        WHERE `destination`.`BATCH_LINE_ID` IS NULL
+          AND `source`.`BATCH_LINE_ID` IS NOT NULL
+          AND `destination`.`ROLL` IS NOT NULL
+          AND TRIM(`destination`.`ROLL`) <> \'\'';
+    if (!$db->query($backfillSql)) {
+        throw new RuntimeException('Could not backfill BATCH_LINE_ID in ' . $table . ': ' . $db->error);
     }
 }

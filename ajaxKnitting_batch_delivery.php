@@ -15,7 +15,7 @@ function respond($payload, $statusCode = 200)
 function formatDeliveryQuantity($value)
 {
     if (!is_numeric($value) || !is_finite((float)$value)) {
-        throw new InvalidArgumentException('A delivery roll has an invalid quantity.');
+        throw new InvalidArgumentException('A delivery line has an invalid quantity.');
     }
 
     $formatted = rtrim(rtrim(number_format((float)$value, 3, '.', ''), '0'), '.');
@@ -76,7 +76,8 @@ try {
             KCHALLAN VARCHAR(20) DEFAULT NULL,
             TO_NAME VARCHAR(255) DEFAULT NULL,
             BCARD VARCHAR(30) DEFAULT NULL,
-            ROLL VARCHAR(50) NOT NULL,
+            ROLL VARCHAR(50) DEFAULT NULL,
+            BATCH_LINE_ID INT(11) DEFAULT NULL,
             PO_NUMBER VARCHAR(50) DEFAULT NULL,
             QTY VARCHAR(50) DEFAULT NULL,
             SONO VARCHAR(50) DEFAULT NULL,
@@ -102,11 +103,12 @@ try {
             DOP VARCHAR(100) DEFAULT NULL,
             DID VARCHAR(100) DEFAULT NULL,
             PRIMARY KEY (DBDTID),
-            UNIQUE KEY uq_dyeing_delivery_bcard_roll (BCARD, ROLL)
+            KEY idx_dyeing_delivery_line (BCARD, BATCH_LINE_ID)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
     )) {
         respond(['success' => false, 'message' => 'Could not initialize delivery records: ' . $db->error], 500);
     }
+    ensureDyeingBatchLineSchema($db);
     ensureDyeingProcessColumns($db, 'dyeing_batch_card');
     ensureDyeingProcessColumns($db, 'dyeing_batch_delivery');
 
@@ -147,7 +149,7 @@ try {
     ensureDeliveryColumnAfter($db, $deliveryColumns, 'VEHICLE_NO', 'VARCHAR(100) DEFAULT NULL', 'GATE_PASS_NO');
 
     $requiredDeliveryColumns = [
-        'DBDTID', 'BUDAT', 'KCHALLAN', 'TO_NAME', 'BCARD', 'ROLL', 'PO_NUMBER', 'QTY', 'SONO',
+        'DBDTID', 'BUDAT', 'KCHALLAN', 'TO_NAME', 'BCARD', 'ROLL', 'BATCH_LINE_ID', 'PO_NUMBER', 'QTY', 'SONO',
         'BUYER', 'STYLE', 'COLOR', 'DYMCNO', 'MCDIA', 'CUSTOMER', 'O_T', 'SL',
         'FTYPE', 'FGSM', 'FDIA', 'FEEDER_PLAN', 'LOT_NO', 'YTYPE', 'YCOUNT',
         'YBRAND', 'CATEGORY', 'GATE_PASS_NO', 'VEHICLE_NO', 'DOP', 'DID'
@@ -257,7 +259,10 @@ try {
 
 function fetchDeliveryBatchRows($db, $cardNo, $forUpdate = false)
 {
-    $sql = "SELECT dbc.ROLL, dbc.PO_NUMBER, dbc.COLOR, dbc.RQTY AS QTY, dbc.DYMCNO, dbc.SONO, dbc.BUYER,
+    $sql = "SELECT dbc.DBCTID AS BATCH_LINE_ID, dbc.PO_NUMBER, dbc.COLOR, dbc.RQTY AS QTY,
+                   COALESCE(delivered.DELIVERED_QTY, 0) AS DELIVERED_QTY,
+                   GREATEST(COALESCE(dbc.RQTY, 0) - COALESCE(delivered.DELIVERED_QTY, 0), 0) AS REMAINING_QTY,
+                   dbc.DYMCNO, dbc.SONO, dbc.BUYER,
                    dbc.STYLE, dbc.MCDIA, dbc.CUSTOMER, dbc.O_T, dbc.SL,
                    dbc.FTYPE, dbc.FGSM, dbc.FDIA, dbc.YTYPE, dbc.YCOUNT,
                    dbc.FEEDER_PLAN, dbc.LOT_NO, dbc.YBRAND, dbc.CATEGORY, dbc.BCARD,
@@ -265,6 +270,13 @@ function fetchDeliveryBatchRows($db, $cardNo, $forUpdate = false)
                    dbc.NONENZYME, dbc.PEACH, dbc.BRUSH, dbc.AOP, dbc.SOFTENER,
                    dbc.NONSOFTENER, dbc.OTHERS
             FROM dyeing_batch_card dbc
+            LEFT JOIN (
+                SELECT BATCH_LINE_ID,
+                       SUM(CAST(NULLIF(TRIM(QTY), '') AS DECIMAL(12,3))) AS DELIVERED_QTY
+                FROM dyeing_batch_delivery
+                WHERE BATCH_LINE_ID IS NOT NULL
+                GROUP BY BATCH_LINE_ID
+            ) delivered ON delivered.BATCH_LINE_ID = dbc.DBCTID
             WHERE TRIM(dbc.BCARD) = ?
             ORDER BY dbc.DBCTID ASC";
     if ($forUpdate) {
@@ -284,38 +296,33 @@ function fetchDeliveryBatchRows($db, $cardNo, $forUpdate = false)
 
     $result = $stmt->get_result();
     $rows = [];
-    $rolls = [];
     $totalQty = 0;
+    $totalRemainingQty = 0;
     while ($row = $result->fetch_assoc()) {
-        $roll = trim((string)$row['ROLL']);
-        if ($roll === '' || !is_numeric($row['QTY']) ||
-            !is_finite((float)$row['QTY']) || (float)$row['QTY'] <= 0) {
+        if (!is_numeric($row['BATCH_LINE_ID']) || (int)$row['BATCH_LINE_ID'] < 1 ||
+            !is_numeric($row['QTY']) || !is_finite((float)$row['QTY']) ||
+            (float)$row['QTY'] <= 0 || trim((string)$row['FTYPE']) === '') {
             $stmt->close();
-            throw new RuntimeException('This batch contains an invalid roll number or QTY.');
+            throw new RuntimeException('This batch contains an invalid fabric line or quantity.');
         }
-        if (isset($rolls[$roll])) {
-            $stmt->close();
-            throw new RuntimeException('This batch contains duplicate roll ' . $roll . '. Please correct the batch data.');
-        }
-        $rolls[$roll] = true;
-        $row['ROLL'] = $roll;
         $totalQty += (float)$row['QTY'];
+        $totalRemainingQty += (float)$row['REMAINING_QTY'];
         $rows[] = $row;
     }
     $stmt->close();
 
     return [
         'rows' => $rows,
-        'rolls' => $rolls,
         'total_qty' => $totalQty,
+        'remaining_qty' => $totalRemainingQty,
         'target_qty' => $totalQty
     ];
 }
 
-function fetchDeliveredRollStatus($db, $cardNo)
+function fetchDeliveryStatus($db, $cardNo)
 {
     $stmt = $db->prepare(
-        "SELECT ROLL, BUDAT, DOP, DID
+        "SELECT BUDAT, DOP, DID
          FROM dyeing_batch_delivery
          WHERE BCARD = ?
          ORDER BY DBDTID ASC"
@@ -331,17 +338,15 @@ function fetchDeliveredRollStatus($db, $cardNo)
     }
 
     $delivery = null;
-    $deliveredRolls = [];
     $result = $stmt->get_result();
     while ($row = $result->fetch_assoc()) {
-        $deliveredRolls[] = trim((string)$row['ROLL']);
         if ($delivery === null) {
             $delivery = $row;
         }
     }
     $stmt->close();
 
-    return ['delivery' => $delivery, 'delivered_rolls' => $deliveredRolls];
+    return ['delivery' => $delivery];
 }
 
 $action = isset($_GET['action']) ? trim($_GET['action']) : '';
@@ -361,70 +366,22 @@ try {
             respond(['success' => false, 'message' => 'Batch Card ' . $cardNo . ' was not found.'], 404);
         }
 
-        $deliveryStatus = fetchDeliveredRollStatus($db, $cardNo);
+        $deliveryStatus = fetchDeliveryStatus($db, $cardNo);
 
         respond([
             'success' => true,
             'card_no' => $cardNo,
             'rows' => $batch['rows'],
-            'roll_count' => count($batch['rows']),
+            'line_count' => count($batch['rows']),
             'total_qty' => round($batch['total_qty'], 3),
+            'remaining_qty' => round($batch['remaining_qty'], 3),
             'target_qty' => round($batch['target_qty'], 3),
-            'delivery' => $deliveryStatus['delivery'],
-            'delivered_rolls' => $deliveryStatus['delivered_rolls']
+            'delivery' => $deliveryStatus['delivery']
         ]);
     }
 
     if ($action === 'load_batch_by_roll') {
-        $roll = isset($_GET['roll']) ? trim((string)$_GET['roll']) : '';
-        if ($roll === '') {
-            respond(['success' => false, 'message' => 'Scan or enter a roll number first.'], 400);
-        }
-        if (isset($_GET['manual']) && $_GET['manual'] === '1' &&
-            empty($_SESSION['knitting_delivery_manual_entry_authorized'])) {
-            respond(['success' => false, 'message' => 'Unlock manual roll entry before entering a roll.'], 403);
-        }
-
-        $stmt = $db->prepare(
-            "SELECT BCARD
-             FROM dyeing_batch_card
-             WHERE TRIM(ROLL) = ?
-             ORDER BY DBCTID DESC
-             LIMIT 1"
-        );
-        if (!$stmt) {
-            respond(['success' => false, 'message' => 'Database error: ' . $db->error], 500);
-        }
-        $stmt->bind_param('s', $roll);
-        if (!$stmt->execute()) {
-            $error = $stmt->error;
-            $stmt->close();
-            respond(['success' => false, 'message' => 'Database error: ' . $error], 500);
-        }
-        $card = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
-        if (!$card) {
-            respond(['success' => false, 'message' => 'Roll ' . $roll . ' was not found in any Dyeing Batch Card.'], 404);
-        }
-
-        $cardNo = trim((string)$card['BCARD']);
-        $batch = fetchDeliveryBatchRows($db, $cardNo);
-        if (!$batch['rows']) {
-            respond(['success' => false, 'message' => 'No rolls found for Batch Card ' . $cardNo . '.'], 404);
-        }
-
-        $deliveryStatus = fetchDeliveredRollStatus($db, $cardNo);
-
-        respond([
-            'success' => true,
-            'card_no' => $cardNo,
-            'rows' => $batch['rows'],
-            'roll_count' => count($batch['rows']),
-            'total_qty' => round($batch['total_qty'], 3),
-            'target_qty' => round($batch['target_qty'], 3),
-            'delivery' => $deliveryStatus['delivery'],
-            'delivered_rolls' => $deliveryStatus['delivered_rolls']
-        ]);
+        respond(['success' => false, 'message' => 'Roll-based delivery is no longer supported. Scan a Batch Card QR instead.'], 410);
     }
 
     if ($action === 'confirm_delivery') {

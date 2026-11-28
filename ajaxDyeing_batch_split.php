@@ -18,6 +18,8 @@ if (empty($_SESSION['batch_split_authorized'])) {
 }
 
 try {
+    ensureDyeingBatchLineSchema($db);
+    ensureDyeingBatchLineIdColumn($db, 'dyeing_batch_verification');
     ensureDyeingBatchQuantityColumns($db);
     ensureDyeingProcessColumns($db, 'dyeing_batch_card');
     ensureDyeingProcessColumns($db, 'dyeing_batch_delivery');

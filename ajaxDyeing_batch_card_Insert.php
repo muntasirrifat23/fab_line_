@@ -29,6 +29,7 @@ if (!$items || $poNumber === '' || $color === '' || $dyeingMcno === '' || !$sele
 
 try {
     ensureDyeingBatchQuantityColumns($db);
+    ensureDyeingBatchLineSchema($db);
     ensureDyeingProcessColumns($db, 'dyeing_batch_card');
     ensureDyeingBatchCreatorColumns($db);
     $creator = dyeingBatchCardCreatorDetails(
@@ -106,12 +107,12 @@ foreach ($processFields as $processField) {
 }
 
 $insertSql = "INSERT INTO `dyeing_batch_card`
-    (BUDAT, BCARD, ROLL, PO_NUMBER, RACK, KQTY, AQTY, RQTY, BODY_QTY, RIB_QTY, NECK_QTY,
+    (BUDAT, BCARD, PO_NUMBER, KQTY, AQTY, RQTY, BODY_QTY, RIB_QTY, NECK_QTY,
      SONO, SHIFT, BUYER, STYLE, COLOR, DYMCNO, MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA,
      FEEDER_PLAN, LOT_NO, YTYPE, YCOUNT, YBRAND, CATEGORY, TPOINT, SILICON, NONSILICON,
      NWASH, EWASH, ENZYME, NONENZYME, PEACH, BRUSH, AOP, SOFTENER, NONSOFTENER, OTHERS,
      SHEARING, SINGEING, HEAT_SET, DID, DNAME)
-    VALUES (" . implode(',', array_fill(0, 48, '?')) . ')';
+    VALUES (" . implode(',', array_fill(0, 46, '?')) . ')';
 $stmt = $db->prepare($insertSql);
 if (!$stmt) {
     http_response_code(500);
@@ -142,8 +143,6 @@ try {
         }
 
         $vPO = $poNumber;
-        $vRoll = '';
-        $vRack = '';
         $vKqty = $sourceQty;
         $vAqty = max(0, round($remainingQty - $batchQty, 3));
         $vRqty = $batchQty;
@@ -171,12 +170,10 @@ try {
         $vTpoint = isset($item['TPOINT']) ? (string)$item['TPOINT'] : '';
 
         $stmt->bind_param(
-            str_repeat('s', 48),
+            str_repeat('s', 46),
             $batchDate,
             $cardNo,
-            $vRoll,
             $vPO,
-            $vRack,
             $vKqty,
             $vAqty,
             $vRqty,

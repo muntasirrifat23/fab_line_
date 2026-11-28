@@ -5,6 +5,7 @@ require_once 'dyeing_process_fields.php';
 header('Content-Type: application/json');
 
 try {
+    ensureDyeingBatchLineSchema($db);
     ensureDyeingBatchQuantityColumns($db);
     ensureDyeingBatchCategoryColumn($db);
     ensureDyeingProcessColumns($db, 'dyeing_batch_card');
