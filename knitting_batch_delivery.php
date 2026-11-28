@@ -118,7 +118,7 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
         .is-hidden { display: none !important; }
         .batch-summary { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 14px; }
         .summary-item { padding: 9px 12px; border-radius: 8px; background: #ecfdf5; font-weight: 800; }
-        .batch-selection { display: flex; grid-column: 1; flex-direction: column; gap: 0; align-self: stretch; overflow: hidden; border: 1px solid #0f766e; border-radius: 9px; background: #fff; }
+        .batch-selection { display: flex; grid-column: 1; justify-self: start; width: min(100%, 220px); flex-direction: column; gap: 0; align-self: stretch; overflow: hidden; border: 1px solid #0f766e; border-radius: 9px; background: #fff; }
         .batch-selection-title { padding: 10px 9px; border-bottom: 1px solid #0f766e; color: #fff; background: #134e4a; font-weight: 800; text-align: center; }
         .batch-selection-list { display: flex; flex: 1; flex-direction: column; gap: 8px; padding: 8px; }
         .batch-selection-item { display: inline-flex; align-items: center; gap: 5px; padding: 4px; border: 1px solid #c9dedb; border-radius: 9px; background: #f8fffd; }
@@ -127,9 +127,19 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
         .batch-selection-item .batch-selection-number { flex: 1; padding: 6px 10px; color: #075e54; background: transparent; }
         .batch-selection-item .batch-selection-number:hover { background: #d1fae5; }
         .batch-selection-item .remove-batch-button { width: 34px; min-height: 34px; padding: 6px; }
-        .camera-layout { display: grid; grid-template-columns: minmax(120px, 180px) minmax(0, 1fr); gap: 18px; align-items: start; }
-        .camera-layout.has-batches .scanner-stage { grid-column: 2; }
-        .scanner-stage { grid-column: 1 / -1; justify-self: center; width: min(100%, 460px); }
+        .camera-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 460px) minmax(0, 1fr); gap: 18px; align-items: stretch; }
+        .camera-layout.has-batches .scanner-stage, .scanner-stage { grid-column: 2; }
+        .scanner-stage { grid-column: 2; justify-self: center; width: 100%; max-width: 460px; }
+        .scanned-roll-panel { display: flex; grid-column: 3; justify-self: end; flex-direction: column; width: min(100%, 530px); min-width: 0; overflow: hidden; border: 1px solid #0f766e; border-radius: 9px; background: #fff; }
+        .scanned-roll-title { padding: 10px 9px; border-bottom: 1px solid #0f766e; color: #fff; background: #134e4a; font-weight: 800; text-align: center; }
+        .scanned-roll-list { display: grid; flex: 1; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 8px; max-height: 390px; overflow-y: auto; padding: 8px; }
+        .scanned-roll-list.has-many-rolls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .scanned-roll-item { display: grid; grid-template-columns: 34px minmax(0, 1fr); align-items: center; gap: 6px; min-width: 0; padding: 6px; border: 1px solid #c9dedb; border-radius: 9px; background: #f8fffd; }
+        .scanned-roll-item .remove-roll-button { grid-row: 1 / span 2; }
+        .scanned-roll-item-info { min-width: 0; }
+        .scanned-roll-item-number { display: block; overflow: hidden; color: #075e54; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+        .scanned-roll-item-detail { display: block; overflow: hidden; color: #475569; font-size: .75rem; text-overflow: ellipsis; white-space: nowrap; }
+        .scanned-roll-empty { grid-column: 1 / -1; padding: 10px; color: #64748b; text-align: center; }
         #qr-reader { width: 100%; min-height: 300px; overflow: hidden; border-radius: 12px; background: #f1f5f9; }
         .scanner-controls { display: flex; width: 100%; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; }
         .manual-scan { width: 100%; margin-top: 12px; }
@@ -222,7 +232,7 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
         .challan-signatures { display: flex; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 5mm; }
         .challan-signatures > span { position: relative; flex: 1; padding-top: 4px; border-top: 1px solid #222; text-align: center; white-space: nowrap; }
         .challan-prepared-name { position: absolute; right: 0; bottom: calc(100% + 4px); left: 0; font-size: 9px; font-weight: 700; }
-        @media (max-width: 800px) {
+        @media (max-width: 1000px) {
             body { padding: 16px 9px 9px; }
             .header { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; padding: 10px; }
             .header h1 { font-size: 1.1rem; }
@@ -232,8 +242,9 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
             .challan-fields { grid-template-columns: 1fr; }
             .camera-layout { grid-template-columns: minmax(0, 1fr); }
             .batch-selection { grid-column: 1; }
-            .batch-selection-list { flex-direction: row; flex-wrap: wrap; }
-            .camera-layout.has-batches .scanner-stage { grid-column: 1; }
+            .batch-selection-list { flex-direction: column; flex-wrap: nowrap; }
+            .scanner-stage { grid-column: 1; }
+            .scanned-roll-panel { display: none; }
         }
         @media print {
             @page { size: A4 portrait; margin: 8mm; }
@@ -259,12 +270,12 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
         </header>
 
         <section class="panel" id="deliveryPanel">
-            <h2 class="panel-title">Scan a Batch Card QR first, then scan rolls from that batch. Scan another Batch Card QR to switch batches.</h2>
+            <h2 class="panel-title">Scan a Batch Card QR, then scan knitting rolls. Each roll is matched by PO Number, Fabrics Type and Color.</h2>
             <div class="message" id="message" role="status" aria-live="polite"></div>
             <div class="batch-summary">
-                <div class="summary-item">Rolls scanned: <span id="scannedCount">0</span> / <span id="expectedCount">0</span></div>
+                <div class="summary-item">Rolls scanned: <span id="scannedCount">0</span> · Quantity groups: <span id="expectedCount">0</span></div>
                 <div class="summary-item">Scanned QTY: <span id="scannedQty">0</span> KG</div>
-                <div class="summary-item">Batch Total QTY: <span id="expectedQty">0</span> KG</div>
+                <div class="summary-item">Batch Target QTY: <span id="expectedQty">0</span> KG</div>
             </div>
             <div class="camera-layout">
                 <div class="batch-selection is-hidden" id="batchSelectionPanel">
@@ -294,11 +305,17 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
                         </form>
                     </div>
                 </div>
+                <aside class="scanned-roll-panel" aria-live="polite">
+                    <div class="scanned-roll-title">Scanned Rolls</div>
+                    <div class="scanned-roll-list" id="scannedRollList">
+                        <div class="scanned-roll-empty">Scanned roll details will appear here.</div>
+                    </div>
+                </aside>
             </div>
         </section>
 
         <section class="panel is-hidden" id="scannedPanel">
-            <h2 class="panel-title">Scanned Rolls</h2>
+            <h2 class="panel-title">Batch Quantity Matching</h2>
             <div class="challan-fields">
                 <div class="field field-to">
                     <label for="toNameInput">To</label>
@@ -317,11 +334,26 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
                 <table>
                     <thead>
                         <tr>
-                            <th>Action</th><th>Batch</th><th>Roll</th><th>Fabrics Type</th><th>Batch Qty (kg)</th><th>Remarks</th>
+                            <th>Batch</th><th>PO Number</th><th>Fabrics Type</th><th>Color</th>
+                            <th>Target (kg)</th><th>Already Delivered (kg)</th><th>Pending Scanned (kg)</th><th>Remaining (kg)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="batchGroupsRows">
+                        <tr><td colspan="8">Scan a Batch Card QR to see PO / Fabrics Type / Color quantities.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <h2 class="panel-title" style="margin-top:16px">Scanned Knitting Rolls</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Action</th><th>Batch</th><th>Roll</th><th>PO Number</th>
+                            <th>Fabrics Type</th><th>Color</th><th>Roll Qty (kg)</th><th>Remarks</th>
                         </tr>
                     </thead>
                     <tbody id="scannedRows">
-                        <tr><td colspan="6">Scan a Batch Card QR first, then scan its rolls.</td></tr>
+                        <tr><td colspan="8">Scan a Batch Card QR first, then scan its rolls.</td></tr>
                     </tbody>
                     <tfoot id="scannedFooter"></tfoot>
                 </table>
@@ -355,8 +387,6 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
             var qrScanner = null;
             var batch = null;
             var scannedRolls = new Map();
-            var expectedByRoll = new Map();
-            var alreadyDeliveredRolls = new Set();
             var loadedBatches = new Map();
             var completedBatches = [];
             var remarksByBatch = new Map();
@@ -475,20 +505,20 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
                     return {
                         card_no: savedBatch.card_no,
                         rows: savedBatch.rows,
+                        target_groups: savedBatch.target_groups,
                         target_qty: Number(savedBatch.target_qty) || 0,
-                        expected_count: Number(savedBatch.expected_count) || savedBatch.rows.length,
                         remarks: remarksByBatch.has(String(savedBatch.card_no))
                             ? remarksByBatch.get(String(savedBatch.card_no))
                             : (savedBatch.remarks || ''),
                         completed: true
                     };
                 });
-                if (batch && scannedRolls.size) {
+                if (batch) {
                     groups.push({
                         card_no: batch.card_no,
                         rows: Array.from(scannedRolls.values()),
+                        target_groups: batch.groups,
                         target_qty: Number(batch.target_qty) || 0,
-                        expected_count: batch.rows.length,
                         remarks: remarksByBatch.get(String(batch.card_no)) || '',
                         completed: false
                     });
@@ -496,34 +526,33 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
                 return groups;
             }
 
-            function getCurrentBatchRolls() {
-                return batch ? batch.rows.length : 0;
-            }
-
-            function getAlreadyDeliveredRollCount() {
-                var count = 0;
-                alreadyDeliveredRolls.forEach(function(roll) {
-                    if (expectedByRoll.has(String(roll))) count++;
+            function getPendingQtyByGroup(rows) {
+                var totals = new Map();
+                rows.forEach(function(row) {
+                    var groupId = String(row.GROUP_ID || '');
+                    totals.set(groupId, (totals.get(groupId) || 0) + (Number(row.QTY) || 0));
                 });
-                return count;
+                return totals;
             }
 
             function isCurrentBatchComplete() {
-                return batch
-                    ? scannedRolls.size + getAlreadyDeliveredRollCount() === batch.rows.length
-                    : completedBatches.length > 0;
+                if (!batch) return false;
+                var pendingQty = getPendingQtyByGroup(Array.from(scannedRolls.values()));
+                return batch.groups.every(function(group) {
+                    return (pendingQty.get(String(group.GROUP_ID)) || 0) + 0.0005 >= Number(group.REMAINING_QTY);
+                });
             }
 
             function updateSummary() {
                 var groups = getDeliveryGroups();
                 var scannedCount = 0;
-                var expectedCount = completedBatches.reduce(function(total, savedBatch) {
-                    return total + (Number(savedBatch.expected_count) || savedBatch.rows.length);
-                }, 0) + getCurrentBatchRolls();
+                var expectedCount = groups.reduce(function(total, savedBatch) {
+                    return total + savedBatch.target_groups.length;
+                }, 0);
                 var totalQty = 0;
-                var targetQty = completedBatches.reduce(function(total, savedBatch) {
+                var targetQty = groups.reduce(function(total, savedBatch) {
                     return total + (Number(savedBatch.target_qty) || 0);
-                }, 0) + (batch ? Number(batch.target_qty) || 0 : 0);
+                }, 0);
                 groups.forEach(function(group) {
                     group.rows.forEach(function(row) {
                         scannedCount++;
@@ -536,7 +565,7 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
                 document.getElementById('scannedQty').textContent = formatQty(totalQty);
                 document.getElementById('expectedQty').textContent = formatQty(targetQty);
                 document.getElementById('scannedFooter').innerHTML = groups.length
-                    ? '<tr><th colspan="4">Total Batch Qty</th><th class="scanned-total-qty">' + formatQty(totalQty) + ' KG</th><th></th></tr>'
+                    ? '<tr><th colspan="6">Total Scanned Roll Qty</th><th class="scanned-total-qty">' + formatQty(totalQty) + ' KG</th><th></th></tr>'
                     : '';
 
                 deliveryPanel.classList.toggle('is-hidden', delivered);
@@ -585,12 +614,59 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
                 });
             }
 
+            function renderScannedRollList(groups) {
+                var rowsHtml = '';
+                var completedIndex = 0;
+                var rollCount = 0;
+                groups.forEach(function(group) {
+                    var groupIndex = group.completed ? completedIndex++ : -1;
+                    group.rows.forEach(function(row, rowIndex) {
+                        rollCount++;
+                        var removeButton = group.completed
+                            ? '<button class="remove-roll-button" type="button" data-remove-completed-batch-index="' +
+                                groupIndex + '" data-remove-completed-row-index="' + rowIndex +
+                                '" aria-label="Remove roll" title="Remove roll"' +
+                                (delivered ? ' disabled' : '') + '>' + trashIconMarkup() + '</button>'
+                            : '<button class="remove-roll-button" type="button" data-remove-roll-index="' +
+                                Array.from(scannedRolls.keys()).indexOf(String(row.ROLL)) +
+                                '" aria-label="Remove roll" title="Remove roll"' +
+                                (delivered ? ' disabled' : '') + '>' + trashIconMarkup() + '</button>';
+                        rowsHtml += '<div class="scanned-roll-item">' + removeButton +
+                            '<div class="scanned-roll-item-info">' +
+                            '<span class="scanned-roll-item-number">' + escapeHtml(row.ROLL) +
+                            ' · ' + escapeHtml(formatQty(row.QTY)) + ' kg</span>' +
+                            '<span class="scanned-roll-item-detail">' + escapeHtml(row.card_no || group.card_no) +
+                            ' · ' + escapeHtml(row.FTYPE) + ' · ' + escapeHtml(row.COLOR) + '</span>' +
+                            '</div></div>';
+                    });
+                });
+                var rollList = document.getElementById('scannedRollList');
+                rollList.classList.toggle('has-many-rolls', rollCount > 4);
+                rollList.innerHTML = rowsHtml ||
+                    '<div class="scanned-roll-empty">Scanned roll details will appear here.</div>';
+            }
+
             function renderScannedRows() {
                 var groups = getDeliveryGroups();
                 var completedIndex = 0;
                 var rowsHtml = '';
+                var targetRowsHtml = '';
                 groups.forEach(function(group) {
                     var groupIndex = group.completed ? completedIndex++ : -1;
+                    var pendingByGroup = getPendingQtyByGroup(group.rows);
+                    group.target_groups.forEach(function(targetGroup) {
+                        var pendingQty = pendingByGroup.get(String(targetGroup.GROUP_ID)) || 0;
+                        var remainingQty = Math.max(0, Number(targetGroup.REMAINING_QTY) - pendingQty);
+                        targetRowsHtml += '<tr>' +
+                            '<td>' + escapeHtml(group.card_no) + '</td>' +
+                            '<td>' + escapeHtml(targetGroup.PO_NUMBER) + '</td>' +
+                            '<td>' + escapeHtml(targetGroup.FTYPE) + '</td>' +
+                            '<td>' + escapeHtml(targetGroup.COLOR) + '</td>' +
+                            '<td>' + escapeHtml(formatQty(targetGroup.TARGET_QTY)) + '</td>' +
+                            '<td>' + escapeHtml(formatQty(targetGroup.FULFILLED_QTY)) + '</td>' +
+                            '<td>' + escapeHtml(formatQty(pendingQty)) + '</td>' +
+                            '<td>' + escapeHtml(formatQty(remainingQty)) + '</td></tr>';
+                    });
                     group.rows.forEach(function(row, rowIndex) {
                         rowsHtml += '<tr>';
                         if (group.completed) {
@@ -610,7 +686,9 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
                                 escapeHtml(group.card_no) + '</td>';
                         }
                         rowsHtml += '<td><span class="roll-badge">' + escapeHtml(row.ROLL) + '</span></td>' +
+                            '<td>' + escapeHtml(row.PO_NUMBER) + '</td>' +
                             '<td>' + escapeHtml(row.FTYPE) + '</td>' +
+                            '<td>' + escapeHtml(row.COLOR) + '</td>' +
                             '<td>' + escapeHtml(formatQty(row.QTY)) + '</td>';
                         if (rowIndex === 0) {
                             rowsHtml += '<td rowspan="' + group.rows.length + '">' +
@@ -622,8 +700,11 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
                     });
                 });
 
+                document.getElementById('batchGroupsRows').innerHTML = targetRowsHtml ||
+                    '<tr><td colspan="8">Scan a Batch Card QR to see PO / Fabrics Type / Color quantities.</td></tr>';
                 document.getElementById('scannedRows').innerHTML = rowsHtml ||
-                    '<tr><td colspan="6">Scan a Batch Card QR first, then scan its rolls.</td></tr>';
+                    '<tr><td colspan="8">Scan a Batch Card QR first, then scan its rolls.</td></tr>';
+                renderScannedRollList(groups);
                 sizeBatchRemarkInputs();
                 updateSummary();
             }
@@ -633,14 +714,12 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
                 completedBatches.push({
                     card_no: batch.card_no,
                     target_qty: Number(batch.target_qty) || 0,
-                    expected_count: batch.rows.length,
+                    target_groups: batch.groups,
                     remarks: remarksByBatch.get(String(batch.card_no)) || '',
                     rows: Array.from(scannedRolls.values())
                 });
                 batch = null;
                 scannedRolls.clear();
-                expectedByRoll.clear();
-                alreadyDeliveredRolls.clear();
                 batchAlreadyDelivered = false;
                 alreadyDeliveredMessage = '';
                 renderScannedRows();
@@ -685,13 +764,6 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
                 loadedBatches.set(String(response.card_no), response);
                 batch = response;
                 scannedRolls.clear();
-                expectedByRoll.clear();
-                alreadyDeliveredRolls = new Set((response.delivered_rolls || []).map(function(deliveredRoll) {
-                    return String(deliveredRoll);
-                }));
-                batch.rows.forEach(function(row) {
-                    expectedByRoll.set(String(row.ROLL), row);
-                });
                 var savedBatchIndex = completedBatches.findIndex(function(savedBatch) {
                     return String(savedBatch.card_no) === String(response.card_no);
                 });
@@ -701,22 +773,20 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
                         scannedRolls.set(String(savedRow.ROLL), savedRow);
                     });
                 }
-                if (alreadyDeliveredRolls.size === response.rows.length) {
+                if (Number(response.remaining_qty) <= 0.0005) {
                     batchAlreadyDelivered = true;
                     var delivery = response.delivery || {};
-                    alreadyDeliveredMessage = 'Batch Card ' + response.card_no + ' was already delivered' +
+                    alreadyDeliveredMessage = 'All PO / Fabrics Type / Color quantities on Batch Card ' +
+                        response.card_no + ' are already fulfilled' +
                         (delivery.BUDAT ? ' on ' + delivery.BUDAT : '') +
                         (delivery.DOP ? ' by ' + delivery.DOP : '') +
                         (delivery.DID ? ' (ID: ' + delivery.DID + ')' : '') + '.';
                 } else {
                     batchAlreadyDelivered = false;
                     alreadyDeliveredMessage = '';
-                    var deliveredCount = alreadyDeliveredRolls.size;
                     showMessage(
                         'Batch Card ' + response.card_no + ' found. ' +
-                        (deliveredCount
-                            ? deliveredCount + ' roll(s) already delivered. Scan remaining rolls.'
-                            : 'Scan its rolls.'),
+                        formatQty(response.remaining_qty) + ' KG remains across its PO / Fabrics Type / Color groups. Scan matching knitting rolls.',
                         'info'
                     );
                 }
@@ -732,21 +802,6 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
                 });
             }
 
-            function findLoadedBatchForRoll(roll) {
-                if (batch && expectedByRoll.has(roll)) return {batch: batch, ambiguous: false};
-
-                var matches = [];
-                loadedBatches.forEach(function(loadedBatch) {
-                    if (loadedBatch.rows.some(function(row) {
-                        return String(row.ROLL) === roll;
-                    })) {
-                        matches.push(loadedBatch);
-                    }
-                });
-                if (matches.length === 1) return {batch: matches[0], ambiguous: false};
-                return {batch: null, ambiguous: matches.length > 1};
-            }
-
             function removeBatch(cardNo) {
                 if (delivered) return;
                 var batchKey = String(cardNo);
@@ -760,8 +815,6 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
                 if (batch && String(batch.card_no) === batchKey) {
                     batch = null;
                     scannedRolls.clear();
-                    expectedByRoll.clear();
-                    alreadyDeliveredRolls.clear();
                     batchAlreadyDelivered = false;
                     alreadyDeliveredMessage = '';
                 }
@@ -799,45 +852,47 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
                         showScanPopup(alreadyDeliveredMessage, 'Batch Already Delivered', 'error');
                         return;
                     }
-                    if (!expectedByRoll.has(roll)) {
-                        showScanPopup('Not match this roll for this batch: ' + roll);
+                    var duplicateRoll = scannedRolls.has(roll) || completedBatches.some(function(savedBatch) {
+                        return savedBatch.rows.some(function(savedRow) {
+                            return String(savedRow.ROLL) === roll;
+                        });
+                    });
+                    if (duplicateRoll) {
+                        showScanPopup('Roll ' + roll + ' has already been scanned for this challan.');
                         return;
                     }
-                    if (alreadyDeliveredRolls.has(roll)) {
-                        showScanPopup('Roll ' + roll + ' has already been delivered.');
-                        return;
-                    }
-                    if (scannedRolls.has(roll)) {
-                        showScanPopup('Roll ' + roll + ' has already been scanned for this batch.');
-                        return;
-                    }
-
-                    var row = expectedByRoll.get(roll);
-                    var previousTotal = 0;
-                    scannedRolls.forEach(function(scanned) { previousTotal += Number(scanned.QTY) || 0; });
-                    var nextTotal = previousTotal + (Number(row.QTY) || 0);
-                    var targetQty = Number(batch.target_qty);
-                    if (nextTotal - targetQty > 0.0005) {
+                    return api('load_batch_by_roll', {card_no: batch.card_no, roll: roll}).then(function(response) {
+                        var row = response.roll;
+                        var targetGroup = batch.groups.find(function(group) {
+                            return String(group.GROUP_ID) === String(row.GROUP_ID);
+                        });
+                        if (!targetGroup) {
+                            throw new Error('This roll does not match a quantity group on the selected batch.');
+                        }
+                        var pendingQty = getPendingQtyByGroup(Array.from(scannedRolls.values()))
+                            .get(String(targetGroup.GROUP_ID)) || 0;
+                        var availableQty = Number(targetGroup.REMAINING_QTY) - pendingQty;
+                        if (Number(row.QTY) - availableQty > 0.0005) {
+                            throw new Error(
+                                'Only ' + formatQty(Math.max(0, availableQty)) +
+                                ' KG remains for this PO / Fabrics Type / Color. Roll ' + roll +
+                                ' has ' + formatQty(row.QTY) + ' KG and was not added.'
+                            );
+                        }
+                        scannedRolls.set(roll, row);
+                        scannedPanel.classList.remove('is-hidden');
+                        renderScannedRows();
+                        var batchComplete = isCurrentBatchComplete();
                         showScanPopup(
-                            'Over QTY by ' + formatQty(nextTotal - targetQty) + ' KG. Batch total: ' +
-                            formatQty(targetQty) + ' KG; previous scanned: ' +
-                            formatQty(previousTotal) + ' KG; this roll: ' +
-                            formatQty(row.QTY) + ' KG. This roll was not added.'
+                            batchComplete
+                                ? 'All PO / Fabrics Type / Color quantities on Batch Card ' + batch.card_no +
+                                    ' are fulfilled. Continue scanning another batch or confirm delivery.'
+                                : 'Roll ' + roll + ' added to Batch Card ' + batch.card_no + '.',
+                            batchComplete ? 'Batch Quantity Fulfilled' : 'Roll Added Successfully',
+                            'success',
+                            1000
                         );
-                        return;
-                    }
-                    scannedRolls.set(roll, row);
-                    scannedPanel.classList.remove('is-hidden');
-                    renderScannedRows();
-                    var batchComplete = isCurrentBatchComplete();
-                    showScanPopup(
-                        batchComplete
-                            ? 'All available rolls from Batch Card ' + batch.card_no + ' are scanned. Continue scanning another batch or confirm delivery.'
-                            : 'Roll ' + roll + ' added successfully to Batch Card ' + batch.card_no + '.',
-                        batchComplete ? 'Batch Scan Complete' : 'Roll Added Successfully',
-                        'success',
-                        1000
-                    );
+                    });
                 }).catch(function(error) {
                     showScanPopup(error.message);
                 }).then(function() {
@@ -857,28 +912,7 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
                     return;
                 }
 
-                var knownBatch = scannedCode.type === 'batch'
-                    ? {batch: null, ambiguous: false}
-                    : findLoadedBatchForRoll(scannedCode.value);
-                if (knownBatch.ambiguous) {
-                    showScanPopup(
-                        'Roll ' + scannedCode.value + ' exists in more than one scanned batch. Select the correct batch from the Batch list first.',
-                        'Batch Selection Required',
-                        'warning'
-                    );
-                    return;
-                }
-                if (knownBatch.batch) {
-                    if (!batch || String(batch.card_no) !== String(knownBatch.batch.card_no)) {
-                        activateBatch(knownBatch.batch);
-                    }
-                    addScannedRoll(scannedCode.value, isManualEntry);
-                    return;
-                }
-
-                var isBatchCode = scannedCode.type === 'batch' || scannedCode.type === '' ||
-                    (!batch && scannedCode.type !== 'roll');
-                if (!isBatchCode) {
+                if (scannedCode.type === 'roll') {
                     addScannedRoll(scannedCode.value, isManualEntry);
                     return;
                 }
@@ -887,6 +921,27 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
                     showScanPopup(alreadyDeliveredMessage, 'Batch Already Delivered', 'error');
                     return;
                 }
+                if (scannedCode.type === '') {
+                    processingRoll = true;
+                    rollInput.disabled = true;
+                    addRollBtn.disabled = true;
+                    var routedToRoll = false;
+                    api('identify_scan', {code: scannedCode.value}).then(function(result) {
+                        if (result.kind === 'roll') {
+                            processingRoll = false;
+                            routedToRoll = true;
+                            addScannedRoll(scannedCode.value, isManualEntry);
+                            return;
+                        }
+                        return loadBatchByCard(scannedCode.value);
+                    }).catch(function(error) {
+                        showScanPopup(error.message);
+                    }).then(function() {
+                        if (!routedToRoll) finishScan();
+                    });
+                    return;
+                }
+
                 processingRoll = true;
                 rollInput.disabled = true;
                 addRollBtn.disabled = true;
@@ -1206,6 +1261,20 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
                     );
                 }
             });
+            document.getElementById('scannedRollList').addEventListener('click', function(event) {
+                var button = event.target.closest(
+                    '[data-remove-roll-index], [data-remove-completed-row-index]'
+                );
+                if (!button || !this.contains(button)) return;
+                if (button.hasAttribute('data-remove-roll-index')) {
+                    removeScannedRoll(Number(button.dataset.removeRollIndex));
+                } else {
+                    removeCompletedRoll(
+                        Number(button.dataset.removeCompletedBatchIndex),
+                        Number(button.dataset.removeCompletedRowIndex)
+                    );
+                }
+            });
             batchSelectionList.addEventListener('click', function(event) {
                 var removeButton = event.target.closest('[data-remove-batch]');
                 if (removeButton && this.contains(removeButton)) {
@@ -1249,10 +1318,13 @@ unset($_SESSION['knitting_delivery_manual_entry_authorized']);
                 vehicleNoInput.value = vehicleNo;
                 api('confirm_delivery', {
                     batches: deliveryGroups.map(function(group) {
+                        var scannedQty = group.rows.reduce(function(total, row) {
+                            return total + (Number(row.QTY) || 0);
+                        }, 0);
                         return {
                             card_no: group.card_no,
                             rolls: group.rows.map(function(row) { return String(row.ROLL); }),
-                            total_qty: Number(group.target_qty),
+                            total_qty: Number(scannedQty.toFixed(3)),
                             remarks: String(group.remarks || '').toUpperCase()
                         };
                     }),

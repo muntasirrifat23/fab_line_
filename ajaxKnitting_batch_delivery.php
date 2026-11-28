@@ -257,37 +257,57 @@ try {
     respond(['success' => false, 'message' => 'Could not initialize delivery records: ' . $error->getMessage()], 500);
 }
 
-function fetchDeliveryBatchRows($db, $cardNo, $forUpdate = false)
+function fetchDeliveryBatchRows($db, $cardNo)
 {
-    $sql = "SELECT dbc.DBCTID AS BATCH_LINE_ID, dbc.PO_NUMBER, dbc.COLOR, dbc.RQTY AS QTY,
-                   COALESCE(delivered.DELIVERED_QTY, 0) AS DELIVERED_QTY,
-                   GREATEST(COALESCE(dbc.RQTY, 0) - COALESCE(delivered.DELIVERED_QTY, 0), 0) AS REMAINING_QTY,
-                   dbc.DYMCNO, dbc.SONO, dbc.BUYER,
-                   dbc.STYLE, dbc.MCDIA, dbc.CUSTOMER, dbc.O_T, dbc.SL,
-                   dbc.FTYPE, dbc.FGSM, dbc.FDIA, dbc.YTYPE, dbc.YCOUNT,
-                   dbc.FEEDER_PLAN, dbc.LOT_NO, dbc.YBRAND, dbc.CATEGORY, dbc.BCARD,
-                   dbc.SILICON, dbc.NONSILICON, dbc.NWASH, dbc.EWASH, dbc.ENZYME,
-                   dbc.NONENZYME, dbc.PEACH, dbc.BRUSH, dbc.AOP, dbc.SOFTENER,
-                   dbc.NONSOFTENER, dbc.OTHERS
+    $sql = "SELECT MIN(dbc.DBCTID) AS BATCH_LINE_ID,
+                   MAX(TRIM(dbc.PO_NUMBER)) AS PO_NUMBER,
+                   MAX(TRIM(dbc.COLOR)) AS COLOR,
+                   MAX(TRIM(dbc.FTYPE)) AS FTYPE,
+                   SUM(CAST(dbc.RQTY AS DECIMAL(12,3))) AS TARGET_QTY,
+                   COALESCE(MAX(delivered.DELIVERED_QTY), 0) AS FULFILLED_QTY,
+                   GREATEST(
+                       SUM(CAST(dbc.RQTY AS DECIMAL(12,3))) -
+                       COALESCE(MAX(delivered.DELIVERED_QTY), 0),
+                       0
+                   ) AS REMAINING_QTY,
+                   MAX(dbc.DYMCNO) AS DYMCNO, MAX(dbc.SONO) AS SONO,
+                   MAX(dbc.BUYER) AS BUYER, MAX(dbc.STYLE) AS STYLE,
+                   MAX(dbc.MCDIA) AS MCDIA, MAX(dbc.CUSTOMER) AS CUSTOMER,
+                   MAX(dbc.O_T) AS O_T, MAX(dbc.SL) AS SL,
+                   MAX(dbc.FGSM) AS FGSM, MAX(dbc.FDIA) AS FDIA,
+                   MAX(dbc.FEEDER_PLAN) AS FEEDER_PLAN, MAX(dbc.LOT_NO) AS LOT_NO,
+                   MAX(dbc.YTYPE) AS YTYPE, MAX(dbc.YCOUNT) AS YCOUNT,
+                   MAX(dbc.YBRAND) AS YBRAND, MAX(dbc.CATEGORY) AS CATEGORY,
+                   MAX(dbc.SILICON) AS SILICON, MAX(dbc.NONSILICON) AS NONSILICON,
+                   MAX(dbc.NWASH) AS NWASH, MAX(dbc.EWASH) AS EWASH,
+                   MAX(dbc.ENZYME) AS ENZYME, MAX(dbc.NONENZYME) AS NONENZYME,
+                   MAX(dbc.PEACH) AS PEACH, MAX(dbc.BRUSH) AS BRUSH,
+                   MAX(dbc.AOP) AS AOP, MAX(dbc.SOFTENER) AS SOFTENER,
+                   MAX(dbc.NONSOFTENER) AS NONSOFTENER, MAX(dbc.OTHERS) AS OTHERS
             FROM dyeing_batch_card dbc
             LEFT JOIN (
-                SELECT BATCH_LINE_ID,
+                SELECT UPPER(TRIM(BCARD)) AS BCARD_KEY, UPPER(TRIM(PO_NUMBER)) AS PO_KEY,
+                       UPPER(TRIM(COLOR)) AS COLOR_KEY, UPPER(TRIM(FTYPE)) AS FTYPE_KEY,
                        SUM(CAST(NULLIF(TRIM(QTY), '') AS DECIMAL(12,3))) AS DELIVERED_QTY
                 FROM dyeing_batch_delivery
-                WHERE BATCH_LINE_ID IS NOT NULL
-                GROUP BY BATCH_LINE_ID
-            ) delivered ON delivered.BATCH_LINE_ID = dbc.DBCTID
+                WHERE TRIM(BCARD) = ?
+                GROUP BY UPPER(TRIM(BCARD)), UPPER(TRIM(PO_NUMBER)),
+                         UPPER(TRIM(COLOR)), UPPER(TRIM(FTYPE))
+            ) delivered
+                ON delivered.BCARD_KEY = UPPER(TRIM(dbc.BCARD))
+               AND delivered.PO_KEY = UPPER(TRIM(dbc.PO_NUMBER))
+               AND delivered.COLOR_KEY = UPPER(TRIM(dbc.COLOR))
+               AND delivered.FTYPE_KEY = UPPER(TRIM(dbc.FTYPE))
             WHERE TRIM(dbc.BCARD) = ?
-            ORDER BY dbc.DBCTID ASC";
-    if ($forUpdate) {
-        $sql .= " FOR UPDATE";
-    }
+            GROUP BY UPPER(TRIM(dbc.PO_NUMBER)), UPPER(TRIM(dbc.COLOR)),
+                     UPPER(TRIM(dbc.FTYPE))
+            ORDER BY PO_NUMBER, FTYPE, COLOR";
 
     $stmt = $db->prepare($sql);
     if (!$stmt) {
         throw new RuntimeException('Database error: ' . $db->error);
     }
-    $stmt->bind_param('s', $cardNo);
+    $stmt->bind_param('ss', $cardNo, $cardNo);
     if (!$stmt->execute()) {
         $error = $stmt->error;
         $stmt->close();
@@ -295,28 +315,95 @@ function fetchDeliveryBatchRows($db, $cardNo, $forUpdate = false)
     }
 
     $result = $stmt->get_result();
-    $rows = [];
+    $groups = [];
     $totalQty = 0;
+    $totalFulfilledQty = 0;
     $totalRemainingQty = 0;
     while ($row = $result->fetch_assoc()) {
         if (!is_numeric($row['BATCH_LINE_ID']) || (int)$row['BATCH_LINE_ID'] < 1 ||
-            !is_numeric($row['QTY']) || !is_finite((float)$row['QTY']) ||
-            (float)$row['QTY'] <= 0 || trim((string)$row['FTYPE']) === '') {
+            !is_numeric($row['TARGET_QTY']) || !is_finite((float)$row['TARGET_QTY']) ||
+            (float)$row['TARGET_QTY'] <= 0 || trim((string)$row['FTYPE']) === '') {
             $stmt->close();
-            throw new RuntimeException('This batch contains an invalid fabric line or quantity.');
+            throw new RuntimeException('This batch contains an invalid PO / Color / Fabric Type quantity.');
         }
-        $totalQty += (float)$row['QTY'];
-        $totalRemainingQty += (float)$row['REMAINING_QTY'];
-        $rows[] = $row;
+        $row['TARGET_QTY'] = round((float)$row['TARGET_QTY'], 3);
+        $row['FULFILLED_QTY'] = round((float)$row['FULFILLED_QTY'], 3);
+        $row['REMAINING_QTY'] = round((float)$row['REMAINING_QTY'], 3);
+        $row['GROUP_ID'] = deliveryGroupId($row['PO_NUMBER'], $row['FTYPE'], $row['COLOR']);
+        $totalQty += $row['TARGET_QTY'];
+        $totalFulfilledQty += $row['FULFILLED_QTY'];
+        $totalRemainingQty += $row['REMAINING_QTY'];
+        $groups[] = $row;
     }
     $stmt->close();
 
     return [
-        'rows' => $rows,
+        'groups' => $groups,
         'total_qty' => $totalQty,
+        'fulfilled_qty' => $totalFulfilledQty,
         'remaining_qty' => $totalRemainingQty,
         'target_qty' => $totalQty
     ];
+}
+
+function deliveryGroupId($poNumber, $fabricType, $color)
+{
+    $parts = array_map(function ($value) {
+        return strtoupper(trim((string)$value));
+    }, [$poNumber, $fabricType, $color]);
+    return hash('sha256', implode("\0", $parts));
+}
+
+function findDeliveryGroup($groups, $poNumber, $fabricType, $color)
+{
+    $groupId = deliveryGroupId($poNumber, $fabricType, $color);
+    foreach ($groups as $group) {
+        if ($group['GROUP_ID'] === $groupId) {
+            return $group;
+        }
+    }
+    return null;
+}
+
+function fetchKnittingRoll($db, $roll, $forUpdate = false)
+{
+    $sql = 'SELECT KSTID, TRIM(ROLL) AS ROLL, TRIM(PO_NUMBER) AS PO_NUMBER,
+                   TRIM(COLOR) AS COLOR, TRIM(FTYPE) AS FTYPE, QTY, SONO, SHIFT,
+                   BUYER, STYLE, MCNO, MCDIA, CUSTOMER, YTYPE, YCOUNT, YBRAND,
+                   O_T, SL, FGSM, FDIA, FEEDER_PLAN, LOT_NO, TPOINT, CATEGORY
+            FROM knitting_store
+            WHERE TRIM(ROLL) = ?
+            ORDER BY KSTID ASC
+            LIMIT 2';
+    if ($forUpdate) {
+        $sql .= ' FOR UPDATE';
+    }
+    $stmt = $db->prepare($sql);
+    if (!$stmt) {
+        throw new RuntimeException('Could not prepare knitting roll lookup: ' . $db->error);
+    }
+    $stmt->bind_param('s', $roll);
+    if (!$stmt->execute()) {
+        $error = $stmt->error;
+        $stmt->close();
+        throw new RuntimeException('Could not look up knitting roll ' . $roll . ': ' . $error);
+    }
+    $result = $stmt->get_result();
+    $rows = [];
+    while ($row = $result->fetch_assoc()) {
+        $rows[] = $row;
+    }
+    $stmt->close();
+    if (count($rows) > 1) {
+        throw new DeliveryRequestException('Roll ' . $roll . ' is duplicated in knitting_store. Please correct the roll data.', 409);
+    }
+    if (!$rows) {
+        throw new DeliveryRequestException('Knitting roll ' . $roll . ' was not found.', 404);
+    }
+    if (!is_numeric($rows[0]['QTY']) || !is_finite((float)$rows[0]['QTY']) || (float)$rows[0]['QTY'] <= 0) {
+        throw new DeliveryRequestException('Knitting roll ' . $roll . ' has an invalid quantity.', 422);
+    }
+    return $rows[0];
 }
 
 function fetchDeliveryStatus($db, $cardNo)
@@ -362,7 +449,7 @@ try {
         }
 
         $batch = fetchDeliveryBatchRows($db, $cardNo);
-        if (!$batch['rows']) {
+        if (!$batch['groups']) {
             respond(['success' => false, 'message' => 'Batch Card ' . $cardNo . ' was not found.'], 404);
         }
 
@@ -371,17 +458,117 @@ try {
         respond([
             'success' => true,
             'card_no' => $cardNo,
-            'rows' => $batch['rows'],
-            'line_count' => count($batch['rows']),
+            'groups' => $batch['groups'],
+            'group_count' => count($batch['groups']),
             'total_qty' => round($batch['total_qty'], 3),
+            'fulfilled_qty' => round($batch['fulfilled_qty'], 3),
             'remaining_qty' => round($batch['remaining_qty'], 3),
             'target_qty' => round($batch['target_qty'], 3),
             'delivery' => $deliveryStatus['delivery']
         ]);
     }
 
+    if ($action === 'identify_scan') {
+        $code = isset($input['code']) && is_scalar($input['code'])
+            ? trim((string)$input['code'])
+            : '';
+        if ($code === '') {
+            respond(['success' => false, 'message' => 'Scan a Batch Card or knitting roll.'], 400);
+        }
+        $rollStmt = $db->prepare('SELECT KSTID FROM knitting_store WHERE TRIM(ROLL) = ? LIMIT 1');
+        if (!$rollStmt) {
+            throw new RuntimeException('Could not identify scanned code: ' . $db->error);
+        }
+        $rollStmt->bind_param('s', $code);
+        if (!$rollStmt->execute()) {
+            $error = $rollStmt->error;
+            $rollStmt->close();
+            throw new RuntimeException('Could not identify scanned code: ' . $error);
+        }
+        $isRoll = $rollStmt->get_result()->num_rows > 0;
+        $rollStmt->close();
+        if ($isRoll) {
+            respond(['success' => true, 'kind' => 'roll']);
+        }
+        $batch = fetchDeliveryBatchRows($db, $code);
+        if ($batch['groups']) {
+            respond(['success' => true, 'kind' => 'batch']);
+        }
+        respond(['success' => false, 'message' => 'No Batch Card or knitting roll was found for ' . $code . '.'], 404);
+    }
+
     if ($action === 'load_batch_by_roll') {
-        respond(['success' => false, 'message' => 'Roll-based delivery is no longer supported. Scan a Batch Card QR instead.'], 410);
+        $cardNo = isset($input['card_no']) && is_scalar($input['card_no'])
+            ? trim((string)$input['card_no'])
+            : (isset($_GET['card_no']) ? trim((string)$_GET['card_no']) : '');
+        $roll = isset($input['roll']) && is_scalar($input['roll'])
+            ? trim((string)$input['roll'])
+            : (isset($_GET['roll']) ? trim((string)$_GET['roll']) : '');
+        if ($cardNo === '' || $roll === '') {
+            respond(['success' => false, 'message' => 'Scan a Batch Card first, then scan a knitting roll.'], 400);
+        }
+
+        $batch = fetchDeliveryBatchRows($db, $cardNo);
+        if (!$batch['groups']) {
+            respond(['success' => false, 'message' => 'Batch Card ' . $cardNo . ' was not found.'], 404);
+        }
+        $rollStmt = $db->prepare(
+            'SELECT DBDTID FROM dyeing_batch_delivery WHERE TRIM(ROLL) = ? LIMIT 1'
+        );
+        if (!$rollStmt) {
+            throw new RuntimeException('Could not check whether roll ' . $roll . ' was already delivered: ' . $db->error);
+        }
+        $rollStmt->bind_param('s', $roll);
+        if (!$rollStmt->execute()) {
+            $error = $rollStmt->error;
+            $rollStmt->close();
+            throw new RuntimeException('Could not check delivery status for roll ' . $roll . ': ' . $error);
+        }
+        $alreadyDelivered = $rollStmt->get_result()->num_rows > 0;
+        $rollStmt->close();
+        if ($alreadyDelivered) {
+            respond(['success' => false, 'message' => 'Roll ' . $roll . ' has already been delivered.'], 409);
+        }
+
+        $knittingRoll = fetchKnittingRoll($db, $roll);
+        $group = findDeliveryGroup(
+            $batch['groups'],
+            $knittingRoll['PO_NUMBER'],
+            $knittingRoll['FTYPE'],
+            $knittingRoll['COLOR']
+        );
+        if (!$group) {
+            respond([
+                'success' => false,
+                'message' => 'Roll ' . $roll . ' does not match this batch by PO Number, Fabrics Type and Color.'
+            ], 422);
+        }
+        if ((float)$group['REMAINING_QTY'] <= 0) {
+            respond([
+                'success' => false,
+                'message' => 'This PO / Fabrics Type / Color quantity is already fulfilled.'
+            ], 409);
+        }
+        $rollQty = (float)formatDeliveryQuantity($knittingRoll['QTY']);
+        if ($rollQty - (float)$group['REMAINING_QTY'] > 0.0005) {
+            respond([
+                'success' => false,
+                'message' => 'Roll ' . $roll . ' is ' . formatDeliveryQuantity($rollQty) .
+                    ' KG, but only ' . formatDeliveryQuantity($group['REMAINING_QTY']) .
+                    ' KG remains for this PO / Fabrics Type / Color. The roll was not added.'
+            ], 409);
+        }
+
+        $rollRow = array_merge($group, $knittingRoll);
+        $rollRow['GROUP_ID'] = $group['GROUP_ID'];
+        $rollRow['BATCH_LINE_ID'] = $group['BATCH_LINE_ID'];
+        $rollRow['QTY'] = formatDeliveryQuantity($rollQty);
+        respond([
+            'success' => true,
+            'card_no' => $cardNo,
+            'roll' => $rollRow,
+            'group_id' => $group['GROUP_ID']
+        ]);
     }
 
     if ($action === 'confirm_delivery') {
@@ -410,7 +597,7 @@ try {
         $seenRolls = [];
         $remarksByCard = [];
         $rollCount = 0;
-        foreach ($batchesInput as $batchInput) {
+        foreach ($batchesInput as $batchIndex => $batchInput) {
             if (!is_array($batchInput)) {
                 respond(['success' => false, 'message' => 'Invalid batch data in the delivery challan.'], 400);
             }
@@ -418,11 +605,11 @@ try {
                 ? trim((string)$batchInput['card_no'])
                 : '';
             $rolls = isset($batchInput['rolls']) && is_array($batchInput['rolls']) ? $batchInput['rolls'] : [];
-            $loadedTotalQty = isset($batchInput['total_qty']) && is_numeric($batchInput['total_qty'])
+            $loadedRollQty = isset($batchInput['total_qty']) && is_numeric($batchInput['total_qty'])
                 ? (float)$batchInput['total_qty']
                 : -1;
             if ($cardNo === '' || isset($seenCards[$cardNo]) || !$rolls ||
-                !is_finite($loadedTotalQty) || $loadedTotalQty < 0) {
+                !is_finite($loadedRollQty) || $loadedRollQty <= 0) {
                 respond(['success' => false, 'message' => 'A batch is missing its card number, rolls, or quantity.'], 400);
             }
             $batchRemark = isset($batchInput['remarks']) && is_scalar($batchInput['remarks'])
@@ -438,12 +625,13 @@ try {
             $remarksByCard[$cardNo] = $batchRemark;
             foreach ($rolls as $roll) {
                 $roll = is_scalar($roll) ? trim((string)$roll) : '';
-                if ($roll === '' || isset($seenRolls[$cardNo][$roll])) {
+                if ($roll === '' || isset($seenRolls[$roll])) {
                     respond(['success' => false, 'message' => 'A roll is missing or appears more than once in this challan.'], 400);
                 }
-                $seenRolls[$cardNo][$roll] = true;
+                $seenRolls[$roll] = true;
                 $rollCount++;
             }
+            $batchesInput[$batchIndex]['validated_total_qty'] = $loadedRollQty;
         }
         $lockResult = $db->query("SELECT GET_LOCK('fabline_knitting_challan_sequence', 10) AS acquired");
         if (!$lockResult) {
@@ -478,56 +666,89 @@ try {
             $scannedRolls = array_map(function ($roll) {
                 return trim((string)$roll);
             }, $batchInput['rolls']);
-            $loadedTotalQty = (float)$batchInput['total_qty'];
-            $batch = fetchDeliveryBatchRows($db, $cardNo, true);
-            if (!$batch['rows']) {
+            $loadedRollQty = (float)$batchInput['validated_total_qty'];
+
+            $lockBatch = $db->prepare('SELECT DBCTID FROM dyeing_batch_card WHERE TRIM(BCARD) = ? FOR UPDATE');
+            if (!$lockBatch) {
+                throw new RuntimeException('Could not lock Batch Card ' . $cardNo . ': ' . $db->error);
+            }
+            $lockBatch->bind_param('s', $cardNo);
+            if (!$lockBatch->execute()) {
+                $error = $lockBatch->error;
+                $lockBatch->close();
+                throw new RuntimeException('Could not lock Batch Card ' . $cardNo . ': ' . $error);
+            }
+            $lockedBatchRows = $lockBatch->get_result();
+            $batchExists = $lockedBatchRows->num_rows > 0;
+            $lockBatch->close();
+
+            $batch = fetchDeliveryBatchRows($db, $cardNo);
+            if (!$batchExists || !$batch['groups']) {
                 throw new DeliveryRequestException('Batch Card ' . $cardNo . ' was not found.', 404);
             }
-            if (abs($loadedTotalQty - $batch['target_qty']) > 0.0005) {
-                throw new DeliveryRequestException(
-                    'Batch ' . $cardNo . ' quantity changed after loading. Reload it before confirming.',
-                    409
-                );
-            }
 
-            $stmt = $db->prepare("SELECT ROLL FROM dyeing_batch_delivery WHERE BCARD = ? FOR UPDATE");
-            if (!$stmt) {
-                throw new RuntimeException('Database error: ' . $db->error);
+            $existingDelivery = $db->prepare(
+                'SELECT DBDTID FROM dyeing_batch_delivery WHERE TRIM(ROLL) = ? LIMIT 1 FOR UPDATE'
+            );
+            if (!$existingDelivery) {
+                throw new RuntimeException('Could not prepare delivered-roll validation: ' . $db->error);
             }
-            $stmt->bind_param('s', $cardNo);
-            if (!$stmt->execute()) {
-                $error = $stmt->error;
-                $stmt->close();
-                throw new RuntimeException('Database error: ' . $error);
-            }
-            $deliveredRolls = [];
-            $deliveredResult = $stmt->get_result();
-            while ($deliveredRow = $deliveredResult->fetch_assoc()) {
-                $deliveredRolls[trim((string)$deliveredRow['ROLL'])] = true;
-            }
-            $stmt->close();
-
+            $rowsByRoll = [];
+            $pendingQtyByGroup = [];
+            $batchQty = 0.0;
             foreach ($scannedRolls as $roll) {
-                if (!isset($batch['rolls'][$roll])) {
+                $alreadyDeliveredStmt = $existingDelivery;
+                $alreadyDeliveredStmt->bind_param('s', $roll);
+                if (!$alreadyDeliveredStmt->execute()) {
+                    $error = $alreadyDeliveredStmt->error;
+                    $alreadyDeliveredStmt->close();
+                    throw new RuntimeException('Could not validate roll ' . $roll . ': ' . $error);
+                }
+                $alreadyDelivered = $alreadyDeliveredStmt->get_result()->num_rows > 0;
+                if ($alreadyDelivered) {
+                    $alreadyDeliveredStmt->close();
+                    throw new DeliveryRequestException('Roll ' . $roll . ' has already been delivered.', 409);
+                }
+
+                $knittingRoll = fetchKnittingRoll($db, $roll, true);
+                $group = findDeliveryGroup(
+                    $batch['groups'],
+                    $knittingRoll['PO_NUMBER'],
+                    $knittingRoll['FTYPE'],
+                    $knittingRoll['COLOR']
+                );
+                if (!$group) {
+                    $existingDelivery->close();
                     throw new DeliveryRequestException(
-                        'Roll ' . $roll . ' does not match Batch Card ' . $cardNo . '.',
+                        'Roll ' . $roll . ' does not match Batch Card ' . $cardNo .
+                            ' by PO Number, Fabrics Type and Color.',
                         422
                     );
                 }
-                if (isset($deliveredRolls[$roll])) {
+                $rollQty = (float)formatDeliveryQuantity($knittingRoll['QTY']);
+                $groupId = $group['GROUP_ID'];
+                $pendingQtyByGroup[$groupId] = ($pendingQtyByGroup[$groupId] ?? 0) + $rollQty;
+                if ($pendingQtyByGroup[$groupId] - (float)$group['REMAINING_QTY'] > 0.0005) {
+                    $existingDelivery->close();
                     throw new DeliveryRequestException(
-                        'Roll ' . $roll . ' from Batch Card ' . $cardNo . ' has already been delivered.',
+                        'Roll ' . $roll . ' exceeds the remaining quantity for its PO / Fabrics Type / Color.',
                         409
                     );
                 }
+
+                $row = array_merge($group, $knittingRoll);
+                $row['GROUP_ID'] = $groupId;
+                $row['BATCH_LINE_ID'] = $group['BATCH_LINE_ID'];
+                $row['QTY'] = formatDeliveryQuantity($rollQty);
+                $rowsByRoll[$roll] = $row;
+                $batchQty += $rollQty;
             }
-            $rowsByRoll = [];
-            foreach ($batch['rows'] as $row) {
-                $rowsByRoll[$row['ROLL']] = $row;
-            }
-            $batchQty = 0;
-            foreach ($scannedRolls as $roll) {
-                $batchQty += (float)$rowsByRoll[$roll]['QTY'];
+            $existingDelivery->close();
+            if (abs($loadedRollQty - $batchQty) > 0.0005) {
+                throw new DeliveryRequestException(
+                    'Batch ' . $cardNo . ' scanned roll quantity changed. Reload the batch and try again.',
+                    409
+                );
             }
             $totalQty += $batchQty;
             $validatedBatches[] = [
@@ -549,12 +770,12 @@ try {
         $deliveryDate = date('Y-m-d');
         $stmt = $db->prepare(
             "INSERT INTO dyeing_batch_delivery
-             (BUDAT, KCHALLAN, TO_NAME, BCARD, ROLL, PO_NUMBER, QTY, SONO,
+             (BUDAT, KCHALLAN, TO_NAME, BCARD, BATCH_LINE_ID, ROLL, PO_NUMBER, QTY, SONO,
               BUYER, STYLE, COLOR, DYMCNO, MCDIA, CUSTOMER, O_T, SL, FTYPE, FGSM, FDIA,
               FEEDER_PLAN, LOT_NO, YTYPE, YCOUNT, YBRAND, CATEGORY, GATE_PASS_NO, VEHICLE_NO,
               SILICON, NONSILICON, NWASH, EWASH, ENZYME, NONENZYME, PEACH, BRUSH, AOP,
               SOFTENER, NONSOFTENER, OTHERS, DELIVERY_REMARKS, DOP, DID)
-             VALUES (" . implode(', ', array_fill(0, 42, '?')) . ")"
+             VALUES (" . implode(', ', array_fill(0, 43, '?')) . ")"
         );
         if (!$stmt) {
             throw new RuntimeException('Database error: ' . $db->error);
@@ -572,6 +793,7 @@ try {
                     $kChallan,
                     $toName,
                     $validatedBatch['card_no'],
+                    $row['BATCH_LINE_ID'],
                     $row['ROLL'],
                     $row['PO_NUMBER'],
                     $quantity,

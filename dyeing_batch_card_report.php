@@ -210,21 +210,26 @@ function dyeingReportEscape($value)
         .print-route-section .print-comment { height: 10mm; text-align: left !important; vertical-align: top !important; }
         .print-route-section .print-section-title { height: auto; }
         .print-dyeing,
+        .print-heat-set,
         .print-finishing,
         .print-quality,
         .print-store { margin-top: 1mm; }
         .print-dyeing td,
+        .print-heat-set td,
         .print-finishing td,
         .print-quality td,
         .print-store td { height: 5.2mm; }
         .print-dyeing .print-section-title,
+        .print-heat-set .print-section-title,
         .print-finishing .print-section-title,
         .print-quality .print-section-title,
         .print-store .print-section-title { width: 8%; height: auto; font-size: 7pt; font-weight: 700; }
         .print-dyeing .print-comment,
+        .print-heat-set .print-comment,
         .print-finishing .print-comment,
         .print-quality .print-comment,
         .print-store .print-comment { height: 7mm; text-align: left !important; vertical-align: top !important; }
+        .print-heat-set .print-subtitle,
         .print-finishing .print-subtitle { height: 4mm; }
         @media (max-width: 700px) {
             body { padding: 10px; }
@@ -424,20 +429,32 @@ function dyeingReportEscape($value)
                 'EWASH', 'ENZYME', 'NONENZYME', 'SOFTENER', 'OTHERS',
                 'NONSOFTENER', 'SINGEING', 'SHEARING', 'HEAT_SET'
             ];
+            function processRowFor(field) {
+                return rows.find(function(row) {
+                    return hasProcess(row, field);
+                }) || null;
+            }
+            var selectedProcessOptions = processOptions.filter(function(field) {
+                return processRowFor(field) !== null;
+            });
             var processRows = [];
-            for (var processIndex = 0; processIndex < processOptions.length; processIndex += 2) {
-                var processCells = processOptions.slice(processIndex, processIndex + 2).map(function(field) {
-                    var label = field === 'OTHERS' && hasProcess(first, field)
-                        ? first[field]
+            for (var processIndex = 0; processIndex < selectedProcessOptions.length; processIndex += 2) {
+                var processCells = selectedProcessOptions.slice(processIndex, processIndex + 2).map(function(field) {
+                    var processRow = processRowFor(field);
+                    var label = field === 'OTHERS' && processRow
+                        ? processRow[field]
                         : (processLabels[field] || field);
                     return '<td class="process-check">' +
-                        (hasProcess(first, field) ? '&#9745;' : '&#9744;') + '</td><td>' +
+                        '&#9745;</td><td>' +
                         escapeHtml(label) + '</td>';
                 }).join('');
-                if (processIndex + 1 >= processOptions.length) {
+                if (processIndex + 1 >= selectedProcessOptions.length) {
                     processCells += '<td colspan="2"></td>';
                 }
                 processRows.push('<tr>' + processCells + '</tr>');
+            }
+            if (!processRows.length) {
+                processRows.push('<tr><td colspan="4">-</td></tr>');
             }
             var processHtml = '<table class="print-process-options"><thead><tr>' +
                 '<th colspan="4">Process</th></tr></thead><tbody>' +
@@ -510,12 +527,12 @@ function dyeingReportEscape($value)
                 '<tr><td colspan="2">Shade: □ OK &nbsp; □ Not OK</td>' +
                 '<td colspan="5" class="print-comment">Comments:</td>' +
                 '<td colspan="4">Sign: __________________</td></tr></table>' +
-                '<table class="print-finishing"><tr><td class="print-section-title" rowspan="16">Finishing</td>' +
-                '<td colspan="10" class="print-subtitle">Heat Set Parameter</td></tr>' +
-                '<tr><td>R. Dia</td><td>Set Dia</td><td>A. Dia</td><td>R. GSM</td><td>A. GSM</td>' +
-                '<td>Speed</td><td>Temp.</td><td>Over Feed%</td><td>Blower</td><td>Remark</td></tr>' +
-                '<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>' +
-                '<tr><td colspan="10" class="print-subtitle">Shade Roll Parameter (Stenter)</td></tr>' +
+                '<table class="print-heat-set"><tr><td class="print-section-title" rowspan="2">Heat Set<br>Parameter</td>' +
+                '<td>R. Dia</td><td>Set Dia</td><td>A. Dia</td><td>R. GSM</td><td>A. GSM</td>' +
+                '<td>Speed</td><td>Temp.</td><td>Over Feed%</td><td>Blower</td><td>Remark</td><td>Sign</td></tr>' +
+                '<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></table>' +
+                '<table class="print-finishing"><tr><td class="print-section-title" rowspan="13">Finishing</td>' +
+                '<td colspan="10" class="print-subtitle">Shade Roll Parameter (Stenter)</td></tr>' +
                 '<tr><td>Shade</td><td>Sign</td><td>Speed</td><td>Temp.</td><td>Softener</td><td>P/P</td><td>pH</td><td>Over Feed%</td><td>Remark</td><td>Sign</td></tr>' +
                 '<tr><td>OK / Not OK</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>' +
                 '<tr><td colspan="10" class="print-subtitle">Shade Roll Parameter (Compactor)</td></tr>' +
