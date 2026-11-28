@@ -87,7 +87,9 @@ $sql = "SELECT
             t.FTYPE,
             t.FGSM,
             t.FDIA,
+            t.YTYPE,
             t.YCOUNT,
+            t.YBRAND,
             t.LOT_NO,
             t.CREATED_DATE,
             {$timeSelectSql}{$reportOperator} AS DNAME,
@@ -207,6 +209,23 @@ function dyeingReportEscape($value)
         .print-route-section td { height: 6.5mm; }
         .print-route-section .print-comment { height: 10mm; text-align: left !important; vertical-align: top !important; }
         .print-route-section .print-section-title { height: auto; }
+        .print-dyeing,
+        .print-finishing,
+        .print-quality,
+        .print-store { margin-top: 1mm; }
+        .print-dyeing td,
+        .print-finishing td,
+        .print-quality td,
+        .print-store td { height: 5.2mm; }
+        .print-dyeing .print-section-title,
+        .print-finishing .print-section-title,
+        .print-quality .print-section-title,
+        .print-store .print-section-title { width: 8%; height: auto; font-size: 7pt; font-weight: 700; }
+        .print-dyeing .print-comment,
+        .print-finishing .print-comment,
+        .print-quality .print-comment,
+        .print-store .print-comment { height: 7mm; text-align: left !important; vertical-align: top !important; }
+        .print-finishing .print-subtitle { height: 4mm; }
         @media (max-width: 700px) {
             body { padding: 10px; }
             .report-header { flex-wrap: wrap; gap: 8px; }
@@ -365,7 +384,7 @@ function dyeingReportEscape($value)
                 if (!fabricationGroups[fabricationKey]) {
                     fabricationGroups[fabricationKey] = {
                         fabrication: fabrication,
-                        categories: [],
+                        categories: {BODY: {qty: 0}, RIB: {qty: 0}, NECK: {qty: 0}},
                         machineGauge: [],
                         finishDia: [],
                         gsm: [],
@@ -375,7 +394,7 @@ function dyeingReportEscape($value)
                 var group = fabricationGroups[fabricationKey];
                 var qty = Number(row.BATCH_QTY);
                 if (categoryLabels[category]) {
-                    addUniqueValue(group.categories, categoryLabels[category]);
+                    group.categories[category].qty += Number.isFinite(qty) ? qty : 0;
                 }
                 addUniqueValue(group.machineGauge, row.MCDIA);
                 addUniqueValue(group.finishDia, row.FDIA);
@@ -423,15 +442,29 @@ function dyeingReportEscape($value)
             var processHtml = '<table class="print-process-options"><thead><tr>' +
                 '<th colspan="4">Process</th></tr></thead><tbody>' +
                 processRows.join('') + '</tbody></table>';
-            var fabricRows = Object.keys(fabricationGroups).map(function(fabricationKey) {
+            var fabricRows = '';
+            var categoryOrder = ['BODY', 'RIB', 'NECK'];
+            Object.keys(fabricationGroups).forEach(function(fabricationKey) {
                 var group = fabricationGroups[fabricationKey];
-                return '<tr><td>' + escapeHtml(group.categories.join(' / ')) + '</td><td>' +
-                    escapeHtml(group.fabrication) + '</td><td>' +
-                    escapeHtml(group.machineGauge.join(', ')) + '</td><td>' +
-                    escapeHtml(group.finishDia.join(', ')) + '</td><td>' +
-                    escapeHtml(group.gsm.join(', ')) + '</td><td>' + formatQty(group.qty) +
-                    '</td><td></td><td></td></tr>';
-            }).join('');
+                var presentCategories = categoryOrder.filter(function(category) {
+                    return group.categories[category].qty > 0;
+                });
+                if (!presentCategories.length) {
+                    presentCategories = ['BODY'];
+                }
+                presentCategories.forEach(function(category, categoryIndex) {
+                    fabricRows += '<tr><td>' + categoryLabels[category] + '</td>';
+                    if (categoryIndex === 0) {
+                        fabricRows += '<td rowspan="' + presentCategories.length + '">' +
+                            escapeHtml(group.fabrication) + '</td>';
+                    }
+                    fabricRows += '<td>' + escapeHtml(group.machineGauge.join(', ')) + '</td>' +
+                        '<td>' + escapeHtml(group.finishDia.join(', ')) + '</td>' +
+                        '<td>' + escapeHtml(group.gsm.join(', ')) + '</td>' +
+                        '<td>' + formatQty(group.categories[category].qty) +
+                        '</td><td></td><td></td></tr>';
+                });
+            });
 
             var dateValue = String(first.BUDAT || '').trim();
             if (dateValue && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
@@ -467,40 +500,47 @@ function dyeingReportEscape($value)
                 formatQty(totalQty) + '</td><td></td><td></td></tr></tbody></table></td>' +
                 '<td class="print-process-cell">' + processHtml + '</td></tr>' +
                 '<tr><td colspan="3" class="print-comment">Comments:</td></tr></table>' +
-                '<table class="print-route-section"><tr><td class="print-section-title" rowspan="3">Dyeing</td>' +
+                '<table class="print-dyeing"><tr><td class="print-section-title" rowspan="3">Dyeing</td>' +
                 '<td rowspan="2"><strong>Shade</strong><br>□ OK &nbsp; □ Not OK</td>' +
-                '<td rowspan="2"><strong>Sign</strong></td><td colspan="5" class="print-subtitle">Proposed Parameter (Stenter)</td>' +
+                '<td rowspan="2"><strong>Sign</strong></td>' +
+                '<td colspan="5" class="print-subtitle">Proposed Parameter (Stenter)</td>' +
                 '<td colspan="3" class="print-subtitle">Color Fastness</td><td rowspan="2"><strong>Sign</strong></td></tr>' +
                 '<tr><td>Speed</td><td>Temp.</td><td>Softener</td><td>P/P</td><td>pH</td>' +
                 '<td>Wash</td><td>Water</td><td>Rubbing / Perspiration</td></tr>' +
-                '<tr><td colspan="2">Shade: □ OK &nbsp; □ Not OK</td><td colspan="5" class="print-comment">Comments:</td>' +
+                '<tr><td colspan="2">Shade: □ OK &nbsp; □ Not OK</td>' +
+                '<td colspan="5" class="print-comment">Comments:</td>' +
                 '<td colspan="4">Sign: __________________</td></tr></table>' +
-                '<table class="print-route-section"><tr><td class="print-section-title" rowspan="16">Finishing</td>' +
+                '<table class="print-finishing"><tr><td class="print-section-title" rowspan="16">Finishing</td>' +
                 '<td colspan="10" class="print-subtitle">Heat Set Parameter</td></tr>' +
                 '<tr><td>R. Dia</td><td>Set Dia</td><td>A. Dia</td><td>R. GSM</td><td>A. GSM</td>' +
-                '<td>Speed</td><td>Temp.</td><td>Over Feed%</td><td>Blower</td><td>Remark</td></tr><tr>' +
-                '<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>' +
+                '<td>Speed</td><td>Temp.</td><td>Over Feed%</td><td>Blower</td><td>Remark</td></tr>' +
+                '<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>' +
                 '<tr><td colspan="10" class="print-subtitle">Shade Roll Parameter (Stenter)</td></tr>' +
                 '<tr><td>Shade</td><td>Sign</td><td>Speed</td><td>Temp.</td><td>Softener</td><td>P/P</td><td>pH</td><td>Over Feed%</td><td>Remark</td><td>Sign</td></tr>' +
                 '<tr><td>OK / Not OK</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>' +
                 '<tr><td colspan="10" class="print-subtitle">Shade Roll Parameter (Compactor)</td></tr>' +
-                '<tr><td>Shade</td><td>Sign</td><td>Speed</td><td>Temp.</td><td>Softener</td><td>P/P</td><td>pH</td><td>Over Feed%</td><td>Remark</td><td>Sign</td></tr>' +
+                '<tr><td>Shade</td><td>Sign</td><td>Speed</td><td>Temp.</td><td>B/P</td><td>Set Dia</td><td>Act. Dia</td><td>Comp.%</td><td>Remark</td><td>Sign</td></tr>' +
                 '<tr><td>OK / Not OK</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>' +
                 '<tr><td colspan="10" class="print-subtitle">Bulk Parameter (Stenter)</td></tr>' +
                 '<tr><td>DIA</td><td>GSM</td><td>Speed</td><td>Temp.</td><td>Softener</td><td>P/P</td><td>pH</td><td>Over Feed%</td><td>Remark</td><td>Sign</td></tr>' +
                 '<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>' +
                 '<tr><td colspan="10" class="print-subtitle">Bulk Parameter (Compactor)</td></tr>' +
-                '<tr><td>DIA</td><td>GSM</td><td>Speed</td><td>Temp.</td><td>Softener</td><td>P/P</td><td>pH</td><td>Over Feed%</td><td>Remark</td><td>Sign</td></tr>' +
+                '<tr><td>DIA</td><td>GSM</td><td>Speed</td><td>Temp.</td><td>B/P</td><td>Set Dia</td><td>Act. Dia</td><td>Comp.%</td><td>Remark</td><td>Sign</td></tr>' +
                 '<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>' +
                 '<tr><td colspan="10" class="print-comment">Comments:</td></tr></table>' +
-                '<table class="print-route-section"><tr><td class="print-section-title" rowspan="4">Quality</td>' +
-                '<td colspan="4" class="print-subtitle">Online Check (Stenter)</td><td colspan="4" class="print-subtitle">Online Check (Compacting)</td><td colspan="2" class="print-subtitle">Decision</td></tr>' +
-                '<tr><td>Shade</td><td>Sign</td><td>DIA</td><td>GSM</td><td>Shade</td><td>Sign</td><td>Surface</td><td>Uneven</td><td colspan="2">□ Go for Compacting</td></tr>' +
-                '<tr><td>□ OK</td><td>□</td><td></td><td></td><td>□ OK</td><td>□</td><td></td><td></td><td colspan="2">□ Return to Dyeing/Finishing</td></tr>' +
+                '<table class="print-quality"><tr><td class="print-section-title" rowspan="4">Quality</td>' +
+                '<td colspan="4" class="print-subtitle">Online Check (Stenter)</td>' +
+                '<td colspan="4" class="print-subtitle">Online Check (Compact)</td>' +
+                '<td colspan="2" class="print-subtitle">Decision</td></tr>' +
+                '<tr><td>Shade</td><td>Sign</td><td>DIA</td><td>GSM</td>' +
+                '<td>Shade</td><td>Sign</td><td>Surface</td><td>Uneven</td>' +
+                '<td colspan="2">□ Go for Compacting</td></tr>' +
+                '<tr><td>□ OK</td><td></td><td></td><td></td><td>□ OK / □ Not OK</td><td></td><td></td><td></td>' +
+                '<td colspan="2">□ Return to Dyeing/Finishing</td></tr>' +
                 '<tr><td colspan="9" class="print-comment">Comments:</td><td colspan="2">Sign: __________</td></tr></table>' +
-                '<table class="print-route-section"><tr><td class="print-section-title">Finish Fabric Store</td>' +
+                '<table class="print-store"><tr><td class="print-section-title" rowspan="2">Finish<br>Fabrics<br>Store</td>' +
                 '<td>Rack No.</td><td>Other Position</td><td>Position after R/P</td><td>Remark</td><td>Sign</td></tr>' +
-                '<tr><td></td><td></td><td></td><td></td><td></td><td></td></tr></table>' +
+                '<tr><td></td><td></td><td></td><td></td><td></td></tr></table>' +
                 '<table class="print-signatures"><tr><td><div class="print-sign-line"></div>Batch Shift Incharge</td>' +
                 '<td><div class="print-sign-line"></div>Batch Supervisor</td><td><div class="print-sign-line"></div>' +
                 'Batch Incharge</td><td><div class="print-sign-line"></div>Batch Manager</td></tr></table></article>';
